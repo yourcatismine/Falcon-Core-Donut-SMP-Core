@@ -1,0 +1,16 @@
+blacklisted-blocks:
+  - LAVA
+  - WATER
+  - CACTUS
+  - MAGMA_BLOCK
+  - SEAPICKLE
+  - KELP
+  - SEAGRASS
+  - LILY_PAD
+  - FIRE
+  - CAMPFIRE
+  - SOUL_CAMPFIRE
+  - WITHER_ROSE
+  - VOID_AIR
+  - CAVE_AIR
+  - AIR

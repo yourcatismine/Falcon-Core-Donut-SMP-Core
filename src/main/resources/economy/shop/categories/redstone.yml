@@ -1,0 +1,101 @@
+gui-title: "&8ѕʜᴏᴘ - ʀᴇᴅѕᴛᴏɴᴇ"
+
+items:
+  hopper:
+    slot: 0
+    material: HOPPER
+    price: 450
+    currency: MONEY
+    values: [1, 10, 64]
+
+  redstone:
+    slot: 1
+    material: REDSTONE
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+      
+  redstone_torch:
+    slot: 2
+    material: REDSTONE_TORCH
+    price: 85
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  redstone_repeater:
+    slot: 3
+    material: REPEATER
+    price: 200
+    currency: MONEY
+    values: [1, 10, 64]
+    
+  redstone_comparator:
+    slot: 4
+    material: COMPARATOR
+    price: 120
+    currency: MONEY
+    values: [1, 10, 64]
+
+  target:
+    slot: 5
+    material: TARGET
+    price: 450
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  lever:
+    slot: 6
+    material: LEVER
+    price: 80
+    currency: MONEY
+    values: [1, 10, 64]
+
+  piston:
+    slot: 7
+    material: PISTON
+    price: 300
+    currency: MONEY
+    values: [1, 10, 64]
+
+  sticky_piston:
+    slot: 8
+    material: STICKY_PISTON
+    price: 250
+    currency: MONEY
+    values: [1, 10, 64]
+
+  slime_block:
+    slot: 9
+    material: SLIME_BLOCK
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+
+  honey_block:
+    slot: 10
+    material: HONEY_BLOCK
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+
+  dispenser:
+    slot: 11
+    material: DISPENSER
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+
+  dropper:
+    slot: 12
+    material: DROPPER
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+
+  observer:
+    slot: 13
+    material: OBSERVER
+    price: 500
+    currency: MONEY
+    values: [1, 10, 64]
+  

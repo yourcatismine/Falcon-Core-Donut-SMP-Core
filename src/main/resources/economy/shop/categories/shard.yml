@@ -1,0 +1,84 @@
+gui-title: "&8ѕʜᴏᴘ - ѕʜᴀʀᴅ ѕʜᴏᴘ"
+
+items:
+  # Spawners
+  pig_spawner:
+    material: SPAWNER
+    spawner: "PIG"
+    name: "&dᴘɪɢ ѕᴘᴀᴡɴᴇʀ"
+    slot: 9
+    command: "smartspawner give spawner {gamertag} pig 1"
+    price: 250
+    currency: SHARDS
+
+  cow_spawner:
+    material: SPAWNER
+    spawner: "COW"
+    name: "&cᴄᴏᴡ ѕᴘᴀᴡɴᴇʀ"
+    slot: 10
+    command: "smartspawner give spawner {gamertag} cow 1"
+    price: 350
+    currency: SHARDS
+
+  zombie_spawner:
+    material: SPAWNER
+    spawner: "ZOMBIE"
+    name: "&aᴢᴏᴍʙɪᴇ ѕᴘᴀᴡɴᴇʀ"
+    slot: 11
+    command: "smartspawner give spawner {gamertag} zombie 1"
+    price: 400
+    currency: SHARDS
+
+  spider_spawner:
+    material: SPAWNER
+    spawner: "SPIDER"
+    name: "&csᴘɪᴅᴇʀ ѕᴘᴀᴡɴᴇʀ"
+    slot: 12
+    command: "smartspawner give spawner {gamertag} spider 1"
+    price: 750
+    currency: SHARDS
+
+  skeleton_spawner:
+    material: SPAWNER
+    spawner: "SKELETON"
+    name: "&fsᴋᴇʟᴇᴛᴏɴ ѕᴘᴀᴡɴᴇʀ"
+    slot: 13
+    command: "smartspawner give spawner {gamertag} skeleton 1"
+    price: 500
+    currency: SHARDS
+
+  creeper_spawner:
+    material: SPAWNER
+    spawner: "CREEPER"
+    name: "&cᴄʀᴇᴇᴘᴇʀ ѕᴘᴀᴡɴᴇʀ"
+    slot: 14
+    command: "smartspawner give spawner {gamertag} creeper 1"
+    price: 625
+    currency: SHARDS
+
+  zombified_piglin_spawner:
+    material: SPAWNER
+    spawner: "ZOMBIFIED_PIGLIN"
+    name: "&eᴢᴏᴍʙɪꜰɪᴇᴅ ᴘɪɢʟɪɴ ѕᴘᴀᴡɴᴇʀ"
+    slot: 15
+    command: "smartspawner give spawner {gamertag} zombified_piglin 1"
+    price: 750
+    currency: SHARDS
+
+  blaze_spawner:
+    material: SPAWNER
+    spawner: "BLAZE"
+    name: "&6ʙʟᴀᴢᴇ ѕᴘᴀᴡɴᴇʀ"
+    slot: 16
+    command: "smartspawner give spawner {gamertag} blaze 1"
+    price: 1000
+    currency: SHARDS
+
+  iron_golem_spawner:
+    material: SPAWNER
+    spawner: "IRON_GOLEM"
+    name: "&fɪʀᴏɴ ɢᴏʟᴇᴍ ѕᴘᴀᴡɴᴇʀ"
+    slot: 17
+    command: "smartspawner give spawner {gamertag} iron_golem 1"
+    price: 1500
+    currency: SHARDS

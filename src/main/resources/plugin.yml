@@ -1,0 +1,209 @@
+name: PrismCore
+version: '1.0.0'
+main: com.h2ph.PrismSurvival
+api-version: '1.21'
+author: h2ph
+folia-supported: true
+description: Advanced shop system with multi-currency support
+depend: [Vault, packetevents]
+softdepend: [PlaceholderAPI, WorldEdit, FastAsyncWorldEdit]
+
+commands:
+  shop:
+    description: Open the shop GUI
+    usage: /<command>
+    aliases: []
+  shards:
+    description: Admin command to manage player shards
+    usage: /<command> <give|set|remove> <player> <amount>
+
+  billford:
+    description: Open the Billford trade GUI
+    usage: /billford [admin]
+    permission: prism.billford
+    permission-message: You do not have permission to use this command.
+
+  rules:
+    description: View the server rules
+    usage: /rules
+    aliases: []
+
+  media:
+    description: View media rank requirements
+    usage: /media
+    aliases: []
+
+  advisor:
+    description: View or edit the advisor book
+    usage: /advisor [admin]
+    aliases: []
+
+  setspawn:
+    description: Set a spawn point
+    usage: /setspawn <name>
+    aliases: []
+
+  spawn:
+    description: Teleport to a spawn
+    usage: /spawn [name]
+    aliases: []
+
+  economy:
+    description: Manage player balances
+    usage: /economy <give|set|remove> <player> <amount>
+
+  baltop:
+    description: View the top balances
+    usage: /baltop
+
+  balance:
+    description: View player balance
+    usage: /balance [player]
+    aliases: [bal]
+
+  pay:
+    description: Pay money to another player
+    usage: /pay <player> <amount>
+
+  setafk:
+    description: Manage AFK regions
+    usage: /setafk <confirm|delete> <region_name>
+    permission: prismcore.admin.afk
+    permission-message: You do not have permission to use this command.
+
+  update:
+    description: Create a server update book to show to the next player
+    usage: /update
+    permission: emporium.update
+    permission-message: You do not have permission to use this command.
+
+  afk:
+    description: Open the AFK areas GUI
+    usage: /afk
+
+  rtp:
+    description: Open the Random Teleport GUI
+    usage: /rtp
+
+  offend:
+    description: Ban a player with a reason
+    permission: prism.admin.offend
+    usage: /offend <player> <reason> [duration]
+  unban:
+    description: Unban a player
+    permission: prism.admin.unban
+    usage: /unban <player>
+  checkban:
+    description: Check ban status of a player
+    permission: prism.admin.checkban
+    usage: /checkban <player/ID>
+
+  crate:
+    description: Manage crates
+    permission: prism.crates.admin
+    usage: /crate <create|edit|get> ...
+
+  key:
+    description: Manage crate keys
+    permission: prism.admin.key
+    usage: /key <give|set|remove|reset> ...
+
+  sus:
+    description: Monitor suspicious activity
+    permission: prism.admin.sus
+    usage: /sus
+
+  gmsp:
+    description: Silent spectator mode
+    permission: prism.admin.spectator
+    usage: /gmsp
+
+  duel:
+    description: Manage duel regions and settings
+    usage: /duel <player|create|settings>
+    permission: prismcore.duel.use
+    permission-message: You do not have permission to use this command.
+
+  prismreload:
+    description: Reload all plugin configurations
+    permission: prism.admin.reload
+    aliases: [preload]
+    usage: /prismreload
+
+  tools:
+    description: Manage survival tools
+    usage: /tools give <player> <tool>
+    permission: prism.admin.tools
+    permission-message: You do not have permission to use this command.
+
+  ah:
+    description: Open the auction house
+    usage: /ah <search>
+    aliases: []
+
+  auction:
+    description: Admin commands for the auction system
+    usage: /auction <reload>
+    permission: prism.admin.auction
+    permission-message: You do not have permission to use this command.
+
+  maintenance:
+    description: Toggle maintenance mode
+    usage: /maintenance
+    permission: prismcore.maintenance
+    permission-message: You do not have permission to use this command.
+
+  tpa:
+    description: Request to teleport to another player
+    usage: /tpa <player>
+  
+  tpahere:
+    description: Request another player to teleport to you
+    usage: /tpahere <player>
+
+  tpaccept:
+    description: Accept a teleport request
+    usage: /tpaccept [player]
+
+  tpacancel:
+    description: Cancel a sent teleport request
+    usage: /tpacancel
+
+  tpadeny:
+    description: Deny a teleport request
+    usage: /tpadeny [player]
+
+permissions:
+  prismcore.admin.shards:
+    description: Allows administration of player shards
+    default: op
+  prismcore.admin.shop:
+    description: Allows administration of the shop
+    default: op
+  prismcore.admin.economy:
+    description: Allows administration of player balances
+    default: op
+  prismcore.admin.antixray:
+    description: Permission to use the /antixray admin command
+    default: op
+  prism.admin.billford:
+    description: Permission to use /billford admin
+    default: op
+  prism.admin.advisor:
+    description: Permission to use /advisor admin
+    default: op
+  prism.admin.setspawn:
+    description: Permission to use /setspawn
+    default: op
+  prism.spawn:
+    description: Permission to use /spawn
+    default: true
+  prismcore.admin.afk:
+    description: Allows administration of AFK regions
+    default: op
+  prismcore.admin.duel:
+    description: Allows administration of duels
+    default: op
+  prismcore.duel.use:
+    description: Allows use of duel requests
+    default: true

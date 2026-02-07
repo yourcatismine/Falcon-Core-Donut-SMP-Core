@@ -1,0 +1,50 @@
+gui-title: "&8ѕʜᴏᴘ"
+
+categories:
+  end_shop:
+    slot: 11
+    file: "end.yml"
+    material: END_STONE
+    name: "&aᴇɴᴅ ѕʜᴏᴘ"
+    lore:
+      - "&fClick to view the end shop"
+  
+  nether_shop:
+    slot: 12
+    file: "nether.yml"
+    material: NETHERRACK
+    name: "&aɴᴇᴛʜᴇʀ ѕʜᴏᴘ"
+    lore:
+      - "&fClick to view the nether shop"
+
+  gear_shop:
+    slot: 13
+    file: "gear.yml"
+    material: TOTEM_OF_UNDYING
+    name: "&aɢᴇᴀʀ ѕʜᴏᴘ"
+    lore:
+      - "&fClick to view the gear shop"
+
+  food_shop:
+    slot: 14
+    file: "food.yml"
+    material: COOKED_BEEF
+    name: "&aғᴏᴏᴅ ѕʜᴏᴘ"
+    lore:
+      - "&fClick to view the food shop"
+
+  shard_shop:
+    slot: 15
+    file: "shard.yml"
+    material: AMETHYST_SHARD
+    name: "&5ѕʜᴀʀᴅ ѕʜᴏᴘ"
+    lore:
+      - "&fClick to view the shard shop"
+
+  redstone_shop:
+    slot: 22
+    file: "redstone.yml"
+    material: REDSTONE
+    name: "&cʀᴇᴅsᴛᴏɴᴇ ѕʜᴏᴘ"
+    lore:
+      - "&fClick to view the redstone shop"

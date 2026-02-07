@@ -1,0 +1,121 @@
+package com.h2ph.commands.player;
+
+import com.h2ph.PrismSurvival;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MediaCommand implements CommandExecutor, Listener {
+
+    private final PrismSurvival plugin;
+    private FileConfiguration config;
+    private File configFile;
+
+    public MediaCommand(PrismSurvival plugin) {
+        this.plugin = plugin;
+        loadConfig();
+    }
+
+    public void loadConfig() {
+        configFile = new File(plugin.getDataFolder(), "survival/rules/media.yml");
+        if (!configFile.exists()) {
+            plugin.saveResource("survival/rules/media.yml", false);
+        }
+        config = YamlConfiguration.loadConfiguration(configFile);
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+            return true;
+        }
+
+        Player player = (Player) sender;
+        openMediaGUI(player);
+        return true;
+    }
+
+    private void openMediaGUI(Player player) {
+        if (config == null) {
+            loadConfig();
+        }
+
+        String title = ChatColor.translateAlternateColorCodes('&', config.getString("gui.title", "&8ᴍᴇᴅɪᴀ ʀᴀɴᴋ"));
+        int size = config.getInt("gui.size", 27);
+
+        Inventory gui = Bukkit.createInventory(null, size, title);
+
+        if (config.contains("gui.items")) {
+            for (String key : config.getConfigurationSection("gui.items").getKeys(false)) {
+                String path = "gui.items." + key;
+                int slot = config.getInt(path + ".slot");
+                String materialName = config.getString(path + ".material", "PAPER");
+                String name = config.getString(path + ".name", "&5ᴍᴇᴅɪᴀ ʀᴀɴᴋ");
+                List<String> lore = config.getStringList(path + ".lore");
+
+                Material material = Material.matchMaterial(materialName);
+                if (material == null)
+                    material = Material.PAPER;
+
+                ItemStack item = new ItemStack(material);
+                ItemMeta meta = item.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+                    List<String> coloredLore = new ArrayList<>();
+                    for (String line : lore) {
+                        coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
+                    }
+                    meta.setLore(coloredLore);
+                    item.setItemMeta(meta);
+                }
+
+                if (slot >= 0 && slot < size) {
+                    gui.setItem(slot, item);
+                }
+            }
+        }
+
+        // Fill empty slots with black stained glass pane if not specified (optional
+        // polish, user said "same GUI" as rules/billford so maybe they want this)
+        // Checks BillfordCommand: uses fillBackground. RulesCommand: does NOT. User
+        // said "same GUI Small Chest" and "Same config at survival\rules\media.yml".
+        // RulesCommand is the better reference here since it's in the same folder.
+        // RulesCommand does NOT fill background. I will stick to RulesCommand logic.
+
+        player.openInventory(gui);
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getView().getTitle()
+                .equals(ChatColor.translateAlternateColorCodes('&', config.getString("gui.title", "&8ᴍᴇᴅɪᴀ ʀᴀɴᴋ")))) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getView().getTitle()
+                .equals(ChatColor.translateAlternateColorCodes('&', config.getString("gui.title", "&8ᴍᴇᴅɪᴀ ʀᴀɴᴋ")))) {
+            event.setCancelled(true);
+        }
+    }
+}

@@ -1,0 +1,58 @@
+package com.h2ph.commands.player;
+
+import com.h2ph.managers.TpaRequestManager;
+import org.bukkit.ChatColor;
+import org.bukkit.Sound;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.ChatMessageType;
+
+import java.util.Collections;
+import java.util.List;
+
+public class TpaCancelCommand implements CommandExecutor, TabCompleter {
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("Only players can use this command.");
+            return true;
+        }
+
+        Player p = (Player) sender;
+        TpaRequestManager.Request request = TpaRequestManager.getInstance().getLastRequestOut(p.getUniqueId());
+
+        if (request == null) {
+            String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
+            p.sendMessage(msg);
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        // Cancel the request
+        TpaRequestManager.getInstance().removeRequest(request.getTarget(), p.getUniqueId());
+
+        String feedback;
+        if (request.getType() == TpaRequestManager.RequestType.TPA_HERE) {
+            feedback = ChatColor.translateAlternateColorCodes('&', "&7You cancelled your teleport here request.");
+        } else {
+            feedback = ChatColor.translateAlternateColorCodes('&', "&7You cancelled your teleport request.");
+        }
+
+        p.sendMessage(feedback);
+        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(feedback));
+        // No sound on success as requested
+
+        return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        return Collections.emptyList();
+    }
+}

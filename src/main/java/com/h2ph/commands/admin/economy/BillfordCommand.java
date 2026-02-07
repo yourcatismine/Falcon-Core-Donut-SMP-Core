@@ -1,0 +1,375 @@
+package com.h2ph.commands.admin.economy;
+
+import com.h2ph.PrismSurvival;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.bukkit.command.TabCompleter;
+
+public class BillfordCommand implements CommandExecutor, Listener, TabCompleter {
+
+    private final PrismSurvival plugin;
+    private final String GUI_TITLE_PLAYER = ChatColor.translateAlternateColorCodes('&', "&8ʙɪʟʟꜰᴏʀᴅ");
+    private final String GUI_TITLE_ADMIN = ChatColor.translateAlternateColorCodes('&', "&8ʙɪʟʟꜰᴏʀᴅ &cᴀᴅᴍɪɴ");
+
+    private final File tradeFile;
+    private FileConfiguration tradeConfig;
+
+    // Cache: Map<Slot, ItemStack> for inputs
+    private Map<Integer, ItemStack> currentInputs = new HashMap<>();
+    private ItemStack currentOutput;
+
+    // Valid Input Slots (Large Chest Area)
+    private final List<Integer> VALID_INPUT_SLOTS = Arrays.asList(10, 11, 12, 19, 20, 21, 28, 29, 30);
+    private final int OUTPUT_SLOT = 25;
+    private final int SAVE_SLOT = 53;
+
+    public BillfordCommand(PrismSurvival plugin) {
+        this.plugin = plugin;
+
+        tradeFile = new File(plugin.getDataFolder(), "survival/billford/billford.yml");
+        if (!tradeFile.exists()) {
+            try {
+                if (tradeFile.getParentFile() != null && !tradeFile.getParentFile().exists())
+                    tradeFile.getParentFile().mkdirs();
+                tradeFile.createNewFile();
+            } catch (IOException ignored) {
+            }
+        }
+        tradeConfig = YamlConfiguration.loadConfiguration(tradeFile);
+
+        loadTrade();
+    }
+
+    private void loadTrade() {
+        currentInputs.clear();
+
+        // Load Input Items (Slot -> Item)
+        if (tradeConfig.contains("inputs")) {
+            for (String key : tradeConfig.getConfigurationSection("inputs").getKeys(false)) {
+                try {
+                    int slot = Integer.parseInt(key);
+                    ItemStack item = tradeConfig.getItemStack("inputs." + key);
+                    if (item != null) {
+                        currentInputs.put(slot, item);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        } else {
+            // Default: 64 Iron in Slot 10
+            currentInputs.put(10, new ItemStack(Material.IRON_INGOT, 64));
+        }
+
+        // Load Output Item
+        if (tradeConfig.contains("output")) {
+            currentOutput = tradeConfig.getItemStack("output");
+        } else {
+            currentOutput = new ItemStack(Material.ARROW, 16);
+        }
+    }
+
+    private void saveTrade(Map<Integer, ItemStack> inputs, ItemStack output) {
+        try {
+            // Clear old inputs
+            tradeConfig.set("inputs", null);
+            tradeConfig.set("input", null); // Clear legacy single input if exists
+
+            // Save new inputs with their slots
+            for (Map.Entry<Integer, ItemStack> entry : inputs.entrySet()) {
+                tradeConfig.set("inputs." + entry.getKey(), entry.getValue());
+            }
+
+            tradeConfig.set("output", output);
+            tradeConfig.save(tradeFile);
+
+            this.currentInputs = new HashMap<>(inputs);
+            this.currentOutput = output;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+            @NotNull String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "Only players can use Billford.");
+            return true;
+        }
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("admin")) {
+            if (!player.hasPermission("prism.admin.billford")) {
+                openPlayerGUI(player);
+                return true;
+            }
+            openAdminGUI(player);
+            return true;
+        }
+
+        openPlayerGUI(player);
+        return true;
+    }
+
+    // --- PLAYER GUI ---
+    private void openPlayerGUI(Player player) {
+        Inventory gui = Bukkit.createInventory(null, 54, GUI_TITLE_PLAYER);
+        fillBackground(gui);
+
+        // Place Input Items in exact slots
+        for (Map.Entry<Integer, ItemStack> entry : currentInputs.entrySet()) {
+            gui.setItem(entry.getKey(), entry.getValue().clone());
+        }
+
+        // Place Output Item
+        if (currentOutput != null) {
+            gui.setItem(OUTPUT_SLOT, currentOutput.clone());
+        }
+
+        // Hopper (Trade Button)
+        ItemStack hopper = new ItemStack(Material.HOPPER);
+        ItemMeta hMeta = hopper.getItemMeta();
+        hMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&8ᴛʀᴀᴅᴇ"));
+        List<String> hLore = new ArrayList<>();
+        hLore.add(ChatColor.WHITE + "Click to confirm the trade");
+        hLore.add("");
+        hLore.add(ChatColor.GRAY + "(you need the items in your inventory)");
+        hMeta.setLore(hLore);
+        hopper.setItemMeta(hMeta);
+        gui.setItem(23, hopper);
+
+        // Info Book
+        ItemStack book = new ItemStack(Material.BOOK);
+        ItemMeta bMeta = book.getItemMeta();
+        bMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aʙɪʟʟꜰᴏʀᴅ᾽ѕ ᴛʀᴀᴅᴇ"));
+
+        List<String> bLore = new ArrayList<>();
+
+        // List all required inputs
+        for (ItemStack input : currentInputs.values()) {
+            bLore.add(ChatColor.GRAY + "" + input.getAmount() + "x " + ChatColor.WHITE + formatName(input));
+        }
+
+        bLore.add(ChatColor.GRAY + "for");
+        if (currentOutput != null) {
+            bLore.add(ChatColor.GRAY + "" + currentOutput.getAmount() + "x " + ChatColor.GREEN
+                    + formatName(currentOutput));
+        }
+
+        bMeta.setLore(bLore);
+        book.setItemMeta(bMeta);
+        gui.setItem(49, book);
+
+        player.openInventory(gui);
+    }
+
+    // --- ADMIN GUI ---
+    private void openAdminGUI(Player player) {
+        Inventory gui = Bukkit.createInventory(null, 54, GUI_TITLE_ADMIN);
+        fillBackground(gui);
+
+        // Clear zones
+        for (int i : VALID_INPUT_SLOTS)
+            gui.setItem(i, null);
+        gui.setItem(OUTPUT_SLOT, null);
+
+        // Place Current Items (Exact Positions)
+        for (Map.Entry<Integer, ItemStack> entry : currentInputs.entrySet()) {
+            gui.setItem(entry.getKey(), entry.getValue().clone());
+        }
+        if (currentOutput != null) {
+            gui.setItem(OUTPUT_SLOT, currentOutput.clone());
+        }
+
+        // Save Button
+        ItemStack save = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+        ItemMeta sMeta = save.getItemMeta();
+        sMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aѕᴀᴠᴇ ᴛʀᴀᴅᴇ"));
+        sMeta.setLore(List.of(ChatColor.translateAlternateColorCodes('&', "&fClick to save the billford")));
+        save.setItemMeta(sMeta);
+        gui.setItem(SAVE_SLOT, save);
+
+        player.openInventory(gui);
+    }
+
+    private void fillBackground(Inventory gui) {
+        ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemMeta fillerMeta = filler.getItemMeta();
+        fillerMeta.setDisplayName(" ");
+        filler.setItemMeta(fillerMeta);
+
+        for (int i = 0; i < 54; i++) {
+            gui.setItem(i, filler);
+        }
+
+        // Clear slots we use for items so they aren't glass
+        for (int slot : VALID_INPUT_SLOTS)
+            gui.setItem(slot, null);
+        gui.setItem(OUTPUT_SLOT, null);
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        String title = event.getView().getTitle();
+        if (!title.equals(GUI_TITLE_PLAYER) && !title.equals(GUI_TITLE_ADMIN))
+            return;
+
+        Player player = (Player) event.getWhoClicked();
+        ItemStack clicked = event.getCurrentItem();
+        int slot = event.getSlot();
+
+        // --- PLAYER MODE ---
+        if (title.equals(GUI_TITLE_PLAYER)) {
+            event.setCancelled(true);
+
+            if (clicked != null && clicked.getType() != Material.BLACK_STAINED_GLASS_PANE
+                    && clicked.getType() != Material.AIR) {
+                playSound(player, Sound.BLOCK_TRIPWIRE_CLICK_ON);
+            }
+
+            if (slot == 23 && clicked != null && clicked.getType() == Material.HOPPER) {
+                performTrade(player);
+            }
+        }
+
+        // --- ADMIN MODE ---
+        else if (title.equals(GUI_TITLE_ADMIN)) {
+            boolean isTopInv = (event.getClickedInventory() == event.getView().getTopInventory());
+
+            if (isTopInv) {
+                // Save Button
+                if (slot == SAVE_SLOT) {
+                    event.setCancelled(true);
+                    handleAdminSave(player, event.getInventory());
+                    return;
+                }
+
+                // Allow Dragging in Input/Output Slots
+                if (VALID_INPUT_SLOTS.contains(slot) || slot == OUTPUT_SLOT) {
+                    return;
+                }
+
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    private void handleAdminSave(Player player, Inventory inv) {
+        Map<Integer, ItemStack> foundInputs = new HashMap<>();
+        ItemStack foundOutput = inv.getItem(OUTPUT_SLOT);
+
+        // Scan all valid slots and save exact positions
+        boolean hasInput = false;
+        for (int slot : VALID_INPUT_SLOTS) {
+            ItemStack item = inv.getItem(slot);
+            if (item != null && item.getType() != Material.AIR) {
+                foundInputs.put(slot, item);
+                hasInput = true;
+            }
+        }
+
+        if (!hasInput || foundOutput == null || foundOutput.getType() == Material.AIR) {
+            player.sendMessage(
+                    ChatColor.RED + "Missing items! Place items in the input area and an output in Slot 25.");
+            playSound(player, Sound.ENTITY_VILLAGER_NO);
+            return;
+        }
+
+        saveTrade(foundInputs, foundOutput);
+        player.sendMessage(ChatColor.GREEN + "Billford Trade Saved!");
+        playSound(player, Sound.ENTITY_PLAYER_LEVELUP);
+        player.closeInventory();
+    }
+
+    private void performTrade(Player player) {
+        // 1. Check ALL required items
+        for (ItemStack required : currentInputs.values()) {
+            if (!player.getInventory().containsAtLeast(required, required.getAmount())) {
+                String failMsg = ChatColor.RED + "You do not have all the required contents.";
+                player.sendMessage(failMsg);
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(failMsg));
+                playSound(player, Sound.ENTITY_VILLAGER_NO);
+                return;
+            }
+        }
+
+        // 2. Remove ALL required items
+        for (ItemStack required : currentInputs.values()) {
+            player.getInventory().removeItem(required);
+        }
+
+        // 3. Give Reward
+        ItemStack reward = currentOutput.clone();
+        if (player.getInventory().firstEmpty() == -1) {
+            player.getWorld().dropItem(player.getLocation(), reward);
+        } else {
+            player.getInventory().addItem(reward);
+        }
+
+        String successMsg = ChatColor.translateAlternateColorCodes('&',
+                "&7Traded for &f" + currentOutput.getAmount() + "x &f" + formatName(currentOutput));
+
+        player.sendMessage(successMsg);
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(successMsg));
+
+    }
+
+    private void playSound(Player p, Sound s) {
+        try {
+            p.playSound(p.getLocation(), s, 1f, 1f);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String formatName(ItemStack item) {
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            return item.getItemMeta().getDisplayName();
+        }
+        String name = item.getType().name().toLowerCase().replace("_", " ");
+        StringBuilder sb = new StringBuilder();
+        for (String word : name.split(" ")) {
+            sb.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(" ");
+        }
+        return sb.toString().trim();
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
+            @NotNull String[] args) {
+        if (args.length == 1) {
+            if (sender.hasPermission("prism.admin.billford")) {
+                List<String> completions = new ArrayList<>();
+                if ("admin".startsWith(args[0].toLowerCase())) {
+                    completions.add("admin");
+                }
+                return completions;
+            }
+        }
+        return new ArrayList<>();
+    }
+}

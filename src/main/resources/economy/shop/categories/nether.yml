@@ -1,0 +1,65 @@
+gui-title: "&8ѕʜᴏᴘ - ɴᴇᴛʜᴇʀ"
+
+items:
+  blaze_rod:
+    slot: 9
+    material: BLAZE_ROD
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+
+  nether_wart:
+    slot: 10
+    material: NETHER_WART
+    price: 96
+    currency: MONEY
+    values: [1, 10, 64]
+      
+  glowstone_dust:
+    slot: 11
+    material: GLOWSTONE_DUST
+    price: 15
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  magma_cream:
+    slot: 12
+    material: MAGMA_CREAM
+    price: 96
+    currency: MONEY
+    values: [1, 10, 64]
+    
+  ghast_tear:
+    slot: 13
+    material: GHAST_TEAR
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+
+  quartz:
+    slot: 14
+    material: QUARTZ
+    price: 180
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  soul_sand:
+    slot: 15
+    material: SOUL_SAND
+    price: 50
+    currency: MONEY
+    values: [1, 10, 64]
+
+  magma_block:
+    slot: 16
+    material: MAGMA_BLOCK
+    price: 35
+    currency: MONEY
+    values: [1, 10, 64]
+
+  crying_obsidian:
+    slot: 17
+    material: CRYING_OBSIDIAN
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]

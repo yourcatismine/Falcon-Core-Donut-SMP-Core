@@ -1,0 +1,20 @@
+interval: 60
+amount: 1
+permission: "prism.shards.passive"
+
+# Kill Reward Configuration
+kill-reward:
+  amount: 3
+  cooldown: 300
+
+# Messages
+messages:
+  passive:
+    chat: "&7You have received &5{shard} shards."
+    actionbar: "&7You have received &5{shard} shards."
+  active:
+    actionbar: "&5+{shards} shards&7 for killing &f{PLAYER}"
+
+# Sounds
+sounds:
+  passive: "BLOCK_AMETHYST_BLOCK_CHIME"      

@@ -1,0 +1,99 @@
+# config.yml
+database_file: "bannedplayers.db"
+
+reasons:
+  Racism/Harassment:
+    delete_data: false
+    display_reason: "Racism/Harassment"
+    offenses:
+      1: "1d"
+      2: "3d"
+      3: "permanent"
+  HateSpeech:
+    delete_data: false
+    display_reason: "HateSpeech/Racism"
+    offenses:
+      1: "1d"
+      2: "3d"
+      3: "permanent"
+  LyingToStaff:
+    delete_data: false
+    display_reason: "Lying to Staff"
+    offenses:
+      1: "3d"
+      2: "7d"
+      3: "permanent"
+  Cheating/Hacking:
+    delete_data: true
+    display_reason: "Unfair Advantage"
+    offenses:
+      1: "3d"
+      2: "7d"
+      3: "permanent"
+  Bugs/Glitches:
+    delete_data: true
+    display_reason: "Using Bugs/Glitches"
+    offenses:
+      1: "3d"
+      2: "7d"
+      2: "permanent"
+  Advertising:
+    delete_data: false
+    display_reason: "Advertising"
+    offenses:
+      1: "3h"
+      2: "1d"
+      3: "permanent"
+  PretendingToBeStaff:
+    delete_data: false
+    display_reason: "Pretending to be Staff"
+    offenses:
+      1: "7d"
+      2: "30d"
+      3: "permanent"
+  Duplicating/Exploiting:
+    delete_data: true
+    display_reason: "Item Duplicating/Exploiting"
+    offenses:
+      1: "30d"
+      2: "permanent"
+  NSFW/InappropriateContent:
+    delete_data: false
+    display_reason: "NSFW/Inappropriate Content"
+    offenses:
+      1: "3d"
+      2: "7d"
+      3: "30d"
+  Spamming/Flooding:
+    delete_data: false
+    display_reason: "Spamming/Flooding"
+    offenses:
+      1: "1d"
+      2: "7d"
+      3: "30d"
+  Scamming/Phishing:
+    delete_data: false
+    display_reason: "Scamming/Phishing"
+    offenses:
+      1: "7d"
+      2: "30d"
+      3: "permanent"
+
+messages:
+  # Admin feedback (Screenshot 1)
+  admin_line_1: "&cPunishment executed with success. Offension: %count%"
+  admin_line_2: "&cTemporarily banned player &f%player% &cfor &f%duration% &cwith reason: &f%reason%"
+  
+  # Ban Screen Layout (Screenshot 2)
+  # %n is a new line
+  ban_layout: |
+    &cYou are banned from this server!
+    
+    &fBanned on: &f%banned_on%
+    &fReason: &f%reason% (%count%%ordinal% offense)
+    &fBan ID: &b#%id%
+    
+    &fExpires in: &f%time_left%
+    &7You may be able to appeal this on discord
+    
+    &bhttps://discord.gg/psmp

@@ -1,0 +1,11 @@
+# AFK Shard Area Configuration
+title: "&5ᴀꜰᴋ"
+subtitle: "&fEarn one shard per minute"
+actionbar: "&7Next shard in &5<COUNTDOWN>s"
+countdown: 60
+reward-amount: 1
+
+entry-sound:
+  sound: "minecraft:block.amethyst_block.chime"
+  volume: 15.0
+  pitch: 1.0

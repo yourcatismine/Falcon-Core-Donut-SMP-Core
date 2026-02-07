@@ -1,0 +1,65 @@
+gui-title: "&8ѕʜᴏᴘ - ᴇɴᴅ"
+
+items:
+  ender_chest:
+    slot: 9
+    material: ENDER_CHEST
+    price: 2500
+    currency: MONEY
+    values: [1, 10, 64]
+
+  ender_pearl:
+    slot: 10
+    material: ENDER_PEARL
+    price: 75
+    currency: MONEY
+    values: [1, 10, 16]
+      
+  end_stone:
+    slot: 11
+    material: END_STONE
+    price: 128
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  dragon_breath:
+    slot: 12
+    material: DRAGON_BREATH
+    price: 1000
+    currency: MONEY
+    values: [1, 10, 64]
+    
+  end_rod:
+    slot: 13
+    material: END_ROD
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+
+  chorus_fruit:
+    slot: 14
+    material: CHORUS_FRUIT
+    price: 108
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  popped_chorus_fruit:
+    slot: 15
+    material: POPPED_CHORUS_FRUIT
+    price: 24
+    currency: MONEY
+    values: [1, 10, 64]
+
+  shulker_shell:
+    slot: 16
+    material: SHULKER_SHELL
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+
+  shulker_box:
+    slot: 17
+    material: SHULKER_BOX
+    price: 800
+    currency: MONEY
+    values: []

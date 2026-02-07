@@ -1,0 +1,20 @@
+gui:
+  title: "&8ᴍᴇᴅɪᴀ ʀᴀɴᴋ"
+  size: 27
+  items:
+    info:
+      slot: 13
+      material: PAPER
+      name: "&5&lᴍᴇᴅɪᴀ ʀᴀɴᴋ"
+      lore:
+        - "&5Requirements: (only one needed)"
+        - "&5 -&f 25 average viewers on tiktok live"
+        - "&5 -&f 15 average on twitch or YouTube"
+        - "&5 -&f 10k views on tiktok video or YouTube short"
+        - "&5 -&f 700 views for a normal youtube video"
+        - ""
+        - "&5Reminders:"
+        - "&5 -&f Must have the IP on screen"
+        - "&5 -&f Must be from the new season"
+        - "&5 -&f Create a ticket in discord for the rank"
+        - "&5 -&f It lasts 90 days and has all top ranks perks"

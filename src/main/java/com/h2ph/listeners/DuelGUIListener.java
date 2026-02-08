@@ -75,7 +75,8 @@ public class DuelGUIListener implements Listener {
                 }
             }
         } else if (title.contains(ChatColor.translateAlternateColorCodes('&', "ѕᴇᴛᴛɪɴɢѕ"))
-                && !title.equals(GUI_TITLE)) {
+                && !title.equals(GUI_TITLE)
+                && !title.equals(com.h2ph.commands.player.SettingsCommand.GUI_TITLE)) {
             // Region Settings GUI
             event.setCancelled(true);
 
@@ -206,7 +207,10 @@ public class DuelGUIListener implements Listener {
     @EventHandler
     public void onInventoryClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
         String title = event.getView().getTitle();
-        if (title.contains(ChatColor.translateAlternateColorCodes('&', "ѕᴇᴛᴛɪɴɢѕ")) && !title.equals(GUI_TITLE)) {
+        // Fix: Exclude the main Settings GUI from this check
+        if (title.contains(ChatColor.translateAlternateColorCodes('&', "ѕᴇᴛᴛɪɴɢѕ"))
+                && !title.equals(GUI_TITLE)
+                && !title.equals(com.h2ph.commands.player.SettingsCommand.GUI_TITLE)) {
             if (event.getPlayer() instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getPlayer();
                 if (!isRedirecting.contains(player.getUniqueId())) {

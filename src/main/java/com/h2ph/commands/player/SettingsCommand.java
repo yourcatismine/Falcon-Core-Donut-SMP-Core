@@ -36,8 +36,15 @@ public class SettingsCommand implements CommandExecutor {
         return true;
     }
 
+    public static class SettingsHolder implements org.bukkit.inventory.InventoryHolder {
+        @Override
+        public Inventory getInventory() {
+            return null;
+        }
+    }
+
     private void openSettingsGUI(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
+        Inventory gui = Bukkit.createInventory(new SettingsHolder(), 27, GUI_TITLE);
 
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         boolean hideChat = data != null && data.isHideChat();
@@ -66,10 +73,13 @@ public class SettingsCommand implements CommandExecutor {
         if (cherrySign == null)
             cherrySign = Material.OAK_SIGN;
 
-        gui.setItem(2, createItem(cherrySign, "&aᴘᴀʏ ᴀʟᴇʀᴛѕ", "&fCurrently: &a&lON", "&a&lON", "&4&lOFF"));
+        boolean payAlerts = data != null && data.isPayAlerts();
+        String payStatus = payAlerts ? "&a&lON" : "&4&lOFF";
+
+        gui.setItem(2, createItem(cherrySign, "&aᴘᴀʏ ᴀʟᴇʀᴛѕ", "&fCurrently: " + payStatus, "&a&lON", "&4&lOFF"));
 
         // Slot 9: Amethyst Shard - Quick Auction Buy
-        gui.setItem(3, createAuctionItem(player));
+        gui.setItem(3, createAuctionItem(player, data));
 
         // Slot 10: Zombie Head - Disable Mob Spawns
         gui.setItem(4,
@@ -130,7 +140,7 @@ public class SettingsCommand implements CommandExecutor {
         return item;
     }
 
-    private ItemStack createAuctionItem(Player player) {
+    private ItemStack createAuctionItem(Player player, com.prismcore.survival.manager.PlayerData data) {
         ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
@@ -139,7 +149,13 @@ public class SettingsCommand implements CommandExecutor {
 
             // Check permission
             boolean hasPerm = player.hasPermission("prismsmp.quick.auction");
-            String status = hasPerm ? "&4&lOFF" : "&4ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ"; // Default OFF if allowed, else Not Available
+            String status;
+            if (hasPerm) {
+                boolean enabled = data != null && data.isQuickAuctionBuy();
+                status = enabled ? "&a&lON" : "&4&lOFF";
+            } else {
+                status = "&4ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ";
+            }
 
             lore.add(ChatColor.translateAlternateColorCodes('&', "&fCurrently: " + status));
             lore.add(""); // SPACE

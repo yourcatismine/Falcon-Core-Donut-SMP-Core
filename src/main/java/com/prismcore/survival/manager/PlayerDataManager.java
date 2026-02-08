@@ -98,6 +98,12 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.private_messages")) {
                 data.setPrivateMessages(cratesConfig.getBoolean("settings.private_messages"));
             }
+            if (cratesConfig.contains("settings.pay_alerts")) {
+                data.setPayAlerts(cratesConfig.getBoolean("settings.pay_alerts"));
+            }
+            if (cratesConfig.contains("settings.quick_auction_buy")) {
+                data.setQuickAuctionBuy(cratesConfig.getBoolean("settings.quick_auction_buy"));
+            }
         }
 
         // Load Money Data
@@ -172,6 +178,8 @@ public class PlayerDataManager {
         // Save Settings
         cratesConfig.set("settings.hide_chat", data.isHideChat());
         cratesConfig.set("settings.private_messages", data.isPrivateMessages());
+        cratesConfig.set("settings.pay_alerts", data.isPayAlerts());
+        cratesConfig.set("settings.quick_auction_buy", data.isQuickAuctionBuy());
 
         try {
             cratesConfig.save(cratesFile);

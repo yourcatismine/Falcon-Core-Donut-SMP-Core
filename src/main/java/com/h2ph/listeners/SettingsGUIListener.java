@@ -14,12 +14,12 @@ public class SettingsGUIListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getView().getTitle().equals(SettingsCommand.GUI_TITLE)) {
+        if (e.getView().getTopInventory().getHolder() instanceof SettingsCommand.SettingsHolder) {
             // Cancel events in top inventory (GUI)
             if (e.getClickedInventory() == null)
                 return;
 
-            if (e.getClickedInventory() == e.getView().getTopInventory()) {
+            if (e.getClickedInventory().equals(e.getView().getTopInventory())) {
                 e.setCancelled(true); // Always cancel clicks in the GUI
 
                 if (!(e.getWhoClicked() instanceof Player))
@@ -81,8 +81,65 @@ public class SettingsGUIListener implements Listener {
                         }
                     }
                 }
+
+                // Slot 2: Pay Alerts
+                if (slot == 2) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isPayAlerts();
+                        data.setPayAlerts(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
+                // Slot 3: Quick Auction Buy
+                if (slot == 3) {
+                    if (!p.hasPermission("prismsmp.quick.auction")) {
+                        p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                        p.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                "&cYou do not have permission to use Quick Auction Buy. &5PrismPlus &conly!"));
+                        return;
+                    }
+
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isQuickAuctionBuy();
+                        data.setQuickAuctionBuy(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = new java.util.ArrayList<>();
+                        // We need to re-build lore carefully since it has the "Access Only" text if no
+                        // perm, but here we Checked perm already.
+                        // Wait, if they have perm, the lore is just "Currently: STATUS".
+                        // If they don't, we return early above.
+                        lore.add(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&fCurrently: " + status));
+                        if (lore.size() > 1) { // Preserve extra lines/spacers if any?
+                            // Actually SettingsCommand only adds extra lines if !hasPerm.
+                            // So here we just set the one line.
+                        }
+                        meta.setLore(lore);
+                        current.setItemMeta(meta);
+                    }
+                }
                 // Allow bottom inventory events (dragging items in player inventory)
                 // BUT prevent shift-clicking into the GUI
+            } else {
                 if (e.isShiftClick()) {
                     e.setCancelled(true);
                 }
@@ -93,7 +150,7 @@ public class SettingsGUIListener implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent e) {
-        if (e.getView().getTitle().equals(SettingsCommand.GUI_TITLE)) {
+        if (e.getView().getTopInventory().getHolder() instanceof SettingsCommand.SettingsHolder) {
             // Check if any of the dragged slots are in the top inventory
             for (int slot : e.getRawSlots()) {
                 if (slot < e.getView().getTopInventory().getSize()) {
@@ -101,6 +158,9 @@ public class SettingsGUIListener implements Listener {
                     return;
                 }
             }
+            // Double check drag into top inventory logic - if drag involves top inventory,
+            // block it?
+            // Actually raw slots < size handles it.
         }
     }
 }

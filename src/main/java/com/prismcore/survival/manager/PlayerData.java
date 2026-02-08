@@ -158,4 +158,24 @@ public class PlayerData {
     public void setPrivateMessages(boolean privateMessages) {
         this.privateMessages = privateMessages;
     }
+
+    private boolean payAlerts = true; // Default: ON (Receive Alerts)
+
+    public boolean isPayAlerts() {
+        return payAlerts;
+    }
+
+    public void setPayAlerts(boolean payAlerts) {
+        this.payAlerts = payAlerts;
+    }
+
+    private boolean quickAuctionBuy = false; // Default: OFF
+
+    public boolean isQuickAuctionBuy() {
+        return quickAuctionBuy;
+    }
+
+    public void setQuickAuctionBuy(boolean quickAuctionBuy) {
+        this.quickAuctionBuy = quickAuctionBuy;
+    }
 }

@@ -60,7 +60,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -155,7 +155,20 @@ public class GUIListener
                     if (ai2.getSeller().equals(p.getName())) {
                         p.playSound(p.getLocation(), no, 1.0f, 1.0f);
                     } else {
-                        GUIHandler.openBuyConfirm(p, ai2, this.controller);
+                        // Check Quick Auction Buy
+                        com.h2ph.PrismSurvival plugin = (com.h2ph.PrismSurvival) this.controller.getPlugin();
+                        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager()
+                                .get(p.getUniqueId());
+                        boolean quickBuy = data != null && data.isQuickAuctionBuy();
+                        boolean hasPerm = p.hasPermission("prismsmp.quick.auction");
+
+                        if (quickBuy && hasPerm) {
+                            // FAST BUY
+                            purchaseItem(p, ai2);
+                        } else {
+                            // NORMAL CONFIRM
+                            GUIHandler.openBuyConfirm(p, ai2, this.controller);
+                        }
                     }
                 }
             }
@@ -166,7 +179,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -189,7 +202,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -231,7 +244,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -336,7 +349,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -383,7 +396,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -430,7 +443,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -489,7 +502,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -562,7 +575,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -629,7 +642,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -716,7 +729,7 @@ public class GUIListener
             // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
-            if (event.getClickedInventory().equals(top)) {
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 event.setCancelled(true);
             } else {
                 if (event.isShiftClick()) {
@@ -885,5 +898,89 @@ public class GUIListener
             }
         }
         return "Highest Price";
+    }
+
+    private void purchaseItem(Player p, AuctionItem ai) {
+        if (!this.controller.getAuctionManager().getItems().contains(ai)) {
+            p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available")));
+            p.playSound(p.getLocation(),
+                    Sound.valueOf((String) this.controller.getConfig().getString("sounds.villager-no")), 1.0f, 1.0f);
+            p.closeInventory();
+            int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
+            GUIHandler.openMainGUI(p, page, this.controller);
+            return;
+        }
+        if (this.controller.getAuctionManager().isExpired(ai)) {
+            p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available")));
+            p.playSound(p.getLocation(),
+                    Sound.valueOf((String) this.controller.getConfig().getString("sounds.villager-no")), 1.0f, 1.0f);
+            p.closeInventory();
+            int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
+            GUIHandler.openMainGUI(p, page, this.controller);
+            return;
+        }
+        if (p.getInventory().firstEmpty() == -1) {
+            p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.inventory-full")));
+            p.playSound(p.getLocation(),
+                    Sound.valueOf((String) this.controller.getConfig().getString("sounds.villager-no")), 1.0f, 1.0f);
+            p.closeInventory();
+            return;
+        }
+        if (!EconomyHandler.chargePlayer(p, ai.getPrice())) {
+            p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.insufficient-funds")));
+            p.playSound(p.getLocation(),
+                    Sound.valueOf((String) this.controller.getConfig().getString("sounds.villager-no")), 1.0f, 1.0f);
+            p.closeInventory();
+            return;
+        }
+        String sellerName = ai.getSeller();
+        boolean paid = EconomyHandler.depositByName(sellerName, ai.getPrice());
+        p.getInventory().addItem(new ItemStack[] { ai.getItemStack() });
+        this.controller.getAuctionManager().removeItem(ai);
+        this.controller.getTransactionManager().recordSale(ai.getItemStack(), ai.getPrice(), ai.getSeller(),
+                p.getName());
+        String itemName = Utils.prettifyMaterialName(ai.getItemStack().getType());
+        p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.purchase-success")
+                .replace("{priceFormatted}", Utils.formatNumber(ai.getPrice()))
+                .replace("{seller}", sellerName)
+                .replace("{item}", itemName)));
+        try {
+            Sound notifySound = Sound.valueOf(this.controller.getConfig().getString("sounds.sale-notify",
+                    "ENTITY_EXPERIENCE_ORB_PICKUP"));
+            p.playSound(p.getLocation(), notifySound, 1.0f, 1.0f);
+        } catch (Exception ignored) {
+        }
+        Player seller = Bukkit.getPlayer((String) sellerName);
+        if (seller != null && seller.isOnline()) {
+            String soldFmt = this.controller.getConfig().getString("messages.sold-notify")
+                    .replace("{item}", itemName).replace("{buyer}", p.getName())
+                    .replace("{priceFormatted}", Utils.formatNumber(ai.getPrice()));
+            String soldC = Utils.formatColors(soldFmt);
+            seller.sendMessage(soldC);
+            seller.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText((String) soldC));
+
+            // Sound for online seller
+            try {
+                Sound notifySound = Sound.valueOf(this.controller.getConfig().getString("sounds.sale-notify",
+                        "ENTITY_EXPERIENCE_ORB_PICKUP"));
+                seller.playSound(seller.getLocation(), notifySound, 1.0f, 1.0f);
+            } catch (Exception ignored) {
+            }
+        } else {
+            // Offline notification logic
+            UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
+            this.controller.getAuctionManager().addPendingSale(sellerUUID, p.getName(), itemName,
+                    ai.getPrice());
+        }
+
+        if (!paid) {
+            this.controller.getPlugin().getLogger().warning("[Auction] Failed to deposit " + ai.getPrice()
+                    + " to " + sellerName + " via Vault. Check your economy plugin.");
+        }
+
+        // Refresh GUI for Quick Buy effect
+        int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
+        GUIHandler.openMainGUI(p, page, this.controller);
     }
 }

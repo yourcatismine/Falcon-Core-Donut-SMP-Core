@@ -163,6 +163,11 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         // "&5{player}&7 has paid you&a ${money}"
         Player targetOnline = Bukkit.getPlayer(targetId);
         if (targetOnline != null) {
+            // Check if they want alerts
+            if (!targetData.isPayAlerts()) {
+                return; // Pay Alerts OFF = No Notification
+            }
+
             String targetMsg = ChatColor.translateAlternateColorCodes('&',
                     "&5" + sender.getName() + "&7 has paid you&a $" + moneyFormatted);
             targetOnline.sendMessage(targetMsg);

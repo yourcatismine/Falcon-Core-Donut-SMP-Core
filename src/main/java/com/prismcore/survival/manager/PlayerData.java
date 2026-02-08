@@ -137,4 +137,25 @@ public class PlayerData {
             return 0;
         return (shardBoosterExpiry - System.currentTimeMillis()) / 1000L;
     }
+
+    // Settings
+    private boolean hideChat = false; // Default: Chat Visible (OFF from "Hide Chat" perspective)
+
+    public boolean isHideChat() {
+        return hideChat;
+    }
+
+    public void setHideChat(boolean hideChat) {
+        this.hideChat = hideChat;
+    }
+
+    private boolean privateMessages = true; // Default: ON (Allowed)
+
+    public boolean isPrivateMessages() {
+        return privateMessages;
+    }
+
+    public void setPrivateMessages(boolean privateMessages) {
+        this.privateMessages = privateMessages;
+    }
 }

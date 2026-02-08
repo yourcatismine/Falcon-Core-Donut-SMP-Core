@@ -107,6 +107,23 @@ public class ChatFilter implements Listener {
         // Update Data
         chatCooldowns.put(uuid, currentTime);
         lastMessages.put(uuid, message);
+
+        // --- HIDE CHAT FILTER ---
+        // Remove recipients who have 'hideChat' enabled
+        // Unless they are the sender (sender always sees their own message usually, or
+        // loop skips them)
+        // But getRecipients() allows modification.
+        java.util.Iterator<Player> iterator = event.getRecipients().iterator();
+        while (iterator.hasNext()) {
+            Player recipient = iterator.next();
+            if (recipient.getUniqueId().equals(uuid))
+                continue; // Sender always sees their own chat
+
+            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(recipient.getUniqueId());
+            if (data != null && data.isHideChat()) {
+                iterator.remove();
+            }
+        }
     }
 
     @EventHandler

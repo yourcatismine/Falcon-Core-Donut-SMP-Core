@@ -178,6 +178,11 @@ commands:
     usage: /msg <player> <message>
     aliases: [tell, w, wisper]
 
+  settings:
+    description: Open the settings GUI
+    usage: /settings
+    aliases: []
+
 permissions:
   prismcore.admin.shards:
     description: Allows administration of player shards

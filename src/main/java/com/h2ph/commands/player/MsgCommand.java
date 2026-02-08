@@ -69,6 +69,17 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Check if target has private messages enabled
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(target.getUniqueId());
+        if (data != null && !data.isPrivateMessages()) {
+            String errorMsg = ChatColor.RED + "User disabled private messages.";
+            player.sendMessage(errorMsg);
+            player.sendActionBar(Component.text("User disabled private messages.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
         // Send messages
         String senderFormat = ChatColor.translateAlternateColorCodes('&',
                 "&5YOU -> " + target.getName() + " - &7" + message);

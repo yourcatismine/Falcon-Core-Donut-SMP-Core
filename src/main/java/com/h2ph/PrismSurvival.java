@@ -303,6 +303,11 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("msg").setExecutor(msgCmd);
         getCommand("msg").setTabCompleter(msgCmd);
 
+        // Register Settings Command
+        com.h2ph.commands.player.SettingsCommand settingsCmd = new com.h2ph.commands.player.SettingsCommand(this);
+        getCommand("settings").setExecutor(settingsCmd);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SettingsGUIListener(), this);
+
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new com.h2ph.placeholders.PrismPlaceholders(this).register();

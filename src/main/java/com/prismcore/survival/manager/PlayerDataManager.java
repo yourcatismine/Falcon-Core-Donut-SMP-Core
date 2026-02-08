@@ -91,6 +91,13 @@ public class PlayerDataManager {
             if (cratesConfig.contains("shard_booster_expiry")) {
                 data.setShardBoosterExpiry(cratesConfig.getLong("shard_booster_expiry"));
             }
+            // Load Settings
+            if (cratesConfig.contains("settings.hide_chat")) {
+                data.setHideChat(cratesConfig.getBoolean("settings.hide_chat"));
+            }
+            if (cratesConfig.contains("settings.private_messages")) {
+                data.setPrivateMessages(cratesConfig.getBoolean("settings.private_messages"));
+            }
         }
 
         // Load Money Data
@@ -159,7 +166,12 @@ public class PlayerDataManager {
         }
 
         cratesConfig.set("last_seen_update", data.getLastSeenUpdate());
+        cratesConfig.set("last_seen_update", data.getLastSeenUpdate());
         cratesConfig.set("shard_booster_expiry", data.getShardBoosterExpiry());
+
+        // Save Settings
+        cratesConfig.set("settings.hide_chat", data.isHideChat());
+        cratesConfig.set("settings.private_messages", data.isPrivateMessages());
 
         try {
             cratesConfig.save(cratesFile);

@@ -298,6 +298,11 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("tpadeny").setExecutor(tpaDenyCmd);
         getCommand("tpadeny").setTabCompleter(tpaDenyCmd);
 
+        // Register Msg Command
+        com.h2ph.commands.player.MsgCommand msgCmd = new com.h2ph.commands.player.MsgCommand();
+        getCommand("msg").setExecutor(msgCmd);
+        getCommand("msg").setTabCompleter(msgCmd);
+
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new com.h2ph.placeholders.PrismPlaceholders(this).register();
@@ -336,6 +341,29 @@ public class PrismSurvival extends JavaPlugin {
 
         // Register Reload Command
         getCommand("prismreload").setExecutor(new com.h2ph.commands.admin.ReloadCommand(this));
+
+        // Initialize Economy Monitor
+        new com.h2ph.economy.EconomyMonitor(this);
+
+        // Wrap Vault Economy if enabled
+        if (vaultEnabled && getServer().getPluginManager().getPlugin("Vault") != null) {
+            getSchedulerAdapter().runTaskLater(() -> {
+                org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = getServer()
+                        .getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+                if (rsp != null) {
+                    net.milkbowl.vault.economy.Economy existing = rsp.getProvider();
+                    if (!(existing instanceof com.h2ph.economy.EconomyWrapper)) {
+                        com.h2ph.economy.EconomyWrapper wrapper = new com.h2ph.economy.EconomyWrapper(existing,
+                                com.h2ph.economy.EconomyMonitor.getInstance());
+
+                        // Register new wrapper with Highest priority to shadow others
+                        getServer().getServicesManager().register(net.milkbowl.vault.economy.Economy.class, wrapper,
+                                this,
+                                org.bukkit.plugin.ServicePriority.Highest);
+                    }
+                }
+            }, 40); // 2 second delay to ensure all plugins registered their economy
+        }
 
         // Print Startup Banner
         printStartupBanner(vaultEnabled);

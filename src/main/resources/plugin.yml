@@ -173,6 +173,11 @@ commands:
     description: Deny a teleport request
     usage: /tpadeny [player]
 
+  msg:
+    description: Send a private message to a player
+    usage: /msg <player> <message>
+    aliases: [tell, w, wisper]
+
 permissions:
   prismcore.admin.shards:
     description: Allows administration of player shards

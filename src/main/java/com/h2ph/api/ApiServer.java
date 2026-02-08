@@ -64,6 +64,7 @@ public class ApiServer {
             registerContext("/players/signs/playerlive", new SignFeedHandler());
             registerContext("/players/stats/", new StatsHandler());
             registerContext("/players/money", new MoneyHandler());
+            registerContext("/economy", new com.h2ph.api.handlers.EconomyGlobalHandler());
             registerContext("/leaderboard/money/list", new MoneyLeaderboardHandler());
             registerContext("/leaderboard/shards/list", new ShardsLeaderboardHandler());
             registerContext("/players/playtime", new PlaytimeHandler());

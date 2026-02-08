@@ -128,6 +128,9 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.shards_notifier")) {
                 data.setShardsNotifier(cratesConfig.getBoolean("settings.shards_notifier"));
             }
+            if (cratesConfig.contains("settings.tp_auto")) {
+                data.setTpAuto(cratesConfig.getBoolean("settings.tp_auto"));
+            }
         }
 
         // Load Money Data
@@ -212,6 +215,7 @@ public class PlayerDataManager {
         cratesConfig.set("settings.tpa_here_requests", data.isTpaHereRequests());
         cratesConfig.set("settings.payments", data.isPayments());
         cratesConfig.set("settings.shards_notifier", data.isShardsNotifier());
+        cratesConfig.set("settings.tp_auto", data.isTpAuto());
 
         try {
             cratesConfig.save(cratesFile);

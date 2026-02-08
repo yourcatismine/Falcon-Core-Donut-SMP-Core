@@ -178,6 +178,11 @@ commands:
     usage: /msg <player> <message>
     aliases: [tell, w, wisper]
 
+  tpauto:
+    description: Automatically accept teleport requests
+    usage: /tpauto
+
+
   settings:
     description: Open the settings GUI
     usage: /settings

@@ -277,6 +277,10 @@ public class PrismSurvival extends JavaPlugin {
         // Register TPA GUI Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TpaGUIListener(), this);
 
+        // Register TpAuto
+        getCommand("tpauto").setExecutor(new com.h2ph.commands.player.TpAutoCommand());
+        new com.h2ph.managers.TpAutoManager(this);
+
         // Register TPA Commands
         com.h2ph.commands.player.TpaCommand tpaCmd = new com.h2ph.commands.player.TpaCommand();
         getCommand("tpa").setExecutor(tpaCmd);

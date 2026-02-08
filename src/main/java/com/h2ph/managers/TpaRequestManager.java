@@ -131,6 +131,15 @@ public class TpaRequestManager {
         // Receiver GUI is removed as per user request. Always use chat.
         boolean isTpaHere = (type == RequestType.TPA_HERE);
 
+        // Check for Auto-Accept
+        com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(target.getUniqueId());
+        if (targetData != null && targetData.isTpAuto()) {
+            // Auto-accept!
+            acceptRequest(target, sender, type);
+            return;
+        }
+
         // Default Chat Behavior
         if (isTpaHere) {
             // Sender Feedback
@@ -167,5 +176,135 @@ public class TpaRequestManager {
             target.playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1f,
                     1f);
         }
+    }
+
+    public void acceptRequest(org.bukkit.entity.Player acceptor, org.bukkit.entity.Player sender, RequestType type) {
+        String smallCapsTarget = com.h2ph.utils.SmallCapsUtil.toSmallCaps(sender.getName()); // Sender is the "other"
+                                                                                             // person in the acceptance
+                                                                                             // context?
+        // Wait, "You accepted %PLAYER_NAME%". If I am acceptor, I accepted sender.
+        // Logic from TpAcceptCommand:
+        // targetPlayer = Bukkit.getPlayer(request.getSender());
+        // destinationName = SmallCapsUtil.toSmallCaps(destination.getName());
+
+        final org.bukkit.entity.Player teleporter;
+        final org.bukkit.entity.Player destination;
+        final String destinationName;
+
+        if (type == RequestType.TPA_HERE) {
+            teleporter = acceptor; // Acceptor teleports to Sender
+            destination = sender;
+            destinationName = com.h2ph.utils.SmallCapsUtil.toSmallCaps(destination.getName());
+        } else {
+            teleporter = sender; // Sender teleports to Acceptor
+            destination = acceptor;
+            destinationName = com.h2ph.utils.SmallCapsUtil.toSmallCaps(destination.getName());
+        }
+
+        // Feedback Messages
+        String smallCapsAcceptor = com.h2ph.utils.SmallCapsUtil.toSmallCaps(acceptor.getName());
+        String smallCapsSender = com.h2ph.utils.SmallCapsUtil.toSmallCaps(sender.getName());
+
+        String typeMsg = (type == RequestType.TPA_HERE) ? "teleport here request" : "teleport request";
+
+        // To Sender: [Acceptor] accepted your teleport request.
+        String senderMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&5" + smallCapsAcceptor + " &7accepted your " + typeMsg + ".");
+        sender.sendMessage(senderMsg);
+        sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                new net.md_5.bungee.api.chat.TextComponent(senderMsg));
+
+        // To Acceptor: You accepted [Sender]'s teleport request.
+        String acceptorMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&7You accepted &5" + smallCapsSender + "&7's " + typeMsg + ".");
+        acceptor.sendMessage(acceptorMsg);
+        acceptor.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                new net.md_5.bungee.api.chat.TextComponent(acceptorMsg));
+
+        // Start Teleport Countdown Task
+        final java.util.concurrent.atomic.AtomicInteger seconds = new java.util.concurrent.atomic.AtomicInteger(5);
+        final java.util.concurrent.atomic.AtomicReference<org.bukkit.scheduler.BukkitTask> task = new java.util.concurrent.atomic.AtomicReference<>();
+        final org.bukkit.Location startLoc = teleporter.getLocation();
+
+        // Sound on accept
+        teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
+        destination.playSound(destination.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!teleporter.isOnline() || !destination.isOnline()) {
+                    if (task.get() != null) {
+                        task.get().cancel();
+                    }
+                    return; // Abort if anyone logs off
+                }
+
+                // Movement Check
+                org.bukkit.Location currentLoc = teleporter.getLocation();
+                double dist = Math.pow(currentLoc.getX() - startLoc.getX(), 2)
+                        + Math.pow(currentLoc.getZ() - startLoc.getZ(), 2);
+                double distY = Math.abs(currentLoc.getY() - startLoc.getY());
+
+                if (dist > 0.1 || distY > 1.5 || !currentLoc.getWorld().equals(startLoc.getWorld())) {
+                    String cancelMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                            "&cTeleportation cancelled because you moved.");
+                    teleporter.sendMessage(cancelMsg);
+                    teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(cancelMsg));
+                    // Play sound at current location to ensure they hear it
+                    teleporter.playSound(currentLoc, org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+
+                    if (task.get() != null) {
+                        task.get().cancel();
+                    }
+                    return;
+                }
+
+                if (seconds.get() > 0) {
+                    // Feedback: &7Teleporting in &5%SECOND%s
+                    String msg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                            "&7Teleporting in &5" + seconds.get() + "s");
+                    teleporter.sendMessage(msg);
+                    teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(msg));
+
+                    // Sounds: Tripwire & Enderman teleport sound per count
+                    teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
+                    teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+
+                    seconds.decrementAndGet();
+                } else {
+                    // Teleport Time!
+
+                    // Perform Teleport
+                    teleporter.teleportAsync(destination.getLocation()).thenAccept(success -> {
+                        if (success) {
+                            // Post-Teleport Feedback
+                            // &7You were teleported to &5%GAMERTAG% - Actionbar only
+                            String successMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&7You were teleported to &5" + destinationName);
+                            teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                                    new net.md_5.bungee.api.chat.TextComponent(successMsg));
+
+                            // Enderman Teleport sound
+                            teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT,
+                                    1f, 1f);
+                        }
+                    });
+
+                    if (task.get() != null) {
+                        task.get().cancel();
+                    }
+                }
+            }
+        };
+
+        // Schedule the task using the Folia-safe scheduler adapter on the teleporter
+        // entity
+        org.bukkit.scheduler.BukkitTask scheduledTask = com.h2ph.PrismSurvival.getInstance().getSchedulerAdapter()
+                .runEntityTaskTimer(teleporter,
+                        runnable, 0L, 20L);
+        task.set(scheduledTask);
     }
 }

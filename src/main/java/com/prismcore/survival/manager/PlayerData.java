@@ -257,4 +257,14 @@ public class PlayerData {
     public void setShardsNotifier(boolean shardsNotifier) {
         this.shardsNotifier = shardsNotifier;
     }
+
+    private boolean tpAuto = false; // Default: OFF
+
+    public boolean isTpAuto() {
+        return tpAuto;
+    }
+
+    public void setTpAuto(boolean tpAuto) {
+        this.tpAuto = tpAuto;
+    }
 }

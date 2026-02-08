@@ -4,3 +4,6 @@
 /mappings
 /pom.xml
 /target
+# Skidfuscator
+skidfuscator.log
+skidfuscator-error-*.txt

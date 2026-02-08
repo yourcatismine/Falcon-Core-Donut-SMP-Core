@@ -24,7 +24,31 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
         }
 
         Player p = (Player) sender;
-        TpaRequestManager.Request request = TpaRequestManager.getInstance().getLastRequestOut(p.getUniqueId());
+        TpaRequestManager.Request request;
+
+        if (args.length > 0) {
+            Player target = org.bukkit.Bukkit.getPlayer(args[0]);
+            if (target != null) {
+                request = TpaRequestManager.getInstance().getRequest(target.getUniqueId(), p.getUniqueId());
+            } else {
+                String msg = ChatColor.translateAlternateColorCodes('&',
+                        "&cThat player is not online or does not exist."); // Keeping simple for now or match Accept?
+                // Match accept style:
+                org.bukkit.OfflinePlayer offlineTarget = org.bukkit.Bukkit.getOfflinePlayer(args[0]);
+                if (offlineTarget.hasPlayedBefore()) {
+                    msg = ChatColor.translateAlternateColorCodes('&', "&cThat player is not online.");
+                } else {
+                    msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
+                }
+
+                p.sendMessage(msg);
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+        } else {
+            request = TpaRequestManager.getInstance().getLastRequestOut(p.getUniqueId());
+        }
 
         if (request == null) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
@@ -53,6 +77,15 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            java.util.List<String> playerNames = new java.util.ArrayList<>();
+            for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
+                if (sender instanceof Player && ((Player) sender).canSee(player)) {
+                    playerNames.add(player.getName());
+                }
+            }
+            return playerNames;
+        }
         return Collections.emptyList();
     }
 }

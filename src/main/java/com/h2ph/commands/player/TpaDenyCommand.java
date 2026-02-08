@@ -25,7 +25,28 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
         }
 
         Player p = (Player) sender;
-        TpaRequestManager.Request request = TpaRequestManager.getInstance().getLastRequest(p.getUniqueId());
+        TpaRequestManager.Request request;
+
+        if (args.length > 0) {
+            Player targetSender = org.bukkit.Bukkit.getPlayer(args[0]);
+            if (targetSender != null) {
+                request = TpaRequestManager.getInstance().getRequest(p.getUniqueId(), targetSender.getUniqueId());
+            } else {
+                org.bukkit.OfflinePlayer offlineSender = org.bukkit.Bukkit.getOfflinePlayer(args[0]);
+                String msg;
+                if (offlineSender.hasPlayedBefore()) {
+                    msg = ChatColor.translateAlternateColorCodes('&', "&cThat player is not online.");
+                } else {
+                    msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
+                }
+                p.sendMessage(msg);
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+        } else {
+            request = TpaRequestManager.getInstance().getLastRequest(p.getUniqueId());
+        }
 
         if (request == null) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
@@ -61,6 +82,15 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            java.util.List<String> playerNames = new java.util.ArrayList<>();
+            for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
+                if (sender instanceof Player && ((Player) sender).canSee(player)) {
+                    playerNames.add(player.getName());
+                }
+            }
+            return playerNames;
+        }
         return Collections.emptyList();
     }
 }

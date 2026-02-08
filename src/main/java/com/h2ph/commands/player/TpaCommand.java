@@ -53,21 +53,27 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (target == null || !p.canSee(target)) {
-            String msg = ChatColor.translateAlternateColorCodes('&',
-                    "&cThat player does not exist.\n&cThis user is not online.");
+            String msg;
+            if (target != null) {
+                // Online but hidden -> "Not online" to the sender
+                msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
+            } else {
+                org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
+                if (offlineTarget.hasPlayedBefore()) {
+                    msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
+                } else {
+                    msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
+                }
+            }
+
             p.sendMessage(msg);
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg.replace("\n", " "))); // Actionbar
-                                                                                                           // single
-                                                                                                           // line? Or
-                                                                                                           // just first
-                                                                                                           // line?
-            // "Both chat and actionbar" implies showing the error on both.
-            // Let's show "That player does not exist" on action bar maybe? Or "This user is
-            // not online".
-            // The request says: "&cThat player does not exist. &cThis user is not online. -
-            // Both chat and actionbar"
-            // I'll send both lines to chat, and maybe the second or combined to actionbar.
-            // Actually Actionbar usually supports one line. I'll join them.
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        if (target.getUniqueId().equals(p.getUniqueId())) {
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }

@@ -14,6 +14,9 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import org.bukkit.scheduler.BukkitTask;
 
 public class TpAcceptCommand implements CommandExecutor, TabCompleter {
 
@@ -35,8 +38,20 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
                 request = TpaRequestManager.getInstance().getRequest(p.getUniqueId(), target.getUniqueId());
                 targetPlayer = target;
             } else {
-                p.sendMessage(
-                        ChatColor.translateAlternateColorCodes('&', "&cThat player is not online or does not exist."));
+                org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(args[0]);
+                if (offlineTarget.hasPlayedBefore()) {
+                    String msg = ChatColor.translateAlternateColorCodes('&', "&cThat player is not online.");
+                    p.sendMessage(msg);
+                    p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(msg));
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                } else {
+                    String msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
+                    p.sendMessage(msg);
+                    p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(msg));
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                }
                 return true;
             }
         } else {
@@ -45,14 +60,21 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
             if (request != null) {
                 targetPlayer = Bukkit.getPlayer(request.getSender());
             } else {
-                p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cYou have no pending teleport requests."));
+                String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
+                p.sendMessage(msg);
+                p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                        new net.md_5.bungee.api.chat.TextComponent(msg));
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         }
 
         if (request == null) {
-            p.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    "&cYou have no pending teleport requests from that player."));
+            String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
+            p.sendMessage(msg);
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -84,19 +106,52 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
         }
 
         // Start Teleport Countdown Task
-        new org.bukkit.scheduler.BukkitRunnable() {
-            int seconds = 5;
+        final AtomicInteger seconds = new AtomicInteger(5);
+        final AtomicReference<BukkitTask> task = new AtomicReference<>();
+        final org.bukkit.Location startLoc = teleporter.getLocation();
 
+        // Sound on accept: Cow Bell to Requester (Teleporter) and Receiver
+        // (Destination)
+        // User said "cowbell note sound when a player got accepted".
+        // Playing to both to be safe/nice.
+        teleporter.playSound(teleporter.getLocation(), Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
+        destination.playSound(destination.getLocation(), Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
+
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 if (!teleporter.isOnline() || !destination.isOnline()) {
-                    this.cancel();
+                    if (task.get() != null) {
+                        task.get().cancel();
+                    }
                     return; // Abort if anyone logs off
                 }
 
-                if (seconds > 0) {
+                // Movement Check
+                org.bukkit.Location currentLoc = teleporter.getLocation();
+                double dist = Math.pow(currentLoc.getX() - startLoc.getX(), 2)
+                        + Math.pow(currentLoc.getZ() - startLoc.getZ(), 2);
+                double distY = Math.abs(currentLoc.getY() - startLoc.getY());
+
+                if (dist > 0.1 || distY > 1.5 || !currentLoc.getWorld().equals(startLoc.getWorld())) {
+                    String cancelMsg = ChatColor.translateAlternateColorCodes('&',
+                            "&cTeleportation cancelled because you moved.");
+                    teleporter.sendMessage(cancelMsg);
+                    teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(cancelMsg));
+                    // Play sound at current location to ensure they hear it
+                    teleporter.playSound(currentLoc, Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+
+                    if (task.get() != null) {
+                        task.get().cancel();
+                    }
+                    return;
+                }
+
+                if (seconds.get() > 0) {
                     // Feedback: &7Teleporting in &5%SECOND%s
-                    String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &5" + seconds + "s");
+                    String msg = ChatColor.translateAlternateColorCodes('&',
+                            "&7Teleporting in &5" + seconds.get() + "s");
                     teleporter.sendMessage(msg);
                     teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             new net.md_5.bungee.api.chat.TextComponent(msg));
@@ -105,36 +160,38 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
                     teleporter.playSound(teleporter.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
                     teleporter.playSound(teleporter.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
 
-                    seconds--;
+                    seconds.decrementAndGet();
                 } else {
                     // Teleport Time!
-                    // Feedback: &7Teleporting...
-                    String teleportingMsg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting...");
-                    teleporter.sendMessage(teleportingMsg); // "Both chat and actionbar" implied from context or
-                                                            // explicit request?
-                    // User Request: "&7Teleporting..." (didn't specify location, assuming
-                    // Chat/Actionbar consistency)
-                    // Let's do both to be safe/consistent.
-                    teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                            new net.md_5.bungee.api.chat.TextComponent(teleportingMsg));
+                    // Teleport Time!
 
                     // Perform Teleport
-                    teleporter.teleport(destination.getLocation());
+                    teleporter.teleportAsync(destination.getLocation()).thenAccept(success -> {
+                        if (success) {
+                            // Post-Teleport Feedback
+                            // &7You were teleported to &5%GAMERTAG% - Actionbar only
+                            String successMsg = ChatColor.translateAlternateColorCodes('&',
+                                    "&7You were teleported to &5" + destinationName);
+                            teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                                    new net.md_5.bungee.api.chat.TextComponent(successMsg));
 
-                    // Post-Teleport Feedback
-                    // &7You were teleported to &5%GAMERTAG% - Actionbar only
-                    String successMsg = ChatColor.translateAlternateColorCodes('&',
-                            "&7You were teleported to &5" + destinationName);
-                    teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                            new net.md_5.bungee.api.chat.TextComponent(successMsg));
+                            // Enderman Teleport sound
+                            teleporter.playSound(teleporter.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+                        }
+                    });
 
-                    // Enderman Teleport sound
-                    teleporter.playSound(teleporter.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
-
-                    this.cancel();
+                    if (task.get() != null) {
+                        task.get().cancel();
+                    }
                 }
             }
-        }.runTaskTimer(PrismSurvival.getInstance(), 0L, 20L); // Run immediately (0 delay), every 20 ticks (1 second)
+        };
+
+        // Schedule the task using the Folia-safe scheduler adapter on the teleporter
+        // entity
+        BukkitTask scheduledTask = PrismSurvival.getInstance().getSchedulerAdapter().runEntityTaskTimer(teleporter,
+                runnable, 0L, 20L);
+        task.set(scheduledTask);
 
         // Remove request after accept
         TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());

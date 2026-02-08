@@ -374,6 +374,9 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
 
             config.save(duelFile);
 
+            // Reload into memory immediately
+            arenaManager.reloadArena(name);
+
             sender.sendMessage(ChatColor.GREEN + "Duel region " + ChatColor.YELLOW + name + ChatColor.GREEN
                     + " saved successfully!");
 

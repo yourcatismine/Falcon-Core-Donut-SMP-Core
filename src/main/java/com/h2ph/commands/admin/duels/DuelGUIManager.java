@@ -144,10 +144,38 @@ public class DuelGUIManager {
         ItemStack pos2 = createItem(Material.ARMOR_STAND, "&aᴘʟᴀʏᴇʀ 2", regionName, pos2Lore.toArray(new String[0]));
         gui.setItem(15, pos2);
 
+        // Slot 18: Back
+        ItemStack backBtn = createItem(Material.ARROW, "&eʙᴀᴄᴋ", null, "&fReturn to regions");
+        gui.setItem(18, backBtn);
+
         // Slot 26: Delete Region
-        ItemStack deleteBtn = createItem(Material.RED_STAINED_GLASS_PANE, "&4ᴅᴇʟᴇᴛᴇ ʀᴇɢɪᴏɴ", regionName,
+        ItemStack deleteBtn = createItem(Material.RED_STAINED_GLASS_PANE, "&4ð¦¸¿ð¦»¿ð¦¿ð¦´ð¦Æð¦´ ð¦¦ð¦´ð¦¸ð¦ªð¦¾ð¦½",
+                regionName,
                 "&fClick to delete this region");
         gui.setItem(26, deleteBtn);
+
+        player.openInventory(gui);
+    }
+
+    public void openDeleteConfirmGUI(Player player, String regionName) {
+        Inventory gui = Bukkit.createInventory(null, 27,
+                ChatColor.translateAlternateColorCodes('&', "&4ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛɪᴏɴ?"));
+
+        // Slot 11: Cancel
+        ItemStack cancelBtn = createItem(Material.GREEN_STAINED_GLASS_PANE, "&aᴄᴀɴᴄᴇʟ", regionName,
+                "&fKeep " + regionName);
+        gui.setItem(11, cancelBtn);
+
+        // Slot 13: Info
+        ItemStack infoBtn = createItem(Material.PAPER, "&e" + toSmallCaps(regionName), null,
+                "&7Are you sure you want to delete this?",
+                "&cThis action cannot be undone.");
+        gui.setItem(13, infoBtn);
+
+        // Slot 15: Confirm Delete
+        ItemStack confirmBtn = createItem(Material.RED_CONCRETE, "&4ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛᴇ", regionName,
+                "&fDelete " + regionName + " forever");
+        gui.setItem(15, confirmBtn);
 
         player.openInventory(gui);
     }

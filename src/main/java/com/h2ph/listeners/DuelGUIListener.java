@@ -169,22 +169,13 @@ public class DuelGUIListener implements Listener {
                 config.set("looting-minutes", minutes);
                 save = true;
                 refresh = true;
-            } else if (slot == 26) { // Delete Region
+            } else if (slot == 18) { // Back
                 isRedirecting.add(player.getUniqueId());
-                player.closeInventory();
-                if (file.exists()) {
-                    file.delete();
-                    player.sendMessage(ChatColor.RED + "Region " + regionName + " deleted.");
-                    try {
-                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
-                    } catch (Exception ignored) {
-                    }
-                } else {
-                    player.sendMessage(ChatColor.RED + "Region file not found.");
-                }
-                // Reopen regions list
-                com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
-                        .runEntityTaskLater(player, () -> guiManager.openRegionsGUI(player), 1L);
+                guiManager.openRegionsGUI(player);
+                return;
+            } else if (slot == 26) { // Delete Region (Request Confirmation)
+                isRedirecting.add(player.getUniqueId());
+                guiManager.openDeleteConfirmGUI(player, regionName);
                 return;
             }
 
@@ -200,6 +191,69 @@ public class DuelGUIListener implements Listener {
             if (refresh) {
                 isRedirecting.add(player.getUniqueId()); // Prevent "Back" to Regions
                 guiManager.openRegionSettingsGUI(player, regionName);
+            }
+        } else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&4ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛɪᴏɴ?"))) {
+            event.setCancelled(true);
+            if (event.getRawSlot() >= event.getView().getTopInventory().getSize())
+                return;
+
+            if (event.getCurrentItem() == null || !(event.getWhoClicked() instanceof org.bukkit.entity.Player))
+                return;
+            org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getWhoClicked();
+
+            // Play click sound
+            try {
+                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.5f, 1.2f);
+            } catch (Exception ignored) {
+            }
+
+            com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
+                    com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+
+            if (!event.getCurrentItem().hasItemMeta())
+                return;
+            org.bukkit.persistence.PersistentDataContainer pdc = event.getCurrentItem().getItemMeta()
+                    .getPersistentDataContainer();
+            if (!pdc.has(guiManager.getRegionKey(), org.bukkit.persistence.PersistentDataType.STRING))
+                return;
+
+            String regionName = pdc.get(guiManager.getRegionKey(), org.bukkit.persistence.PersistentDataType.STRING);
+            int slot = event.getRawSlot();
+
+            if (slot == 11) { // Cancel -> Back to Settings
+                isRedirecting.add(player.getUniqueId());
+                guiManager.openRegionSettingsGUI(player, regionName);
+            } else if (slot == 15) { // Confirm -> Delete
+                java.io.File file = new java.io.File(
+                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDataFolder(),
+                        "survival/regions/duels/" + regionName + ".yml");
+
+                isRedirecting.add(player.getUniqueId()); // Prevent back-logic from messing up
+                player.closeInventory();
+
+                if (file.exists()) {
+                    if (file.delete()) {
+                        player.sendMessage(ChatColor.RED + "Region " + regionName + " deleted forever.");
+                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getLogger().info(
+                                "Player " + player.getName() + " deleted duel region: " + regionName);
+                        try {
+                            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 1f, 1f);
+                        } catch (Exception ignored) {
+                        }
+
+                        // Update Arena Manager
+                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDuelArenaManager()
+                                .reloadArena(regionName);
+                    } else {
+                        player.sendMessage(ChatColor.RED + "Failed to delete region file.");
+                    }
+                } else {
+                    player.sendMessage(ChatColor.RED + "Region file not found (already deleted?).");
+                }
+
+                // Reopen regions list
+                com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
+                        .runEntityTaskLater(player, () -> guiManager.openRegionsGUI(player), 1L);
             }
         }
     }
@@ -264,10 +318,14 @@ public class DuelGUIListener implements Listener {
                                 player.sendMessage(ChatColor.GREEN + "Position set successfully.");
                                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 
+                                // Reload Arena (Safety Check)
+                                com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDuelArenaManager()
+                                        .reloadArena(regionName);
+
                                 // Reopen GUI
-                                com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
+                                com.h2ph.commands.admin.duels.DuelGUIManager reopenManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
                                         com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
-                                guiManager.openRegionSettingsGUI(player, regionName);
+                                reopenManager.openRegionSettingsGUI(player, regionName);
 
                             } catch (Exception e) {
                                 player.sendMessage(ChatColor.RED + "Error saving position.");

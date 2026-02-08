@@ -144,6 +144,26 @@ public class DuelArenaManager {
         plugin.getLogger().info("Loaded " + arenaMap.size() + " duel arenas.");
     }
 
+    public void reloadArena(String name) {
+        File file = new File(plugin.getDataFolder(), "survival/regions/duels/" + name + ".yml");
+        if (!file.exists()) {
+            arenaMap.remove(name);
+            return;
+        }
+
+        try {
+            YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+            if (cfg.contains("spawn1.world") && cfg.contains("spawn2.world")) {
+                ArenaRegion region = new ArenaRegion(file.getName(), cfg);
+                arenaMap.put(file.getName(), region);
+                plugin.getLogger().info("Reloaded arena: " + name);
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to reload arena: " + name);
+            e.printStackTrace();
+        }
+    }
+
     public boolean isCommandIgnored(String message) {
         if (message.isEmpty())
             return false;

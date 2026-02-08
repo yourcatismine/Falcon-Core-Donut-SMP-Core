@@ -435,6 +435,10 @@ public class PrismSurvival extends JavaPlugin {
         return maintenanceManager;
     }
 
+    public com.h2ph.commands.admin.duels.DuelArenaManager getDuelArenaManager() {
+        return duelArenaManager;
+    }
+
     public String normalizeKeyName(String keyName) {
         // Normalize key names (e.g., "Common Key" -> "common_key")
         return keyName.toLowerCase().replace(" ", "_");

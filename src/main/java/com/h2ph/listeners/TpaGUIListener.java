@@ -21,10 +21,17 @@ public class TpaGUIListener implements Listener {
     public void onInventoryClick(InventoryClickEvent e) {
         if (e.getView().getTitle().equals(TpaCommand.GUI_TITLE)) {
             // Cancel events in top inventory (GUI)
+            if (e.getClickedInventory() == null)
+                return;
+
             if (e.getClickedInventory() == e.getView().getTopInventory()) {
                 e.setCancelled(true);
             } else {
                 // Allow bottom inventory events (dragging items in player inventory)
+                // BUT prevent shift-clicking into the GUI
+                if (e.isShiftClick()) {
+                    e.setCancelled(true);
+                }
                 return;
             }
 
@@ -119,6 +126,18 @@ public class TpaGUIListener implements Listener {
                             p.sendMessage(ChatColor.RED + "That player is no longer online.");
                         }
                     }
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(org.bukkit.event.inventory.InventoryDragEvent e) {
+        if (e.getView().getTitle().equals(TpaCommand.GUI_TITLE)) {
+            for (int slot : e.getRawSlots()) {
+                if (slot < e.getView().getTopInventory().getSize()) {
+                    e.setCancelled(true);
+                    return;
                 }
             }
         }

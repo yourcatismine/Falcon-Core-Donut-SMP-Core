@@ -144,6 +144,15 @@ public class CrateListener implements Listener {
 
         // 1. Crate Selection GUI (Normal)
         if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʜᴏᴏѕᴇ 1 ɪᴛᴇᴍ"))) {
+            if (event.getClickedInventory() == null)
+                return;
+
+            if (!event.getClickedInventory().equals(event.getView().getTopInventory())) {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
             event.setCancelled(true);
 
             ItemStack clicked = event.getCurrentItem();
@@ -169,6 +178,15 @@ public class CrateListener implements Listener {
 
         // 2. Carousel GUI
         else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ"))) {
+            if (event.getClickedInventory() == null)
+                return;
+
+            if (!event.getClickedInventory().equals(event.getView().getTopInventory())) {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
             event.setCancelled(true);
 
             // Allow clicking start button
@@ -183,7 +201,17 @@ public class CrateListener implements Listener {
 
         // 3. Confirmation GUI
         else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄᴏɴꜰɪʀᴍ"))) {
+            if (event.getClickedInventory() == null)
+                return;
+
+            if (!event.getClickedInventory().equals(event.getView().getTopInventory())) {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
             event.setCancelled(true);
+
             int slot = event.getSlot();
 
             if (slot == 11) { // Cancel
@@ -337,6 +365,19 @@ public class CrateListener implements Listener {
     @EventHandler
     public void onInventoryDrag(org.bukkit.event.inventory.InventoryDragEvent event) {
         String title = event.getView().getTitle();
+
+        if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʜᴏᴏѕᴇ 1 ɪᴛᴇᴍ")) ||
+                title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ")) ||
+                title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄᴏɴꜰɪʀᴍ"))) {
+
+            for (int slot : event.getRawSlots()) {
+                if (slot < event.getView().getTopInventory().getSize()) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+
         if (title.startsWith(ChatColor.translateAlternateColorCodes('&', "&eEditing: "))) {
             String crateName = ChatColor.stripColor(title).replace("Editing: ", "");
             File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");

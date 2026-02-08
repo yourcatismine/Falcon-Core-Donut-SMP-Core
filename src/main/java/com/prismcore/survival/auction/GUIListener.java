@@ -56,7 +56,19 @@ public class GUIListener
         Sound confirm = Sound.valueOf((String) cfg.getString("sounds.confirm-sell"));
         Sound no = Sound.valueOf((String) cfg.getString("sounds.villager-no"));
         if (top instanceof GUIHandler.MainHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             if (slot == cfg.getInt("main-gui.items.previous-page.slot")) {
@@ -150,7 +162,19 @@ public class GUIListener
             return;
         }
         if (top instanceof GUIHandler.FilterHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             if (event.getCurrentItem() == null) {
                 return;
             }
@@ -161,7 +185,19 @@ public class GUIListener
             return;
         }
         if (top instanceof GUIHandler.SellConfirmHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             if (slot == this.controller.getConfig().getInt("sell-confirm-gui.decline-button.slot")) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
@@ -191,7 +227,19 @@ public class GUIListener
             return;
         }
         if (top instanceof GUIHandler.BuyConfirmHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             if (slot == this.controller.getConfig().getInt("purchase-confirm-gui.decline-button.slot")) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
@@ -284,7 +332,19 @@ public class GUIListener
             return;
         }
         if (top instanceof GUIHandler.YourItemsHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             if (slot == this.controller.getConfig().getInt("your-items-gui.back-button.slot")) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
@@ -319,7 +379,19 @@ public class GUIListener
             return;
         }
         if (top instanceof GUIHandler.TransactionsHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             int page = p.getMetadata("tx-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             if (slot == cfg.getInt("transactions-gui.items.previous-page.slot")) {
@@ -354,7 +426,19 @@ public class GUIListener
             }
         }
         if (top instanceof GUIHandler.AdminPlayerDetailsHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             if (slot >= 0 && slot < 27) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
@@ -401,7 +485,19 @@ public class GUIListener
             }
         }
         if (top instanceof GUIHandler.AdminPlayerListHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             int page = p.getMetadata("ah-admin-list-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
 
@@ -462,7 +558,19 @@ public class GUIListener
         }
 
         if (top instanceof GUIHandler.AdminTransactionsHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             int page = p.getMetadata("tx-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             String target = p.getMetadata("ah-admin-target").get(0).asString();
@@ -517,7 +625,19 @@ public class GUIListener
             }
         }
         if (top instanceof GUIHandler.ItemManagementHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             if (!p.hasMetadata("ah-manage-item")) {
                 p.closeInventory();
@@ -592,7 +712,19 @@ public class GUIListener
         }
 
         if (top instanceof GUIHandler.AdminDeleteConfirmHolder) {
-            event.setCancelled(true);
+
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(top)) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
+                }
+                return;
+            }
+
             int slot = event.getRawSlot();
             String target = p.getMetadata("ah-admin-target").get(0).asString();
 
@@ -711,6 +843,30 @@ public class GUIListener
 
             this.controller.getAuctionManager().clearPendingSales(p.getUniqueId());
         }, 40L); // Delay 2 seconds to ensure player is fully loaded
+    }
+
+    @EventHandler
+    public void onInventoryDrag(org.bukkit.event.inventory.InventoryDragEvent event) {
+        InventoryHolder top = event.getView().getTopInventory().getHolder();
+        if (top instanceof GUIHandler.MainHolder ||
+                top instanceof GUIHandler.FilterHolder ||
+                top instanceof GUIHandler.SellConfirmHolder ||
+                top instanceof GUIHandler.BuyConfirmHolder ||
+                top instanceof GUIHandler.YourItemsHolder ||
+                top instanceof GUIHandler.TransactionsHolder ||
+                top instanceof GUIHandler.AdminPlayerDetailsHolder ||
+                top instanceof GUIHandler.AdminPlayerListHolder ||
+                top instanceof GUIHandler.AdminTransactionsHolder ||
+                top instanceof GUIHandler.ItemManagementHolder ||
+                top instanceof GUIHandler.AdminDeleteConfirmHolder) {
+
+            for (int slot : event.getRawSlots()) {
+                if (slot < event.getView().getTopInventory().getSize()) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
     }
 
     private String getNextSortMode(String current) {

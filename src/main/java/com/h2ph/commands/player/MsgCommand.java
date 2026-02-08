@@ -89,6 +89,13 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(senderFormat);
         target.sendMessage(receiverFormat);
 
+        // Sound Notification
+        com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(target.getUniqueId());
+        if (targetData != null && targetData.isSoundNotifications()) {
+            target.playSound(target.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+        }
+
         return true;
     }
 

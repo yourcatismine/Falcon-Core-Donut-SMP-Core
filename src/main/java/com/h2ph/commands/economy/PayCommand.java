@@ -131,6 +131,12 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             targetData = plugin.getPlayerDataManager().loadPlayer(targetId);
         }
 
+        // Check if target has disabled payments
+        if (!targetData.isPayments()) {
+            sendError(sender, "&cUser disabled payments.");
+            return;
+        }
+
         // Transaction
         senderData.setMoney(senderData.getMoney() - amount);
         targetData.setMoney(targetData.getMoney() + amount);
@@ -172,7 +178,11 @@ public class PayCommand implements CommandExecutor, TabCompleter {
                     "&5" + sender.getName() + "&7 has paid you&a $" + moneyFormatted);
             targetOnline.sendMessage(targetMsg);
             targetOnline.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(targetMsg));
-            // No sound
+
+            // Sound Notification
+            if (targetData.isSoundNotifications()) {
+                targetOnline.playSound(targetOnline.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+            }
         }
     }
 

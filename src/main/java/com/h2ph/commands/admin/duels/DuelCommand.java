@@ -231,6 +231,28 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             // It HAS `@EventHandler public void onClick`.
             // So it expects to be registered.
 
+            // Disable self-duel (handled in sendRequest but good to check here too if
+            // needed, but RequestManager handles it)
+            if (creator.getUniqueId().equals(target.getUniqueId())) {
+                creator.sendMessage(ChatColor.RED + "You cannot duel yourself.");
+                return true;
+            }
+
+            // Check if target has disabled duel requests
+            com.prismcore.survival.manager.PlayerData targetData = plugin.getPlayerDataManager()
+                    .get(target.getUniqueId());
+            if (targetData != null && !targetData.isDuelRequests()) {
+                String errorMsg = ChatColor.translateAlternateColorCodes('&', "&cUser disabled duel requests.");
+                creator.sendMessage(errorMsg);
+                creator.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                        new net.md_5.bungee.api.chat.TextComponent(errorMsg));
+                try {
+                    creator.playSound(creator.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                } catch (Exception ignored) {
+                }
+                return true;
+            }
+
             DuelCreationGUI gui = new DuelCreationGUI(plugin, requestManager, creator, target);
             plugin.getServer().getPluginManager().registerEvents(gui, plugin);
             gui.open();
@@ -249,6 +271,10 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                     break;
                 }
             }
+
+            // Also check offline target settings if we wanted to be thorough, but offline
+            // players can't receive requests anyway
+            // in this system (live requests). So we just show "Not Online".
 
             if (offlineTarget != null) { // We found them in the cache/offline list
                 String msg = ChatColor.RED + "This user is not online.";

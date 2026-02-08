@@ -118,4 +118,54 @@ public class TpaRequestManager {
     public void setOnCooldown(UUID player) {
         cooldowns.put(player, System.currentTimeMillis());
     }
+
+    public void sendRequest(org.bukkit.entity.Player sender, org.bukkit.entity.Player target, RequestType type) {
+        // Add Request
+        addRequest(sender.getUniqueId(), target.getUniqueId(), type);
+        setOnCooldown(sender.getUniqueId());
+
+        String smallCapsTarget = com.h2ph.utils.SmallCapsUtil.toSmallCaps(target.getName());
+        String smallCapsSender = com.h2ph.utils.SmallCapsUtil.toSmallCaps(sender.getName());
+
+        // Check Target's Preference
+        // Receiver GUI is removed as per user request. Always use chat.
+        boolean isTpaHere = (type == RequestType.TPA_HERE);
+
+        // Default Chat Behavior
+        if (isTpaHere) {
+            // Sender Feedback
+            String senderMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&7You sent &5" + smallCapsTarget + "&7 a teleport here request.");
+            sender.sendMessage(senderMsg);
+            sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(senderMsg));
+            sender.playSound(sender.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
+
+            // Target Feedback
+            String targetMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&5" + smallCapsSender + "&7 sent you a teleport here request.");
+            target.sendMessage(targetMsg);
+            target.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(targetMsg));
+            target.playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1f,
+                    1f);
+        } else {
+            // Sender Feedback
+            String senderMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&7You sent &5" + smallCapsTarget + "&7 a teleport request.");
+            sender.sendMessage(senderMsg);
+            sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(senderMsg));
+            sender.playSound(sender.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
+
+            // Target Feedback
+            String targetMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&5" + smallCapsSender + "&7 sent you a teleport request.");
+            target.sendMessage(targetMsg);
+            target.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(targetMsg));
+            target.playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1f,
+                    1f);
+        }
+    }
 }

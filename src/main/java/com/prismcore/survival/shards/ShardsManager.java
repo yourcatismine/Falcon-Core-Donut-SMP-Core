@@ -144,10 +144,13 @@ public class ShardsManager implements Listener {
                     ChatColor.translateAlternateColorCodes('&', passiveChatMessage.replace("{shard}", amountStr)));
         }
 
-        // Actionbar
-        if (passiveActionbarMessage != null && !passiveActionbarMessage.isEmpty()) {
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor
-                    .translateAlternateColorCodes('&', passiveActionbarMessage.replace("{shard}", amountStr))));
+        // Actions based on settings
+        if (plugin.getPlayerDataManager().get(player.getUniqueId()).isShardsNotifier()) {
+            // Actionbar
+            if (passiveActionbarMessage != null && !passiveActionbarMessage.isEmpty()) {
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor
+                        .translateAlternateColorCodes('&', passiveActionbarMessage.replace("{shard}", amountStr))));
+            }
         }
 
         // Sound
@@ -194,11 +197,13 @@ public class ShardsManager implements Listener {
 
         // Message (Actionbar only)
         if (activeActionbarMessage != null && !activeActionbarMessage.isEmpty()) {
-            String msg = activeActionbarMessage
-                    .replace("{shards}", String.valueOf(killRewardAmount))
-                    .replace("{PLAYER}", victim.getName());
-            killer.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                    TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', msg)));
+            if (plugin.getPlayerDataManager().get(killerId).isShardsNotifier()) {
+                String msg = activeActionbarMessage
+                        .replace("{shards}", String.valueOf(killRewardAmount))
+                        .replace("{PLAYER}", victim.getName());
+                killer.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                        TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', msg)));
+            }
         }
 
         // Set Cooldown

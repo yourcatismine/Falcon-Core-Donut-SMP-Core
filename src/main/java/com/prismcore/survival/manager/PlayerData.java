@@ -169,7 +169,16 @@ public class PlayerData {
         this.payAlerts = payAlerts;
     }
 
-    private boolean quickAuctionBuy = false; // Default: OFF
+    private boolean quickAuctionBuy = false;
+    private boolean disableMobSpawns = false;
+
+    public boolean isDisableMobSpawns() {
+        return disableMobSpawns;
+    }
+
+    public void setDisableMobSpawns(boolean disableMobSpawns) {
+        this.disableMobSpawns = disableMobSpawns;
+    } // Default: OFF
 
     public boolean isQuickAuctionBuy() {
         return quickAuctionBuy;
@@ -177,5 +186,75 @@ public class PlayerData {
 
     public void setQuickAuctionBuy(boolean quickAuctionBuy) {
         this.quickAuctionBuy = quickAuctionBuy;
+    }
+
+    private boolean soundNotifications = true; // Default: ON
+
+    public boolean isSoundNotifications() {
+        return soundNotifications;
+    }
+
+    public void setSoundNotifications(boolean soundNotifications) {
+        this.soundNotifications = soundNotifications;
+    }
+
+    private boolean tpaConfirmMenus = true; // Default: ON
+
+    public boolean isTpaConfirmMenus() {
+        return tpaConfirmMenus;
+    }
+
+    public void setTpaConfirmMenus(boolean tpaConfirmMenus) {
+        this.tpaConfirmMenus = tpaConfirmMenus;
+    }
+
+    private boolean duelRequests = true; // Default: ON
+
+    public boolean isDuelRequests() {
+        return duelRequests;
+    }
+
+    public void setDuelRequests(boolean duelRequests) {
+        this.duelRequests = duelRequests;
+    }
+
+    private boolean tpaRequests = true; // Default: ON
+
+    public boolean isTpaRequests() {
+        return tpaRequests;
+    }
+
+    public void setTpaRequests(boolean tpaRequests) {
+        this.tpaRequests = tpaRequests;
+    }
+
+    private boolean tpaHereRequests = true; // Default: ON
+
+    public boolean isTpaHereRequests() {
+        return tpaHereRequests;
+    }
+
+    public void setTpaHereRequests(boolean tpaHereRequests) {
+        this.tpaHereRequests = tpaHereRequests;
+    }
+
+    private boolean payments = true; // Default: ON
+
+    public boolean isPayments() {
+        return payments;
+    }
+
+    public void setPayments(boolean payments) {
+        this.payments = payments;
+    }
+
+    private boolean shardsNotifier = true; // Default: ON
+
+    public boolean isShardsNotifier() {
+        return shardsNotifier;
+    }
+
+    public void setShardsNotifier(boolean shardsNotifier) {
+        this.shardsNotifier = shardsNotifier;
     }
 }

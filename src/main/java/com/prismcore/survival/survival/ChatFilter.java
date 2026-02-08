@@ -54,53 +54,53 @@ public class ChatFilter implements Listener {
         Player player = event.getPlayer();
         FileConfiguration config = plugin.getChatFilterConfig();
 
-        // 1. Bypass Check
-        if (player.hasPermission("prism.chat.bypass")) {
-            return;
-        }
+        // 1. Bypass Check (Guards content filters only)
+        boolean hasBypass = player.hasPermission("prism.chat.bypass");
 
         UUID uuid = player.getUniqueId();
         long currentTime = System.currentTimeMillis();
         String message = event.getMessage();
 
-        // --- ANTI-SPAM ---
-        long cooldownTime = config.getLong("chat-filter.cooldown-ms", 2000);
-        if (chatCooldowns.containsKey(uuid)) {
-            long diff = currentTime - chatCooldowns.get(uuid);
-            if (diff < cooldownTime) {
-                event.setCancelled(true);
-                long left = ((cooldownTime - diff) / 1000) + 1;
-                player.sendMessage(ChatColor.RED + "Please wait " + left + " second" + (left != 1 ? "s" : "")
-                        + " before your next message.");
-                return;
-            }
-        }
-
-        // --- ANTI-REPEAT ---
-        if (config.getBoolean("chat-filter.block-repeats", true)) {
-            if (lastMessages.containsKey(uuid) && lastMessages.get(uuid).equalsIgnoreCase(message)) {
-                event.setCancelled(true);
-                player.sendMessage(ChatColor.RED + "Please do not repeat the same (or similar) message.");
-                return;
-            }
-        }
-
-        // --- SMART BAD WORD FILTER ---
-        // remove color codes first to prevent "&cf&au&cc&kk" bypass
-        String cleanMsg = ChatColor.stripColor(message);
-
-        for (Pattern pattern : badWordPatterns) {
-            Matcher matcher = pattern.matcher(cleanMsg);
-            if (matcher.find()) { // .find() checks if the pattern exists anywhere in the string
-                event.setCancelled(true);
-
-                // Broadcast to API
-                if (plugin.getApiServer() != null) {
-                    plugin.getApiServer().broadcastChatFilter(player.getName(), message, matcher.group());
+        if (!hasBypass) {
+            // --- ANTI-SPAM ---
+            long cooldownTime = config.getLong("chat-filter.cooldown-ms", 2000);
+            if (chatCooldowns.containsKey(uuid)) {
+                long diff = currentTime - chatCooldowns.get(uuid);
+                if (diff < cooldownTime) {
+                    event.setCancelled(true);
+                    long left = ((cooldownTime - diff) / 1000) + 1;
+                    player.sendMessage(ChatColor.RED + "Please wait " + left + " second" + (left != 1 ? "s" : "")
+                            + " before your next message.");
+                    return;
                 }
+            }
 
-                // Silent block (no message sent to player)
-                return;
+            // --- ANTI-REPEAT ---
+            if (config.getBoolean("chat-filter.block-repeats", true)) {
+                if (lastMessages.containsKey(uuid) && lastMessages.get(uuid).equalsIgnoreCase(message)) {
+                    event.setCancelled(true);
+                    player.sendMessage(ChatColor.RED + "Please do not repeat the same (or similar) message.");
+                    return;
+                }
+            }
+
+            // --- SMART BAD WORD FILTER ---
+            // remove color codes first to prevent "&cf&au&cc&kk" bypass
+            String cleanMsg = ChatColor.stripColor(message);
+
+            for (Pattern pattern : badWordPatterns) {
+                Matcher matcher = pattern.matcher(cleanMsg);
+                if (matcher.find()) { // .find() checks if the pattern exists anywhere in the string
+                    event.setCancelled(true);
+
+                    // Broadcast to API
+                    if (plugin.getApiServer() != null) {
+                        plugin.getApiServer().broadcastChatFilter(player.getName(), message, matcher.group());
+                    }
+
+                    // Silent block (no message sent to player)
+                    return;
+                }
             }
         }
 

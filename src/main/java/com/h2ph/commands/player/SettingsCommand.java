@@ -82,30 +82,56 @@ public class SettingsCommand implements CommandExecutor {
         gui.setItem(3, createAuctionItem(player, data));
 
         // Slot 10: Zombie Head - Disable Mob Spawns
+        boolean disableMobSpawns = data != null && data.isDisableMobSpawns();
+        String mobStatus = disableMobSpawns ? "&a&lON" : "&4&lOFF";
         gui.setItem(4,
-                createHeadItem("MHF_Zombie", "&aᴅɪѕᴀʙʟᴇ ᴍᴏʙ ѕᴘᴀᴡɴѕ", "&fCurrently: &4&lOFF", "&a&lON", "&4&lOFF"));
+                createHeadItem("MHF_Zombie", "&aᴅɪѕᴀʙʟᴇ ᴍᴏʙ ѕᴘᴀᴡɴѕ", "&fCurrently: " + mobStatus, "&a&lON", "&4&lOFF"));
 
         // Slot 11: Music Disc Cat - Sound Notifications
-        gui.setItem(5, createItem(Material.MUSIC_DISC_CAT, "&aѕᴏᴜɴᴅ ɴᴏᴛɪꜰɪᴄᴀᴛɪᴏɴѕ", "&fCurrently: &a&lON", "&a&lON",
-                "&4&lOFF"));
+        boolean soundNotifications = data != null && data.isSoundNotifications();
+        String soundStatus = soundNotifications ? "&a&lON" : "&4&lOFF";
+        gui.setItem(5,
+                createItem(Material.MUSIC_DISC_CAT, "&aѕᴏᴜɴᴅ ɴᴏᴛɪꜰɪᴄᴀᴛɪᴏɴѕ", "&fCurrently: " + soundStatus, "&a&lON",
+                        "&4&lOFF"));
 
         // Slot 12: Feather - TPA Confirm Menus
+        boolean tpaConfirmMenus = data != null && data.isTpaConfirmMenus();
+        String tpaStatus = tpaConfirmMenus ? "&a&lON" : "&4&lOFF";
         gui.setItem(6,
-                createItem(Material.FEATHER, "&aᴛᴘᴀ ᴄᴏɴꜰɪʀᴍ ᴍᴇɴᴜѕ", "&fCurrently: &a&lON", "&a&lON", "&4&lOFF"));
+                createItem(Material.FEATHER, "&aᴛᴘᴀ ᴄᴏɴꜰɪʀᴍ ᴍᴇɴᴜѕ", "&fCurrently: " + tpaStatus, "&a&lON", "&4&lOFF"));
 
         // Slot 13: Diamond Sword - Duel Requests
+        boolean duelRequests = data != null && data.isDuelRequests();
+        String duelStatus = duelRequests ? "&a&lON" : "&4&lOFF";
         gui.setItem(7,
-                createItem(Material.DIAMOND_SWORD, "&aᴅᴜᴇʟ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: &a&lON", "&a&lON", "&4&lOFF"));
+                createItem(Material.DIAMOND_SWORD, "&aᴅᴜᴇʟ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: " + duelStatus, "&a&lON",
+                        "&4&lOFF"));
 
         // Slot 14: Ender Pearl - TPA Requests
-        gui.setItem(8, createItem(Material.ENDER_PEARL, "&aᴛᴘᴀ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: &a&lON", "&a&lON", "&4&lOFF"));
+        boolean tpaRequests = data != null && data.isTpaRequests();
+        String tpaReqStatus = tpaRequests ? "&a&lON" : "&4&lOFF";
+        gui.setItem(8, createItem(Material.ENDER_PEARL, "&aᴛᴘᴀ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: " + tpaReqStatus, "&a&lON",
+                "&4&lOFF"));
 
         // Slot 15: Eye of Ender - TPA Here Requests
+        boolean tpaHereRequests = data != null && data.isTpaHereRequests();
+        String tpaHereStatus = tpaHereRequests ? "&a&lON" : "&4&lOFF";
         gui.setItem(9,
-                createItem(Material.ENDER_EYE, "&aᴛᴘᴀ ʜᴇʀᴇ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: &a&lON", "&a&lON", "&4&lOFF"));
+                createItem(Material.ENDER_EYE, "&aᴛᴘᴀ ʜᴇʀᴇ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: " + tpaHereStatus, "&a&lON",
+                        "&4&lOFF"));
 
-        // Slot 16: Emerald - Payments
-        gui.setItem(10, createItem(Material.EMERALD, "&aᴘᴀʏᴍᴇɴᴛѕ", "&fCurrently: &a&lON", "&a&lON", "&4&lOFF"));
+        // Slot 10: Emerald - Payments
+        boolean payments = data != null && data.isPayments();
+        String paymentsStatus = payments ? "&a&lON" : "&4&lOFF";
+        gui.setItem(10,
+                createItem(Material.EMERALD, "&aᴘᴀʏᴍᴇɴᴛѕ", "&fCurrently: " + paymentsStatus, "&a&lON", "&4&lOFF"));
+
+        // Slot 11: Prismarine Shard - Shards Notifier
+        boolean shardsNotifier = data != null && data.isShardsNotifier();
+        String shardsNotifierStatus = shardsNotifier ? "&a&lON" : "&4&lOFF";
+        gui.setItem(11,
+                createItem(Material.PRISMARINE_SHARD, "&aѕʜᴀʀᴅѕ ɴᴏᴛɪꜰɪᴇʀ", "&fCurrently: " + shardsNotifierStatus,
+                        "&a&lON", "&4&lOFF"));
 
         player.openInventory(gui);
     }

@@ -79,46 +79,7 @@ public class TpaGUIListener implements Listener {
                                     ? com.h2ph.managers.TpaRequestManager.RequestType.TPA_HERE
                                     : com.h2ph.managers.TpaRequestManager.RequestType.TPA;
 
-                            com.h2ph.managers.TpaRequestManager.getInstance().addRequest(p.getUniqueId(),
-                                    target.getUniqueId(), type);
-                            com.h2ph.managers.TpaRequestManager.getInstance().setOnCooldown(p.getUniqueId());
-
-                            String smallCapsTarget = SmallCapsUtil.toSmallCaps(targetPlayer.getName());
-                            String smallCapsSender = SmallCapsUtil.toSmallCaps(p.getName());
-
-                            if (isTpaHere) {
-                                // Sender Feedback
-                                String senderMsg = ChatColor.translateAlternateColorCodes('&',
-                                        "&7You sent &5" + smallCapsTarget + "&7 a teleport here request.");
-                                p.sendMessage(senderMsg);
-                                p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                                        new net.md_5.bungee.api.chat.TextComponent(senderMsg));
-                                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
-
-                                // Target Feedback
-                                String targetMsg = ChatColor.translateAlternateColorCodes('&',
-                                        "&5" + smallCapsSender + "&7 sent you a teleport here request.");
-                                targetPlayer.sendMessage(targetMsg);
-                                targetPlayer.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                                        new net.md_5.bungee.api.chat.TextComponent(targetMsg));
-                                targetPlayer.playSound(targetPlayer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-                            } else {
-                                // Sender Feedback
-                                String senderMsg = ChatColor.translateAlternateColorCodes('&',
-                                        "&7You sent &5" + smallCapsTarget + "&7 a teleport request.");
-                                p.sendMessage(senderMsg);
-                                p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                                        new net.md_5.bungee.api.chat.TextComponent(senderMsg));
-                                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
-
-                                // Target Feedback
-                                String targetMsg = ChatColor.translateAlternateColorCodes('&',
-                                        "&5" + smallCapsSender + "&7 sent you a teleport request.");
-                                targetPlayer.sendMessage(targetMsg);
-                                targetPlayer.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                                        new net.md_5.bungee.api.chat.TextComponent(targetMsg));
-                                targetPlayer.playSound(targetPlayer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-                            }
+                            com.h2ph.managers.TpaRequestManager.getInstance().sendRequest(p, targetPlayer, type);
 
                             // TODO: Integrate with TpaManager logic to actually store the request
                         } else {

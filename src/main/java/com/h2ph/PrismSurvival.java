@@ -307,6 +307,8 @@ public class PrismSurvival extends JavaPlugin {
         com.h2ph.commands.player.SettingsCommand settingsCmd = new com.h2ph.commands.player.SettingsCommand(this);
         getCommand("settings").setExecutor(settingsCmd);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SettingsGUIListener(), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.MobSpawnListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TpaConfirmGUIListener(), this);
 
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {

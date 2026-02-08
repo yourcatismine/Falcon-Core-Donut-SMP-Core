@@ -137,6 +137,179 @@ public class SettingsGUIListener implements Listener {
                         current.setItemMeta(meta);
                     }
                 }
+                // Slot 4: Disable Mob Spawns
+                if (slot == 4) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isDisableMobSpawns();
+                        data.setDisableMobSpawns(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+                // Slot 5: Sound Notifications
+                if (slot == 5) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isSoundNotifications();
+                        data.setSoundNotifications(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+                // Slot 6: TPA Confirm Menus
+                if (slot == 6) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isTpaConfirmMenus();
+                        data.setTpaConfirmMenus(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+                // Slot 7: Duel Requests
+                if (slot == 7) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isDuelRequests();
+                        data.setDuelRequests(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
+                // Slot 8: TPA Requests
+                if (slot == 8) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isTpaRequests();
+                        data.setTpaRequests(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
+                // Slot 9: TPA Here Requests
+                if (slot == 9) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isTpaHereRequests();
+                        data.setTpaHereRequests(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
+                // Slot 10: Payments
+                if (slot == 10) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isPayments();
+                        data.setPayments(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
+                // Slot 11: Shards Notifier
+                if (slot == 11) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isShardsNotifier();
+                        data.setShardsNotifier(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
                 // Allow bottom inventory events (dragging items in player inventory)
                 // BUT prevent shift-clicking into the GUI
             } else {

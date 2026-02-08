@@ -104,6 +104,30 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.quick_auction_buy")) {
                 data.setQuickAuctionBuy(cratesConfig.getBoolean("settings.quick_auction_buy"));
             }
+            if (cratesConfig.contains("settings.disable_mob_spawns")) {
+                data.setDisableMobSpawns(cratesConfig.getBoolean("settings.disable_mob_spawns"));
+            }
+            if (cratesConfig.contains("settings.sound_notifications")) {
+                data.setSoundNotifications(cratesConfig.getBoolean("settings.sound_notifications"));
+            }
+            if (cratesConfig.contains("settings.tpa_confirm_menus")) {
+                data.setTpaConfirmMenus(cratesConfig.getBoolean("settings.tpa_confirm_menus"));
+            }
+            if (cratesConfig.contains("settings.duel_requests")) {
+                data.setDuelRequests(cratesConfig.getBoolean("settings.duel_requests"));
+            }
+            if (cratesConfig.contains("settings.tpa_requests")) {
+                data.setTpaRequests(cratesConfig.getBoolean("settings.tpa_requests"));
+            }
+            if (cratesConfig.contains("settings.tpa_here_requests")) {
+                data.setTpaHereRequests(cratesConfig.getBoolean("settings.tpa_here_requests"));
+            }
+            if (cratesConfig.contains("settings.payments")) {
+                data.setPayments(cratesConfig.getBoolean("settings.payments"));
+            }
+            if (cratesConfig.contains("settings.shards_notifier")) {
+                data.setShardsNotifier(cratesConfig.getBoolean("settings.shards_notifier"));
+            }
         }
 
         // Load Money Data
@@ -180,6 +204,14 @@ public class PlayerDataManager {
         cratesConfig.set("settings.private_messages", data.isPrivateMessages());
         cratesConfig.set("settings.pay_alerts", data.isPayAlerts());
         cratesConfig.set("settings.quick_auction_buy", data.isQuickAuctionBuy());
+        cratesConfig.set("settings.disable_mob_spawns", data.isDisableMobSpawns());
+        cratesConfig.set("settings.sound_notifications", data.isSoundNotifications());
+        cratesConfig.set("settings.tpa_confirm_menus", data.isTpaConfirmMenus());
+        cratesConfig.set("settings.duel_requests", data.isDuelRequests());
+        cratesConfig.set("settings.tpa_requests", data.isTpaRequests());
+        cratesConfig.set("settings.tpa_here_requests", data.isTpaHereRequests());
+        cratesConfig.set("settings.payments", data.isPayments());
+        cratesConfig.set("settings.shards_notifier", data.isShardsNotifier());
 
         try {
             cratesConfig.save(cratesFile);

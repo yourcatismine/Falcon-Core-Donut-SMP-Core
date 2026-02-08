@@ -76,6 +76,28 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Check if target has disabled TPA Here requests
+        com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(target.getUniqueId());
+        if (targetData != null && !targetData.isTpaHereRequests()) {
+            String msg = ChatColor.translateAlternateColorCodes('&', "&cUser disabled tpahere requests.");
+            p.sendMessage(msg);
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        // Check Sender's "TPA Confirm Menus" setting
+        com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(p.getUniqueId());
+        if (senderData != null && !senderData.isTpaConfirmMenus()) {
+            // Send immediately
+            com.h2ph.managers.TpaRequestManager.getInstance().sendRequest(p, target,
+                    com.h2ph.managers.TpaRequestManager.RequestType.TPA_HERE);
+            return true;
+        }
+
         openTpaHereGUI(p, target);
         return true;
     }

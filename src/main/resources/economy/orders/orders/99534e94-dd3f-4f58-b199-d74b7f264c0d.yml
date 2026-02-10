@@ -1,0 +1,10 @@
+id: 99534e94-dd3f-4f58-b199-d74b7f264c0d
+owner: 01ce6620-2b1a-4202-8565-912638cd53f6
+item: GOLD_BLOCK
+requested: 60
+delivered: 60
+priceEach: 500000.0
+paid: 2.0E7
+canceled: true
+completed: true
+storage: []

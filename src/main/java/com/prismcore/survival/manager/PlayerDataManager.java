@@ -131,6 +131,15 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.tp_auto")) {
                 data.setTpAuto(cratesConfig.getBoolean("settings.tp_auto"));
             }
+            if (cratesConfig.contains("settings.auction_sort")) {
+                data.setAuctionSortOrder(cratesConfig.getString("settings.auction_sort"));
+            }
+            if (cratesConfig.contains("settings.auction_filter")) {
+                data.setAuctionFilter(cratesConfig.getString("settings.auction_filter"));
+            }
+            if (cratesConfig.contains("settings.auction_category")) {
+                data.setAuctionCategory(cratesConfig.getString("settings.auction_category"));
+            }
         }
 
         // Load Money Data
@@ -216,6 +225,9 @@ public class PlayerDataManager {
         cratesConfig.set("settings.payments", data.isPayments());
         cratesConfig.set("settings.shards_notifier", data.isShardsNotifier());
         cratesConfig.set("settings.tp_auto", data.isTpAuto());
+        cratesConfig.set("settings.auction_sort", data.getAuctionSortOrder());
+        cratesConfig.set("settings.auction_filter", data.getAuctionFilter());
+        cratesConfig.set("settings.auction_category", data.getAuctionCategory());
 
         try {
             cratesConfig.save(cratesFile);

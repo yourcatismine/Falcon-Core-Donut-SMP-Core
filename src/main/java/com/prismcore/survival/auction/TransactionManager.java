@@ -64,7 +64,7 @@ public class TransactionManager {
     }
 
     public void loadFromConfig() {
-        FileConfiguration cfg = this.controller.getSavesConfig();
+        FileConfiguration cfg = this.controller.getStorageConfig();
         this.transactions.clear();
         if (!cfg.isConfigurationSection("transactions")) {
             return;
@@ -93,7 +93,7 @@ public class TransactionManager {
     }
 
     public void saveToConfig() {
-        FileConfiguration cfg = this.controller.getSavesConfig();
+        FileConfiguration cfg = this.controller.getStorageConfig();
         if (cfg == null) {
             return;
         }

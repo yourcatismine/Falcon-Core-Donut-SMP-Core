@@ -1,0 +1,10 @@
+id: c6ffa73e-5423-439e-bdcb-39f199a8eebd
+owner: b7ce678c-e775-4207-8cef-bd0f89b8bf94
+item: MILK_BUCKET
+requested: 100
+delivered: 0
+priceEach: 10000.0
+paid: 1000000.0
+canceled: false
+completed: false
+storage: []

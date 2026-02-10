@@ -1,0 +1,135 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  org.bukkit.Bukkit
+ *  org.bukkit.ChatColor
+ *  org.bukkit.Location
+ *  org.bukkit.Material
+ *  org.bukkit.block.Block
+ *  org.bukkit.block.Sign
+ *  org.bukkit.block.data.BlockData
+ *  org.bukkit.configuration.ConfigurationSection
+ *  org.bukkit.entity.Entity
+ *  org.bukkit.entity.Player
+ *  org.bukkit.event.EventHandler
+ *  org.bukkit.event.Listener
+ *  org.bukkit.event.block.SignChangeEvent
+ *  org.bukkit.event.player.PlayerQuitEvent
+ *  org.bukkit.plugin.Plugin
+ *  org.bukkit.plugin.java.JavaPlugin
+ *  org.bukkit.util.Vector
+ */
+package com.prismcore.survival.orders;
+
+import java.lang.reflect.Method;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import com.prismcore.survival.orders.util.TaskUtil;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
+
+public final class Utils {
+    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    public static final DecimalFormat ONE_DECIMAL = new DecimalFormat("#.#");
+
+    private Utils() {
+    }
+
+    public static String formatColors(String input) {
+        if (input == null) {
+            return null;
+        }
+        Matcher matcher = HEX_PATTERN.matcher(input);
+        StringBuffer buffer = new StringBuffer(input.length() + 32);
+        while (matcher.find()) {
+            String hex = matcher.group(1);
+            StringBuilder repl = new StringBuilder("\u00a7x");
+            for (char c : hex.toCharArray()) {
+                repl.append('\u00a7').append(c);
+            }
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(repl.toString()));
+        }
+        matcher.appendTail(buffer);
+        return ChatColor.translateAlternateColorCodes((char) '&', (String) buffer.toString());
+    }
+
+    public static List<String> formatColors(List<String> lines) {
+        return lines.stream().map(Utils::formatColors).collect(Collectors.toList());
+    }
+
+    public static String applyPlaceholders(String s, Map<String, String> ph) {
+        if (s == null) {
+            return null;
+        }
+        String out = s;
+        for (Map.Entry<String, String> e : ph.entrySet()) {
+            out = out.replace("{" + e.getKey() + "}", String.valueOf(e.getValue()));
+        }
+        return Utils.formatColors(out);
+    }
+
+    public static List<String> applyPlaceholders(List<String> list, Map<String, String> ph) {
+        return list.stream().map(s -> Utils.applyPlaceholders(s, ph)).collect(Collectors.toList());
+    }
+
+    public static String abbr(double v) {
+        int i;
+        boolean neg = v < 0.0;
+        double n = Math.abs(v);
+        String[] u = new String[] { "", "K", "M", "B", "T" };
+        for (i = 0; n >= 1000.0 && i < u.length - 1; n /= 1000.0, ++i) {
+        }
+        String s = ONE_DECIMAL.format(n);
+        if (s.endsWith(".0")) {
+            s = s.substring(0, s.length() - 2);
+        }
+        return (neg ? "-" : "") + s + u[i];
+    }
+
+    public static String formatDuration(long millis) {
+        if (millis <= 0)
+            return "0m";
+        long seconds = millis / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+
+        minutes %= 60;
+        hours %= 24;
+
+        StringBuilder sb = new StringBuilder();
+        if (days > 0)
+            sb.append(days).append("d ");
+        if (hours > 0)
+            sb.append(hours).append("h ");
+        if (minutes > 0)
+            sb.append(minutes).append("m");
+
+        String res = sb.toString().trim();
+        return res.isEmpty() ? "0m" : res;
+    }
+}

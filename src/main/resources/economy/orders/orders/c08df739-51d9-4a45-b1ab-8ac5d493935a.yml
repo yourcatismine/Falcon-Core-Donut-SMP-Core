@@ -1,0 +1,10 @@
+id: c08df739-51d9-4a45-b1ab-8ac5d493935a
+owner: 738cd952-f123-48ce-bbf5-6ca29c1f5e43
+item: WATER_BUCKET
+requested: 10
+delivered: 10
+priceEach: 40000.0
+paid: 0.0
+canceled: false
+completed: true
+storage: []

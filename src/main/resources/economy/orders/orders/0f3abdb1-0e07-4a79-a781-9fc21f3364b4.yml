@@ -1,0 +1,10 @@
+id: 0f3abdb1-0e07-4a79-a781-9fc21f3364b4
+owner: 1eeec9bb-818f-4af1-8be1-c22885c71535
+item: GLASS
+requested: 0
+delivered: 0
+priceEach: 10000.0
+paid: 3000000.0
+canceled: true
+completed: true
+storage: []

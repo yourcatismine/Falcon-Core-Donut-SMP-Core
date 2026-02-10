@@ -153,6 +153,22 @@ commands:
     permission: prismcore.maintenance
     permission-message: You do not have permission to use this command.
 
+  redstone:
+    description: Open the redstone manager GUI
+    usage: /redstone
+    permission: prism.redstone.admin
+
+  order:
+    description: Open the orders GUI
+    usage: /order
+    aliases: [orders]
+
+  prismorder:
+    description: Admin commands for the orders system
+    usage: /prismorder <reload>
+    permission: prism.admin.orders
+    permission-message: You do not have permission to use this command.
+
   tpa:
     description: Request to teleport to another player
     usage: /tpa <player>

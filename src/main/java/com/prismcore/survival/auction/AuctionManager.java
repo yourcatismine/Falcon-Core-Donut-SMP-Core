@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 public class AuctionManager {
     private final AuctionController controller;
-    private final java.util.Map<UUID, String> sortPreferences;
+    // private final java.util.Map<UUID, String> sortPreferences; // Removed
     private final List<AuctionItem> items;
     private final int defaultTime;
     private final java.util.Map<UUID, List<OfflineSale>> pendingSales;
@@ -19,7 +19,8 @@ public class AuctionManager {
     public AuctionManager(AuctionController controller) {
         this.controller = controller;
         this.items = new ArrayList<AuctionItem>();
-        this.sortPreferences = new java.util.concurrent.ConcurrentHashMap<>();
+        // this.sortPreferences = new java.util.concurrent.ConcurrentHashMap<>(); //
+        // Removed
         this.pendingSales = new java.util.concurrent.ConcurrentHashMap<>();
         this.defaultTime = controller.getConfig().getInt("settings.item-time");
     }
@@ -28,8 +29,8 @@ public class AuctionManager {
         this.items.add(item);
     }
 
-    public void removeItem(AuctionItem item) {
-        this.items.remove(item);
+    public boolean removeItem(AuctionItem item) {
+        return this.items.remove(item);
     }
 
     public boolean isExpired(AuctionItem item) {
@@ -78,9 +79,9 @@ public class AuctionManager {
     }
 
     public void loadFromConfig() {
-        FileConfiguration cfg = this.controller.getSavesConfig();
+        FileConfiguration cfg = this.controller.getStorageConfig(); // Changed to getStorageConfig
         this.items.clear();
-        this.sortPreferences.clear();
+        // this.sortPreferences.clear(); // Removed
         this.pendingSales.clear();
 
         // Load Auctions
@@ -103,19 +104,7 @@ public class AuctionManager {
             }
         }
 
-        // Load Sort Preferences
-        if (cfg.contains("sort")) {
-            for (String key : cfg.getConfigurationSection("sort").getKeys(false)) {
-                try {
-                    UUID uuid = UUID.fromString(key);
-                    String mode = cfg.getString("sort." + key);
-                    if (mode != null) {
-                        this.sortPreferences.put(uuid, mode);
-                    }
-                } catch (Exception e) {
-                }
-            }
-        }
+        // Load Sort Preferences -> MOVED TO PLAYER DATA, REMOVED FROM HERE
 
         // Load Pending Sales
         if (cfg.contains("pending-sales")) {
@@ -138,7 +127,7 @@ public class AuctionManager {
     }
 
     public void saveToConfig() {
-        FileConfiguration cfg = this.controller.getSavesConfig();
+        FileConfiguration cfg = this.controller.getStorageConfig(); // Changed to getStorageConfig
         if (cfg == null) {
             return;
         }
@@ -154,11 +143,7 @@ public class AuctionManager {
             cfg.set(path + ".duration", (Object) item.getDuration());
         }
 
-        // Save Sort Preferences
-        cfg.set("sort", null); // Clear old to ensure clean state
-        for (java.util.Map.Entry<UUID, String> entry : this.sortPreferences.entrySet()) {
-            cfg.set("sort." + entry.getKey().toString(), entry.getValue());
-        }
+        // Save Sort Preferences -> MOVED TO PLAYER DATA, REMOVED FROM HERE
 
         // Save Pending Sales
         cfg.set("pending-sales", null);
@@ -176,11 +161,56 @@ public class AuctionManager {
     }
 
     public void setPlayerSort(UUID playerUUID, String mode) {
-        this.sortPreferences.put(playerUUID, mode);
+        // Delegate to PlayerData
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(playerUUID);
+        if (data != null) {
+            data.setAuctionSortOrder(mode);
+        }
     }
 
     public String getPlayerSort(UUID playerUUID) {
-        return this.sortPreferences.getOrDefault(playerUUID, "Highest Price");
+        // Delegate to PlayerData
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(playerUUID);
+        if (data != null) {
+            return data.getAuctionSortOrder();
+        }
+        return "Highest Price";
+    }
+
+    public void setPlayerFilter(UUID playerUUID, String filter) {
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(playerUUID);
+        if (data != null) {
+            data.setAuctionFilter(filter);
+        }
+    }
+
+    public String getPlayerFilter(UUID playerUUID) {
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(playerUUID);
+        if (data != null) {
+            return data.getAuctionFilter();
+        }
+        return "";
+    }
+
+    public void setPlayerCategory(UUID playerUUID, String category) {
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(playerUUID);
+        if (data != null) {
+            data.setAuctionCategory(category);
+        }
+    }
+
+    public String getPlayerCategory(UUID playerUUID) {
+        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(playerUUID);
+        if (data != null) {
+            return data.getAuctionCategory();
+        }
+        return "All";
     }
 
     public static class OfflineSale {

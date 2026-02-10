@@ -32,7 +32,8 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
         FileConfiguration cfg = this.controller.getConfig();
         Sound villagerNo = Sound.valueOf((String) cfg.getString("sounds.villager-no"));
         if (args.length == 0) {
-            player.removeMetadata("ah-filter", (Plugin) this.controller.getPlugin());
+            // player.removeMetadata("ah-filter", (Plugin) this.controller.getPlugin()); //
+            // Keep filter
             player.removeMetadata("ah-admin-view", (Plugin) this.controller.getPlugin());
             GUIHandler.openMainGUI(player, 1, this.controller);
             return true;

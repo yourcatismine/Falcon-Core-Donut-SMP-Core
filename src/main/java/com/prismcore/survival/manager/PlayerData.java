@@ -267,4 +267,32 @@ public class PlayerData {
     public void setTpAuto(boolean tpAuto) {
         this.tpAuto = tpAuto;
     }
+
+    private String auctionSortOrder = "Highest Price"; // Default
+    private String auctionFilter = "";
+    private String auctionCategory = "All";
+
+    public String getAuctionSortOrder() {
+        return auctionSortOrder;
+    }
+
+    public void setAuctionSortOrder(String auctionSortOrder) {
+        this.auctionSortOrder = auctionSortOrder;
+    }
+
+    public String getAuctionFilter() {
+        return auctionFilter;
+    }
+
+    public void setAuctionFilter(String auctionFilter) {
+        this.auctionFilter = auctionFilter;
+    }
+
+    public String getAuctionCategory() {
+        return auctionCategory;
+    }
+
+    public void setAuctionCategory(String auctionCategory) {
+        this.auctionCategory = auctionCategory;
+    }
 }

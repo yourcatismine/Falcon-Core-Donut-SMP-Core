@@ -35,6 +35,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.commands.admin.duels.DuelArenaManager duelArenaManager;
 
     private com.h2ph.maintenance.MaintenanceManager maintenanceManager;
+    private com.prismcore.survival.orders.OrdersModule ordersModule;
 
     @Override
     public void onLoad() {
@@ -103,11 +104,15 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
 
         // Initialize managers
+        this.redstoneManager = new com.h2ph.managers.RedstoneManager(this);
 
         // Register shop command
         this.shopCommand = new ShopCommand(this);
         getCommand("shop").setExecutor(shopCommand);
         getServer().getPluginManager().registerEvents(shopCommand, this);
+
+        // Register Redstone Command
+        getCommand("redstone").setExecutor(new com.h2ph.commands.admin.RedstoneCommand(this));
 
         // Register OffendPlugin (Moderation)
         this.offendPlugin = new com.h2ph.commands.admin.moderations.OffendPlugin(this);
@@ -346,6 +351,10 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager()
                 .registerEvents(new com.h2ph.maintenance.MaintenanceListener(this.maintenanceManager), this);
 
+        // Initialize Orders Module
+        this.ordersModule = new com.prismcore.survival.orders.OrdersModule(this);
+        this.ordersModule.enable();
+
         // Initialize and Start API Server
         this.apiServer = new com.h2ph.api.ApiServer(this);
         this.apiServer.start();
@@ -396,6 +405,10 @@ public class PrismSurvival extends JavaPlugin {
             this.apiServer.stop();
         }
 
+        if (this.ordersModule != null) {
+            this.ordersModule.disable();
+        }
+
         if (this.auctionController != null) {
             this.auctionController.disable();
         }
@@ -441,6 +454,16 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.commands.admin.duels.DuelArenaManager getDuelArenaManager() {
         return duelArenaManager;
+    }
+
+    public com.prismcore.survival.orders.OrdersModule getOrdersModule() {
+        return ordersModule;
+    }
+
+    private com.h2ph.managers.RedstoneManager redstoneManager;
+
+    public com.h2ph.managers.RedstoneManager getRedstoneManager() {
+        return redstoneManager;
     }
 
     public String normalizeKeyName(String keyName) {

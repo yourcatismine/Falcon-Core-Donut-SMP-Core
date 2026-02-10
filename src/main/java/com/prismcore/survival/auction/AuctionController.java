@@ -14,8 +14,8 @@ public class AuctionController {
     private AuctionManager auctionManager;
     private TransactionManager transactionManager;
     private GUIListener guiListener;
-    private File savesFile;
-    private FileConfiguration savesConfig;
+    private File storageFile;
+    private FileConfiguration storageConfig;
     private File filterFile;
     private FileConfiguration filterConfig;
     private File configFile;
@@ -33,7 +33,7 @@ public class AuctionController {
         boolean useVault = this.config.getBoolean("settings.use-vault", true);
         EconomyHandler.setup(plugin, useVault);
         // Logging is handled inside EconomyHandler setup now
-        this.setupSavesFile();
+        this.setupStorageFile();
         this.auctionManager.loadFromConfig();
         this.transactionManager.loadFromConfig();
         AHCommand ahCmd = new AHCommand(this);
@@ -77,13 +77,17 @@ public class AuctionController {
         loadConfig();
     }
 
-    private void setupSavesFile() {
-        this.savesFile = new File(plugin.getDataFolder(), "economy/auction/saves.yml");
-        if (!this.savesFile.exists()) {
-            this.savesFile.getParentFile().mkdirs();
-            plugin.saveResource("economy/auction/saves.yml", false);
+    private void setupStorageFile() {
+        this.storageFile = new File(plugin.getDataFolder(), "economy/auction/storage.yml");
+        if (!this.storageFile.exists()) {
+            this.storageFile.getParentFile().mkdirs();
+            try {
+                this.storageFile.createNewFile();
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not create storage.yml: " + e.getMessage());
+            }
         }
-        this.savesConfig = YamlConfiguration.loadConfiguration(this.savesFile);
+        this.storageConfig = YamlConfiguration.loadConfiguration(this.storageFile);
     }
 
     private void setupFilterFile() {
@@ -112,18 +116,18 @@ public class AuctionController {
         return this.transactionManager;
     }
 
-    public FileConfiguration getSavesConfig() {
-        return this.savesConfig;
+    public FileConfiguration getStorageConfig() {
+        return this.storageConfig;
     }
 
-    public void saveSavesFile() {
-        if (this.savesConfig == null || this.savesFile == null) {
+    public void saveStorageFile() {
+        if (this.storageConfig == null || this.storageFile == null) {
             return;
         }
         try {
-            this.savesConfig.save(this.savesFile);
+            this.storageConfig.save(this.storageFile);
         } catch (IOException e) {
-            plugin.getLogger().severe("Could not save saves.yml: " + e.getMessage());
+            plugin.getLogger().severe("Could not save storage.yml: " + e.getMessage());
         }
     }
 
@@ -243,7 +247,7 @@ public class AuctionController {
         if (this.transactionManager != null) {
             this.transactionManager.saveToConfig();
         }
-        this.saveSavesFile();
+        this.saveStorageFile();
     }
 
     public PrismSurvival getPlugin() {

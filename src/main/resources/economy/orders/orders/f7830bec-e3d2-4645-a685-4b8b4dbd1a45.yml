@@ -1,0 +1,10 @@
+id: f7830bec-e3d2-4645-a685-4b8b4dbd1a45
+owner: 00000000-0000-0000-0009-01fcf70580db
+item: SUGAR_CANE
+requested: 7
+delivered: 7
+priceEach: 1000.0
+paid: 993000.0
+canceled: true
+completed: true
+storage: []

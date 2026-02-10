@@ -34,14 +34,25 @@ public class GUIHandler {
         FileConfiguration cfg = controller.getConfig();
         String string = searchFilter = player.hasMetadata("ah-filter")
                 ? ((MetadataValue) player.getMetadata("ah-filter").get(0)).asString()
-                : "";
+                : controller.getAuctionManager().getPlayerFilter(player.getUniqueId());
         if (searchFilter == null) {
             searchFilter = "";
         }
         searchFilter = searchFilter.trim().toLowerCase();
+
+        // Ensure metadata is set so other parts of the plugin can read it
+        if (!player.hasMetadata("ah-filter") && !searchFilter.isEmpty()) {
+            player.setMetadata("ah-filter", new FixedMetadataValue(controller.getPlugin(), searchFilter));
+        }
+
         String category = player.hasMetadata("ah-cat")
                 ? ((MetadataValue) player.getMetadata("ah-cat").get(0)).asString()
-                : "All";
+                : controller.getAuctionManager().getPlayerCategory(player.getUniqueId());
+
+        // Ensure metadata is set
+        if (!player.hasMetadata("ah-cat")) {
+            player.setMetadata("ah-cat", new FixedMetadataValue(controller.getPlugin(), category));
+        }
         List<AuctionItem> all = controller.getAuctionManager().getActiveItems();
         ArrayList<AuctionItem> toDisplay = new ArrayList<AuctionItem>();
         for (AuctionItem ai : all) {

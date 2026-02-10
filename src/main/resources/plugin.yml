@@ -6,7 +6,7 @@ author: h2ph
 folia-supported: true
 description: Advanced shop system with multi-currency support
 depend: [Vault, packetevents]
-softdepend: [PlaceholderAPI, WorldEdit, FastAsyncWorldEdit]
+softdepend: [PlaceholderAPI, WorldEdit, FastAsyncWorldEdit, LuckPerms]
 
 commands:
   shop:

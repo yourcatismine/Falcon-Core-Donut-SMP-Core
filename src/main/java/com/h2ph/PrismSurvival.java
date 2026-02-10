@@ -64,6 +64,9 @@ public class PrismSurvival extends JavaPlugin {
         // Register ChatFilter
         getServer().getPluginManager().registerEvents(new com.prismcore.survival.survival.ChatFilter(this), this);
 
+        // Register ChatFormatter
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.survival.ChatFormatter(this), this);
+
         // Load persistent update
         loadUpdateFromConfig();
 

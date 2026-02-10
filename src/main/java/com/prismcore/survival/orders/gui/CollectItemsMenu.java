@@ -87,6 +87,12 @@ public class CollectItemsMenu
     }
 
     public void open() {
+        if (this.order.completed && this.order.storage.isEmpty()) {
+            this.module.orders().deleteOrder(this.order);
+            this.module.cfg().message(this.p, "&aOrder completed and collected! Deleted.");
+            new YourOrdersMenu(this.module, this.p).open();
+            return;
+        }
         if (this.order.storage.isEmpty()) {
             this.module.cfg().message(this.p, "&cNo items to collect.");
             this.p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
@@ -145,185 +151,179 @@ public class CollectItemsMenu
         if (e.getView().getTopInventory().getHolder() != this) {
             return;
         }
-        e.setCancelled(true);
-        if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR) {
+
+        Inventory top = e.getView().getTopInventory();
+        boolean clickedTop = e.getClickedInventory() != null && e.getClickedInventory().equals((Object) top);
+        boolean clickedPlayer = e.getClickedInventory() != null && e.getClickedInventory().getHolder() == this.p;
+
+        if (e.getAction() == org.bukkit.event.inventory.InventoryAction.COLLECT_TO_CURSOR) {
+            e.setCancelled(true);
             return;
         }
 
         int rows = this.rows();
-        int prev = (rows - 1) * 9;
-        int next = rows * 9 - 1;
-        int drop = rows * 9 - 2;
-        Inventory top = e.getView().getTopInventory();
-        boolean clickedTop = e.getClickedInventory() != null && e.getClickedInventory().equals((Object) top);
-        boolean clickedPlayer = e.getClickedInventory() != null && e.getClickedInventory().getHolder() == this.p;
         int slot = e.getSlot();
-        if (clickedTop && slot >= (rows - 1) * 9) {
-            // Prevent spam clicking
-            long now = System.currentTimeMillis();
-            if (now - lastClickTime < CLICK_COOLDOWN_MS) {
-                return;
-            }
-            lastClickTime = now;
 
-            if (slot == prev) {
-                if (this.currentPage > 0) {
-                    int prevPage = Math.max(0, this.currentPage - 1);
-                    this.module.cfg().play(this.p, "sounds.page", "UI_BUTTON_CLICK", 1.0f, 1.1f);
-                    this.internalPageSwitch = true;
-                    TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                            () -> new CollectItemsMenu(this.module, this.p, this.order, prevPage).open(), 1L);
-                }
-                return;
-            }
-            if (slot == next) {
-                if (this.currentPage < maxPage()) {
-                    int nextPage = Math.min(this.maxPage(), this.currentPage + 1);
-                    this.module.cfg().play(this.p, "sounds.page", "UI_BUTTON_CLICK", 1.0f, 1.1f);
-                    this.internalPageSwitch = true;
-                    TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                            () -> new CollectItemsMenu(this.module, this.p, this.order, nextPage).open(), 1L);
-                }
-                return;
-            }
-            if (slot == drop) {
-                // Inline drop logic
-                int per = this.perPage();
-                int from = this.currentPage * per;
-                int to = Math.min(this.order.storage.size(), from + per);
-
-                List<ItemStack> toDrop = new ArrayList<>();
-                if (to > from) {
-                    for (int i = from; i < to; i++) {
-                        toDrop.add(this.order.storage.get(i).clone());
-                    }
-                    this.order.storage.subList(from, to).clear();
-                }
-
-                Location eye = this.p.getEyeLocation();
-                for (ItemStack item : toDrop) {
-                    if (item != null && item.getType() != Material.AIR) {
-                        Item dropped = this.p.getWorld().dropItem(eye, item);
-                        dropped.setVelocity(eye.getDirection().multiply(0.25));
-                    }
-                }
-
-                this.module.orders().saveOrder(this.order);
-                this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
-
-                // If storage is now empty and completed, it will be deleted in open()
-                this.internalPageSwitch = true;
-                this.open();
-                return;
-            }
-            return;
-        }
-        if (clickedPlayer) {
-            if (e.isShiftClick()) {
-                e.setCancelled(true);
-            }
-            return;
-        }
         if (clickedTop) {
-            e.setCancelled(true); // BLOCK ALL INTERACTION IN TOP INV
+            int prev = (rows - 1) * 9;
+            int next = rows * 9 - 1;
+            int drop = rows * 9 - 2;
 
             if (slot >= (rows - 1) * 9) {
-                // Prevention for spam clicking handled above in existing code?
-                // No, the existing code handled bottom row actions separately but we need to
-                // merge logic or handle it here.
-                // The existing code at line 142 handles the bottom row.
-                // This block is for "clickedTop" but NOT the bottom row (handled by previous
-                // if).
-                // Wait, the previous block (lines 142-182) handles slot >= (rows-1)*9.
-                // So if we are here, slot < (rows-1)*9. This is the item area.
+                e.setCancelled(true);
+                if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR) {
+                    return;
+                }
+
+                // Prevent spam clicking
+                long now = System.currentTimeMillis();
+                if (now - lastClickTime < CLICK_COOLDOWN_MS) {
+                    return;
+                }
+                lastClickTime = now;
+
+                if (slot == prev) {
+                    if (this.currentPage > 0) {
+                        int prevPage = Math.max(0, this.currentPage - 1);
+                        this.module.cfg().play(this.p, "sounds.page", "UI_BUTTON_CLICK", 1.0f, 1.1f);
+                        this.internalPageSwitch = true;
+                        TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
+                                () -> new CollectItemsMenu(this.module, this.p, this.order, prevPage).open(), 1L);
+                    }
+                    return;
+                }
+                if (slot == next) {
+                    if (this.currentPage < maxPage()) {
+                        int nextPage = Math.min(this.maxPage(), this.currentPage + 1);
+                        this.module.cfg().play(this.p, "sounds.page", "UI_BUTTON_CLICK", 1.0f, 1.1f);
+                        this.internalPageSwitch = true;
+                        TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
+                                () -> new CollectItemsMenu(this.module, this.p, this.order, nextPage).open(), 1L);
+                    }
+                    return;
+                }
+                if (slot == drop) {
+                    // Inline drop logic
+                    int per = this.perPage();
+                    int from = this.currentPage * per;
+                    int to = Math.min(this.order.storage.size(), from + per);
+
+                    List<ItemStack> toDrop = new ArrayList<>();
+                    if (to > from) {
+                        for (int i = from; i < to; i++) {
+                            toDrop.add(this.order.storage.get(i).clone());
+                        }
+                        this.order.storage.subList(from, to).clear();
+                    }
+
+                    Location eye = this.p.getEyeLocation();
+                    for (ItemStack item : toDrop) {
+                        if (item != null && item.getType() != Material.AIR) {
+                            Item dropped = this.p.getWorld().dropItem(eye, item);
+                            dropped.setVelocity(eye.getDirection().multiply(0.25));
+                        }
+                    }
+
+                    this.module.orders().saveOrder(this.order);
+                    this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
+
+                    this.internalPageSwitch = true;
+                    this.open();
+                    return;
+                }
+                return;
             }
 
-            // Logic for item collection (Core Fix)
+            // Item area in top inventory
             if (slot < (rows - 1) * 9) {
-                // Determine index in storage
+                org.bukkit.event.inventory.InventoryAction action = e.getAction();
+                boolean isTaking = action == org.bukkit.event.inventory.InventoryAction.PICKUP_ALL
+                        || action == org.bukkit.event.inventory.InventoryAction.PICKUP_HALF
+                        || action == org.bukkit.event.inventory.InventoryAction.PICKUP_ONE
+                        || action == org.bukkit.event.inventory.InventoryAction.PICKUP_SOME
+                        || action == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY;
+
+                if (!isTaking) {
+                    e.setCancelled(true);
+                    return;
+                }
+
+                // Handle secure collection
+                e.setCancelled(true); // We handle the transfer manually to ensure atoms
                 int per = this.perPage();
                 int index = (this.currentPage * per) + slot;
 
                 if (index >= 0 && index < this.order.storage.size()) {
                     ItemStack item = this.order.storage.get(index);
                     if (item != null && item.getType() != Material.AIR) {
-                        // Securely collect logic
                         long now = System.currentTimeMillis();
                         if (now - lastClickTime < CLICK_COOLDOWN_MS)
                             return;
                         lastClickTime = now;
 
-                        // Check if player has space
-                        if (this.p.getInventory().firstEmpty() == -1) {
-                            // Check if can merge? Simpler to require empty slot or attempt add
-                            HashMap<Integer, ItemStack> left = this.p.getInventory().addItem(item);
-                            if (!left.isEmpty()) {
-                                // Full, rollback (virtually, we haven't removed yet if we used clone, but
-                                // addItem modifies input?)
-                                // addItem returns what COULD NOT be added.
-                                // If left is not empty, it means we couldn't fit it all.
-                                // For simplicity, if inv is full, just say so.
-                                this.module.cfg().message(this.p, "&cInventory full!");
-                                return;
-                            } else {
-                                // Success transaction
-                                this.order.storage.remove(index);
-                                this.module.orders().saveOrder(this.order); // Save immediately
+                        ItemStack toAdd = item.clone();
+                        int initialAmount = toAdd.getAmount();
 
+                        // If it's a shift click, try to add to inventory.
+                        // If it's a normal pickup, try to set to cursor.
+                        if (action == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                            HashMap<Integer, ItemStack> leftovers = this.p.getInventory().addItem(toAdd);
+                            int rem = leftovers.isEmpty() ? 0 : leftovers.get(0).getAmount();
+                            if (rem < initialAmount) {
+                                int taken = initialAmount - rem;
+                                if (rem == 0) {
+                                    this.order.storage.remove(index);
+                                } else {
+                                    item.setAmount(rem);
+                                }
+                                this.module.orders().saveOrder(this.order);
                                 this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f, 1.0f);
-
-                                // Refresh current page
+                                this.internalPageSwitch = true;
                                 this.open();
+                            } else {
+                                this.module.cfg().message(this.p, "&cInventory full!");
                             }
                         } else {
-                            // Determine allow generic add
-                            HashMap<Integer, ItemStack> left = this.p.getInventory().addItem(item);
-                            if (!left.isEmpty()) {
-                                // Should not happen if firstEmpty != -1 generally, unless max stack issues
-                                // But handling leftovers:
-                                // If we collected it, we removed it from storage.
-                                // But wait, we shouldn't remove until we know we added it.
-                                // The addItem acts on the player inventory.
+                            // Pickup to cursor
+                            ItemStack cursor = e.getView().getCursor();
+                            if (cursor == null || cursor.getType() == Material.AIR) {
+                                // Full pickup or half pickup?
+                                int toTake = initialAmount;
+                                if (action == org.bukkit.event.inventory.InventoryAction.PICKUP_HALF) {
+                                    toTake = (int) Math.ceil(initialAmount / 2.0);
+                                } else if (action == org.bukkit.event.inventory.InventoryAction.PICKUP_ONE) {
+                                    toTake = 1;
+                                }
 
-                                // Re-add leftovers to inventory? No, we haven't removed from storage yet
-                                // actually.
-                                // We need to deduct what was added.
-                                // item is a reference to storage? No, get() returns ref.
-                                // But addItem modifies the stack you pass to it to reflect REMAINDER?
-                                // Bukkit API: addItem(ItemStack... items) - "Returns a HashMap containing items
-                                // that could not be stored"
-                                // It does NOT modify the input ItemStacks in some versions?
-                                // Actually it usually does NOT modify the input stack in recent versions, it
-                                // returns a new map of leftovers.
-                                // Let's assume complete success or fail for simplicity, or handle partial?
+                                ItemStack taking = toAdd.clone();
+                                taking.setAmount(toTake);
+                                e.getView().setCursor(taking);
 
-                                // Better approach:
-                                ItemStack toAdd = item.clone();
-                                HashMap<Integer, ItemStack> leftovers = this.p.getInventory().addItem(toAdd);
-
-                                if (leftovers.isEmpty()) {
-                                    // All added
+                                if (toTake >= initialAmount) {
                                     this.order.storage.remove(index);
+                                } else {
+                                    item.setAmount(initialAmount - toTake);
+                                }
+                                this.module.orders().saveOrder(this.order);
+                                this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f, 1.0f);
+                                this.internalPageSwitch = true;
+                                this.open();
+                            } else if (cursor.isSimilar(toAdd)) {
+                                // Merge with cursor?
+                                int canTake = cursor.getMaxStackSize() - cursor.getAmount();
+                                if (canTake > 0) {
+                                    int toTake = Math.min(canTake, initialAmount);
+                                    cursor.setAmount(cursor.getAmount() + toTake);
+
+                                    if (toTake >= initialAmount) {
+                                        this.order.storage.remove(index);
+                                    } else {
+                                        item.setAmount(initialAmount - toTake);
+                                    }
                                     this.module.orders().saveOrder(this.order);
                                     this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f, 1.0f);
+                                    this.internalPageSwitch = true;
                                     this.open();
-                                } else {
-                                    // Partial or None added
-                                    // We need to calculate what was actually taken.
-                                    int initial = item.getAmount();
-                                    int rem = leftovers.get(0).getAmount(); // Assuming 1 stack
-
-                                    if (rem < initial) {
-                                        // Some were taken
-                                        int taken = initial - rem;
-                                        item.setAmount(rem); // Update storage directly
-                                        this.module.orders().saveOrder(this.order);
-                                        this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f,
-                                                1.0f);
-                                        this.open();
-                                    } else {
-                                        this.module.cfg().message(this.p, "&cInventory full!");
-                                    }
                                 }
                             }
                         }
@@ -332,12 +332,25 @@ public class CollectItemsMenu
             }
             return;
         }
-        e.setCancelled(true);
+
+        if (clickedPlayer) {
+            if (e.isShiftClick()) {
+                e.setCancelled(true); // Don't allow shift clicking into the GUI
+            }
+            // Allow normal interaction within player's inventory
+            return;
+        }
     }
 
     @Override
     public void onDrag(InventoryDragEvent e) {
-        e.setCancelled(true); // Always block drag
+        // Block dragging that touches the top inventory slots
+        for (int slot : e.getRawSlots()) {
+            if (slot < e.getView().getTopInventory().getSize()) {
+                e.setCancelled(true);
+                return;
+            }
+        }
     }
 
     @Override

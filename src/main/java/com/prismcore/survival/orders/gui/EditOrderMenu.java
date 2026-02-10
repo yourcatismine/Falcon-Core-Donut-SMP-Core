@@ -155,11 +155,17 @@ public class EditOrderMenu
         if (e.getClickedInventory() == null) {
             return;
         }
-        if (e.getClickedInventory().getHolder() != this) {
+
+        // Handle clicks in the GUI itself
+        if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
+        } else {
+            // Player inventory click: block shift-clicking into the GUI
+            if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                e.setCancelled(true);
+            }
             return;
         }
-        e.setCancelled(true);
         int slot = e.getSlot();
 
         boolean hasItemsToCollect = !this.order.storage.isEmpty();

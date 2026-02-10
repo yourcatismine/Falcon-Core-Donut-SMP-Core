@@ -204,10 +204,21 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
 
     @Override
     public void onClick(InventoryClickEvent e) {
-        if (e.getClickedInventory() == null || e.getClickedInventory().getHolder() != this) {
+        if (e.getClickedInventory() == null) {
             return;
         }
-        e.setCancelled(true);
+
+        // Handle clicks in the GUI itself
+        if (e.getClickedInventory().getHolder() == this) {
+            e.setCancelled(true);
+        } else {
+            // Player inventory click: block shift-clicking into the GUI
+            if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                e.setCancelled(true);
+            }
+            return;
+        }
+
         int slot = e.getSlot();
 
         // Back

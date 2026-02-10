@@ -66,11 +66,17 @@ public class DeleteOrderMenu
         if (e.getClickedInventory() == null) {
             return;
         }
-        if (e.getClickedInventory().getHolder() != this) {
+
+        // Handle clicks in the GUI itself
+        if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
+        } else {
+            // Player inventory click: block shift-clicking into the GUI
+            if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                e.setCancelled(true);
+            }
             return;
         }
-        e.setCancelled(true);
         if (e.getCurrentItem() == null || e.getCurrentItem().getType() == org.bukkit.Material.AIR) {
             return;
         }
@@ -83,9 +89,20 @@ public class DeleteOrderMenu
             return;
         }
         if (slot == confirm) {
+            // Real-time check to prevent deleting orders with pending items (co-op race
+            // condition)
+            if (!this.order.storage.isEmpty()) {
+                this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                this.p.sendMessage(com.prismcore.survival.orders.Utils
+                        .formatColors("&cCannot delete: items were delivered just now! Please collect them first."));
+                new EditOrderMenu(this.module, this.p, this.order).open();
+                return;
+            }
+
             this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
             this.module.orders().cancel(this.order);
             new YourOrdersMenu(this.module, this.p).open();
+            return;
         }
     }
 

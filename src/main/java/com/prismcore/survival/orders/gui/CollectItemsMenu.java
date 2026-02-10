@@ -88,16 +88,6 @@ public class CollectItemsMenu
 
     public void open() {
         if (this.order.storage.isEmpty()) {
-            if (this.order.completed) {
-                // Order is completed and no items left to collect -> Delete it
-                this.module.orders().deleteOrder(this.order);
-                this.module.cfg().message(this.p, "&aOrder completed and all items collected!");
-                new YourOrdersMenu(this.module, this.p).open();
-                return;
-            }
-            // If not completed but empty, we still show the message if it was an explicit
-            // open.
-            // But we'll use a boolean to skip it if it's a refresh? Or just handle it here.
             this.module.cfg().message(this.p, "&cNo items to collect.");
             this.p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     new TextComponent(Utils.formatColors("&cNo items to collect.")));
@@ -360,14 +350,7 @@ public class CollectItemsMenu
             return;
         }
 
-        if (this.order.storage.isEmpty() && this.order.completed) {
-            this.module.orders().deleteOrder(this.order);
-            TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                    () -> new YourOrdersMenu(this.module, this.p).open(),
-                    1L);
-        } else {
-            TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                    () -> new EditOrderMenu(this.module, this.p, this.order).open(), 1L);
-        }
+        TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
+                () -> new EditOrderMenu(this.module, this.p, this.order).open(), 1L);
     }
 }

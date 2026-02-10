@@ -342,6 +342,10 @@ public class OrderManager {
             o.completed = cfg.getBoolean("completed");
 
             if (isLegacy) {
+                // If it was canceled, we skip it (effectively deleting it from the new system)
+                if (o.canceled) {
+                    return;
+                }
                 // Reset creation time for migrated orders
                 o.creationTime = System.currentTimeMillis();
                 // isLegacy forces save at the end of method
@@ -362,12 +366,22 @@ public class OrderManager {
                         ItemStack item = itemFromBase64((String) ois);
                         if (item != null) {
                             o.storage.add(item);
+                        } else {
+                            this.pl.getLogger().warning("Failed to deserialize item for order " + o.id);
                         }
                     } else if (ois instanceof ItemStack) {
                         o.storage.add((ItemStack) ois);
                     }
                 }
             }
+            if (isLegacy) {
+                // If it's fully delivered, completed, and storage is empty, we don't need to
+                // migrate it
+                if (o.completed && o.requested == o.delivered && o.storage.isEmpty()) {
+                    return;
+                }
+            }
+
             this.orders.put(o.id, o);
 
             if (isLegacy) {
@@ -391,6 +405,7 @@ public class OrderManager {
             oos.close();
             return Base64.getEncoder().encodeToString(baos.toByteArray());
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -408,6 +423,7 @@ public class OrderManager {
             ois.close();
             return item;
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }

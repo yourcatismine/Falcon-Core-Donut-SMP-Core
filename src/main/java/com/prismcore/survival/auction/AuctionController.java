@@ -81,11 +81,7 @@ public class AuctionController {
         this.storageFile = new File(plugin.getDataFolder(), "economy/auction/storage.yml");
         if (!this.storageFile.exists()) {
             this.storageFile.getParentFile().mkdirs();
-            try {
-                this.storageFile.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().severe("Could not create storage.yml: " + e.getMessage());
-            }
+            plugin.saveResource("economy/auction/storage.yml", false);
         }
         this.storageConfig = YamlConfiguration.loadConfiguration(this.storageFile);
     }

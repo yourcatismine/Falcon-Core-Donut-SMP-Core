@@ -4,9 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.h2ph.PrismSurvival;
 import org.bukkit.Material;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.ItemMeta;
+import com.google.gson.JsonArray;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -73,18 +77,48 @@ public class InventoryLogManager {
         JsonObject obj = new JsonObject();
         obj.addProperty("type", item.getType().name());
         obj.addProperty("amount", item.getAmount());
+
         if (item.hasItemMeta()) {
-            if (item.getItemMeta().hasDisplayName()) {
-                obj.addProperty("name", item.getItemMeta().getDisplayName());
+            ItemMeta meta = item.getItemMeta();
+            if (meta.hasDisplayName()) {
+                obj.addProperty("name", meta.getDisplayName());
             }
-            if (item.getItemMeta().hasEnchants()) {
+
+            // Lore
+            if (meta.hasLore()) {
+                JsonArray lore = new JsonArray();
+                for (String line : meta.getLore()) {
+                    lore.add(line);
+                }
+                obj.add("lore", lore);
+            }
+
+            // Enchantments
+            if (meta.hasEnchants()) {
                 JsonObject enchants = new JsonObject();
-                item.getItemMeta().getEnchants().forEach((enchant, level) -> {
-                    // Use key name or translation key for better display, but name() is standard
-                    // for internal keys
+                meta.getEnchants().forEach((enchant, level) -> {
                     enchants.addProperty(enchant.getKey().getKey().toLowerCase(), level);
                 });
                 obj.add("enchantments", enchants);
+            }
+
+            // Container Contents (Shulker Boxes, etc.)
+            if (meta instanceof BlockStateMeta) {
+                BlockStateMeta bsm = (BlockStateMeta) meta;
+                if (bsm.getBlockState() instanceof Container) {
+                    Container container = (Container) bsm.getBlockState();
+                    JsonObject contents = new JsonObject();
+                    ItemStack[] innerItems = container.getInventory().getContents();
+                    for (int i = 0; i < innerItems.length; i++) {
+                        ItemStack inner = innerItems[i];
+                        if (inner != null && inner.getType() != Material.AIR) {
+                            contents.add(String.valueOf(i), serializeItem(inner));
+                        }
+                    }
+                    if (contents.size() > 0) {
+                        obj.add("contents", contents);
+                    }
+                }
             }
         }
         return obj;

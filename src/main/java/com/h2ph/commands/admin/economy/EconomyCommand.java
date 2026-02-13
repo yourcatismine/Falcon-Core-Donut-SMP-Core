@@ -127,7 +127,7 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
         switch (action) {
             case "give":
                 newMoney = currentMoney + amount;
-                data.setMoney(newMoney);
+                data.setMoney(newMoney, "Admin Adjustment");
                 sender.sendMessage(ChatColor.GREEN + "Gave " + ChatColor.GOLD + "$" + formatNumber(amount) +
                         ChatColor.GREEN + " to " + ChatColor.YELLOW + targetName +
                         ChatColor.GREEN + ". New balance: " + ChatColor.GOLD + "$" + formatNumber(newMoney));
@@ -135,14 +135,14 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
 
             case "set":
                 newMoney = amount;
-                data.setMoney(newMoney);
+                data.setMoney(newMoney, "Admin Adjustment");
                 sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + targetName +
                         ChatColor.GREEN + "'s balance to " + ChatColor.GOLD + "$" + formatNumber(newMoney));
                 break;
 
             case "remove":
                 newMoney = Math.max(0, currentMoney - amount);
-                data.setMoney(newMoney);
+                data.setMoney(newMoney, "Admin Adjustment");
                 double actualRemoved = currentMoney - newMoney;
                 sender.sendMessage(ChatColor.GREEN + "Removed " + ChatColor.GOLD + "$" + formatNumber(actualRemoved) +
                         ChatColor.GREEN + " from " + ChatColor.YELLOW + targetName +

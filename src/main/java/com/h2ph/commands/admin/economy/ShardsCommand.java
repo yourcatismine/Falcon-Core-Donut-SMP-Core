@@ -259,8 +259,8 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         PlayerData targetData = plugin.getPlayerDataManager().get(target.getUniqueId());
 
         // Execute transaction
-        senderData.setShards(senderShards - amount);
-        targetData.setShards(targetData.getShards() + amount);
+        senderData.removeShards(amount, "Payment to " + target.getName());
+        targetData.addShards(amount, "Payment from " + sender.getName());
 
         // Save data
         plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
@@ -368,7 +368,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         switch (action) {
             case "give":
                 newShards = currentShards + amount;
-                data.setShards(newShards);
+                data.setShards(newShards, "Admin Adjustment");
                 sender.sendMessage(ChatColor.GREEN + "Gave " + ChatColor.GOLD + amount +
                         ChatColor.GREEN + " shards to " + ChatColor.YELLOW + target.getName() +
                         ChatColor.GREEN + ". New balance: " + ChatColor.GOLD + (int) newShards);
@@ -376,14 +376,14 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
             case "set":
                 newShards = amount;
-                data.setShards(newShards);
+                data.setShards(newShards, "Admin Adjustment");
                 sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + target.getName() +
                         ChatColor.GREEN + "'s shards to " + ChatColor.GOLD + amount);
                 break;
 
             case "remove":
                 newShards = Math.max(0, currentShards - amount);
-                data.setShards(newShards);
+                data.setShards(newShards, "Admin Adjustment");
                 int actualRemoved = (int) (currentShards - newShards);
                 sender.sendMessage(ChatColor.GREEN + "Removed " + ChatColor.GOLD + actualRemoved +
                         ChatColor.GREEN + " shards from " + ChatColor.YELLOW + target.getName() +

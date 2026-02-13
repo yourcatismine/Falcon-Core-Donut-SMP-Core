@@ -110,6 +110,34 @@ public final class Utils {
         return (neg ? "-" : "") + s + u[i];
     }
 
+    public static double parseAbbr(String input) {
+        if (input == null || input.isBlank()) {
+            return Double.NaN;
+        }
+        input = input.trim().toUpperCase();
+        double multiplier = 1.0;
+        if (input.endsWith("K")) {
+            multiplier = 1000.0;
+            input = input.substring(0, input.length() - 1);
+        } else if (input.endsWith("M")) {
+            multiplier = 1000000.0;
+            input = input.substring(0, input.length() - 1);
+        } else if (input.endsWith("B")) {
+            multiplier = 1000000000.0;
+            input = input.substring(0, input.length() - 1);
+        } else if (input.endsWith("T")) {
+            multiplier = 1000000000000.0;
+            input = input.substring(0, input.length() - 1);
+        }
+
+        try {
+            double val = Double.parseDouble(input);
+            return val * multiplier;
+        } catch (NumberFormatException e) {
+            return Double.NaN;
+        }
+    }
+
     public static String formatDuration(long millis) {
         if (millis <= 0)
             return "0m";

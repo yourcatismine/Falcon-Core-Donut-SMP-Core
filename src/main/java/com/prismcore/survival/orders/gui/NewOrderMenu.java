@@ -207,16 +207,17 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                 if (input == null || input.isBlank())
                     return;
                 try {
-                    int val = Integer.parseInt(input);
-                    if (val <= 0) {
+                    double val = Utils.parseAbbr(input);
+                    if (Double.isNaN(val) || val <= 0) {
                         this.module.cfg().message(this.p, "&cInvalid amount.");
                     } else {
+                        int finalVal = (int) val;
                         com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
                                 com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                                "Set amount to " + val + " for this order");
-                        this.amount = val;
+                                "Set amount to " + finalVal + " for this order");
+                        this.amount = finalVal;
                     }
-                } catch (NumberFormatException ex) {
+                } catch (Exception ex) {
                     this.module.cfg().message(this.p, "&cInvalid number.");
                 }
                 new NewOrderMenu(this.module, this.p, this.selected, this.amount, this.price).open();
@@ -234,8 +235,8 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                 if (input == null || input.isBlank())
                     return;
                 try {
-                    double val = Double.parseDouble(input);
-                    if (!Double.isFinite(val) || val <= 0) {
+                    double val = Utils.parseAbbr(input);
+                    if (Double.isNaN(val) || !Double.isFinite(val) || val <= 0) {
                         this.module.cfg().message(this.p, "&cInvalid price.");
                     } else {
                         com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
@@ -243,7 +244,7 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                                 "Set price to " + val + " for this order");
                         this.price = val;
                     }
-                } catch (NumberFormatException ex) {
+                } catch (Exception ex) {
                     this.module.cfg().message(this.p, "&cInvalid price number.");
                 }
                 new NewOrderMenu(this.module, this.p, this.selected, this.amount, this.price).open();

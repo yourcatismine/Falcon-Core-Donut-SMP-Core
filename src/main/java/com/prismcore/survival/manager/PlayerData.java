@@ -1,11 +1,13 @@
 package com.prismcore.survival.manager;
 
+import com.h2ph.PrismSurvival;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class PlayerData {
 
+    private final PrismSurvival plugin;
     private final UUID uuid;
     private double shards;
     private double money;
@@ -17,7 +19,8 @@ public class PlayerData {
     private String name; // Cached name
     private long shardBoosterExpiry; // Timestamp when shard booster expires
 
-    public PlayerData(UUID uuid) {
+    public PlayerData(PrismSurvival plugin, UUID uuid) {
+        this.plugin = plugin;
         this.uuid = uuid;
         this.shards = 0.0;
         this.money = 0.0;
@@ -43,15 +46,31 @@ public class PlayerData {
     }
 
     public void setShards(double shards) {
+        this.setShards(shards, "Manual Set");
+    }
+
+    public void setShards(double shards, String source) {
+        double old = this.shards;
         this.shards = shards;
+        logEconomyChange(shards - old, "SHARDS", source);
     }
 
     public void addShards(double amount) {
+        this.addShards(amount, "Unknown");
+    }
+
+    public void addShards(double amount, String source) {
         this.shards += amount;
+        logEconomyChange(amount, "SHARDS", source);
     }
 
     public void removeShards(double amount) {
+        this.removeShards(amount, "Unknown");
+    }
+
+    public void removeShards(double amount, String source) {
         this.shards -= amount;
+        logEconomyChange(-amount, "SHARDS", source);
     }
 
     public double getMoney() {
@@ -59,21 +78,59 @@ public class PlayerData {
     }
 
     public void setMoney(double money) {
+        this.setMoney(money, "Manual Set");
+    }
+
+    public void setMoney(double money, String source) {
         if (!Double.isFinite(money))
             return;
+        double old = this.money;
         this.money = money;
+        logEconomyChange(money - old, "MONEY", source);
     }
 
     public void addMoney(double amount) {
+        this.addMoney(amount, "Unknown");
+    }
+
+    public void addMoney(double amount, String source) {
         if (!Double.isFinite(amount) || amount < 0)
             return;
         this.money += amount;
+        logEconomyChange(amount, "MONEY", source);
     }
 
     public void removeMoney(double amount) {
+        this.removeMoney(amount, "Unknown");
+    }
+
+    public void removeMoney(double amount, String source) {
         if (!Double.isFinite(amount) || amount < 0)
             return;
         this.money -= amount;
+        logEconomyChange(-amount, "MONEY", source);
+    }
+
+    private void logEconomyChange(double change, String type, String source) {
+        if (Math.abs(change) < 0.001)
+            return;
+
+        String prefix = change >= 0 ? "+" : "";
+        String symbol = type.equals("MONEY") ? "$" : "";
+        String suffix = type.equals("SHARDS") ? "x Shards" : "";
+
+        String formattedChange = prefix + symbol + String.format("%,.2f", change) + suffix;
+        double currentBalance = type.equals("MONEY") ? this.money : this.shards;
+        String formattedBalance = symbol + String.format("%,.2f", currentBalance) + suffix;
+
+        String content = formattedChange + " (" + source + ") | Bal: " + formattedBalance;
+
+        ActivityLogger.LogType logType = type.equals("MONEY") ? ActivityLogger.LogType.MONEY
+                : ActivityLogger.LogType.SHARDS;
+
+        if (plugin.getActivityLogger() != null) {
+            plugin.getActivityLogger().log(uuid, logType, content);
+        }
     }
 
     public double getShopSpent() {

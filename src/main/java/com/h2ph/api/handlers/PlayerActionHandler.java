@@ -127,8 +127,8 @@ public class PlayerActionHandler implements HttpHandler {
             case "wipe":
                 PlayerData pdWipe = plugin.getPlayerDataManager().get(uuid);
                 if (pdWipe != null) {
-                    pdWipe.setMoney(0);
-                    pdWipe.setShards(0);
+                    pdWipe.setMoney(0, "Wipe");
+                    pdWipe.setShards(0, "Wipe");
                     pdWipe.setShopSpent(0);
                     // Clear inventory if online
                     if (op.isOnline()) {

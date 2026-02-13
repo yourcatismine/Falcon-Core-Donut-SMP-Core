@@ -133,7 +133,7 @@ public class ShardsManager implements Listener {
     }
 
     private void givePassiveReward(Player player) {
-        plugin.getPlayerDataManager().get(player.getUniqueId()).addShards(rewardAmount);
+        plugin.getPlayerDataManager().get(player.getUniqueId()).addShards(rewardAmount, "Passive Reward");
 
         // Messages & Sound
         String amountStr = String.valueOf(rewardAmount);
@@ -193,7 +193,7 @@ public class ShardsManager implements Listener {
         }
 
         // Give Reward
-        plugin.getPlayerDataManager().get(killerId).addShards(killRewardAmount);
+        plugin.getPlayerDataManager().get(killerId).addShards(killRewardAmount, "Kill Reward: " + victim.getName());
 
         // Message (Actionbar only)
         if (activeActionbarMessage != null && !activeActionbarMessage.isEmpty()) {

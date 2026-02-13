@@ -746,7 +746,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                 return;
             }
             // Deduct shards
-            pd.setShards(currentShards - session.price);
+            pd.removeShards(session.price, "Shop: " + session.displayMaterial.name());
             plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
         }
 
@@ -775,7 +775,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                     Economy econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
                     econ.depositPlayer(player, session.price);
                 } else {
-                    pd.setShards(pd.getShards() + session.price);
+                    pd.setShards(pd.getShards() + session.price, "Shop Refund");
                     plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
                 }
                 playSound(player, Sound.ENTITY_VILLAGER_NO);

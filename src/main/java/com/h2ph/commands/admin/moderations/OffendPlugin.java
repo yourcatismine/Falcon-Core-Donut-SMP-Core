@@ -595,7 +595,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             try {
                 com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
                 if (pd != null) {
-                    pd.setShards(0);
+                    pd.setShards(0, "Wipe");
                     pd.setShopSpent(0);
                     pd.getAllKeys().clear(); // Wipe all keys
                     plugin.getPlayerDataManager().savePlayer(target.getUniqueId());

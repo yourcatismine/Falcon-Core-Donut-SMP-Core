@@ -276,7 +276,8 @@ public class AFKManager {
             // Check for active shard booster
             com.prismcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(uuid);
             int multiplier = playerData.hasActiveShardBooster() ? 4 : 1;
-            playerData.addShards(rewardAmount * multiplier);
+            String source = multiplier > 1 ? "AFK Reward (Booster)" : "AFK Reward";
+            playerData.addShards(rewardAmount * multiplier, source);
             // Optional: Sound/Message for reward?
             // Reset countdown
             resetPlayerCountdown(uuid);

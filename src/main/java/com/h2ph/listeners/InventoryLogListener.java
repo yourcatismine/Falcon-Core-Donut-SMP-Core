@@ -48,4 +48,14 @@ public class InventoryLogListener implements Listener {
     public void onPlayerDrop(PlayerDropItemEvent event) {
         plugin.getInventoryLogManager().checkAndLog(event.getPlayer());
     }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPlace(org.bukkit.event.block.BlockPlaceEvent event) {
+        plugin.getInventoryLogManager().checkAndLog(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {
+        plugin.getInventoryLogManager().checkAndLog(event.getPlayer());
+    }
 }

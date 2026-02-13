@@ -49,13 +49,13 @@ public class PlayerDataManager {
     }
 
     public PlayerData loadPlayer(UUID uuid) {
-        PlayerData data = new PlayerData(uuid);
+        PlayerData data = new PlayerData(plugin, uuid);
 
         // Load Shards Data
         File shardsFile = new File(dataFolderShards, uuid.toString() + "-shards.db");
         if (shardsFile.exists()) {
             FileConfiguration config = YamlConfiguration.loadConfiguration(shardsFile);
-            data.setShards(config.getDouble("shards", 0.0));
+            data.setShards(config.getDouble("shards", 0.0), "Initial Load");
             data.setShopSpent(config.getDouble("shop_spent", 0.0));
 
             // Legacy key loading (migration support, optional)
@@ -146,7 +146,7 @@ public class PlayerDataManager {
         File moneyFile = new File(dataFolderMoney, uuid.toString() + "-money.db");
         if (moneyFile.exists()) {
             FileConfiguration moneyConfig = YamlConfiguration.loadConfiguration(moneyFile);
-            data.setMoney(moneyConfig.getDouble("money", 0.0));
+            data.setMoney(moneyConfig.getDouble("money", 0.0), "Initial Load");
             // Load cached name if exists
             if (moneyConfig.contains("cached_name")) {
                 data.setName(moneyConfig.getString("cached_name"));

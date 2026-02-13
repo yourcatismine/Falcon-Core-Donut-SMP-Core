@@ -54,7 +54,7 @@ public class EconomyHandler {
             if (data.getMoney() < amount) {
                 return false;
             }
-            data.removeMoney(amount);
+            data.removeMoney(amount, "Auction");
             // Internal economy usually auto-saves or logic is handled in manager,
             // but we might want to trigger a save or update if necessary.
             // PlayerDataManager saves on quit/interval.
@@ -69,7 +69,7 @@ public class EconomyHandler {
             // Internal Economy
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null) {
-                data.addMoney(amount);
+                data.addMoney(amount, "Auction");
             }
         }
     }
@@ -89,7 +89,7 @@ public class EconomyHandler {
                 PlayerData data = plugin.getPlayerDataManager().get(off.getUniqueId());
                 // getPlayerData might load from DB if not cached
                 if (data != null) {
-                    data.addMoney(amount);
+                    data.addMoney(amount, "Auction");
                     return true;
                 }
             }

@@ -138,8 +138,8 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         }
 
         // Transaction
-        senderData.setMoney(senderData.getMoney() - amount);
-        targetData.setMoney(targetData.getMoney() + amount);
+        senderData.removeMoney(amount, "Payment to " + targetName);
+        targetData.addMoney(amount, "Payment from " + sender.getName());
 
         // Save
         plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());

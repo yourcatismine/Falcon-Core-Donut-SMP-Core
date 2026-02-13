@@ -16,6 +16,10 @@ public class SchedulerAdapter {
      * Run a task on the main thread (global region for Folia)
      */
     public void runTask(Runnable task) {
+        if (!plugin.isEnabled()) {
+            task.run();
+            return;
+        }
         try {
             // Try Folia's global region scheduler first
             Bukkit.getGlobalRegionScheduler().run(plugin, scheduledTask -> task.run());
@@ -29,6 +33,10 @@ public class SchedulerAdapter {
      * Run a task async
      */
     public void runTaskAsync(Runnable task) {
+        if (!plugin.isEnabled()) {
+            task.run();
+            return;
+        }
         try {
             // Try Folia's async scheduler first
             Bukkit.getAsyncScheduler().runNow(plugin, scheduledTask -> task.run());
@@ -81,8 +89,10 @@ public class SchedulerAdapter {
         try {
             // Try Folia's global region scheduler first
             // Note: runAtFixedRate handles repeating tasks
+            // Folia requires initialDelayTicks > 0
+            long actualDelay = Math.max(1L, delayTicks);
             Object scheduledTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin,
-                    st -> task.run(), delayTicks, periodTicks);
+                    st -> task.run(), actualDelay, periodTicks);
             return new FoliaBukkitTaskWrapper(scheduledTask);
         } catch (NoSuchMethodError | NoClassDefFoundError e) {
             // Fall back to Bukkit scheduler for non-Folia servers
@@ -97,8 +107,10 @@ public class SchedulerAdapter {
         try {
             // Try Folia's async scheduler first
             // Async scheduler uses milliseconds (50ms = 1 tick)
+            // Folia requires initialDelay > 0
+            long actualDelayMs = Math.max(1L, delayTicks) * 50;
             Object scheduledTask = Bukkit.getAsyncScheduler().runAtFixedRate(plugin,
-                    st -> task.run(), delayTicks * 50, periodTicks * 50, java.util.concurrent.TimeUnit.MILLISECONDS);
+                    st -> task.run(), actualDelayMs, periodTicks * 50, java.util.concurrent.TimeUnit.MILLISECONDS);
             return new FoliaBukkitTaskWrapper(scheduledTask);
         } catch (NoSuchMethodError | NoClassDefFoundError e) {
             // Fall back to Bukkit async scheduler for non-Folia servers

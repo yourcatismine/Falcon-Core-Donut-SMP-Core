@@ -73,37 +73,7 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         String title = Utils.formatColors("&8ᴏʀᴅᴇʀѕ (Page " + (st.page + 1) + ")");
         this.inv = Bukkit.createInventory(this, 54, title);
 
-        // Filter and Sort Logic
-        List<Order> list = this.module.orders().all().stream()
-                .filter(o -> !o.canceled)
-                .filter(o -> !o.completed)
-                .filter(o -> System.currentTimeMillis() < o.creationTime + (7L * 24 * 60 * 60 * 1000))
-                .collect(Collectors.toList());
-
-        // Search Filter
-        if (st.search != null && !st.search.isBlank()) {
-            String s = st.search.toLowerCase(Locale.ENGLISH);
-            list.removeIf(o -> {
-                String disp = o.key.displayName().toLowerCase(Locale.ENGLISH);
-                String mat = o.key.material.name().toLowerCase(Locale.ENGLISH);
-                return !disp.contains(s) && !mat.contains(s);
-            });
-        }
-
-        // Category Filter
-        Set<Material> allow;
-        if (!"All".equalsIgnoreCase(st.filter) && (allow = this.module.filters().resolve(st.filter)) != null
-                && !allow.isEmpty()) {
-            list.removeIf(o -> !allow.contains(o.key.material));
-        }
-
-        // Sorting
-        switch (st.sort) {
-            case MOST_PAID -> list.sort(Comparator.comparingDouble(o -> -((double) o.delivered * o.priceEach)));
-            case MOST_DELIVERED -> list.sort(Comparator.comparingInt(o -> -o.delivered));
-            case RECENTLY_LISTED -> Collections.reverse(list);
-            case MOST_MONEY_PER_ITEM -> list.sort(Comparator.comparingDouble(o -> -o.priceEach));
-        }
+        List<Order> list = getFilteredOrders(st);
 
         // Pagination
         int perPage = 45;
@@ -164,6 +134,40 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         }
 
         this.p.openInventory(this.inv);
+    }
+
+    private List<Order> getFilteredOrders(PlayerStateManager.View st) {
+        List<Order> list = this.module.orders().all().stream()
+                .filter(o -> !o.canceled)
+                .filter(o -> !o.completed)
+                .filter(o -> System.currentTimeMillis() < o.creationTime + (7L * 24 * 60 * 60 * 1000))
+                .collect(Collectors.toList());
+
+        // Search Filter
+        if (st.search != null && !st.search.isBlank()) {
+            String s = st.search.toLowerCase(Locale.ENGLISH);
+            list.removeIf(o -> {
+                String disp = o.key.displayName().toLowerCase(Locale.ENGLISH);
+                String mat = o.key.material.name().toLowerCase(Locale.ENGLISH);
+                return !disp.contains(s) && !mat.contains(s);
+            });
+        }
+
+        // Category Filter
+        Set<Material> allow;
+        if (!"All".equalsIgnoreCase(st.filter) && (allow = this.module.filters().resolve(st.filter)) != null
+                && !allow.isEmpty()) {
+            list.removeIf(o -> !allow.contains(o.key.material));
+        }
+
+        // Sorting
+        switch (st.sort) {
+            case MOST_PAID -> list.sort(Comparator.comparingDouble(o -> -o.totalPrice()));
+            case MOST_DELIVERED -> list.sort(Comparator.comparingInt(o -> -o.delivered));
+            case RECENTLY_LISTED -> list.sort(Comparator.comparingLong(o -> -o.creationTime));
+            case MOST_MONEY_PER_ITEM -> list.sort(Comparator.comparingDouble(o -> -o.priceEach));
+        }
+        return list;
     }
 
     private String isSort(SortType current, SortType check) {
@@ -354,34 +358,7 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
 
         // Items logic (0-44)
         if (slot >= 0 && slot <= 44) {
-            // Logic to find which item was clicked needs to be robust.
-            // We need to re-fetch the list to know what was in that slot.
-            // This replicates the open() logic partially but it's consistent.
-            List<Order> list = this.module.orders().all().stream()
-                    .filter(o -> !o.canceled)
-                    .filter(o -> !o.completed)
-                    .filter(o -> System.currentTimeMillis() < o.creationTime + (7L * 24 * 60 * 60 * 1000))
-                    .collect(Collectors.toList());
-
-            if (st.search != null && !st.search.isBlank()) {
-                String s = st.search.toLowerCase(Locale.ENGLISH);
-                list.removeIf(o -> {
-                    String disp = o.key.displayName().toLowerCase(Locale.ENGLISH);
-                    String mat = o.key.material.name().toLowerCase(Locale.ENGLISH);
-                    return !disp.contains(s) && !mat.contains(s);
-                });
-            }
-            Set<Material> allow;
-            if (!"All".equalsIgnoreCase(st.filter) && (allow = this.module.filters().resolve(st.filter)) != null
-                    && !allow.isEmpty()) {
-                list.removeIf(o -> !allow.contains(o.key.material));
-            }
-            switch (st.sort) {
-                case MOST_PAID -> list.sort(Comparator.comparingDouble(o -> -((double) o.delivered * o.priceEach)));
-                case MOST_DELIVERED -> list.sort(Comparator.comparingInt(o -> -o.delivered));
-                case RECENTLY_LISTED -> Collections.reverse(list);
-                case MOST_MONEY_PER_ITEM -> list.sort(Comparator.comparingDouble(o -> -o.priceEach));
-            }
+            List<Order> list = getFilteredOrders(st);
 
             int index = st.page * 45 + slot;
             if (index >= 0 && index < list.size()) {

@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import com.prismcore.survival.orders.OrdersModule;
+import com.prismcore.survival.orders.Utils;
 import com.prismcore.survival.orders.gui.NewOrderMenu;
 import com.prismcore.survival.orders.gui.OrdersMainMenu;
 import com.prismcore.survival.orders.gui.SelectItemMenu;
@@ -79,12 +80,13 @@ public class ChatInputManager
             }
             case 2: {
                 try {
-                    int amt = Integer.parseInt(msg);
-                    if (amt <= 0) {
+                    double val = Utils.parseAbbr(msg);
+                    if (Double.isNaN(val) || val <= 0) {
                         throw new NumberFormatException();
                     }
-                    this.session((UUID) u).amount = amt;
-                    p.sendMessage(this.module.cfg().msg("chat.amount_ok", "&aAmount set: &f" + amt));
+                    int finalAmt = (int) val;
+                    this.session((UUID) u).amount = finalAmt;
+                    p.sendMessage(this.module.cfg().msg("chat.amount_ok", "&aAmount set: &f" + finalAmt));
                     TaskUtil.runEntity((Plugin) this.module.getPlugin(), (Entity) p,
                             () -> new NewOrderMenu(this.module, p).open());
                 } catch (NumberFormatException ex) {
@@ -94,8 +96,8 @@ public class ChatInputManager
             }
             case 3: {
                 try {
-                    double price = Double.parseDouble(msg);
-                    if (!Double.isFinite(price) || price <= 0.0) {
+                    double price = Utils.parseAbbr(msg);
+                    if (Double.isNaN(price) || !Double.isFinite(price) || price <= 0.0) {
                         throw new NumberFormatException();
                     }
                     this.session((UUID) u).priceEach = price;

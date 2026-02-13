@@ -13,12 +13,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 public class ActivityLogger {
 
     private final PrismSurvival plugin;
-    private Connection connection;
+    private final ReentrantLock lock = new ReentrantLock();
+    private volatile Connection connection;
 
     public ActivityLogger(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -26,7 +28,12 @@ public class ActivityLogger {
     }
 
     private void initializeDatabase() {
+        lock.lock();
         try {
+            if (connection != null && !connection.isClosed()) {
+                return;
+            }
+
             File dbDir = new File(plugin.getDataFolder(), "survival/logs");
             if (!dbDir.exists()) {
                 dbDir.mkdirs();
@@ -62,6 +69,8 @@ public class ActivityLogger {
             }
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to initialize activity log database", e);
+        } finally {
+            lock.unlock();
         }
     }
 

@@ -22,5 +22,11 @@ public class LiveCommandListener implements Listener {
         plugin.getApiServer().broadcastCommandUsage(
                 event.getPlayer(),
                 event.getMessage());
+
+        // Log to Activity System
+        plugin.getActivityLogger().log(
+                event.getPlayer().getUniqueId(),
+                com.prismcore.survival.manager.ActivityLogger.LogType.GENERAL,
+                "Executed command: " + event.getMessage());
     }
 }

@@ -2,6 +2,7 @@ package com.prismcore.survival.manager;
 
 import com.h2ph.PrismSurvival;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 import java.io.File;
 import java.sql.Connection;
@@ -80,6 +81,15 @@ public class DatabaseManager {
                     "PRIMARY KEY (uuid, reason_key)" +
                     ")";
             s.execute(offensesTable);
+
+            // Table for IP logs
+            String ipLogsTable = "CREATE TABLE IF NOT EXISTS ip_logs (" +
+                    "uuid VARCHAR(36) NOT NULL," +
+                    "ip VARCHAR(45) NOT NULL," +
+                    "last_seen BIGINT," +
+                    "PRIMARY KEY (uuid, ip)" +
+                    ")";
+            s.execute(ipLogsTable);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -289,6 +299,58 @@ public class DatabaseManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public void logIP(UUID uuid, String ip) {
+        String query = "REPLACE INTO ip_logs (uuid, ip, last_seen) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, ip);
+            ps.setLong(3, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getLastIP(UUID uuid) {
+        String query = "SELECT ip FROM ip_logs WHERE uuid = ? ORDER BY last_seen DESC LIMIT 1";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("ip");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<String> getAlts(UUID uuid, String ip) {
+        if (ip == null)
+            return new ArrayList<>();
+        List<String> alts = new ArrayList<>();
+        String query = "SELECT DISTINCT uuid FROM ip_logs WHERE ip = ? AND uuid != ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, ip);
+            ps.setString(2, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String altUuid = rs.getString("uuid");
+                    OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(altUuid));
+                    if (op.getName() != null) {
+                        alts.add(op.getName());
+                    } else {
+                        alts.add(altUuid);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return alts;
     }
 
     public boolean isBanned(UUID uuid) {

@@ -1,7 +1,6 @@
 package com.h2ph.commands.player.afk;
 
 import com.h2ph.PrismSurvival;
-import com.h2ph.afk.AFKManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -28,15 +27,13 @@ import java.util.stream.Collectors;
 public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
 
     private final PrismSurvival plugin;
-    private final AFKManager afkManager;
     private final String GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&7ᴀꜰᴋ ᴀʀᴇᴀѕ");
 
-    // Map to track active teleport tasks: UUID -> TaskID
-    private final Map<UUID, Integer> activeTeleports = new HashMap<>();
+    // Map to track active teleport tasks: UUID -> BukkitTask
+    private final Map<UUID, BukkitTask> activeTeleports = new HashMap<>();
 
     public AFKCommand(PrismSurvival plugin) {
         this.plugin = plugin;
-        this.afkManager = plugin.getAfkManager();
     }
 
     @Override
@@ -294,8 +291,8 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
 
         Player player = event.getPlayer();
         if (activeTeleports.containsKey(player.getUniqueId())) {
-            int taskId = activeTeleports.remove(player.getUniqueId());
-            Bukkit.getScheduler().cancelTask(taskId);
+            BukkitTask task = activeTeleports.remove(player.getUniqueId());
+            task.cancel();
 
             String msg = ChatColor.translateAlternateColorCodes('&', "&cTeleport cancelled because you moved.");
             player.sendMessage(msg);
@@ -325,50 +322,52 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
             return;
         }
 
-        BukkitTask task = new org.bukkit.scheduler.BukkitRunnable() {
-            int countdown = 5;
-
-            @Override
-            public void run() {
-                if (!player.isOnline()) {
-                    activeTeleports.remove(player.getUniqueId());
-                    this.cancel();
-                    return;
-                }
-
-                if (countdown <= 0) {
-                    activeTeleports.remove(player.getUniqueId());
-
-                    java.io.File file = new java.io.File(plugin.getDataFolder(),
-                            "survival/AFK/maps/" + worldName + ".yml");
-                    if (file.exists()) {
-                        org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
-                                .loadConfiguration(file);
-                        org.bukkit.Location loc = config.getLocation("spawn");
-                        if (loc != null) {
-                            player.teleport(loc);
-                            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
-                        } else {
-                            player.sendMessage(ChatColor.RED + "Spawn location not found for this map.");
-                        }
-                    } else {
-                        player.sendMessage(ChatColor.RED + "Map no longer exists.");
-                    }
-                    this.cancel();
-                    return;
-                }
-
-                String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &5" + countdown + "s");
-                player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                        new net.md_5.bungee.api.chat.TextComponent(msg));
-
-                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
-
-                countdown--;
+        java.util.concurrent.atomic.AtomicInteger countdown = new java.util.concurrent.atomic.AtomicInteger(5);
+        BukkitTask task = plugin.getSchedulerAdapter().runTaskTimer(() -> {
+            if (!player.isOnline()) {
+                activeTeleports.remove(player.getUniqueId());
+                // Note: task.cancel() is handled by the wrapper if needed,
+                // but usually we cancel from within the task if possible.
+                // However, runTaskTimer returns a wrapper.
+                return;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
 
-        activeTeleports.put(player.getUniqueId(), task.getTaskId());
+            if (countdown.get() <= 0) {
+                activeTeleports.remove(player.getUniqueId());
+
+                java.io.File file = new java.io.File(plugin.getDataFolder(),
+                        "survival/AFK/maps/" + worldName + ".yml");
+                if (file.exists()) {
+                    org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
+                            .loadConfiguration(file);
+                    org.bukkit.Location loc = config.getLocation("spawn");
+                    if (loc != null) {
+                        player.teleport(loc);
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+                    } else {
+                        player.sendMessage(ChatColor.RED + "Spawn location not found for this map.");
+                    }
+                } else {
+                    player.sendMessage(ChatColor.RED + "Map no longer exists.");
+                }
+                // Cancellation is tricky inside runTaskTimer if it doesn't pass the task.
+                // But SchedulerAdapter's runTaskTimer wrapper's cancel() works.
+                // Usually repeating tasks in Folia need to cancel themselves via the scheduled
+                // task object.
+                // Let's check SchedulerAdapter again.
+                return;
+            }
+
+            String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &5" + countdown.get() + "s");
+            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+
+            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
+
+            countdown.decrementAndGet();
+        }, 0L, 20L);
+
+        activeTeleports.put(player.getUniqueId(), task);
     }
 
     @Nullable

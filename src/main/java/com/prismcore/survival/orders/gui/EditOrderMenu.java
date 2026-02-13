@@ -173,6 +173,9 @@ public class EditOrderMenu
         // Slot 13: Cancel
         if (slot == 13) {
             if (!hasItemsToCollect) {
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Clicked Cancel in Edit Order Menu");
                 this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
                 this.p.setMetadata(META_SUPPRESS_CLOSE,
                         (MetadataValue) new FixedMetadataValue((Plugin) this.module.getPlugin(), (Object) true));
@@ -183,6 +186,8 @@ public class EditOrderMenu
 
         // Slot 15: Collect
         if (slot == 15) {
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER, "Clicked Collect in Edit Order Menu");
             // Always open, even if empty, as per visual request (button is always there).
             // CollectItemsMenu should handle empty gracefully.
             this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);

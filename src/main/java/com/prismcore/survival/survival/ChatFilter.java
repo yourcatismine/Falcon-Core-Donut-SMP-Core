@@ -1,6 +1,7 @@
 package com.prismcore.survival.survival;
 
 import com.h2ph.PrismSurvival;
+import com.prismcore.survival.manager.PlayerData;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -10,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import com.prismcore.survival.manager.ActivityLogger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,6 +60,25 @@ public class ChatFilter implements Listener {
         boolean hasBypass = player.hasPermission("prism.chat.bypass");
 
         UUID uuid = player.getUniqueId();
+
+        // --- MUTE CHECK ---
+        PlayerData data = plugin.getPlayerDataManager().get(uuid);
+        if (data != null && data.isMuted()) {
+            event.setCancelled(true);
+            String reason = data.getMuteReason();
+            long expiry = data.getMuteExpiry();
+            String msg = ChatColor.RED + "You are currently muted.";
+            if (reason != null && !reason.isEmpty()) {
+                msg += " Reason: " + reason;
+            }
+            if (expiry > 0) {
+                long seconds = (expiry - System.currentTimeMillis()) / 1000;
+                msg += " Time left: " + formatDuration(seconds);
+            }
+            player.sendMessage(msg);
+            return;
+        }
+
         long currentTime = System.currentTimeMillis();
         String message = event.getMessage();
 
@@ -108,6 +129,8 @@ public class ChatFilter implements Listener {
         chatCooldowns.put(uuid, currentTime);
         lastMessages.put(uuid, message);
 
+        plugin.getActivityLogger().log(uuid, ActivityLogger.LogType.MESSAGE, "Chat: " + message);
+
         // --- HIDE CHAT FILTER ---
         // Remove recipients who have 'hideChat' enabled
         // Unless they are the sender (sender always sees their own message usually, or
@@ -119,8 +142,8 @@ public class ChatFilter implements Listener {
             if (recipient.getUniqueId().equals(uuid))
                 continue; // Sender always sees their own chat
 
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(recipient.getUniqueId());
-            if (data != null && data.isHideChat()) {
+            PlayerData recipientData = plugin.getPlayerDataManager().get(recipient.getUniqueId());
+            if (recipientData != null && recipientData.isHideChat()) {
                 iterator.remove();
             }
         }
@@ -158,6 +181,27 @@ public class ChatFilter implements Listener {
      * Returns a Regex Character Class for a specific letter, including its Leet
      * Speak variants.
      */
+    private String formatDuration(long seconds) {
+        if (seconds <= 0)
+            return "Expired";
+        long d = seconds / 86400;
+        long h = (seconds % 86400) / 3600;
+        long m = (seconds % 3600) / 60;
+        long s = seconds % 60;
+
+        StringBuilder sb = new StringBuilder();
+        if (d > 0)
+            sb.append(d).append("d ");
+        if (h > 0)
+            sb.append(h).append("h ");
+        if (m > 0)
+            sb.append(m).append("m ");
+        if (s > 0 || sb.length() == 0)
+            sb.append(s).append("s");
+
+        return sb.toString().trim();
+    }
+
     private String getCharRegex(char c) {
         switch (c) {
             case 'a':

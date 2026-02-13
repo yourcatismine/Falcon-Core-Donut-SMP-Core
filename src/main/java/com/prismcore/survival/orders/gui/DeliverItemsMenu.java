@@ -88,7 +88,9 @@ public class DeliverItemsMenu
         }
         ItemKey key = this.order.key;
         int need = this.order.remainingAmount();
-        ArrayList<ItemStack> accepted = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> acceptedDirect = new ArrayList<ItemStack>(); // Items placed directly
+        ArrayList<ItemStack> acceptedFromShulkers = new ArrayList<ItemStack>(); // Items extracted from shulkers
+        ArrayList<ItemStack> originalShulkers = new ArrayList<ItemStack>(); // Original shulkers before extraction
         ArrayList<ItemStack> returns = new ArrayList<ItemStack>();
         int acceptedAmount = 0;
         for (int i = 0; i < this.inv.getSize(); ++i) {
@@ -100,7 +102,7 @@ public class DeliverItemsMenu
                 if (can > 0) {
                     ItemStack clone = it.clone();
                     clone.setAmount(can);
-                    accepted.add(clone);
+                    acceptedDirect.add(clone); // Direct placement
                     acceptedAmount += can;
                     if (it.getAmount() <= can)
                         continue;
@@ -113,9 +115,13 @@ public class DeliverItemsMenu
                 continue;
             }
             if (DeliverItemsMenu.isShulker(it)) {
+                // Clone the ORIGINAL shulker before extraction
+                ItemStack originalShulker = it.clone();
+
                 ItemStack[] cont;
                 BlockStateMeta meta = (BlockStateMeta) it.getItemMeta();
                 ShulkerBox box = (ShulkerBox) meta.getBlockState();
+                boolean extractedAny = false;
                 for (ItemStack s : cont = box.getInventory().getContents()) {
                     if (s == null || s.getType() == Material.AIR || !key.matches(s))
                         continue;
@@ -124,15 +130,22 @@ public class DeliverItemsMenu
                         break;
                     ItemStack clone = s.clone();
                     clone.setAmount(can);
-                    accepted.add(clone);
+                    acceptedFromShulkers.add(clone); // From shulker
                     s.setAmount(s.getAmount() - can);
-                    if ((acceptedAmount += can) >= need)
+                    acceptedAmount += can;
+                    extractedAny = true;
+                    if (acceptedAmount >= need)
                         break;
                 }
-                box.getInventory().setContents(cont);
-                meta.setBlockState((BlockState) box);
-                it.setItemMeta((ItemMeta) meta);
-                returns.add(it);
+
+                if (extractedAny) {
+                    // Store original shulker to return on cancel
+                    originalShulkers.add(originalShulker);
+                    // Don't return the modified shulker yet - let ConfirmDeliveryMenu handle it
+                } else {
+                    // No items extracted, return shulker as-is
+                    returns.add(it);
+                }
                 continue;
             }
             returns.add(it);
@@ -141,15 +154,24 @@ public class DeliverItemsMenu
             this.giveBackOrDrop(this.p, r);
         }
         if (acceptedAmount <= 0) {
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                    "Closed Deliver Items Menu (No items selected)");
             TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
                     () -> new OrdersMainMenu(this.module, this.p).open(),
                     1L);
             return;
         }
+        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                "Selected " + acceptedAmount + " " + key.displayName() + " for delivery");
         int acceptedAmountFinal = acceptedAmount;
-        ArrayList acceptedFinal = new ArrayList(accepted);
+        ArrayList<ItemStack> acceptedDirectFinal = new ArrayList<>(acceptedDirect);
+        ArrayList<ItemStack> acceptedFromShulkersFinal = new ArrayList<>(acceptedFromShulkers);
+        ArrayList<ItemStack> originalShulkersFinal = new ArrayList<>(originalShulkers);
         TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                () -> new ConfirmDeliveryMenu(this.module, this.p, this.order, acceptedFinal, acceptedAmountFinal)
+                () -> new ConfirmDeliveryMenu(this.module, this.p, this.order,
+                        acceptedDirectFinal, acceptedFromShulkersFinal, originalShulkersFinal, acceptedAmountFinal)
                         .open(),
                 1L);
     }

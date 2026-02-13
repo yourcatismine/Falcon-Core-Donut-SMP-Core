@@ -449,6 +449,9 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                     // For trillion, we need to be careful with int overflow
                     // Parse as long first, then convert
                     double base = Double.parseDouble(numberPart);
+                    if (!Double.isFinite(base)) {
+                        throw new NumberFormatException("Shards amount is not finite");
+                    }
                     long result = (long) (base * 1_000_000_000_000L);
                     if (result > Integer.MAX_VALUE) {
                         return Integer.MAX_VALUE;
@@ -461,6 +464,9 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
         // Parse the number part (can be decimal like 1.5k)
         double base = Double.parseDouble(numberPart);
+        if (!Double.isFinite(base)) {
+            throw new NumberFormatException("Shards amount is not finite");
+        }
         long result = (long) (base * multiplier);
 
         // Clamp to int range

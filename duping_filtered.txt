@@ -1,0 +1,158 @@
+[2026-02-12 21:15:13] [INFO] [21:15:13 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 like how do i get people to list stuff
+[2026-02-12 21:15:16] [INFO] [21:15:16 INFO]: thisguy0_: yeah
+[2026-02-12 21:15:23] [INFO] [21:15:23 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ we need to either 1. corrupt economy or 2. I need you to store some stuff incase I get banned
+[2026-02-12 21:15:49] [INFO] [21:15:49 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 ill list stuff
+[2026-02-12 21:15:53] [INFO] [21:15:53 INFO]: thisguy0_ issued server command: /ah
+[2026-02-12 21:15:59] [INFO] [21:15:59 INFO]: SL1PR1K89 issued server command: /ah
+[2026-02-12 21:16:11] [INFO] [21:16:11 INFO]: SL1PR1K89 issued server command: /ah
+[2026-02-12 21:16:25] [INFO] [21:16:25 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ put in echest not on ah or anything
+[2026-02-12 21:16:27] [INFO] [21:16:27 INFO]: SL1PR1K89 issued server command: /ah
+[2026-02-12 21:16:30] [INFO] [21:16:30 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 lk
+[2026-02-12 21:16:31] [INFO] [21:16:31 INFO]: SL1PR1K89 issued server command: /orders
+[2026-02-12 21:17:21] [INFO] [21:17:21 INFO]: thisguy0_ issued server command: /
+[2026-02-12 21:17:28] [INFO] [21:17:28 INFO]: thisguy0_ issued server command: /baltop
+[2026-02-12 21:18:33] [INFO] [21:18:33 INFO]: SL1PR1K89: yo
+[2026-02-12 21:18:37] [INFO] [21:18:37 INFO]: thisguy0_ issued server command: /home
+[2026-02-12 21:19:03] [INFO] [21:19:03 INFO]: SL1PR1K89 issued server command: /tpaccept
+[2026-02-12 21:19:05] [INFO] [21:19:05 INFO]: thisguy0_ issued server command: /homes
+[2026-02-12 21:19:08] [INFO] [21:19:08 INFO]: SL1PR1K89: guy hold these tridents
+[2026-02-12 21:19:18] [INFO] [21:19:18 INFO]: SL1PR1K89 issued server command: /msg .BaggyCobra7156 just?
+[2026-02-12 21:19:22] [INFO] [21:19:22 INFO]: thisguy0_ issued server command: /team
+[2026-02-12 21:19:28] [INFO] [21:19:28 INFO]: SL1PR1K89 issued server command: /tpahere thisguy0_
+[2026-02-12 21:19:39] [INFO] [21:19:39 INFO]: thisguy0_ issued server command: /tpaccept
+[2026-02-12 21:20:04] [INFO] [21:20:04 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ just bought this base for 20b
+[2026-02-12 21:20:07] [INFO] [21:20:07 INFO]: SL1PR1K89 issued server command: /pay .BaggyCobra7156 5b
+[2026-02-12 21:20:24] [INFO] [21:20:24 INFO]: thisguy0_: check ts
+[2026-02-12 21:20:48] [INFO] [21:20:48 INFO]: thisguy0_: yo
+[2026-02-12 21:20:53] [INFO] [21:20:53 INFO]: SL1PR1K89 issued server command: /sethome mcds
+[2026-02-12 21:20:56] [INFO] [21:20:56 INFO]: SL1PR1K89 issued server command: /sethome
+[2026-02-12 21:20:59] [INFO] [21:20:59 INFO]: SL1PR1K89 issued server command: /homes
+[2026-02-12 21:21:03] [INFO] [21:21:03 INFO]: SL1PR1K89 issued server command: /sethome
+[2026-02-12 21:21:05] [INFO] [21:21:05 INFO]: SL1PR1K89 issued server command: /home
+[2026-02-12 21:21:13] [INFO] [21:21:13 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ go back to old base
+[2026-02-12 21:21:19] [INFO] [21:21:19 INFO]: thisguy0_ issued server command: /home
+[2026-02-12 21:21:32] [INFO] [21:21:32 INFO]: SL1PR1K89: hold these for me
+[2026-02-12 21:21:46] [INFO] [21:21:46 INFO]: SL1PR1K89: in ec
+[2026-02-12 21:22:04] [INFO] [21:22:04 INFO]: SL1PR1K89: for u
+[2026-02-12 21:22:14] [INFO] [21:22:14 INFO]: thisguy0_: ty
+[2026-02-12 21:23:07] [INFO] [21:23:07 INFO]: thisguy0_ issued server command: /ah
+[2026-02-12 21:23:33] [INFO] [21:23:33 INFO]: thisguy0_ issued server command: /ah sell 20
+[2026-02-12 21:23:42] [INFO] [21:23:42 INFO]: thisguy0_ issued server command: /ah sell 20
+[2026-02-12 21:23:47] [INFO] [21:23:47 INFO]: thisguy0_ issued server command: /ah sell 20
+[2026-02-12 21:23:50] [INFO] [21:23:50 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ want Infinite money so you can corrupt economy?
+[2026-02-12 21:23:54] [INFO] [21:23:54 INFO]: thisguy0_ issued server command: /ah sell 20
+[2026-02-12 21:24:04] [INFO] [21:24:04 INFO]: SL1PR1K89 issued server command: /ah
+[2026-02-12 21:24:07] [INFO] [21:24:07 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 Yes :)
+[2026-02-12 21:24:17] [INFO] [21:24:17 INFO]: SL1PR1K89 issued server command: /pay thisguy0_ NaN
+[2026-02-12 21:24:30] [INFO] [21:24:30 INFO]: SL1PR1K89 issued server command: /pay thisguy0_ 90000000000000000000000000000000000000000000000T
+[2026-02-12 21:24:30] [INFO] [21:24:30 INFO]: thisguy0_ issued server command: /ah
+[2026-02-12 21:24:39] [INFO] [21:24:39 INFO]: SL1PR1K89 issued server command: /bal thisguy0_
+[2026-02-12 21:24:44] [INFO] [21:24:44 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 Thats alot of money
+[2026-02-12 21:24:54] [INFO] [21:24:54 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 Ty
+[2026-02-12 21:24:59] [INFO] [21:24:59 INFO]: thisguy0_ issued server command: /ah
+[2026-02-12 21:25:05] [INFO] [21:25:05 INFO]: thisguy0_ issued server command: /baltop
+[2026-02-12 21:25:15] [INFO] [21:25:15 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ we need a way to send it to many people at a time
+[2026-02-12 21:25:31] [INFO] [21:25:31 INFO]: thisguy0_ issued server command: /coinflip create money 10B
+[2026-02-12 21:25:31] [ERROR] [21:25:31 WARN]: [UltraCoinFlip] [SECURITY] Withdraw verification failed - balance didn't decrease: thisguy0_ - Before=90000000000000010000000000000000000000000000000000000000000.00, After=90000000000000010000000000000000000000000000000000000000000.00, Deducted=0.00 | Currency=MONEY/default | Expected=10000000000.00 | Actual=0.00
+[2026-02-12 21:25:34] [INFO] [21:25:34 INFO]: thisguy0_ issued server command: /coinflip create money 10b
+[2026-02-12 21:25:39] [INFO] [21:25:39 INFO]: thisguy0_ issued server command: /coinflip create money 10M
+[2026-02-12 21:25:39] [ERROR] [21:25:39 WARN]: [UltraCoinFlip] [SECURITY WARNING] Suspicious activity: Withdraw verification failed - balance didn't decrease by thisguy0_ (3 attempts) - Before=90000000000000010000000000000000000000000000000000000000000.00, After=90000000000000010000000000000000000000000000000000000000000.00, Deducted=0.00 | Currency=MONEY/default | Expected=10000000.00 | Actual=0.00
+[2026-02-12 21:25:47] [INFO] [21:25:47 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ message people to sell stuff on ah
+[2026-02-12 21:25:57] [INFO] [21:25:57 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ it will be really funny to destroy a lot of stuff
+[2026-02-12 21:26:00] [INFO] [21:26:00 INFO]: thisguy0_: like tell them to sell stuf??
+[2026-02-12 21:26:13] [INFO] [21:26:13 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 Whoops
+[2026-02-12 21:26:14] [INFO] [21:26:14 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ yes shh or make an order for elytras
+[2026-02-12 21:26:26] [INFO] [21:26:26 INFO]: SL1PR1K89 issued server command: /ah
+[2026-02-12 21:26:41] [INFO] [21:26:41 INFO]: SL1PR1K89 issued server command: /orders
+[2026-02-12 21:26:43] [INFO] [21:26:43 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 i will buy so many elytras
+[2026-02-12 21:26:58] [INFO] [21:26:58 INFO]: thisguy0_: Anybody got any elytras?
+[2026-02-12 21:27:02] [INFO] [21:27:02 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ if anyone gets suspicious just pay everyone 10000t
+[2026-02-12 21:27:16] [INFO] [21:27:16 INFO]: SL1PR1K89: sell
+[2026-02-12 21:27:17] [INFO] [21:27:17 INFO]: thisguy0_: how many
+[2026-02-12 21:27:25] [INFO] [21:27:25 INFO]: thisguy0_: how much you want
+[2026-02-12 21:27:29] [INFO] [21:27:29 INFO]: SL1PR1K89 issued server command: /msg ItzRealZynx sell while you can
+[2026-02-12 21:27:35] [INFO] [21:27:35 INFO]: thisguy0_: ill give 10m per
+[2026-02-12 21:27:40] [INFO] [21:27:40 INFO]: SL1PR1K89 issued server command: /order
+[2026-02-12 21:27:47] [INFO] [21:27:47 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ say 25m
+[2026-02-12 21:27:59] [INFO] [21:27:59 INFO]: thisguy0_: no im serious
+[2026-02-12 21:28:05] [INFO] [21:28:05 INFO]: thisguy0_: 25m
+[2026-02-12 21:28:21] [INFO] [21:28:21 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ pay me back they will check your bal
+[2026-02-12 21:28:26] [INFO] [21:28:26 INFO]: SL1PR1K89: zybx
+[2026-02-12 21:28:30] [INFO] [21:28:30 INFO]: SL1PR1K89: he means each
+[2026-02-12 21:28:39] [INFO] [21:28:39 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 how
+[2026-02-12 21:28:57] [INFO] [21:28:57 INFO]: thisguy0_ issued server command: /msg SL1PR1K89 how
+[2026-02-12 21:29:06] [INFO] [21:29:06 INFO]: SL1PR1K89 issued server command: /msg thisguy0_ use /pay
+[2026-02-12 21:29:10] [INFO] [21:29:10 INFO]: thisguy0_ issued server command: /pay SL1PR1K89 900000000000000000
+[2026-02-12 21:29:17] [INFO] [21:29:17 INFO]: thisguy0_ issued server command: /pay SL1PR1K89 900000000000000000000000000000000000000000
+[2026-02-12 21:29:23] [INFO] [21:29:23 INFO]: thisguy0_ issued server command: /pay SL1PR1K89 900000000000000000000000000000000000000000000000
+[2026-02-12 21:29:30] [INFO] [21:29:30 INFO]: thisguy0_ issued server command: /pay SL1PR1K89 90000000000000000000000000000000000000000000000000000000
+[2026-02-12 21:29:34] [INFO] [21:29:34 INFO]: thisguy0_ issued server command: /pay SL1PR1K89 9000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+[2026-02-12 21:29:34] [INFO] [21:29:34 INFO]: zoier_glazer issued server command: /offend thisguy0_
+[2026-02-12 21:29:34] [INFO] [21:29:34 INFO]: SL1PR1K89 issued server command: /ah
+[2026-02-12 21:29:36] [INFO] [21:29:36 INFO]: thisguy0_ issued server command: /pay SL1PR1K89 90000000000000000000000000000000000000000000000000000000000000000000000000000
+[2026-02-12 21:29:38] [INFO] [21:29:38 INFO]: SL1PR1K89: yo
+[2026-02-12 21:29:40] [INFO] [21:29:40 INFO]: zoier_glazer issued server command: /offend thisguy0_ Duplicating/Exploiting 10h
+[2026-02-12 21:29:40] [INFO] [21:29:40 INFO]: thisguy0_ lost connection: You have been banned.
+[2026-02-12 21:29:40] [INFO] [21:29:40 INFO]: [voicechat] Disconnecting client thisguy0_
+[2026-02-12 21:29:49] [INFO] [21:29:49 INFO]: SL1PR1K89: guy what happened
+[2026-02-12 21:29:52] [INFO] [21:29:52 INFO]: Disconnecting thisguy0_ (/172.56.84.248:52400): You are banned from this server!
+[2026-02-12 21:29:52] [INFO] [21:29:52 INFO]: UUID of player thisguy0_ is 6ac393c6-0fd5-4951-bda0-7621be8f12b3
+[2026-02-12 21:29:52] [INFO] [21:29:52 INFO]: thisguy0_ (/172.56.84.248:52400) lost connection: You are banned from this server!
+[2026-02-12 21:30:29] [INFO] [21:30:29 INFO]: Disconnecting thisguy0_ (/172.56.84.248:36812): You are banned from this server!
+[2026-02-12 21:30:29] [INFO] [21:30:29 INFO]: UUID of player thisguy0_ is 6ac393c6-0fd5-4951-bda0-7621be8f12b3
+[2026-02-12 21:30:29] [INFO] [21:30:29 INFO]: thisguy0_ (/172.56.84.248:36812) lost connection: You are banned from this server!
+[2026-02-12 21:30:41] [INFO] [21:30:41 INFO]: SL1PR1K89: whatt
+[2026-02-12 21:30:56] [INFO] [21:30:56 INFO]: SL1PR1K89: must be the dupe or zum
+[2026-02-12 21:31:35] [INFO] [21:31:35 INFO]: Disconnecting thisguy0_ (/172.56.84.248:57870): You are banned from this server!
+[2026-02-12 21:31:35] [INFO] [21:31:35 INFO]: UUID of player thisguy0_ is 6ac393c6-0fd5-4951-bda0-7621be8f12b3
+[2026-02-12 21:31:35] [INFO] [21:31:35 INFO]: thisguy0_ (/172.56.84.248:57870) lost connection: You are banned from this server!
+[2026-02-12 21:31:42] [INFO] [21:31:42 INFO]: Disconnecting thisguy0_ (/172.56.84.248:57880): You are banned from this server!
+[2026-02-12 21:31:42] [INFO] [21:31:42 INFO]: UUID of player thisguy0_ is 6ac393c6-0fd5-4951-bda0-7621be8f12b3
+[2026-02-12 21:31:42] [INFO] [21:31:42 INFO]: thisguy0_ (/172.56.84.248:57880) lost connection: You are banned from this server!
+[2026-02-12 21:33:06] [INFO] [21:33:06 INFO]: Disconnecting thisguy0_ (/172.56.84.248:41274): You are banned from this server!
+[2026-02-12 21:33:06] [INFO] [21:33:06 INFO]: UUID of player thisguy0_ is 6ac393c6-0fd5-4951-bda0-7621be8f12b3
+[2026-02-12 21:33:06] [INFO] [21:33:06 INFO]: thisguy0_ (/172.56.84.248:41274) lost connection: You are banned from this server!
+[2026-02-12 21:33:21] [INFO] [21:33:21 INFO]: zoier_glazer issued server command: /offend thisguy0_ Duplicating/Exploiting 10y
+[2026-02-12 21:34:05] [INFO] [21:34:05 INFO]: SL1PR1K89 issued server command: /baltop
+[2026-02-12 21:36:44] [INFO] [21:36:44 INFO]: SL1PR1K89 lost connection: Disconnected
+[2026-02-12 21:36:44] [INFO] [21:36:44 INFO]: [voicechat] Disconnecting client SL1PR1K89
+[2026-02-12 23:48:13] [INFO] alt SL1PR1K89
+[2026-02-12 23:48:13] [INFO] alt SL1PR1K89<--[HERE]
+[2026-02-12 23:48:15] [INFO] alts SL1PR1K89
+[2026-02-12 23:48:15] [INFO] [23:48:15 INFO]: [Essentials] CONSOLE issued server command: /alts SL1PR1K89
+[2026-02-12 23:48:15] [INFO] [23:48:15 INFO]: Running search for players matching 'SL1PR1K89' (this could take a little while).
+[2026-02-12 23:48:15] [INFO] [23:48:15 INFO]: .SL1PR1K89, SL1PR1K89
+[2026-02-12 23:48:29] [INFO] offend .SL1PR1K89 duping permanent
+[2026-02-12 23:48:29] [INFO] [23:48:29 INFO]: Looking up player '.SL1PR1K89'...
+[2026-02-12 23:48:30] [ERROR] [23:48:30 INFO]: Player '.SL1PR1K89' does not exist (Mojang lookup failed).
+[2026-02-12 23:48:42] [INFO] offend SL1PR1K89 duping permanent
+[2026-02-12 23:48:42] [INFO] [23:48:42 INFO]: Looking up player 'SL1PR1K89'...
+[2026-02-12 23:48:43] [INFO] [23:48:43 INFO]: Temporarily banned player SL1PR1K89 for 30 Day(s) with reason: duping permanent
+[2026-02-12 23:48:56] [INFO] offend SL1PR1K89 duping
+[2026-02-12 23:48:56] [INFO] [23:48:56 INFO]: Looking up player 'SL1PR1K89'...
+[2026-02-12 23:48:57] [INFO] [23:48:57 INFO]: Temporarily banned player SL1PR1K89 for 30 Day(s) with reason: duping
+[2026-02-12 23:48:58] [INFO] offend SL1PR1K89 duping
+[2026-02-12 23:48:58] [INFO] [23:48:58 INFO]: Looking up player 'SL1PR1K89'...
+[2026-02-12 23:48:58] [INFO] [23:48:58 INFO]: Temporarily banned player SL1PR1K89 for 30 Day(s) with reason: duping
+[2026-02-12 23:49:00] [INFO] offend SL1PR1K89 duping
+[2026-02-12 23:49:00] [INFO] [23:49:00 INFO]: Looking up player 'SL1PR1K89'...
+[2026-02-12 23:49:00] [INFO] [23:49:00 INFO]: Temporarily banned player SL1PR1K89 for 30 Day(s) with reason: duping
+[2026-02-12 23:49:01] [INFO] offend SL1PR1K89 duping
+[2026-02-12 23:49:01] [INFO] [23:49:01 INFO]: Looking up player 'SL1PR1K89'...
+[2026-02-12 23:49:02] [INFO] [23:49:02 INFO]: Temporarily banned player SL1PR1K89 for 30 Day(s) with reason: duping
+[2026-02-12 23:49:06] [INFO] offend SL1PR1K89 duping permanent
+[2026-02-12 23:49:06] [INFO] [23:49:06 INFO]: Looking up player 'SL1PR1K89'...
+[2026-02-12 23:49:06] [INFO] [23:49:06 INFO]: Temporarily banned player SL1PR1K89 for 30 Day(s) with reason: duping permanent
+[2026-02-12 23:49:31] [INFO] [23:49:31 INFO]: h2ph issued server command: /offend SL1PR1K89 Duping permanent
+[2026-02-12 23:49:39] [INFO] [23:49:39 INFO]: h2ph issued server command: /offend SL1PR1K89 Duping permanent
+[2026-02-12 23:49:42] [INFO] [23:49:42 INFO]: h2ph issued server command: /offend SL1PR1K89 Duping permanent
+[2026-02-12 23:49:48] [INFO] [23:49:48 INFO]: h2ph issued server command: /offend SL1PR1K89 Duplicating/Exploiting
+[2026-02-12 23:49:50] [INFO] [23:49:50 INFO]: h2ph issued server command: /offend SL1PR1K89 Duplicating/Exploiting
+[2026-02-12 23:49:52] [INFO] [23:49:52 INFO]: h2ph issued server command: /offend SL1PR1K89 Duplicating/Exploiting
+[2026-02-12 23:49:57] [INFO] [23:49:57 INFO]: h2ph issued server command: /offend .SL1PR1K89 Duplicating/Exploiting
+[2026-02-12 23:50:06] [INFO] [23:50:06 INFO]: h2ph issued server command: /ban .SL1PR1K89 duping
+[2026-02-12 23:50:06] [INFO] [23:50:06 INFO]: [Essentials] Player h2ph banned .SL1PR1K89 for: \<secondary>You have been banned:
+[2026-02-12 23:50:51] [INFO] [23:50:51 INFO]: h2ph issued server command: /alts thisguy0_
+[2026-02-12 23:51:02] [INFO] [23:51:02 INFO]: h2ph issued server command: /offend thisguy0_ Duplicating/Exploiting
+[2026-02-12 23:57:46] [INFO] [23:57:46 INFO]: h2ph issued server command: /otp SL1PR1K89
+[2026-02-12 23:58:46] [INFO] [23:58:46 INFO]: h2ph issued server command: /otp thisguy0_

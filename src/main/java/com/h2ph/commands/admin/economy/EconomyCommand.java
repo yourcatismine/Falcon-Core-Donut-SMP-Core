@@ -209,6 +209,10 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
         double base = Double.parseDouble(numberPart);
         double result = base * multiplier;
 
+        if (!Double.isFinite(result)) {
+            throw new NumberFormatException("Amount is not finite");
+        }
+
         if (result < 0)
             return 0;
         return result;

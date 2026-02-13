@@ -82,16 +82,6 @@ public class ChatFormatter implements Listener {
         if (org.bukkit.Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             return "";
         }
-        try {
-            LuckPerms lp = LuckPermsProvider.get();
-            User user = lp.getUserManager().getUser(player.getUniqueId());
-            if (user != null) {
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                return prefix != null ? prefix : "";
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to fetch LuckPerms prefix for " + player.getName());
-        }
-        return "";
+        return getPlayerGroup(player);
     }
 }

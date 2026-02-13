@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import com.prismcore.survival.auction.AuctionController;
 import com.prismcore.survival.auction.Transaction;
+import com.prismcore.survival.manager.ActivityLogger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -27,6 +28,16 @@ public class TransactionManager {
         this.addTransaction(seller, tx);
         Transaction txBuyer = new Transaction(item.clone(), price, buyer, seller, now, false);
         this.addTransaction(buyer, txBuyer);
+
+        UUID sellerUuid = controller.getPlugin().getServer().getOfflinePlayer(seller).getUniqueId();
+        UUID buyerUuid = controller.getPlugin().getServer().getOfflinePlayer(buyer).getUniqueId();
+
+        String itemName = Utils.prettifyMaterialName(item.getType());
+        controller.getPlugin().getActivityLogger().log(sellerUuid, ActivityLogger.LogType.AUCTION,
+                "Sold " + itemName + " to " + buyer + " for $" + Utils.formatNumber(price));
+        controller.getPlugin().getActivityLogger().log(buyerUuid, ActivityLogger.LogType.AUCTION,
+                "Bought " + itemName + " from " + seller + " for $" + price);
+
         // optimization: remove immediate save
         // this.saveToConfig();
     }

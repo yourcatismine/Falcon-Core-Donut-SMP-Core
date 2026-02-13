@@ -95,7 +95,7 @@ public class ChatInputManager
             case 3: {
                 try {
                     double price = Double.parseDouble(msg);
-                    if (price <= 0.0) {
+                    if (!Double.isFinite(price) || price <= 0.0) {
                         throw new NumberFormatException();
                     }
                     this.session((UUID) u).priceEach = price;

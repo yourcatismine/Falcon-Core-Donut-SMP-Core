@@ -11,6 +11,8 @@ import com.prismcore.survival.orders.store.FilterManager;
 import com.prismcore.survival.orders.store.OrderManager;
 import com.prismcore.survival.orders.store.PlayerStateManager;
 import com.prismcore.survival.orders.store.VaultHook;
+import com.prismcore.survival.orders.store.OfflineNotificationManager;
+import com.prismcore.survival.orders.gui.OrdersJoinListener;
 import org.bukkit.Bukkit;
 
 public class OrdersModule {
@@ -25,6 +27,7 @@ public class OrdersModule {
     private OrderManager orderManager;
     private PlayerStateManager stateManager;
     private ChatInputManager chatInputManager;
+    private OfflineNotificationManager offlineNotifications;
 
     public OrdersModule(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -50,9 +53,11 @@ public class OrdersModule {
         this.orderManager.cleanupExpired();
         this.stateManager = new PlayerStateManager(this);
         this.chatInputManager = new ChatInputManager(this);
+        this.offlineNotifications = new OfflineNotificationManager(this);
 
         Bukkit.getPluginManager().registerEvents(new MenuListener(plugin), plugin);
         Bukkit.getPluginManager().registerEvents(this.chatInputManager, plugin);
+        Bukkit.getPluginManager().registerEvents(new OrdersJoinListener(this), plugin);
 
         plugin.getCommand("orders").setExecutor(new OrdersCommand(plugin));
 
@@ -103,5 +108,9 @@ public class OrdersModule {
 
     public ChatInputManager chat() {
         return this.chatInputManager;
+    }
+
+    public OfflineNotificationManager getOfflineNotifications() {
+        return this.offlineNotifications;
     }
 }

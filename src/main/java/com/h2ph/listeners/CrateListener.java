@@ -332,6 +332,12 @@ public class CrateListener implements Listener {
             // Success
             data.removeKey(keyName);
             player.getInventory().addItem(reward.clone());
+
+            // Log activity
+            plugin.getActivityLogger().log(player.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
+                    "Claimed " + reward.getType() + " x" + reward.getAmount() + " from " + crateName + " crate");
+
             // No message, No sound
             player.closeInventory();
         } else {

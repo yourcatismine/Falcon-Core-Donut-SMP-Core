@@ -29,6 +29,8 @@ public class ApiServer {
     private final List<HttpExchange> commandClients = new CopyOnWriteArrayList<>();
     // Live clients for Sign events
     private final List<HttpExchange> signClients = new CopyOnWriteArrayList<>();
+    // Live clients for Activity Logs history
+    private final List<HttpExchange> activityClients = new CopyOnWriteArrayList<>();
     private String apiKey;
     private String region;
 
@@ -74,6 +76,13 @@ public class ApiServer {
             registerContext("/players/blocks_break", new BlocksBrokenHandler());
             registerContext("/players/blocks_placed", new BlocksPlacedHandler());
             registerContext("/players/mobs_killed", new MobsKilledHandler());
+            registerContext("/api/players", new com.h2ph.api.handlers.PlayerListHandler(plugin));
+            registerContext("/api/players/detail", new com.h2ph.api.handlers.PlayerDetailHandler(plugin));
+            registerContext("/api/players/action", new com.h2ph.api.handlers.PlayerActionHandler(plugin));
+            registerContext("/api/players/history", new com.h2ph.api.handlers.PlayerLogsHandler(plugin));
+            registerContext("/api/players/history/live", new ActivityLiveFeedHandler());
+            registerContext("/api/players/hazards/summary", new com.h2ph.api.handlers.HazardSummaryHandler(plugin));
+            registerContext("/api/players/hazards/resolve", new com.h2ph.api.handlers.HazardResolveHandler(plugin));
 
             server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool());
             server.start();
@@ -147,6 +156,10 @@ public class ApiServer {
             }
         }
         return false;
+    }
+
+    public String getApiKey() {
+        return apiKey;
     }
 
     private String formatDimension(org.bukkit.World.Environment env) {
@@ -467,6 +480,55 @@ public class ApiServer {
             t.sendResponseHeaders(200, 0); // Chunked encoding
 
             signClients.add(t);
+        }
+    }
+
+    public void broadcastActivityLog(java.util.UUID uuid, com.prismcore.survival.manager.ActivityLogger.LogType type,
+            String content) {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            String json = String.format(
+                    "{\"uuid\": \"%s\", \"type\": \"%s\", \"content\": \"%s\", \"timestamp\": %d}",
+                    uuid.toString(),
+                    type.name(),
+                    escape(content),
+                    System.currentTimeMillis());
+
+            String event = "data: " + json + "\n\n";
+            byte[] bytes = event.getBytes(StandardCharsets.UTF_8);
+
+            List<HttpExchange> toRemove = new ArrayList<>();
+            for (HttpExchange client : activityClients) {
+                try {
+                    OutputStream os = client.getResponseBody();
+                    os.write(bytes);
+                    os.flush();
+                } catch (IOException e) {
+                    toRemove.add(client);
+                }
+            }
+            activityClients.removeAll(toRemove);
+        });
+    }
+
+    private class ActivityLiveFeedHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if (ApiServer.this.isRateLimited(t)) {
+                sendResponse(t, 429, "{\"error\": \"Too Many Requests\"}");
+                return;
+            }
+            if (!ApiServer.this.isAuthorized(t)) {
+                sendResponse(t, 401, "{\"error\": \"Unauthorized\"}");
+                return;
+            }
+            t.getResponseHeaders().set("Content-Type", "text/event-stream");
+            t.getResponseHeaders().set("Cache-Control", "no-cache");
+            t.getResponseHeaders().set("Connection", "keep-alive");
+            t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+
+            t.sendResponseHeaders(200, 0); // Chunked encoding
+
+            activityClients.add(t);
         }
     }
 

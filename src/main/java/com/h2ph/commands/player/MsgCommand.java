@@ -10,6 +10,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import com.prismcore.survival.manager.ActivityLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +89,11 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         player.sendMessage(senderFormat);
         target.sendMessage(receiverFormat);
+
+        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(player.getUniqueId(),
+                ActivityLogger.LogType.MESSAGE, "PM to " + target.getName() + ": " + message);
+        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(target.getUniqueId(),
+                ActivityLogger.LogType.MESSAGE, "PM from " + player.getName() + ": " + message);
 
         // Sound Notification
         com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()

@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.UUID;
 import com.prismcore.survival.auction.AuctionItem;
 import com.prismcore.survival.auction.AuctionController;
+import com.prismcore.survival.tools.ToolsManager;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 public class AuctionManager {
     private final AuctionController controller;
@@ -26,10 +29,14 @@ public class AuctionManager {
     }
 
     public void addItem(AuctionItem item) {
+        // Set auction pause flag on amethyst tools
+        pauseAmethystTimer(item.getItemStack());
         this.items.add(item);
     }
 
     public boolean removeItem(AuctionItem item) {
+        // Resume amethyst timer when removed from auction
+        resumeAmethystTimer(item.getItemStack());
         return this.items.remove(item);
     }
 
@@ -98,6 +105,8 @@ public class AuctionManager {
                     if (item == null || sellerName == null)
                         continue;
                     AuctionItem ai = new AuctionItem(id, sellerName, item, price, listedAt, duration);
+                    // Set auction pause flag on loaded items
+                    pauseAmethystTimer(item);
                     this.items.add(ai);
                 } catch (Exception exception) {
                 }
@@ -116,7 +125,10 @@ public class AuctionManager {
                     for (String s : list) {
                         String[] parts = s.split("::");
                         if (parts.length >= 3) {
-                            sales.add(new OfflineSale(parts[0], parts[1], Double.parseDouble(parts[2])));
+                            double price = Double.parseDouble(parts[2]);
+                            if (Double.isFinite(price)) {
+                                sales.add(new OfflineSale(parts[0], parts[1], price));
+                            }
                         }
                     }
                     this.pendingSales.put(uuid, sales);
@@ -211,6 +223,45 @@ public class AuctionManager {
             return data.getAuctionCategory();
         }
         return "All";
+    }
+
+    /**
+     * Sets the auction pause flag on an item if it's an amethyst tool.
+     * This prevents the timer from counting down while in auction.
+     */
+    private void pauseAmethystTimer(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+
+        // Check if this is an amethyst tool (has expiry or remaining key)
+        boolean isAmethystTool = meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)
+                || meta.getPersistentDataContainer().has(ToolsManager.REMAINING_KEY, PersistentDataType.LONG);
+
+        if (isAmethystTool) {
+            // Set the auction pause flag
+            meta.getPersistentDataContainer().set(ToolsManager.AUCTION_PAUSED_KEY, PersistentDataType.BYTE, (byte) 1);
+            item.setItemMeta(meta);
+        }
+    }
+
+    /**
+     * Removes the auction pause flag from an item, resuming the timer countdown.
+     */
+    private void resumeAmethystTimer(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+
+        // Remove the auction pause flag if it exists
+        if (meta.getPersistentDataContainer().has(ToolsManager.AUCTION_PAUSED_KEY, PersistentDataType.BYTE)) {
+            meta.getPersistentDataContainer().remove(ToolsManager.AUCTION_PAUSED_KEY);
+            item.setItemMeta(meta);
+        }
     }
 
     public static class OfflineSale {

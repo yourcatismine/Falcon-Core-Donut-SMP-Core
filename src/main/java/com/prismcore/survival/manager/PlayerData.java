@@ -10,6 +10,9 @@ public class PlayerData {
     private double shards;
     private double money;
     private double shopSpent;
+    private boolean muted;
+    private String muteReason;
+    private long muteExpiry;
     private final Map<String, Integer> keys = new HashMap<>();
     private String name; // Cached name
     private long shardBoosterExpiry; // Timestamp when shard booster expires
@@ -56,14 +59,20 @@ public class PlayerData {
     }
 
     public void setMoney(double money) {
+        if (!Double.isFinite(money))
+            return;
         this.money = money;
     }
 
     public void addMoney(double amount) {
+        if (!Double.isFinite(amount) || amount < 0)
+            return;
         this.money += amount;
     }
 
     public void removeMoney(double amount) {
+        if (!Double.isFinite(amount) || amount < 0)
+            return;
         this.money -= amount;
     }
 
@@ -294,5 +303,32 @@ public class PlayerData {
 
     public void setAuctionCategory(String auctionCategory) {
         this.auctionCategory = auctionCategory;
+    }
+
+    public boolean isMuted() {
+        if (muted && muteExpiry > 0 && muteExpiry < System.currentTimeMillis()) {
+            muted = false;
+        }
+        return muted;
+    }
+
+    public void setMuted(boolean muted) {
+        this.muted = muted;
+    }
+
+    public String getMuteReason() {
+        return muteReason;
+    }
+
+    public void setMuteReason(String muteReason) {
+        this.muteReason = muteReason;
+    }
+
+    public long getMuteExpiry() {
+        return muteExpiry;
+    }
+
+    public void setMuteExpiry(long muteExpiry) {
+        this.muteExpiry = muteExpiry;
     }
 }

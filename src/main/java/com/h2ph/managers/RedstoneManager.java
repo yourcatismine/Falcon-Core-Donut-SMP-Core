@@ -8,15 +8,23 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,6 +45,15 @@ public class RedstoneManager implements Listener {
     private final Set<UUID> guiViewers = new HashSet<>();
     private final Map<UUID, Map<Long, Long>> lastNotificationTime = new ConcurrentHashMap<>();
     private final Map<UUID, Long> playerNotificationCooldown = new ConcurrentHashMap<>();
+
+    // Block placement tracking
+    private final Map<String, UUID> blockPlacements = new ConcurrentHashMap<>(); // "world,x,y,z" -> player UUID
+    private final Map<Long, Set<UUID>> chunkPlayers = new ConcurrentHashMap<>(); // chunkKey -> Set of player UUIDs who
+                                                                                 // placed redstone
+
+    // Persistence
+    private final File dataFile;
+    private FileConfiguration dataConfig;
 
     private static final EnumSet<Material> REDSTONE_COMPONENTS = EnumSet.noneOf(Material.class);
 
@@ -68,11 +85,15 @@ public class RedstoneManager implements Listener {
 
     public RedstoneManager(JavaPlugin plugin) {
         this.plugin = (PrismSurvival) plugin;
+        this.dataFile = new File(plugin.getDataFolder(), "redstone_data.yml");
+
+        loadData(); // Load persisted data
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
         this.plugin.getSchedulerAdapter().runTaskTimer(this::checkThresholds, 20L, 20L);
         this.plugin.getSchedulerAdapter().runTaskTimer(this::updateLiveGUI, 20L, 20L);
+        this.plugin.getSchedulerAdapter().runTaskTimer(this::saveData, 6000L, 6000L); // Save every 5 minutes
     }
 
     /**
@@ -111,18 +132,31 @@ public class RedstoneManager implements Listener {
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 60);
 
-                            List<String> players = new ArrayList<>();
+                            // Find accurate Y-coordinate of redstone
                             int blockX = x * 16 + 8;
                             int blockZ = z * 16 + 8;
-                            int blockY = world.getHighestBlockYAt(blockX, blockZ) + 1;
+                            int blockY = findAverageRedstoneY(world, x, z);
 
-                            org.bukkit.Location center = new org.bukkit.Location(world, blockX, 64, blockZ);
-                            for (Player p : Bukkit.getOnlinePlayers()) {
-                                if (p.getWorld().equals(world) && p.getLocation().distance(center) <= 48) {
-                                    players.add(p.getName());
+                            // Get players who placed redstone in this chunk
+                            Set<UUID> responsiblePlayers = chunkPlayers.getOrDefault(chunkKey, Collections.emptySet());
+                            List<String> playerNames = new ArrayList<>();
+                            for (UUID uuid : responsiblePlayers) {
+                                String name = Bukkit.getOfflinePlayer(uuid).getName();
+                                if (name != null) {
+                                    playerNames.add(name);
                                 }
                             }
-                            String nearPlayers = players.isEmpty() ? "None" : String.join(", ", players);
+
+                            // Fallback: if no placement data, use nearby players
+                            if (playerNames.isEmpty()) {
+                                org.bukkit.Location center = new org.bukkit.Location(world, blockX, blockY, blockZ);
+                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                    if (p.getWorld().equals(world) && p.getLocation().distance(center) <= 48) {
+                                        playerNames.add(p.getName());
+                                    }
+                                }
+                            }
+                            String nearPlayers = playerNames.isEmpty() ? "Unknown" : String.join(", ", playerNames);
 
                             RedstoneAlert alert = new RedstoneAlert(
                                     world.getName(), blockX, blockY, blockZ,
@@ -152,18 +186,31 @@ public class RedstoneManager implements Listener {
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 20);
 
-                            List<String> players = new ArrayList<>();
+                            // Find accurate Y-coordinate of redstone
                             int blockX = x * 16 + 8;
                             int blockZ = z * 16 + 8;
-                            int blockY = world.getHighestBlockYAt(blockX, blockZ) + 1;
+                            int blockY = findAverageRedstoneY(world, x, z);
 
-                            org.bukkit.Location center = new org.bukkit.Location(world, blockX, 64, blockZ);
-                            for (Player p : Bukkit.getOnlinePlayers()) {
-                                if (p.getWorld().equals(world) && p.getLocation().distance(center) <= 48) {
-                                    players.add(p.getName());
+                            // Get players who placed redstone in this chunk
+                            Set<UUID> responsiblePlayers = chunkPlayers.getOrDefault(chunkKey, Collections.emptySet());
+                            List<String> playerNames = new ArrayList<>();
+                            for (UUID uuid : responsiblePlayers) {
+                                String name = Bukkit.getOfflinePlayer(uuid).getName();
+                                if (name != null) {
+                                    playerNames.add(name);
                                 }
                             }
-                            String nearPlayers = players.isEmpty() ? "None" : String.join(", ", players);
+
+                            // Fallback: if no placement data, use nearby players
+                            if (playerNames.isEmpty()) {
+                                org.bukkit.Location center = new org.bukkit.Location(world, blockX, blockY, blockZ);
+                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                    if (p.getWorld().equals(world) && p.getLocation().distance(center) <= 48) {
+                                        playerNames.add(p.getName());
+                                    }
+                                }
+                            }
+                            String nearPlayers = playerNames.isEmpty() ? "Unknown" : String.join(", ", playerNames);
 
                             RedstoneAlert alert = new RedstoneAlert(
                                     world.getName(), blockX, blockY, blockZ,
@@ -236,6 +283,178 @@ public class RedstoneManager implements Listener {
                 .computeIfAbsent(chunk.getWorld().getUID(), k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(getChunkKey(chunk), k -> new AtomicInteger(0))
                 .incrementAndGet();
+    }
+
+    /**
+     * Get location key for block placement tracking
+     */
+    private String getLocationKey(Location loc) {
+        return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
+    }
+
+    /**
+     * Record who placed a redstone block
+     */
+    private void recordBlockPlacement(Location loc, UUID playerUuid) {
+        blockPlacements.put(getLocationKey(loc), playerUuid);
+
+        Chunk chunk = loc.getChunk();
+        long key = getChunkKey(chunk);
+        chunkPlayers.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet()).add(playerUuid);
+    }
+
+    /**
+     * Find average Y-level of redstone components in a chunk
+     */
+    private int findAverageRedstoneY(World world, int chunkX, int chunkZ) {
+        try {
+            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+            int totalY = 0;
+            int count = 0;
+
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    for (int y = world.getMinHeight(); y < world.getMaxHeight(); y++) {
+                        Block block = chunk.getBlock(x, y, z);
+                        if (REDSTONE_COMPONENTS.contains(block.getType())) {
+                            totalY += y;
+                            count++;
+                        }
+                    }
+                }
+            }
+
+            return count > 0 ? totalY / count : 64; // Default to 64 if no redstone found
+        } catch (Exception e) {
+            return 64; // Fallback to default
+        }
+    }
+
+    /**
+     * Load persisted data from file
+     */
+    private void loadData() {
+        if (!dataFile.exists()) {
+            plugin.getLogger().info("No redstone data file found, starting fresh");
+            return;
+        }
+
+        try {
+            dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+
+            // Load alert history
+            if (dataConfig.contains("alerts")) {
+                ConfigurationSection alerts = dataConfig.getConfigurationSection("alerts");
+                if (alerts != null) {
+                    for (String key : alerts.getKeys(false)) {
+                        try {
+                            String world = alerts.getString(key + ".world");
+                            int x = alerts.getInt(key + ".x");
+                            int y = alerts.getInt(key + ".y");
+                            int z = alerts.getInt(key + ".z");
+                            int count = alerts.getInt(key + ".count");
+                            int limit = alerts.getInt(key + ".limit");
+                            String nearPlayers = alerts.getString(key + ".nearPlayers", "Unknown");
+                            long timestamp = alerts.getLong(key + ".timestamp");
+
+                            RedstoneAlert alert = new RedstoneAlert(world, x, y, z, count, limit, nearPlayers,
+                                    timestamp);
+                            globalAlertHistory.add(alert);
+                        } catch (Exception e) {
+                            plugin.getLogger().warning("Failed to load alert: " + e.getMessage());
+                        }
+                    }
+                }
+                plugin.getLogger().info("Loaded " + globalAlertHistory.size() + " redstone alerts");
+            }
+
+            // Load block placements
+            if (dataConfig.contains("placements")) {
+                ConfigurationSection placements = dataConfig.getConfigurationSection("placements");
+                if (placements != null) {
+                    for (String key : placements.getKeys(false)) {
+                        try {
+                            String uuidStr = placements.getString(key);
+                            blockPlacements.put(key, UUID.fromString(uuidStr));
+                        } catch (Exception e) {
+                            // Skip invalid entries
+                        }
+                    }
+                }
+                plugin.getLogger().info("Loaded " + blockPlacements.size() + " block placements");
+            }
+
+            // Load chunk players
+            if (dataConfig.contains("chunk-players")) {
+                ConfigurationSection chunks = dataConfig.getConfigurationSection("chunk-players");
+                if (chunks != null) {
+                    for (String chunkKeyStr : chunks.getKeys(false)) {
+                        try {
+                            long chunkKey = Long.parseLong(chunkKeyStr);
+                            List<String> uuidList = chunks.getStringList(chunkKeyStr);
+                            Set<UUID> players = ConcurrentHashMap.newKeySet();
+                            for (String uuidStr : uuidList) {
+                                players.add(UUID.fromString(uuidStr));
+                            }
+                            chunkPlayers.put(chunkKey, players);
+                        } catch (Exception e) {
+                            // Skip invalid entries
+                        }
+                    }
+                }
+                plugin.getLogger().info("Loaded " + chunkPlayers.size() + " chunk player mappings");
+            }
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to load redstone data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Save data to file
+     */
+    private void saveData() {
+        try {
+            dataConfig = new YamlConfiguration();
+
+            // Save alert history
+            ConfigurationSection alerts = dataConfig.createSection("alerts");
+            int index = 0;
+            for (RedstoneAlert alert : globalAlertHistory) {
+                String key = String.valueOf(index++);
+                alerts.set(key + ".world", alert.getWorld());
+                alerts.set(key + ".x", alert.getX());
+                alerts.set(key + ".y", alert.getY());
+                alerts.set(key + ".z", alert.getZ());
+                alerts.set(key + ".count", alert.getCount());
+                alerts.set(key + ".limit", alert.getLimit());
+                alerts.set(key + ".nearPlayers", alert.getNearPlayers());
+                alerts.set(key + ".timestamp", alert.getTimestamp());
+            }
+
+            // Save block placements (limit to recent 10000 to avoid excessive file size)
+            ConfigurationSection placements = dataConfig.createSection("placements");
+            int count = 0;
+            for (Map.Entry<String, UUID> entry : blockPlacements.entrySet()) {
+                if (count++ > 10000)
+                    break;
+                placements.set(entry.getKey(), entry.getValue().toString());
+            }
+
+            // Save chunk players
+            ConfigurationSection chunks = dataConfig.createSection("chunk-players");
+            for (Map.Entry<Long, Set<UUID>> entry : chunkPlayers.entrySet()) {
+                List<String> uuidList = new ArrayList<>();
+                for (UUID uuid : entry.getValue()) {
+                    uuidList.add(uuid.toString());
+                }
+                chunks.set(String.valueOf(entry.getKey()), uuidList);
+            }
+
+            dataConfig.save(dataFile);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to save redstone data: " + e.getMessage());
+        }
     }
 
     /**
@@ -313,6 +532,16 @@ public class RedstoneManager implements Listener {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Event Handler: Track redstone block placements
+     */
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (REDSTONE_COMPONENTS.contains(event.getBlock().getType())) {
+            recordBlockPlacement(event.getBlock().getLocation(), event.getPlayer().getUniqueId());
         }
     }
 

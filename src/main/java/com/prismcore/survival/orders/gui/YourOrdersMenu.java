@@ -207,21 +207,32 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
 
             if (index == list.size()) {
                 // New Order Button
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Opened New Order Menu");
                 this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 new NewOrderMenu(this.module, this.p).open();
                 return;
             } else if (index < list.size()) {
                 // Existing Order
+                Order target = list.get(index);
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Selected Order to Edit: " + target.key.displayName());
                 this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                new EditOrderMenu(this.module, this.p, list.get(index)).open();
+                new EditOrderMenu(this.module, this.p, target).open();
                 return;
             }
         } else if (slot == 18) {
             // Previous Page
             if (this.page > 0) {
+                int oldPage = this.page + 1;
                 this.page--;
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Navigated: Your Orders (Page " + oldPage + " -> " + (this.page + 1) + ")");
                 this.internalPageSwitch = true;
                 this.open();
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -239,7 +250,11 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
             int maxPage = Math.max(0, (totalItems - 1) / perPage);
 
             if (this.page < maxPage) {
+                int oldPage = this.page + 1;
                 this.page++;
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Navigated: Your Orders (Page " + oldPage + " -> " + (this.page + 1) + ")");
                 this.internalPageSwitch = true;
                 this.open();
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);

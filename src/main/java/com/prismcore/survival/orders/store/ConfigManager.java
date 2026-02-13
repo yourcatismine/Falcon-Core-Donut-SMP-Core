@@ -22,6 +22,7 @@ public class ConfigManager {
     private final Plugin plugin;
     private FileConfiguration cfg;
     private final Set<String> disabledTokens = new HashSet<>();
+    private final Set<String> lockedWorlds = new HashSet<>();
 
     public ConfigManager(Plugin plugin) {
         this.plugin = plugin;
@@ -38,12 +39,14 @@ public class ConfigManager {
         this.cfg = YamlConfiguration.loadConfiguration(configFile);
 
         this.loadDisabled();
+        this.loadLockedWorlds();
     }
 
     public void reload() {
         this.plugin.reloadConfig();
         this.cfg = this.plugin.getConfig();
         this.loadDisabled();
+        this.loadLockedWorlds();
     }
 
     private void loadDisabled() {
@@ -60,6 +63,22 @@ public class ConfigManager {
             this.disabledTokens.add("SPAWNER");
             this.disabledTokens.add("SPAWNER_EGGS");
         }
+    }
+
+    private void loadLockedWorlds() {
+        this.lockedWorlds.clear();
+        List<String> list = this.cfg.getStringList("droplootlocked");
+        if (list != null) {
+            for (String s : list) {
+                this.lockedWorlds.add(s.trim().toLowerCase());
+            }
+        }
+    }
+
+    public boolean isWorldLocked(String worldName) {
+        if (worldName == null)
+            return false;
+        return this.lockedWorlds.contains(worldName.toLowerCase());
     }
 
     public boolean isDisabled(Material m) {

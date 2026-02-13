@@ -81,7 +81,11 @@ public final class Utils {
         }
         try {
             double value = Double.parseDouble(numberPart);
-            return value * multiplier;
+            double result = value * multiplier;
+            if (!Double.isFinite(result)) {
+                return -1.0;
+            }
+            return result;
         } catch (NumberFormatException ex) {
             return -1.0;
         }

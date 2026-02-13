@@ -84,11 +84,16 @@ public class DeleteOrderMenu
         int back = this.module.cfg().slot("gui.delete.items.back", 10);
         int confirm = this.module.cfg().slot("gui.delete.items.confirm", 16);
         if (slot == back) {
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER, "Clicked Back in Delete Order Menu");
             this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
             new EditOrderMenu(this.module, this.p, this.order).open();
             return;
         }
         if (slot == confirm) {
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                    "Clicked Confirm in Delete Order Menu");
             // Real-time check to prevent deleting orders with pending items (co-op race
             // condition)
             if (!this.order.storage.isEmpty()) {

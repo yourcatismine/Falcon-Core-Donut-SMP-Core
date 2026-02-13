@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +30,6 @@ import java.util.UUID;
 import com.prismcore.survival.orders.Utils;
 import com.prismcore.survival.orders.data.ItemKey;
 import com.prismcore.survival.orders.data.Order;
-import com.prismcore.survival.orders.util.TaskUtil;
 import com.prismcore.survival.orders.OrdersModule;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -39,10 +37,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import com.h2ph.PrismSurvival;
+import com.prismcore.survival.manager.ActivityLogger;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
 
@@ -84,20 +83,27 @@ public class OrderManager {
         o.key = key;
         o.requested = Math.max(1, amount);
         o.delivered = 0;
-        o.priceEach = priceEach;
+        o.priceEach = Double.isFinite(priceEach) ? priceEach : 0.0;
         o.paid = o.totalPrice();
         o.canceled = false;
         o.completed = false;
         o.creationTime = System.currentTimeMillis();
         this.orders.put(o.id, o);
         this.saveOrder(o);
+
+        PrismSurvival.getInstance().getHazardManager().checkActivity(owner, "ORDER_CREATE",
+                amount + " " + key.displayName());
+        PrismSurvival.getInstance().getActivityLogger().log(owner, ActivityLogger.LogType.ORDER,
+                "Created order for " + amount + " " + key.displayName() + " ($" + priceEach + "/ea)");
+
         return o;
     }
 
     public void cancel(Order o) {
         o.canceled = true;
         int remaining = o.remainingAmount();
-        double refund = (double) remaining * o.priceEach;
+        double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
+        double refund = (double) remaining * price;
         OfflinePlayer owner = Bukkit.getOfflinePlayer((UUID) o.owner);
         if (owner.isOnline()) {
             OrdersModule.getInstance().vault().give((OfflinePlayer) owner.getPlayer(), refund);
@@ -105,6 +111,9 @@ public class OrderManager {
         o.requested = o.delivered;
         o.completed = true;
         this.saveOrder(o);
+
+        PrismSurvival.getInstance().getActivityLogger().log(o.owner, ActivityLogger.LogType.ORDER,
+                "Cancelled this order (" + o.key.displayName() + ")");
     }
 
     public void applyDelivery(Order o, List<ItemStack> accepted, int acceptedAmount, UUID deliverer) {
@@ -116,19 +125,70 @@ public class OrderManager {
                 continue;
             o.storage.add(it);
         }
-        double receive = (double) acceptedAmount * o.priceEach;
+
+        double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
+        double receive = (double) acceptedAmount * price;
         Player delivererPlayer = Bukkit.getPlayer((UUID) deliverer);
+        String delivererName = "Someone";
+
         if (delivererPlayer != null) {
             OrdersModule.getInstance().vault().give((OfflinePlayer) delivererPlayer, receive);
+            delivererName = delivererPlayer.getName();
+        } else {
+            OfflinePlayer op = Bukkit.getOfflinePlayer(deliverer);
+            if (op != null && op.getName() != null) {
+                delivererName = op.getName();
+            }
         }
+
         o.delivered += acceptedAmount;
         if (o.delivered >= o.requested) {
             o.completed = true;
         }
-        // o.paid will now represent TOTAL amount paid out so far.
         o.paid = (double) o.delivered * o.priceEach;
         this.saveOrder(o);
-        this.sendReceiverActionbar(o, deliverer, acceptedAmount);
+
+        PrismSurvival.getInstance().getHazardManager().checkActivity(deliverer, "ORDER_DELIVER",
+                acceptedAmount + " " + o.key.displayName() + " to " + o.owner);
+
+        // Notifications
+        String formattedAmount = Utils.abbr(acceptedAmount);
+        String itemName = o.key.displayName();
+        Player ownerPlayer = Bukkit.getPlayer(o.owner);
+        String ownerName = "Someone";
+        OfflinePlayer ownerOp = Bukkit.getOfflinePlayer(o.owner);
+        if (ownerOp != null && ownerOp.getName() != null) {
+            ownerName = ownerOp.getName();
+        }
+
+        PrismSurvival.getInstance().getActivityLogger().log(o.owner, ActivityLogger.LogType.ORDER,
+                delivererName + " delivered you " + acceptedAmount + " " + o.key.displayName());
+        PrismSurvival.getInstance().getActivityLogger().log(deliverer, ActivityLogger.LogType.ORDER,
+                "You delivered " + acceptedAmount + " " + o.key.displayName() + " to " + ownerName);
+
+        // 1. Notify Deliverer (if online)
+        if (delivererPlayer != null) {
+            String msg = Utils.formatColors(
+                    "&7You have delivered &a" + formattedAmount + "&7 of &a" + itemName + "&7 to &5" + ownerName);
+            delivererPlayer.sendMessage(msg);
+            delivererPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
+            delivererPlayer.playSound(delivererPlayer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
+                    1.0f, 1.0f);
+        }
+
+        // 2. Notify Owner
+        if (ownerPlayer != null) {
+            // Online Owner
+            String msg = Utils
+                    .formatColors("&5" + delivererName + "&7 delivered you &a" + formattedAmount + " &a" + itemName);
+            ownerPlayer.sendMessage(msg);
+            ownerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
+            ownerPlayer.playSound(ownerPlayer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+        } else {
+            // Offline Owner
+            OrdersModule.getInstance().getOfflineNotifications().addNotification(o.owner, delivererName, itemName,
+                    acceptedAmount, receive);
+        }
     }
 
     public void deleteOrder(Order o) {
@@ -137,34 +197,6 @@ public class OrderManager {
         if (f.exists()) {
             f.delete();
         }
-    }
-
-    private void sendReceiverActionbar(Order o, UUID deliverer, int acceptedAmount) {
-        Player receiver = Bukkit.getPlayer((UUID) o.owner);
-        if (receiver == null) {
-            return;
-        }
-        TaskUtil.runEntity((Plugin) this.pl, (Entity) receiver, () -> {
-            String delivererName = "Someone";
-            Player d = Bukkit.getPlayer((UUID) deliverer);
-            if (d != null && d.getName() != null) {
-                delivererName = d.getName();
-            } else {
-                OfflinePlayer op = Bukkit.getOfflinePlayer((UUID) deliverer);
-                if (op != null && op.getName() != null) {
-                    delivererName = op.getName();
-                }
-            }
-            HashMap<String, String> ph = new HashMap<String, String>();
-            ph.put("player", delivererName);
-            ph.put("amount", String.valueOf(acceptedAmount));
-            ph.put("item", o.key.displayName());
-            String raw = OrdersModule.getInstance().cfg().cfg().getString("messages.received_actionbar",
-                    "&a{player} has delivered you {amount} {item}!");
-            String msg = Utils.applyPlaceholders(raw, ph);
-            msg = Utils.formatColors(msg);
-            receiver.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText((String) msg));
-        });
     }
 
     private void loadAll() {
@@ -232,7 +264,7 @@ public class OrderManager {
         final long creationTime = o.creationTime;
 
         // Run EVERYTHING async - including Base64 serialization
-        Bukkit.getScheduler().runTaskAsynchronously(pl, () -> {
+        PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
             // Serialize items to Base64 on async thread
             List<String> storageBase64 = new ArrayList<>();
             for (ItemStack item : storageClone) {
@@ -338,6 +370,12 @@ public class OrderManager {
             o.delivered = cfg.getInt("delivered");
             o.priceEach = cfg.getDouble("priceEach");
             o.paid = cfg.getDouble("paid");
+
+            if (!Double.isFinite(o.priceEach))
+                o.priceEach = 0.0;
+            if (!Double.isFinite(o.paid))
+                o.paid = 0.0;
+
             o.canceled = cfg.getBoolean("canceled");
             o.completed = cfg.getBoolean("completed");
 

@@ -61,8 +61,8 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (amount <= 0) {
-            sender.sendMessage(ChatColor.RED + "Amount must be positive.");
+        if (amount <= 0 || !Double.isFinite(amount)) {
+            sender.sendMessage(ChatColor.RED + "Amount must be a positive number.");
             return true;
         }
 
@@ -211,7 +211,11 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         }
 
         double val = Double.parseDouble(amountStr);
-        return val * multiplier;
+        double result = val * multiplier;
+        if (!Double.isFinite(result)) {
+            throw new NumberFormatException("Amount is not finite");
+        }
+        return result;
     }
 
     // Formatting logic replicated from BalanceCommand for consistency in message

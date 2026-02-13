@@ -133,7 +133,7 @@ items:
     name: "&9ᴘʀɪᴍᴇ ᴋᴇʏ"
     slot: 12
     command: "keys give {gamertag} prime 1"
-    price: 1500
+    price: 3000
     currency: SHARDS
 
   gold_key:
@@ -141,7 +141,7 @@ items:
     name: "&6ɢᴏʟᴅ ᴋᴇʏ"
     slot: 13
     command: "keys give {gamertag} gold 1"
-    price: 1500
+    price: 5000
     currency: SHARDS
 
   amethyst_key:
@@ -149,7 +149,7 @@ items:
     name: "&5ᴀᴍᴇᴛʜʏꜱᴛ ᴋᴇʏ"
     slot: 14
     command: "keys give {gamertag} amethyst 1"
-    price: 4000
+    price: 8000
     currency: SHARDS
 
   crimson_key:
@@ -157,5 +157,5 @@ items:
     name: "&4ᴄʀɪᴍꜱᴏɴ ᴋᴇʏ"
     slot: 15
     command: "keys give {gamertag} crimson 1"
-    price: 1500
+    price: 6000
     currency: SHARDS

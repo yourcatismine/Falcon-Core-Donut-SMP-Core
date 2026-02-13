@@ -129,8 +129,9 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
         if (meta instanceof Damageable) {
             ((Damageable) meta).setDamage(0);
         }
-        // Set Remaining Seconds
-        meta.getPersistentDataContainer().set(ToolsManager.REMAINING_KEY, PersistentDataType.LONG, timerSec);
+        // Set Expiration Timestamp (timestamp-based system)
+        long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
+        meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
         item.setItemMeta(meta);
         player.getInventory().addItem(new ItemStack[] { item });
     }
@@ -183,7 +184,9 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             meta.setLore(finalLore);
         }
         meta.getPersistentDataContainer().set(ToolsManager.MULTI_KEY, PersistentDataType.BYTE, (byte) 1);
-        meta.getPersistentDataContainer().set(ToolsManager.REMAINING_KEY, PersistentDataType.LONG, timerSec);
+        // Set Expiration Timestamp (timestamp-based system)
+        long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
+        meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
         item.setItemMeta(meta);
         player.getInventory().addItem(new ItemStack[] { item });
     }
@@ -235,7 +238,9 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             }).toList();
             meta.setLore(finalLore);
         }
-        meta.getPersistentDataContainer().set(ToolsManager.REMAINING_KEY, PersistentDataType.LONG, timerSec);
+        // Set Expiration Timestamp (timestamp-based system)
+        long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
+        meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
         item.setItemMeta(meta);
         player.getInventory().addItem(new ItemStack[] { item });
     }
@@ -279,9 +284,10 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             meta.setLore(finalLore);
         }
 
-        // Mark as shard booster and store timer duration
+        // Mark as shard booster and store expiration timestamp
         meta.getPersistentDataContainer().set(ToolsManager.BOOSTER_KEY, PersistentDataType.BYTE, (byte) 1);
-        meta.getPersistentDataContainer().set(ToolsManager.REMAINING_KEY, PersistentDataType.LONG, timerSec);
+        long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
+        meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
 
         item.setItemMeta(meta);
         player.getInventory().addItem(new ItemStack[] { item });

@@ -36,6 +36,11 @@ public class PrismSurvival extends JavaPlugin {
 
     private com.h2ph.maintenance.MaintenanceManager maintenanceManager;
     private com.prismcore.survival.orders.OrdersModule ordersModule;
+    private com.prismcore.survival.manager.ActivityLogger activityLogger;
+    private com.prismcore.survival.manager.InventoryLogManager inventoryLogManager;
+    private com.h2ph.managers.RedstoneManager redstoneManager;
+    private com.prismcore.survival.manager.HazardManager hazardManager;
+    private com.prismcore.survival.manager.BalanceLogger balanceLogger;
 
     @Override
     public void onLoad() {
@@ -106,8 +111,17 @@ public class PrismSurvival extends JavaPlugin {
         // Register Player Connection Listener (For saving data)
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
 
+        this.activityLogger = new com.prismcore.survival.manager.ActivityLogger(this);
+        this.inventoryLogManager = new com.prismcore.survival.manager.InventoryLogManager(this);
+
+        // Register Inventory Log Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventoryLogListener(this), this);
+
         // Initialize managers
         this.redstoneManager = new com.h2ph.managers.RedstoneManager(this);
+        this.hazardManager = new com.prismcore.survival.manager.HazardManager(this);
+        this.balanceLogger = new com.prismcore.survival.manager.BalanceLogger(this);
+        this.balanceLogger.start();
 
         // Register shop command
         this.shopCommand = new ShopCommand(this);
@@ -463,10 +477,20 @@ public class PrismSurvival extends JavaPlugin {
         return ordersModule;
     }
 
-    private com.h2ph.managers.RedstoneManager redstoneManager;
-
     public com.h2ph.managers.RedstoneManager getRedstoneManager() {
         return redstoneManager;
+    }
+
+    public com.prismcore.survival.manager.HazardManager getHazardManager() {
+        return hazardManager;
+    }
+
+    public com.prismcore.survival.manager.ActivityLogger getActivityLogger() {
+        return activityLogger;
+    }
+
+    public com.prismcore.survival.manager.InventoryLogManager getInventoryLogManager() {
+        return inventoryLogManager;
     }
 
     public String normalizeKeyName(String keyName) {

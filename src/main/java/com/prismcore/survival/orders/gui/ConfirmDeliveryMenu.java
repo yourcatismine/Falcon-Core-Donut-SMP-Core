@@ -18,14 +18,9 @@ package com.prismcore.survival.orders.gui;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import com.prismcore.survival.orders.OrdersModule;
 import com.prismcore.survival.orders.Utils;
 import com.prismcore.survival.orders.data.Order;
-import com.prismcore.survival.orders.gui.DeliverItemsMenu;
-import com.prismcore.survival.orders.gui.GuiVariant;
-import com.prismcore.survival.orders.gui.MenuOwner;
-import com.prismcore.survival.orders.gui.OrdersMainMenu;
 import com.prismcore.survival.orders.util.TaskUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -36,6 +31,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 
 public class ConfirmDeliveryMenu
@@ -44,17 +40,22 @@ public class ConfirmDeliveryMenu
     private final OrdersModule module;
     private final Player p;
     private final Order order;
-    private final List<ItemStack> accepted;
+    private final List<ItemStack> acceptedDirect; // Items placed directly in delivery menu
+    private final List<ItemStack> acceptedFromShulkers; // Items extracted from shulker boxes
+    private final List<ItemStack> originalShulkers; // Original shulker boxes before extraction
     private final int acceptedAmount;
     private Inventory inv;
     private boolean finalized = false;
 
-    public ConfirmDeliveryMenu(OrdersModule module, Player p, Order order, List<ItemStack> accepted,
-            int acceptedAmount) {
+    public ConfirmDeliveryMenu(OrdersModule module, Player p, Order order,
+            List<ItemStack> acceptedDirect, List<ItemStack> acceptedFromShulkers,
+            List<ItemStack> originalShulkers, int acceptedAmount) {
         this.module = module;
         this.p = p;
         this.order = order;
-        this.accepted = accepted;
+        this.acceptedDirect = acceptedDirect;
+        this.acceptedFromShulkers = acceptedFromShulkers;
+        this.originalShulkers = originalShulkers;
         this.acceptedAmount = acceptedAmount;
     }
 
@@ -83,6 +84,11 @@ public class ConfirmDeliveryMenu
 
         this.p.openInventory(this.inv);
         this.module.cfg().play(this.p, "sounds.open", "BLOCK_CHEST_OPEN", 0.7f, 1.0f);
+
+        if (!this.p.hasMetadata("prismorder.deliveryStartTime")) {
+            this.p.setMetadata("prismorder.deliveryStartTime",
+                    new FixedMetadataValue(this.module.getPlugin(), System.currentTimeMillis()));
+        }
     }
 
     private ItemStack createOrderItem(Order o) {
@@ -145,16 +151,28 @@ public class ConfirmDeliveryMenu
         }
         int slot = e.getSlot();
         if (slot == 11) {
-            this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                    "Clicked Cancel in Confirm Delivery Menu");
             this.finalized = true;
-            for (ItemStack is : this.accepted) {
-                this.giveBackOrDrop(is);
+
+            // Return original shulkers (not the extracted items from them)
+            for (ItemStack shulker : this.originalShulkers) {
+                this.giveBackOrDrop(shulker);
             }
+
+            // Return direct items (not from shulkers)
+            for (ItemStack directItem : this.acceptedDirect) {
+                this.giveBackOrDrop(directItem);
+            }
+
             TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
                     () -> new DeliverItemsMenu(this.module, this.p, this.order).open(), 1L);
             return;
         }
-        if (slot == 15) {
+        if (slot == 15)
+
+        {
             this.finalized = true; // Mark finalized to avoid double-refund on close
 
             // RACECONDITION FIX: Check if order is still valid!
@@ -162,9 +180,12 @@ public class ConfirmDeliveryMenu
                 this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                 this.p.sendMessage(Utils.formatColors("&cThis order is no longer active!"));
 
-                // Return items
-                for (ItemStack is : this.accepted) {
-                    this.giveBackOrDrop(is);
+                // Return items on error
+                for (ItemStack shulker : this.originalShulkers) {
+                    this.giveBackOrDrop(shulker);
+                }
+                for (ItemStack directItem : this.acceptedDirect) {
+                    this.giveBackOrDrop(directItem);
                 }
 
                 this.p.closeInventory();
@@ -172,7 +193,24 @@ public class ConfirmDeliveryMenu
             }
 
             this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
-            this.module.orders().applyDelivery(this.order, this.accepted, this.acceptedAmount, this.p.getUniqueId());
+
+            // Combine all accepted items for delivery
+            List<ItemStack> allAccepted = new ArrayList<>();
+            allAccepted.addAll(this.acceptedDirect);
+            allAccepted.addAll(this.acceptedFromShulkers);
+
+            this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount, this.p.getUniqueId());
+
+            // Log Metrics
+            long startTime = this.p.hasMetadata("prismorder.deliveryStartTime")
+                    ? this.p.getMetadata("prismorder.deliveryStartTime").get(0).asLong()
+                    : System.currentTimeMillis();
+            double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                    "Clicked Confirm and delivered " + acceptedAmount + " items in " + String.format("%.1f", seconds)
+                            + "s");
+            this.p.removeMetadata("prismorder.deliveryStartTime", this.module.getPlugin());
 
             // Sanity check re-fetch order state or rely on reference?
             // applyDelivery updates state.
@@ -193,8 +231,12 @@ public class ConfirmDeliveryMenu
             return;
         }
         if (!this.finalized) {
-            for (ItemStack is : this.accepted) {
-                this.giveBackOrDrop(is);
+            // Return original shulkers and direct items on unexpected close
+            for (ItemStack shulker : this.originalShulkers) {
+                this.giveBackOrDrop(shulker);
+            }
+            for (ItemStack directItem : this.acceptedDirect) {
+                this.giveBackOrDrop(directItem);
             }
             TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
                     () -> new OrdersMainMenu(this.module, this.p).open(),

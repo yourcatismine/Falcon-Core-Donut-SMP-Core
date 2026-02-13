@@ -203,6 +203,14 @@ public class CollectItemsMenu
                     return;
                 }
                 if (slot == drop) {
+                    // Check if world is locked for dropping loot
+                    if (this.module.cfg().isWorldLocked(this.p.getWorld().getName())) {
+                        this.module.cfg().message(this.p, "&cYou cannot drop loot in this world!");
+                        this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                        e.setCancelled(true);
+                        return;
+                    }
+
                     // Inline drop logic
                     int per = this.perPage();
                     int from = this.currentPage * per;

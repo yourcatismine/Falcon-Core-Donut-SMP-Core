@@ -116,6 +116,11 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
         this.inv.setItem(16, makeItem(Material.LIME_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ",
                 List.of("&fClick to confirm order", "&7(Total: $" + Utils.abbr(total) + ")")));
 
+        if (!this.p.hasMetadata("prismorder.startTime")) {
+            this.p.setMetadata("prismorder.startTime",
+                    new FixedMetadataValue(this.module.getPlugin(), System.currentTimeMillis()));
+        }
+
         this.p.openInventory(this.inv);
     }
 
@@ -160,6 +165,9 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
 
         // Slot 12: Choose Item
         if (slot == 12) {
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                    "Clicked 'Choose Item' in New Order Menu");
             this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             this.module.state().resetItems(this.p.getUniqueId());
@@ -203,6 +211,9 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                     if (val <= 0) {
                         this.module.cfg().message(this.p, "&cInvalid amount.");
                     } else {
+                        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                                com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                                "Set amount to " + val + " for this order");
                         this.amount = val;
                     }
                 } catch (NumberFormatException ex) {
@@ -224,9 +235,12 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                     return;
                 try {
                     double val = Double.parseDouble(input);
-                    if (val <= 0) {
+                    if (!Double.isFinite(val) || val <= 0) {
                         this.module.cfg().message(this.p, "&cInvalid price.");
                     } else {
+                        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                                com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                                "Set price to " + val + " for this order");
                         this.price = val;
                     }
                 } catch (NumberFormatException ex) {
@@ -269,6 +283,17 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
 
             // Create Order
             this.module.orders().create(this.p.getUniqueId(), this.selected, this.amount, this.price);
+
+            // Log Metrics
+            long startTime = this.p.hasMetadata("prismorder.startTime")
+                    ? this.p.getMetadata("prismorder.startTime").get(0).asLong()
+                    : System.currentTimeMillis();
+            double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
+            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                    "Clicked Confirm and created order for " + selected.displayName() + " in "
+                            + String.format("%.1f", seconds) + "s");
+            this.p.removeMetadata("prismorder.startTime", this.module.getPlugin());
 
             this.p.playSound(this.p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f);
             this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));

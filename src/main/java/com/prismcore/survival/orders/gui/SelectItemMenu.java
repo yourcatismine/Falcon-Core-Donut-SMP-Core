@@ -224,7 +224,11 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
         // Back
         if (slot == 45) {
             if (this.page > 0) {
+                int oldPage = this.page + 1;
                 this.page--;
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Navigated: Select Item (Page " + oldPage + " -> " + (this.page + 1) + ")");
                 this.p.playSound(this.p.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
                 this.internalPageSwitch = true;
                 open();
@@ -236,7 +240,11 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
         if (slot == 53) {
             ItemStack clicked = e.getCurrentItem();
             if (clicked != null && clicked.getType() == Material.ARROW) {
+                int oldPage = this.page + 1;
                 this.page++;
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Navigated: Select Item (Page " + oldPage + " -> " + (this.page + 1) + ")");
                 this.p.playSound(this.p.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
                 this.internalPageSwitch = true;
                 open();
@@ -294,6 +302,11 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
                 PlayerStateManager.ItemView v = this.module.state().items(this.p.getUniqueId());
                 v.search = input.isEmpty() ? null : input;
                 this.page = 0;
+
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Searched Item: '" + (v.search == null ? "None" : v.search) + "'");
+
                 // this.module.state().saveAllPrefs(); // Removed
                 TaskUtil.runEntity(this.module.getPlugin(), this.p, this::open);
             });
@@ -303,6 +316,9 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
         if (slot >= 0 && slot <= 44) {
             if (slot < this.pageEntries.size()) {
                 ItemCatalog.Entry e2 = this.pageEntries.get(slot);
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Selected Item for Order: " + e2.display);
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 if (this.callback != null) {
                     ItemKey key = null;

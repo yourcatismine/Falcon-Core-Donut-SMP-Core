@@ -97,11 +97,15 @@ public class PrismEconomy implements Economy {
 
     @Override
     public boolean has(String playerName, double amount) {
+        if (!Double.isFinite(amount))
+            return false;
         return getBalance(playerName) >= amount;
     }
 
     @Override
     public boolean has(OfflinePlayer player, double amount) {
+        if (!Double.isFinite(amount))
+            return false;
         return getBalance(player) >= amount;
     }
 
@@ -123,8 +127,8 @@ public class PrismEconomy implements Economy {
 
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
-        if (amount < 0) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot withdraw negative amount");
+        if (!Double.isFinite(amount) || amount < 0) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Invalid amount");
         }
 
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
@@ -157,8 +161,8 @@ public class PrismEconomy implements Economy {
 
     @Override
     public EconomyResponse depositPlayer(OfflinePlayer player, double amount) {
-        if (amount < 0) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot deposit negative amount");
+        if (!Double.isFinite(amount) || amount < 0) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Invalid amount");
         }
 
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());

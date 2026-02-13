@@ -15,3 +15,7 @@ disabled-items:
   - TEST_BLOCK 
   - LIGHT
   - KNOWLEDGE_BOOK 
+
+
+droplootlocked:
+  - spawn

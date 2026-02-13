@@ -70,8 +70,8 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
             String priceArg = args[1];
             double rawPrice = Utils.parsePrice(priceArg);
             if (rawPrice < 0.0) {
-                player.sendMessage(Utils.formatColors("&#ff4444Invalid price format. Use numbers or K/M/B/T suffix."));
-                player.playSound(player.getLocation(), villagerNo, 1.0f, 1.0f);
+                player.removeMetadata("ah-admin-view", (Plugin) this.controller.getPlugin());
+                GUIHandler.openMainGUI(player, 1, this.controller);
                 return true;
             }
             double maxPrice = cfg.getDouble("settings.max-auction-price", 1000000000000.0);

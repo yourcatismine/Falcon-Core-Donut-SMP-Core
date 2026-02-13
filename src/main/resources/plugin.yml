@@ -118,6 +118,21 @@ commands:
     permission: prism.admin.spectator
     usage: /gmsp
 
+  gmc:
+    description: Quick creative mode
+    permission: prismsmp.creative
+    usage: /gmc
+
+  gms:
+    description: Quick survival mode
+    permission: prismsmp.survival
+    usage: /gms
+
+  gma:
+    description: Quick adventure mode
+    permission: prismsmp.adventure
+    usage: /gma
+
   duel:
     description: Manage duel regions and settings
     usage: /duel <player|create|settings>
@@ -238,3 +253,12 @@ permissions:
   prismcore.duel.use:
     description: Allows use of duel requests
     default: true
+  prismsmp.creative:
+    description: Permission to use /gmc
+    default: op
+  prismsmp.survival:
+    description: Permission to use /gms
+    default: op
+  prismsmp.adventure:
+    description: Permission to use /gma
+    default: op

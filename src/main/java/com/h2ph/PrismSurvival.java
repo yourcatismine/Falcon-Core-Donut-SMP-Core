@@ -3,6 +3,7 @@ package com.h2ph;
 import com.prismcore.survival.manager.PlayerDataManager;
 import com.prismcore.survival.scheduler.SchedulerAdapter;
 import com.h2ph.commands.economy.ShopCommand;
+import com.h2ph.commands.player.QuickGameMode;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class PrismSurvival extends JavaPlugin {
@@ -335,6 +336,12 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SettingsGUIListener(), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.MobSpawnListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TpaConfirmGUIListener(), this);
+
+        // Register Quick Gamemode Commands
+        QuickGameMode quickGameMode = new QuickGameMode();
+        getCommand("gmc").setExecutor(quickGameMode);
+        getCommand("gms").setExecutor(quickGameMode);
+        getCommand("gma").setExecutor(quickGameMode);
 
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {

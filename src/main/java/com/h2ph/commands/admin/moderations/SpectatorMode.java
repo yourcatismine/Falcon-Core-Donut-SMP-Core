@@ -25,22 +25,9 @@ public class SpectatorMode implements CommandExecutor, Listener {
     private final Set<UUID> spectators = new HashSet<>();
     // Stores the previous GameMode of the player to restore it later
     private final java.util.Map<UUID, GameMode> previousGamemodes = new java.util.HashMap<>();
-    private final String PREFIX = ChatColor.DARK_GRAY + toSmallCaps("prism") + " " + ChatColor.RESET;
 
     public SpectatorMode(JavaPlugin plugin) {
         this.plugin = plugin;
-    }
-
-    // --- FONT HELPER ---
-    private String toSmallCaps(String input) {
-        String normal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘꞯʀꜱᴛᴜᴠᴡxʏᴢᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘꞯʀꜱᴛᴜᴠᴡxʏᴢ";
-        StringBuilder builder = new StringBuilder();
-        for (char c : input.toCharArray()) {
-            int index = normal.indexOf(c);
-            builder.append(index != -1 ? small.charAt(index) : c);
-        }
-        return builder.toString();
     }
 
     @Override
@@ -50,7 +37,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
         Player player = (Player) sender;
 
         if (!player.hasPermission("prism.admin.spectator")) {
-            player.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("no permission"));
+            player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
 
@@ -75,10 +62,9 @@ public class SpectatorMode implements CommandExecutor, Listener {
             }
         }
 
-        player.sendMessage("");
-        player.sendMessage(PREFIX + ChatColor.GREEN + toSmallCaps("silent spectator enabled"));
-        player.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("you are hidden from tab"));
-        player.sendMessage("");
+        String message = "&7You set your gamemode to &aSPECTATOR&7 mode.";
+        player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand()
+                .deserialize(message));
     }
 
     private void disableSpectator(Player player) {
@@ -97,10 +83,9 @@ public class SpectatorMode implements CommandExecutor, Listener {
             online.showPlayer(plugin, player);
         }
 
-        player.sendMessage("");
-        player.sendMessage(PREFIX + ChatColor.RED + toSmallCaps("silent spectator disabled"));
-        player.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("you are visible"));
-        player.sendMessage("");
+        String message = "&7You set your gamemode to &aSURVIVAL&7 mode.";
+        player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand()
+                .deserialize(message));
     }
 
     // --- THE FIX: REJOIN HANDLING ---

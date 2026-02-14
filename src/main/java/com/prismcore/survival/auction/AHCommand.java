@@ -38,20 +38,6 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
             GUIHandler.openMainGUI(player, 1, this.controller);
             return true;
         }
-        if (args.length >= 1 && args[0].trim().equalsIgnoreCase("admin")) {
-            if (!player.hasPermission("auction.admin")) {
-                player.removeMetadata("ah-filter", (Plugin) this.controller.getPlugin());
-                player.removeMetadata("ah-admin-view", (Plugin) this.controller.getPlugin());
-                GUIHandler.openMainGUI(player, 1, this.controller);
-                return true;
-            }
-            player.setMetadata("ah-admin-view",
-                    (MetadataValue) new FixedMetadataValue((Plugin) this.controller.getPlugin(), (Object) true));
-            player.removeMetadata("ah-admin-player-filter", (Plugin) this.controller.getPlugin());
-            player.removeMetadata("ah-admin-target", (Plugin) this.controller.getPlugin());
-            GUIHandler.openAdminPlayerListGUI(player, 1, this.controller);
-            return true;
-        }
         if (args.length >= 2 && args[0].equalsIgnoreCase("sell")) {
             int max = cfg.getInt("settings.max-auction-listed");
             int currentCount = 0;
@@ -116,9 +102,6 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
     public java.util.List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             java.util.List<String> completions = new java.util.ArrayList<>();
-            if (sender.hasPermission("auction.admin")) {
-                completions.add("admin");
-            }
             completions.add("<search>");
             return org.bukkit.util.StringUtil.copyPartialMatches(args[0], completions, new java.util.ArrayList<>());
         }

@@ -386,6 +386,11 @@ public class PrismSurvival extends JavaPlugin {
         // Register Reload Command
         getCommand("prismreload").setExecutor(new com.h2ph.commands.admin.ReloadCommand(this));
 
+        // Register Falcon Command
+        com.h2ph.commands.admin.FalconCommand falconCommand = new com.h2ph.commands.admin.FalconCommand(this);
+        getCommand("falcon").setExecutor(falconCommand);
+        getCommand("falcon").setTabCompleter(falconCommand);
+
         // Initialize Economy Monitor
         new com.h2ph.economy.EconomyMonitor(this);
 

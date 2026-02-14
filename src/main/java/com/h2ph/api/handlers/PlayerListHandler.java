@@ -6,6 +6,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -137,18 +139,24 @@ public class PlayerListHandler implements HttpHandler {
         // IP and Alts count for list view
         String ip = "unknown";
         int altsCount = 0;
+        List<String> alts = new ArrayList<>();
         if (plugin.getOffendPlugin() != null && plugin.getOffendPlugin().getDatabaseManager() != null) {
             ip = plugin.getOffendPlugin().getDatabaseManager().getLastIP(p.getUniqueId());
             if (ip != null) {
-                altsCount = plugin.getOffendPlugin().getDatabaseManager().getAlts(p.getUniqueId(), ip).size();
+                alts = plugin.getOffendPlugin().getDatabaseManager().getAlts(p.getUniqueId(), ip);
+                alts.remove(p.getName()); // Remove current player from alts list
+                altsCount = alts.size();
             } else {
                 ip = "unknown";
             }
         }
         map.put("ipaddress", ip);
         map.put("altsCount", altsCount);
+        map.put("alts", alts);
 
         map.put("group", LuckPermsUtils.getPrimaryGroup(p));
+        map.put("money", getBalance(p));
+        map.put("shards", getShards(p));
         map.put("hazardCount", plugin.getHazardManager().getHazardCount(p.getUniqueId()));
         map.put("lastPlayed", p.getLastPlayed());
         map.put("avatarUrl", "https://crafatar.com/avatars/" + p.getUniqueId() + "?size=64");
@@ -170,6 +178,16 @@ public class PlayerListHandler implements HttpHandler {
 
     private double getBalance(OfflinePlayer p) {
         try {
+            if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+                RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager()
+                        .getRegistration(Economy.class);
+                if (rsp != null) {
+                    Economy eco = rsp.getProvider();
+                    if (eco != null) {
+                        return eco.getBalance(p);
+                    }
+                }
+            }
             return plugin.getPlayerDataManager().get(p.getUniqueId()).getMoney();
         } catch (Exception e) {
             return 0;
@@ -178,7 +196,8 @@ public class PlayerListHandler implements HttpHandler {
 
     private double getShards(OfflinePlayer p) {
         try {
-            return plugin.getPlayerDataManager().get(p.getUniqueId()).getShards();
+            com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(p.getUniqueId());
+            return pd != null ? pd.getShards() : 0;
         } catch (Exception e) {
             return 0;
         }
@@ -230,6 +249,20 @@ public class PlayerListHandler implements HttpHandler {
             sb.append("\"").append(entry.getKey()).append("\":");
             if (entry.getValue() instanceof String) {
                 sb.append("\"").append(escape((String) entry.getValue())).append("\"");
+            } else if (entry.getValue() instanceof List) {
+                List<?> list = (List<?>) entry.getValue();
+                sb.append("[");
+                for (int i = 0; i < list.size(); i++) {
+                    Object val = list.get(i);
+                    if (val instanceof String) {
+                        sb.append("\"").append(escape((String) val)).append("\"");
+                    } else {
+                        sb.append(val);
+                    }
+                    if (i < list.size() - 1)
+                        sb.append(",");
+                }
+                sb.append("]");
             } else {
                 sb.append(entry.getValue());
             }

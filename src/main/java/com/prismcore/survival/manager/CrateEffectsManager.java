@@ -29,7 +29,7 @@ public class CrateEffectsManager {
                 Location loc = entry.getKey();
                 String crateName = entry.getValue();
 
-                if (loc.getWorld() == null || !loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4))
+                if (!loc.isWorldLoaded() || !loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4))
                     continue;
 
                 List<String> effects = getEffectsForCrate(crateName);

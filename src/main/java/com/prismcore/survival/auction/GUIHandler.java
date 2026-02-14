@@ -581,16 +581,6 @@ public class GUIHandler {
             inv.setItem(i, item);
         }
 
-        // Slot 45: Back Arrow (Return to Player List)
-        ItemStack back = new ItemStack(Material.RED_STAINED_GLASS_PANE);
-        ItemMeta bm = back.getItemMeta();
-        bm.setDisplayName(Utils.formatColors("&cʙᴀᴄᴋ ᴛᴏ ʟɪѕᴛ"));
-        List<String> bLore = new ArrayList<>();
-        bLore.add(Utils.formatColors("&fClick to return to player list"));
-        bm.setLore(bLore);
-        back.setItemMeta(bm);
-        inv.setItem(45, back);
-
         // Slot 48: Delete All Items (Barrier)
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dim = delete.getItemMeta();
@@ -655,6 +645,16 @@ public class GUIHandler {
         sign.setItemMeta(sm);
         inv.setItem(11, sign);
 
+        // Slot 12: Take Item (Chest)
+        ItemStack take = new ItemStack(Material.CHEST);
+        ItemMeta tm = take.getItemMeta();
+        tm.setDisplayName(Utils.formatColors("&aᴛᴀᴋᴇ ɪᴛᴇᴍ"));
+        List<String> tLore = new ArrayList<>();
+        tLore.add(Utils.formatColors("&fClick to take this item from auction"));
+        tm.setLore(tLore);
+        take.setItemMeta(tm);
+        inv.setItem(12, take);
+
         // Slot 13: The Item
         ItemStack displayItem = item.getItemStack().clone();
         ItemMeta dm = displayItem.getItemMeta();
@@ -671,6 +671,16 @@ public class GUIHandler {
         // this" lore.
         displayItem.setItemMeta(dm);
         inv.setItem(13, displayItem);
+
+        // Slot 14: Copy Item (Ender Chest)
+        ItemStack copy = new ItemStack(Material.ENDER_CHEST);
+        ItemMeta cm = copy.getItemMeta();
+        cm.setDisplayName(Utils.formatColors("&aᴄᴏᴘʏ ɪᴛᴇᴍ"));
+        List<String> cLore = new ArrayList<>();
+        cLore.add(Utils.formatColors("&fClick to get a copy of this item"));
+        cm.setLore(cLore);
+        copy.setItemMeta(cm);
+        inv.setItem(14, copy);
 
         // Slot 15: Delete Item (Barrier)
         ItemStack delete = new ItemStack(Material.BARRIER);

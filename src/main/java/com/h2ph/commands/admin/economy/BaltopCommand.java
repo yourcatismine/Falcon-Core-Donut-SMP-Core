@@ -87,7 +87,7 @@ public class BaltopCommand implements CommandExecutor, Listener {
                 allEntries = cachedEntries;
             } else {
                 // Load from storage (this is the expensive part)
-                allEntries = plugin.getPlayerDataManager().getTopMoney(500); // Limit to 500 players
+                allEntries = plugin.getPlayerDataManager().getTopMoney(10000); // Limit to 10000 players
                 cachedEntries = allEntries;
                 lastCacheTime = System.currentTimeMillis();
             }
@@ -161,10 +161,10 @@ public class BaltopCommand implements CommandExecutor, Listener {
                     selfMeta.setOwningPlayer(player);
                     selfMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&a" + player.getName()));
                     List<String> selfLore = new ArrayList<>();
-                    
+
                     double balance;
                     String rankDisplay;
-                    
+
                     if (selfEntry != null) {
                         balance = selfEntry.value;
                         rankDisplay = "&a (#" + selfRank + ")";
@@ -172,21 +172,22 @@ public class BaltopCommand implements CommandExecutor, Listener {
                         // Not in top list, fetch directly
                         balance = 0.0;
                         if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
-                            org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin.getServer()
+                            org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin
+                                    .getServer()
                                     .getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
                             if (rsp != null && rsp.getProvider() != null) {
                                 balance = rsp.getProvider().getBalance(player);
                             }
                         } else {
-                             // Fallback to internal
-                             balance = plugin.getPlayerDataManager().get(player.getUniqueId()).getMoney();
+                            // Fallback to internal
+                            balance = plugin.getPlayerDataManager().get(player.getUniqueId()).getMoney();
                         }
                         rankDisplay = "&7 (Not in top " + allEntries.size() + ")";
                     }
-                    
+
                     selfLore.add(ChatColor.translateAlternateColorCodes('&',
                             "&fMoney:&7 $" + formatNumber(balance) + rankDisplay));
-                    
+
                     selfMeta.setLore(selfLore);
                     selfHead.setItemMeta(selfMeta);
                 }

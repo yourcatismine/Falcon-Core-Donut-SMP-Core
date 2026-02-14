@@ -183,6 +183,12 @@ commands:
     usage: /prismorder <reload>
     permission: prism.admin.orders
     permission-message: You do not have permission to use this command.
+  
+  falcon:
+    description: Falcon admin and utility commands
+    usage: /falcon <auction|order> [player]
+    permission: falcon.use
+    permission-message: You do not have permission to use this command.
 
   tpa:
     description: Request to teleport to another player

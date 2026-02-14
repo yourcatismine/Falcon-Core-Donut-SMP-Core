@@ -8,11 +8,16 @@ import org.bukkit.OfflinePlayer;
 
 public class LuckPermsUtils {
 
+    private static final String[] GROUP_HIERARCHY = {
+            "owner", "co-owner", "manager", "dev", "sradmin", "admin",
+            "srmod", "mod", "srhelper", "helper", "media", "donut+", "booster", "default"
+    };
+
     /**
-     * Gets the primary group of a player.
+     * Gets the most significant group of a player based on a predefined hierarchy.
      * 
      * @param player The player to check.
-     * @return The primary group name, or "default" if not found.
+     * @return The highest group name found, or "default" if not found.
      */
     public static String getPrimaryGroup(OfflinePlayer player) {
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
@@ -22,14 +27,32 @@ public class LuckPermsUtils {
             LuckPerms lp = LuckPermsProvider.get();
             User user = lp.getUserManager().getUser(player.getUniqueId());
             if (user == null) {
-                // Try to load user if not online
                 user = lp.getUserManager().loadUser(player.getUniqueId()).join();
             }
             if (user != null) {
-                return user.getPrimaryGroup();
+                String primary = user.getPrimaryGroup();
+
+                // Prioritize checking if the LuckPerms primary group is a high-ranking group
+                for (String group : GROUP_HIERARCHY) {
+                    if (primary.equalsIgnoreCase(group)) {
+                        return group;
+                    }
+                }
+
+                // If primary group isn't a top rank, search all nodes for inheritance
+                for (String group : GROUP_HIERARCHY) {
+                    if (user.getNodes().stream().anyMatch(node -> {
+                        String key = node.getKey().toLowerCase();
+                        return key.equals("group." + group.toLowerCase()) || key.equals(group.toLowerCase());
+                    })) {
+                        return group;
+                    }
+                }
+
+                return primary;
             }
         } catch (Exception e) {
-            // Log if needed, but return default for safety
+            // Log for debugging
         }
         return "default";
     }

@@ -754,6 +754,63 @@ public class GUIListener
                 return;
             }
 
+            if (slot == 12) { // Take Item (Chest)
+                Optional<AuctionItem> opt = this.controller.getAuctionManager().getItems().stream()
+                        .filter(ai -> ai.getId().toString().equals(itemId)).findFirst();
+                if (opt.isPresent()) {
+                    AuctionItem item = opt.get();
+                    if (p.getInventory().firstEmpty() == -1) {
+                        p.sendMessage(Utils.formatColors("&#ff4444Inventory is full!"));
+                        p.playSound(p.getLocation(), no, 1.0f, 1.0f);
+                        return;
+                    }
+                    this.controller.getAuctionManager().removeItem(item);
+                    p.getInventory().addItem(item.getItemStack());
+                    String itemName = Utils.prettifyMaterialName(item.getItemStack().getType());
+                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
+                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
+                            "[Admin] Took auction item: " + itemName + " (ID: " + itemId + ")");
+                    p.sendMessage(Utils.formatColors("&#34ee80Item taken from auction!"));
+                    p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+                }
+                // Return to details
+                if (p.hasMetadata("ah-admin-target")) {
+                    String target = p.getMetadata("ah-admin-target").get(0).asString();
+                    GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
+                } else {
+                    GUIHandler.openMainGUI(p, 1, this.controller);
+                }
+                return;
+            }
+
+            if (slot == 14) { // Copy Item (Ender Chest)
+                Optional<AuctionItem> opt = this.controller.getAuctionManager().getItems().stream()
+                        .filter(ai -> ai.getId().toString().equals(itemId)).findFirst();
+                if (opt.isPresent()) {
+                    AuctionItem item = opt.get();
+                    if (p.getInventory().firstEmpty() == -1) {
+                        p.sendMessage(Utils.formatColors("&#ff4444Inventory is full!"));
+                        p.playSound(p.getLocation(), no, 1.0f, 1.0f);
+                        return;
+                    }
+                    p.getInventory().addItem(item.getItemStack().clone());
+                    String itemName = Utils.prettifyMaterialName(item.getItemStack().getType());
+                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
+                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
+                            "[Admin] Copied auction item: " + itemName + " (ID: " + itemId + ")");
+                    p.sendMessage(Utils.formatColors("&#34ee80Item copied from auction!"));
+                    p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+                }
+                // Return to details
+                if (p.hasMetadata("ah-admin-target")) {
+                    String target = p.getMetadata("ah-admin-target").get(0).asString();
+                    GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
+                } else {
+                    GUIHandler.openMainGUI(p, 1, this.controller);
+                }
+                return;
+            }
+
             if (slot == 15) { // Delete (Barrier)
                 // Direct delete as per user request (or confirm? user said "After deleting...
                 // return")

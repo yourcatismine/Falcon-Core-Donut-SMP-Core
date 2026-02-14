@@ -1,6 +1,11 @@
 region: 
   - "Europe"
 
+disabled-fly:
+  - world
+  - world_nether
+  - world_the_end
+
 command-whitelist:
   enabled: true
   allowed-commands:

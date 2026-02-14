@@ -107,6 +107,15 @@ public class CommandHideListener implements Listener {
         if (!isAllowed(event.getPlayer(), commandName)) {
             event.setCancelled(true);
 
+            // If the command has an explicitly empty permission message, fail silently
+            org.bukkit.command.PluginCommand pluginCommand = org.bukkit.Bukkit.getPluginCommand(commandName);
+            if (pluginCommand != null) {
+                String permMsg = pluginCommand.getPermissionMessage();
+                if (permMsg != null && permMsg.isEmpty()) {
+                    return;
+                }
+            }
+
             // Chat message
             event.getPlayer()
                     .sendMessage(

@@ -133,6 +133,12 @@ commands:
     permission: prismsmp.adventure
     usage: /gma
 
+  fly:
+    description: Toggle flight mode
+    permission: prismsmp.fly
+    permission-message: ""
+    usage: /fly
+
   duel:
     description: Manage duel regions and settings
     usage: /duel <player|create|settings>
@@ -267,4 +273,7 @@ permissions:
     default: op
   prismsmp.adventure:
     description: Permission to use /gma
+    default: op
+  prismsmp.fly:
+    description: Permission to use /fly
     default: op

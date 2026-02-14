@@ -343,6 +343,11 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("gms").setExecutor(quickGameMode);
         getCommand("gma").setExecutor(quickGameMode);
 
+        // Register Fly Command
+        com.h2ph.commands.player.FlyCommand flyCommand = new com.h2ph.commands.player.FlyCommand(this);
+        getCommand("fly").setExecutor(flyCommand);
+        getServer().getPluginManager().registerEvents(flyCommand, this);
+
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new com.h2ph.placeholders.PrismPlaceholders(this).register();

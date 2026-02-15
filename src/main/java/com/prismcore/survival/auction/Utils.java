@@ -12,10 +12,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public final class Utils {
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
-    public static final DecimalFormat ONE_DECIMAL = new DecimalFormat("#.#");
-
-    private Utils() {
-    }
 
     public static String formatColors(String input) {
         if (input == null) {
@@ -92,22 +88,23 @@ public final class Utils {
     }
 
     public static String formatNumber(double raw) {
+        DecimalFormat oneDecimal = new DecimalFormat("#.#");
         if (raw >= 1.0E12) {
-            return ONE_DECIMAL.format(raw / 1.0E12) + "T";
+            return oneDecimal.format(raw / 1.0E12) + "T";
         }
         if (raw >= 1.0E9) {
-            return ONE_DECIMAL.format(raw / 1.0E9) + "B";
+            return oneDecimal.format(raw / 1.0E9) + "B";
         }
         if (raw >= 1000000.0) {
-            return ONE_DECIMAL.format(raw / 1000000.0) + "M";
+            return oneDecimal.format(raw / 1000000.0) + "M";
         }
         if (raw >= 1000.0) {
-            return ONE_DECIMAL.format(raw / 1000.0) + "K";
+            return oneDecimal.format(raw / 1000.0) + "K";
         }
         if (Math.floor(raw) == raw) {
             return String.valueOf((long) raw);
         }
-        return ONE_DECIMAL.format(raw);
+        return oneDecimal.format(raw);
     }
 
     public static List<String> buildSortLore(String currentMode, FileConfiguration cfg) {

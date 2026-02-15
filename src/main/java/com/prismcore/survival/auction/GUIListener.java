@@ -64,7 +64,7 @@ public class GUIListener
             int slot = event.getRawSlot();
             int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             if (slot == cfg.getInt("main-gui.items.previous-page.slot")) {
-                if (page > 1) {
+                if (page > 1 && event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
                     p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
                     GUIHandler.openMainGUI(p, Math.max(1, page - 1), this.controller);
                 }
@@ -123,8 +123,10 @@ public class GUIListener
                 return;
             }
             if (slot == cfg.getInt("main-gui.items.next-page.slot")) {
-                p.playSound(p.getLocation(), next, 1.0f, 1.0f);
-                GUIHandler.openMainGUI(p, page + 1, this.controller);
+                if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
+                    p.playSound(p.getLocation(), next, 1.0f, 1.0f);
+                    GUIHandler.openMainGUI(p, page + 1, this.controller);
+                }
                 return;
             }
             int perPage = cfg.getInt("main-gui.items-per-page", 45);
@@ -447,7 +449,7 @@ public class GUIListener
             int slot = event.getRawSlot();
             int page = p.getMetadata("tx-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             if (slot == cfg.getInt("transactions-gui.items.previous-page.slot")) {
-                if (page > 1) {
+                if (page > 1 && event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
                     p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
                     GUIHandler.openTransactionsGUI(p, Math.max(1, page - 1), this.controller);
                 }
@@ -477,8 +479,10 @@ public class GUIListener
                 return;
             }
             if (slot == cfg.getInt("transactions-gui.items.next-page.slot")) {
-                p.playSound(p.getLocation(), next, 1.0f, 1.0f);
-                GUIHandler.openTransactionsGUI(p, page + 1, this.controller);
+                if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
+                    p.playSound(p.getLocation(), next, 1.0f, 1.0f);
+                    GUIHandler.openTransactionsGUI(p, page + 1, this.controller);
+                }
                 return;
             }
         }
@@ -562,8 +566,10 @@ public class GUIListener
             int page = p.getMetadata("ah-admin-list-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
 
             if (slot == 45 && page > 1) {
-                p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
-                GUIHandler.openAdminPlayerListGUI(p, page - 1, this.controller);
+                if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
+                    p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
+                    GUIHandler.openAdminPlayerListGUI(p, page - 1, this.controller);
+                }
                 return;
             }
             if (slot == 48) { // Search
@@ -646,8 +652,11 @@ public class GUIListener
 
             if (slot == 45) { // Back or Prev
                 if (page > 1) {
-                    p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
-                    GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), page - 1, this.controller);
+                    if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
+                        p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
+                        GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), page - 1,
+                                this.controller);
+                    }
                 } else {
                     // Back to Details
                     p.playSound(p.getLocation(), def, 1.0f, 1.0f);
@@ -688,8 +697,101 @@ public class GUIListener
                 return;
             }
             if (slot == 53) { // Next
-                p.playSound(p.getLocation(), next, 1.0f, 1.0f);
-                GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), page + 1, this.controller);
+                if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
+                    p.playSound(p.getLocation(), next, 1.0f, 1.0f);
+                    GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), page + 1, this.controller);
+                }
+                return;
+            }
+
+            int perPage = cfg.getInt("transactions-gui.items-per-page", 45);
+            if (slot >= 0 && slot < perPage) {
+                List<Transaction> fullTx = this.controller.getTransactionManager()
+                        .getPlayerTransactions(Bukkit.getOfflinePlayer(target).getUniqueId());
+
+                String txFilter = p.hasMetadata("tx-filter")
+                        ? p.getMetadata("tx-filter").get(0).asString().toLowerCase()
+                        : "";
+
+                List<Transaction> filtered = fullTx.stream().filter(tx -> {
+                    if (txFilter.isEmpty())
+                        return true;
+                    String itemName = Utils.prettifyMaterialName(tx.getItem().getType()).toLowerCase();
+                    String buyer = tx.getBuyer().toLowerCase();
+                    String seller = tx.getSeller().toLowerCase();
+                    String priceStr = String.valueOf(tx.getPrice());
+                    String priceFmt = Utils.formatNumber(tx.getPrice()).toLowerCase();
+
+                    return itemName.contains(txFilter) || buyer.contains(txFilter) || seller.contains(txFilter)
+                            || priceStr.contains(txFilter) || priceFmt.contains(txFilter);
+                }).collect(Collectors.toList());
+
+                int idx = (page - 1) * perPage + slot;
+                if (idx < filtered.size()) {
+                    Transaction tx = filtered.get(idx);
+                    p.playSound(p.getLocation(), def, 1.0f, 1.0f);
+                    GUIHandler.openTransactionManagementGUI(p, tx, this.controller);
+                }
+            }
+        }
+
+        if (top instanceof GUIHandler.TransactionManagementHolder) {
+            // Interaction Check
+            if (event.getClickedInventory() == null)
+                return;
+            if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
+                event.setCancelled(true);
+            } else {
+                if (event.isShiftClick())
+                    event.setCancelled(true);
+                return;
+            }
+
+            int slot = event.getRawSlot();
+            if (!p.hasMetadata("ah-admin-tx-focus") || !p.hasMetadata("ah-admin-target")) {
+                p.closeInventory();
+                return;
+            }
+            long timestamp = p.getMetadata("ah-admin-tx-focus").get(0).asLong();
+            String targetName = p.getMetadata("ah-admin-target").get(0).asString();
+            UUID targetUuid = Bukkit.getOfflinePlayer(targetName).getUniqueId();
+
+            if (slot == 11) { // Delete
+                Optional<Transaction> opt = this.controller.getTransactionManager().getPlayerTransactions(targetUuid)
+                        .stream()
+                        .filter(tx -> tx.getTimestamp() == timestamp).findFirst();
+                if (opt.isPresent()) {
+                    Transaction tx = opt.get();
+                    this.controller.getTransactionManager().deleteTransaction(tx);
+                    p.sendMessage(Utils.formatColors("&#34ee80Transaction record deleted and stats updated."));
+                    p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_BREAK, 1.0f, 1.0f);
+                    // Back to list
+                    GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(targetName), 1, this.controller);
+                }
+                return;
+            }
+
+            if (slot == 15) { // Copy Item
+                Optional<Transaction> opt = this.controller.getTransactionManager().getPlayerTransactions(targetUuid)
+                        .stream()
+                        .filter(tx -> tx.getTimestamp() == timestamp).findFirst();
+                if (opt.isPresent()) {
+                    Transaction tx = opt.get();
+                    if (p.getInventory().firstEmpty() == -1) {
+                        p.sendMessage(Utils.formatColors("&#ff4444Inventory is full!"));
+                        p.playSound(p.getLocation(), no, 1.0f, 1.0f);
+                        return;
+                    }
+                    p.getInventory().addItem(new ItemStack[] { tx.getItem().clone() });
+                    p.sendMessage(Utils.formatColors("&#34ee80Received a copy of the transacted item."));
+                    p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+                }
+                return;
+            }
+
+            if (slot == 22) { // Back
+                p.playSound(p.getLocation(), def, 1.0f, 1.0f);
+                GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(targetName), 1, this.controller);
                 return;
             }
         }

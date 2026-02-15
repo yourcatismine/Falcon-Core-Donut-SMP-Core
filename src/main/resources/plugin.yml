@@ -89,10 +89,12 @@ commands:
     description: Ban a player with a reason
     permission: prism.admin.offend
     usage: /offend <player> <reason> [duration]
+    aliases: [ban]
   unban:
     description: Unban a player
     permission: prism.admin.unban
     usage: /unban <player>
+    aliases: [pardon]
   checkban:
     description: Check ban status of a player
     permission: prism.admin.checkban

@@ -44,6 +44,9 @@ import com.h2ph.PrismSurvival;
 import com.prismcore.survival.manager.ActivityLogger;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
+import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class OrderManager {
     private final Plugin pl;
@@ -120,9 +123,23 @@ public class OrderManager {
         if (acceptedAmount <= 0) {
             return;
         }
+        OfflinePlayer recipientOp = Bukkit.getOfflinePlayer(o.owner);
+        String recipientName = recipientOp.getName() != null ? recipientOp.getName() : "Unknown";
+
+        NamespacedKey delivererKey = new NamespacedKey(this.pl, "deliverer-uuid");
+        NamespacedKey recipientKey = new NamespacedKey(this.pl, "recipient-name");
+
         for (ItemStack it : accepted) {
             if (it == null || it.getType() == Material.AIR || it.getAmount() <= 0)
                 continue;
+
+            ItemMeta meta = it.getItemMeta();
+            if (meta != null) {
+                meta.getPersistentDataContainer().set(delivererKey, PersistentDataType.STRING, deliverer.toString());
+                meta.getPersistentDataContainer().set(recipientKey, PersistentDataType.STRING, recipientName);
+                it.setItemMeta(meta);
+            }
+
             o.storage.add(it);
         }
 

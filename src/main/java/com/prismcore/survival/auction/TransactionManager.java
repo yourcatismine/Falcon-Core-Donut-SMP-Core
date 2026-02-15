@@ -104,25 +104,33 @@ public class TransactionManager {
     }
 
     public void saveToConfig() {
-        FileConfiguration cfg = this.controller.getStorageConfig();
-        if (cfg == null) {
-            return;
+        // ... (existing code)
+    }
+
+    public void deleteTransaction(Transaction tx) {
+        UUID sellerUuid = this.controller.getPlugin().getServer().getOfflinePlayer(tx.getSeller()).getUniqueId();
+        UUID buyerUuid = this.controller.getPlugin().getServer().getOfflinePlayer(tx.getBuyer()).getUniqueId();
+
+        // Remove from seller's list
+        List<Transaction> sellerTx = this.transactions.get(sellerUuid);
+        if (sellerTx != null) {
+            sellerTx.removeIf(t -> t.getTimestamp() == tx.getTimestamp() && t.getPrice() == tx.getPrice()
+                    && t.getSeller().equals(tx.getSeller()) && t.getBuyer().equals(tx.getBuyer()));
         }
-        cfg.set("transactions", null);
-        for (Map.Entry<UUID, List<Transaction>> entry : this.transactions.entrySet()) {
-            String uuidStr = entry.getKey().toString();
-            List<Transaction> list = entry.getValue();
-            for (int i = 0; i < list.size(); ++i) {
-                Transaction tx = list.get(i);
-                String path = "transactions." + uuidStr + "." + i;
-                cfg.set(path + ".item", (Object) tx.getItem());
-                cfg.set(path + ".price", (Object) tx.getPrice());
-                cfg.set(path + ".buyer", (Object) tx.getBuyer());
-                cfg.set(path + ".seller", (Object) tx.getSeller());
-                cfg.set(path + ".timestamp", (Object) tx.getTimestamp());
-                cfg.set(path + ".isSale", (Object) tx.isSale());
-            }
+
+        // Remove from buyer's list
+        List<Transaction> buyerTx = this.transactions.get(buyerUuid);
+        if (buyerTx != null) {
+            buyerTx.removeIf(t -> t.getTimestamp() == tx.getTimestamp() && t.getPrice() == tx.getPrice()
+                    && t.getSeller().equals(tx.getSeller()) && t.getBuyer().equals(tx.getBuyer()));
         }
-        // this.controller.saveSavesFile(); // Handled by auto-save
+
+        this.saveToConfig();
+        this.controller.getPlugin().getActivityLogger().log(sellerUuid, ActivityLogger.LogType.AUCTION,
+                "[Admin] Deleted transaction for " + Utils.prettifyMaterialName(tx.getItem().getType())
+                        + " (Seller side)");
+        this.controller.getPlugin().getActivityLogger().log(buyerUuid, ActivityLogger.LogType.AUCTION,
+                "[Admin] Deleted transaction for " + Utils.prettifyMaterialName(tx.getItem().getType())
+                        + " (Buyer side)");
     }
 }

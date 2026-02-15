@@ -54,10 +54,6 @@ import org.bukkit.util.Vector;
 
 public final class Utils {
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
-    public static final DecimalFormat ONE_DECIMAL = new DecimalFormat("#.#");
-
-    private Utils() {
-    }
 
     public static String formatColors(String input) {
         if (input == null) {
@@ -103,7 +99,8 @@ public final class Utils {
         String[] u = new String[] { "", "K", "M", "B", "T" };
         for (i = 0; n >= 1000.0 && i < u.length - 1; n /= 1000.0, ++i) {
         }
-        String s = ONE_DECIMAL.format(n);
+        DecimalFormat oneDecimal = new DecimalFormat("#.#");
+        String s = oneDecimal.format(n);
         if (s.endsWith(".0")) {
             s = s.substring(0, s.length() - 2);
         }
@@ -159,5 +156,22 @@ public final class Utils {
 
         String res = sb.toString().trim();
         return res.isEmpty() ? "0m" : res;
+    }
+
+    public static String toSmallCaps(String input) {
+        if (input == null)
+            return null;
+        String normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        String small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀѕᴛᴜᴠᴡхʏᴢᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀѕᴛᴜᴠᴡхʏᴢ";
+        StringBuilder sb = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            int idx = normal.indexOf(c);
+            if (idx != -1) {
+                sb.append(small.charAt(idx));
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 }

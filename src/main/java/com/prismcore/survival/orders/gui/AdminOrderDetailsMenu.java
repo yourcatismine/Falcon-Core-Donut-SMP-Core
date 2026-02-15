@@ -19,6 +19,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Location;
 import org.bukkit.entity.Item;
 
+import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataType;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +46,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
     }
 
     public void open() {
-        String title = Utils.formatColors("&8ᴍᴀɴᴀɢᴇ: &5" + target.getName());
+        String title = Utils.formatColors("&8ᴍᴀɴᴀɢᴇ: " + Utils.toSmallCaps(target.getName()));
         this.inv = Bukkit.createInventory(this, 54, title);
 
         List<Order> playerOrders = this.module.orders().all().stream()
@@ -59,12 +62,12 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             this.inv.setItem(slot++, createAdminOrderDisplayItem(o));
         }
 
-        // Delete All Button (48)
-        this.inv.setItem(48, makeItem(Material.BARRIER, "&cᴅᴇʟᴇᴛᴇ ᴀʟʟ ᴏʀᴅᴇʀѕ",
+        // Delete All Button (47)
+        this.inv.setItem(47, makeItem(Material.BARRIER, "&cᴅᴇʟᴇᴛᴇ ᴀʟʟ ᴏʀᴅᴇʀѕ",
                 List.of("&fClick to cancel and refund all", "&factive orders for this player.")));
 
-        // Refresh (49)
-        this.inv.setItem(49, makeItem(Material.MAP, "&5ʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
+        // Refresh (48)
+        this.inv.setItem(48, makeItem(Material.MAP, "&5ʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
 
         // Collect All Drops (50)
         this.inv.setItem(50, makeItem(Material.CHEST, "&aᴄᴏʟʟᴇᴄᴛ ᴀʟʟ ᴅʀᴏᴘѕ",
@@ -84,7 +87,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
         lore.add("");
         lore.add(Utils.formatColors("&6" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + "&7 Delivered"));
         lore.add("");
-        lore.add(Utils.formatColors("&cClick to cancel/refund this order"));
+        lore.add(Utils.formatColors("&cClick to view"));
 
         ItemStack item = new ItemStack(o.key.material);
         ItemMeta meta = item.getItemMeta();
@@ -124,14 +127,14 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
         int slot = e.getSlot();
 
-        if (slot == 48) { // Delete All
+        if (slot == 47) { // Delete All
             List<Order> playerOrders = this.module.orders().all().stream()
                     .filter(o -> o.owner.equals(target.getUniqueId()))
                     .filter(o -> !o.canceled && !o.completed)
                     .collect(Collectors.toList());
 
             for (Order o : playerOrders) {
-                this.module.orders().cancel(o);
+                cancelAndRefund(o);
             }
 
             admin.sendMessage(Utils.formatColors("&aCancelled and refunded " + playerOrders.size() + " orders."));
@@ -140,8 +143,8 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 49) { // Refresh
-            admin.playSound(admin.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+        if (slot == 48) { // Refresh
+            admin.playSound(admin.getLocation(), Sound.UI_TOAST_IN, 1.0f, 1.0f);
             open();
             return;
         }
@@ -154,10 +157,8 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
             if (slot < playerOrders.size()) {
                 Order o = playerOrders.get(slot);
-                this.module.orders().cancel(o);
-                admin.sendMessage(Utils.formatColors("&aOrder cancelled and refunded."));
-                admin.playSound(admin.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
-                open();
+                new AdminOrderLootMenu(this.module, this.admin, this.target, o).open();
+                admin.playSound(admin.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             }
         }
 
@@ -190,7 +191,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
             if (collectedCount > 0) {
                 admin.sendMessage(Utils.formatColors("&aCollected items from " + collectedCount + " orders."));
-                admin.playSound(admin.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+                admin.playSound(admin.getLocation(), Sound.UI_TOAST_IN, 1.0f, 1.0f);
             } else {
                 admin.sendMessage(Utils.formatColors("&cNo items to collect."));
             }
@@ -222,7 +223,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
             if (droppedCount > 0) {
                 admin.sendMessage(Utils.formatColors("&aDropped all loot on the ground."));
-                admin.playSound(admin.getLocation(), Sound.ENTITY_CHICKEN_EGG, 1.0f, 1.0f);
+                admin.playSound(admin.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.0f);
             } else {
                 admin.sendMessage(Utils.formatColors("&cNo items to drop."));
             }
@@ -233,5 +234,64 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
     @Override
     public void onClose(InventoryCloseEvent e) {
+    }
+
+    public void cancelAndRefund(Order o) {
+        // Refund items to contributors
+        com.prismcore.survival.auction.AuctionController auction = com.h2ph.PrismSurvival.getInstance()
+                .getAuctionController();
+        if (auction != null) {
+            NamespacedKey delivererKey = new NamespacedKey(module.getPlugin(), "deliverer-uuid");
+            NamespacedKey recipientKey = new NamespacedKey(module.getPlugin(), "recipient-name");
+            NamespacedKey refundFromKey = new NamespacedKey(module.getPlugin(), "refund-from");
+
+            synchronized (o.storage) {
+                for (ItemStack item : o.storage) {
+                    if (item == null || item.getType() == Material.AIR)
+                        continue;
+
+                    ItemMeta meta = item.getItemMeta();
+                    if (meta == null)
+                        continue;
+
+                    String delivererUuidStr = meta.getPersistentDataContainer().get(delivererKey,
+                            PersistentDataType.STRING);
+                    String recipientName = meta.getPersistentDataContainer().get(recipientKey,
+                            PersistentDataType.STRING);
+
+                    if (delivererUuidStr != null) {
+                        try {
+                            UUID delivererUuid = UUID.fromString(delivererUuidStr);
+                            OfflinePlayer deliverer = Bukkit.getOfflinePlayer(delivererUuid);
+                            String delivererName = deliverer.getName() != null ? deliverer.getName() : "Unknown";
+
+                            // Add refund-from tag for GUI lore
+                            if (recipientName != null) {
+                                meta.getPersistentDataContainer().set(refundFromKey, PersistentDataType.STRING,
+                                        recipientName);
+                                item.setItemMeta(meta);
+                            }
+
+                            // Add to auction as expired item
+                            com.prismcore.survival.auction.AuctionItem ai = new com.prismcore.survival.auction.AuctionItem(
+                                    UUID.randomUUID(),
+                                    delivererName,
+                                    item,
+                                    0.0,
+                                    0L, // listed long ago
+                                    0 // duration 0
+                            );
+                            auction.getAuctionManager().addItem(ai);
+                        } catch (Exception ex) {
+                            module.getPlugin().getLogger().warning("Failed to refund item to " + delivererUuidStr);
+                        }
+                    }
+                }
+                o.storage.clear();
+            }
+        }
+
+        // Original cancellation logic (money refund)
+        this.module.orders().cancel(o);
     }
 }

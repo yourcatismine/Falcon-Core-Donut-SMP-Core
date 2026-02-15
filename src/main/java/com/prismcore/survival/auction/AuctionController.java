@@ -162,7 +162,8 @@ public class AuctionController {
                 return;
             }
 
-            for (org.bukkit.inventory.ItemStack item : top.getContents()) {
+            for (int i = 0; i < top.getSize(); i++) {
+                org.bukkit.inventory.ItemStack item = top.getItem(i);
                 if (item == null || !item.hasItemMeta())
                     continue;
                 org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
@@ -171,17 +172,25 @@ public class AuctionController {
                 if (pdc.has(auctionKey, org.bukkit.persistence.PersistentDataType.LONG)) {
                     long expireTime = pdc.get(auctionKey, org.bukkit.persistence.PersistentDataType.LONG);
                     long remaining = expireTime - System.currentTimeMillis();
-                    if (remaining < 0)
-                        remaining = 0;
+
+                    if (remaining <= 0) {
+                        // If it's the main GUI or Admin Details, hide the item when it expires
+                        if (holder instanceof GUIHandler.MainHolder
+                                || holder instanceof GUIHandler.AdminPlayerDetailsHolder) {
+                            top.setItem(i, null);
+                            continue;
+                        }
+                    }
+
                     String timeStr = FormatUtils.formatTime((int) (remaining / 1000));
                     if (meta.hasLore()) {
                         java.util.List<String> lore = meta.getLore();
                         boolean changed = false;
-                        for (int i = 0; i < lore.size(); ++i) {
-                            if (lore.get(i).contains("Time left:")) {
+                        for (int j = 0; j < lore.size(); ++j) {
+                            if (lore.get(j).contains("Time left:")) {
                                 String newLine = Utils.formatColors("&fTime left: &#34ee80" + timeStr);
-                                if (!lore.get(i).equals(newLine)) {
-                                    lore.set(i, newLine);
+                                if (!lore.get(j).equals(newLine)) {
+                                    lore.set(j, newLine);
                                     changed = true;
                                 }
                             }
@@ -198,13 +207,13 @@ public class AuctionController {
                     if (meta.hasLore()) {
                         java.util.List<String> lore = meta.getLore();
                         boolean changed = false;
-                        for (int i = 0; i < lore.size(); ++i) {
-                            String check = lore.get(i);
+                        for (int j = 0; j < lore.size(); ++j) {
+                            String check = lore.get(j);
                             // Check for standard "Sold:" logic
                             if (check.contains("Sold:")) {
                                 String newLine = Utils.formatColors("&fSold: &7" + timeAgo + " ago");
                                 if (!check.equals(newLine)) {
-                                    lore.set(i, newLine);
+                                    lore.set(j, newLine);
                                     changed = true;
                                 }
                             }
@@ -212,7 +221,7 @@ public class AuctionController {
                             else if (check.endsWith(" ago")) {
                                 String newLine = Utils.formatColors("&a" + timeAgo + " ago");
                                 if (!check.equals(newLine)) {
-                                    lore.set(i, newLine);
+                                    lore.set(j, newLine);
                                     changed = true;
                                 }
                             }

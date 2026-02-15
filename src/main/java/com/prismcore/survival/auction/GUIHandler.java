@@ -6,11 +6,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import com.prismcore.survival.auction.AuctionItem;
-import com.prismcore.survival.auction.AuctionController;
-import com.prismcore.survival.auction.FormatUtils;
-import com.prismcore.survival.auction.Transaction;
-import com.prismcore.survival.auction.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Material;
@@ -30,6 +25,10 @@ public class GUIHandler {
     public static final int ITEMS_PER_PAGE = 45;
 
     public static void openMainGUI(Player player, int page, AuctionController controller) {
+        openMainGUI(player, page, controller, 0);
+    }
+
+    public static void openMainGUI(Player player, int page, AuctionController controller, int dummy) {
         String searchFilter;
         FileConfiguration cfg = controller.getConfig();
         String string = searchFilter = player.hasMetadata("ah-filter")
@@ -122,7 +121,7 @@ public class GUIHandler {
             item.setItemMeta(meta);
             inv.setItem(i, item);
         }
-        GUIHandler.setBottomControls(inv, cfg, sortMode, category, controller, page);
+        GUIHandler.setBottomControls(inv, cfg, sortMode, category, controller, page, totalPages);
         player.setMetadata("ah-switching",
                 (MetadataValue) new FixedMetadataValue((Plugin) controller.getPlugin(), (Object) true));
         player.openInventory(inv);
@@ -338,6 +337,8 @@ public class GUIHandler {
                 AuctionItem ai = (AuctionItem) mine.get(i);
                 ItemStack copy = ai.getItemStack().clone();
                 ItemMeta mm = copy.getItemMeta();
+                if (mm == null)
+                    continue;
                 ArrayList baseLore = mm != null && mm.hasLore() ? new ArrayList(mm.getLore()) : new ArrayList();
                 List loreTpl = cfg.getStringList("main-gui.lore-item");
                 ArrayList<String> auctionLore = new ArrayList<String>();
@@ -354,21 +355,32 @@ public class GUIHandler {
                             .replace("{time}", time);
                     auctionLore.add(Utils.formatColors(processed));
                 }
+                // Check if this is a refunded item from Falcon Orders
+                org.bukkit.persistence.PersistentDataContainer pdc = mm.getPersistentDataContainer();
+                org.bukkit.NamespacedKey refundKey = new org.bukkit.NamespacedKey(controller.getPlugin(),
+                        "refund-from");
+                String refundFrom = pdc.get(refundKey, org.bukkit.persistence.PersistentDataType.STRING);
+
                 ArrayList finalLore = new ArrayList();
                 if (!baseLore.isEmpty()) {
                     finalLore.addAll(baseLore);
                 }
-                if (remaining == 0L) {
-                    finalLore.add(Utils.formatColors("&#ff4444Expired"));
+
+                if (refundFrom != null) {
+                    finalLore.add(Utils.formatColors("&cRefunded from &d" + refundFrom));
+                } else {
+                    if (remaining == 0L) {
+                        finalLore.add(Utils.formatColors("&#ff4444Expired"));
+                    }
+                    if (!(baseLore.isEmpty() && remaining != 0L || auctionLore.isEmpty())) {
+                        finalLore.add("");
+                    }
+                    finalLore.addAll(auctionLore);
                 }
-                if (!(baseLore.isEmpty() && remaining != 0L || auctionLore.isEmpty())) {
-                    finalLore.add("");
-                }
-                finalLore.addAll(auctionLore);
                 mm.setLore(finalLore);
 
                 // Store expiration time in PDC for live updates
-                org.bukkit.persistence.PersistentDataContainer pdc = mm.getPersistentDataContainer();
+                pdc = mm.getPersistentDataContainer();
                 org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
                 long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
                 pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
@@ -458,14 +470,16 @@ public class GUIHandler {
             display.setItemMeta(meta);
             inv.setItem(i, display);
         }
-        int slotPrev = cfg.getInt("transactions-gui.items.previous-page.slot");
-        ItemStack prev = new ItemStack(
-                Material.valueOf((String) cfg.getString("transactions-gui.items.previous-page.material")));
-        ItemMeta pm = prev.getItemMeta();
-        pm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.items.previous-page.display-name")));
-        pm.setLore(Utils.formatColors(cfg.getStringList("transactions-gui.items.previous-page.lore")));
-        prev.setItemMeta(pm);
-        inv.setItem(slotPrev, prev);
+        if (page > 1) {
+            int slotPrev = cfg.getInt("transactions-gui.items.previous-page.slot");
+            ItemStack prev = new ItemStack(
+                    Material.valueOf((String) cfg.getString("transactions-gui.items.previous-page.material")));
+            ItemMeta pm = prev.getItemMeta();
+            pm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.items.previous-page.display-name")));
+            pm.setLore(Utils.formatColors(cfg.getStringList("transactions-gui.items.previous-page.lore")));
+            prev.setItemMeta(pm);
+            inv.setItem(slotPrev, prev);
+        }
         int slotSort = cfg.getInt("transactions-gui.items.sort.slot", 46);
         if (slotSort >= 0 && slotSort < inv.getSize()) {
             inv.setItem(slotSort, null);
@@ -503,14 +517,16 @@ public class GUIHandler {
         xm.setLore(Utils.formatColors(cfg.getStringList("transactions-gui.items.search.lore")));
         search.setItemMeta(xm);
         inv.setItem(slotSearch, search);
-        int slotNext = cfg.getInt("transactions-gui.items.next-page.slot");
-        ItemStack next = new ItemStack(
-                Material.valueOf((String) cfg.getString("transactions-gui.items.next-page.material")));
-        ItemMeta nm = next.getItemMeta();
-        nm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.items.next-page.display-name")));
-        nm.setLore(Utils.formatColors(cfg.getStringList("transactions-gui.items.next-page.lore")));
-        next.setItemMeta(nm);
-        inv.setItem(slotNext, next);
+        if (page < totalPages) {
+            int slotNext = cfg.getInt("transactions-gui.items.next-page.slot");
+            ItemStack next = new ItemStack(
+                    Material.valueOf((String) cfg.getString("transactions-gui.items.next-page.material")));
+            ItemMeta nm = next.getItemMeta();
+            nm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.items.next-page.display-name")));
+            nm.setLore(Utils.formatColors(cfg.getStringList("transactions-gui.items.next-page.lore")));
+            next.setItemMeta(nm);
+            inv.setItem(slotNext, next);
+        }
         player.setMetadata("ah-switching",
                 (MetadataValue) new FixedMetadataValue((Plugin) controller.getPlugin(), (Object) true));
         player.openInventory(inv);
@@ -547,6 +563,7 @@ public class GUIHandler {
 
         List<AuctionItem> items = controller.getAuctionManager().getItems().stream()
                 .filter(ai -> ai.getSeller().equalsIgnoreCase(targetPlayerName))
+                .filter(ai -> !controller.getAuctionManager().isExpired(ai))
                 .collect(Collectors.toList());
 
         for (int i = 0; i < items.size() && i < 27; i++) {
@@ -751,7 +768,6 @@ public class GUIHandler {
             long elapsedSeconds = (System.currentTimeMillis() - txObj.getTimestamp()) / 1000L;
             String timeAgo = FormatUtils.formatTime((int) elapsedSeconds);
 
-            String otherPlayer = txObj.isSale() ? txObj.getBuyer() : txObj.getSeller();
             String itemName = Utils.prettifyMaterialName(txObj.getItem().getType());
             String priceFmt = Utils.formatNumber(txObj.getPrice());
 
@@ -873,7 +889,7 @@ public class GUIHandler {
     }
 
     private static void setBottomControls(Inventory inv, FileConfiguration cfg, String sortMode, String category,
-            AuctionController controller, int page) {
+            AuctionController controller, int page, int totalPages) {
         if (page > 1) {
             ItemStack prev = GUIHandler.makeItem(cfg, "main-gui.items.previous-page");
             inv.setItem(cfg.getInt("main-gui.items.previous-page.slot"), prev);
@@ -896,8 +912,10 @@ public class GUIHandler {
         inv.setItem(cfg.getInt("main-gui.items.refresh.slot"), refresh);
         ItemStack your = GUIHandler.makeItem(cfg, "main-gui.items.your-items");
         inv.setItem(cfg.getInt("main-gui.items.your-items.slot"), your);
-        ItemStack next = GUIHandler.makeItem(cfg, "main-gui.items.next-page");
-        inv.setItem(cfg.getInt("main-gui.items.next-page.slot"), next);
+        if (page < totalPages) {
+            ItemStack next = GUIHandler.makeItem(cfg, "main-gui.items.next-page");
+            inv.setItem(cfg.getInt("main-gui.items.next-page.slot"), next);
+        }
     }
 
     public static class MainHolder
@@ -1007,6 +1025,12 @@ public class GUIHandler {
         }
     }
 
+    public static class TransactionManagementHolder implements InventoryHolder {
+        public Inventory getInventory() {
+            return null;
+        }
+    }
+
     public static void openAdminPlayerListGUI(Player p, int page, AuctionController controller) {
         String initialTitle = Utils.formatColors("&8ᴀᴅᴍɪɴ ᴀᴜᴄᴛɪᴏɴ");
         Inventory inv = Bukkit.createInventory(new AdminPlayerListHolder(), 54, initialTitle);
@@ -1106,5 +1130,57 @@ public class GUIHandler {
                 p.setMetadata("ah-admin-list-page", new FixedMetadataValue(controller.getPlugin(), finalPage));
             });
         });
+    }
+
+    public static void openTransactionManagementGUI(Player admin, Transaction tx, AuctionController controller) {
+        String title = Utils.formatColors("&8ᴛʀᴀɴѕᴀᴄᴛɪᴏɴ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ");
+        Inventory inv = Bukkit.createInventory(new TransactionManagementHolder(), 27, title);
+
+        // Slot 11: Delete Transaction
+        ItemStack delete = new ItemStack(Material.BARRIER);
+        ItemMeta dm = delete.getItemMeta();
+        dm.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴛʀᴀɴѕᴀᴄᴛɪᴏɴ"));
+        List<String> dLore = new ArrayList<>();
+        dLore.add(Utils.formatColors("&7Click to permanently delete"));
+        dLore.add(Utils.formatColors("&7this record for both players."));
+        dLore.add("");
+        dLore.add(Utils.formatColors("&fStats will be updated."));
+        dm.setLore(dLore);
+        delete.setItemMeta(dm);
+        inv.setItem(11, delete);
+
+        // Slot 13: The Item (Info)
+        ItemStack item = tx.getItem().clone();
+        ItemMeta im = item.getItemMeta();
+        List<String> lore = im.hasLore() ? im.getLore() : new ArrayList<>();
+        lore.add("");
+        lore.add(Utils.formatColors("&fPrice: &a$" + Utils.formatNumber(tx.getPrice())));
+        lore.add(Utils.formatColors("&fSeller: &a" + tx.getSeller()));
+        lore.add(Utils.formatColors("&fBuyer: &a" + tx.getBuyer()));
+        im.setLore(lore);
+        item.setItemMeta(im);
+        inv.setItem(13, item);
+
+        // Slot 15: Copy Item
+        ItemStack copy = new ItemStack(Material.CHEST);
+        ItemMeta cm = copy.getItemMeta();
+        cm.setDisplayName(Utils.formatColors("&aᴄᴏᴘʏ ɪᴛᴇᴍ"));
+        List<String> cLore = new ArrayList<>();
+        cLore.add(Utils.formatColors("&7Click to get a copy of"));
+        cLore.add(Utils.formatColors("&7the transacted item."));
+        cm.setLore(cLore);
+        copy.setItemMeta(cm);
+        inv.setItem(15, copy);
+
+        // Slot 22: Back
+        ItemStack back = new ItemStack(Material.ARROW);
+        ItemMeta bm = back.getItemMeta();
+        bm.setDisplayName(Utils.formatColors("&cʙᴀᴄᴋ"));
+        back.setItemMeta(bm);
+        inv.setItem(22, back);
+
+        admin.setMetadata("ah-admin-tx-focus", new FixedMetadataValue(controller.getPlugin(), tx.getTimestamp()));
+        admin.setMetadata("ah-switching", new FixedMetadataValue(controller.getPlugin(), true));
+        admin.openInventory(inv);
     }
 }

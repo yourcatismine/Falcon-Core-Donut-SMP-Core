@@ -75,6 +75,19 @@ public class PlayerLogsHandler implements HttpHandler {
             return;
         }
 
+        if (params.containsKey("search_time")) {
+            long searchTimestamp;
+            try {
+                searchTimestamp = Long.parseLong(params.get("search_time"));
+            } catch (NumberFormatException e) {
+                sendResponse(t, 400, "{\"error\": \"Invalid search_time format\"}");
+                return;
+            }
+            int searchOffset = plugin.getActivityLogger().getOffsetAtTimestamp(uuid, type, searchTimestamp);
+            sendResponse(t, 200, "{\"offset\": " + searchOffset + "}");
+            return;
+        }
+
         List<Map<String, Object>> logs = plugin.getActivityLogger().getLogs(uuid, type, limit, offset);
 
         t.getResponseHeaders().set("Content-Type", "application/json");

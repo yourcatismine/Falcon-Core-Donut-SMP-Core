@@ -21,6 +21,7 @@ public class ActivityLogger {
     private final PrismSurvival plugin;
     private final ReentrantLock lock = new ReentrantLock();
     private volatile Connection connection;
+    private volatile boolean shuttingDown = false;
 
     public ActivityLogger(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -75,6 +76,8 @@ public class ActivityLogger {
     }
 
     public Connection getConnection() {
+        if (shuttingDown)
+            return null;
         try {
             if (connection == null || connection.isClosed()) {
                 initializeDatabase();
@@ -85,22 +88,46 @@ public class ActivityLogger {
         return connection;
     }
 
+    public void shutdown() {
+        shuttingDown = true;
+        lock.lock();
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.WARNING, "Error closing activity log database", e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public void log(UUID uuid, LogType type, String content) {
+        if (shuttingDown)
+            return;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            if (shuttingDown)
+                return;
             // Broadcast live
             if (plugin.getApiServer() != null) {
                 plugin.getApiServer().broadcastActivityLog(uuid, type, content);
             }
 
             String query = "INSERT INTO activity_logs (uuid, type, content, timestamp) VALUES (?, ?, ?, ?)";
-            try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            Connection conn = getConnection();
+            if (conn == null)
+                return;
+
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, uuid.toString());
                 ps.setString(2, type.name());
                 ps.setString(3, content);
                 ps.setLong(4, System.currentTimeMillis());
                 ps.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                if (!shuttingDown) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -125,6 +152,23 @@ public class ActivityLogger {
             e.printStackTrace();
         }
         return logs;
+    }
+
+    public int getOffsetAtTimestamp(UUID uuid, LogType type, long timestamp) {
+        String query = "SELECT COUNT(*) FROM activity_logs WHERE uuid = ? AND type = ? AND timestamp > ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, type.name());
+            ps.setLong(3, timestamp);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public enum LogType {

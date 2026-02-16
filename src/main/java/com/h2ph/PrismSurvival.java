@@ -476,6 +476,10 @@ public class PrismSurvival extends JavaPlugin {
             }
         }
 
+        if (this.activityLogger != null) {
+            this.activityLogger.shutdown();
+        }
+
         getLogger().info("PrismCore has been disabled!");
         instance = null;
     }

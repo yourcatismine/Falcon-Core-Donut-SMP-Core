@@ -105,22 +105,42 @@ public class RTPQueueManager {
                 // Trigger pre-calculation at 5 seconds remaining
                 if (nextVal == 5) {
                     java.util.Set<java.util.UUID> players = playersInQueue.get(name);
-                    if (players != null) {
-                        for (java.util.UUID uuid : players) {
-                            Player player = plugin.getServer().getPlayer(uuid);
-                            if (player != null && player.isOnline() && !preCalculatedLocations.containsKey(uuid)) {
-                                String worldType = "overworld";
-                                if (player.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER)
-                                    worldType = "nether";
-                                if (player.getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END)
-                                    worldType = "end";
+                    if (players != null && !players.isEmpty()) {
+                        // Pick a leader to determine the group location
+                        java.util.UUID leaderId = players.iterator().next();
+                        Player leader = plugin.getServer().getPlayer(leaderId);
 
-                                RTPManager.calculateLocation(player, name, worldType, (loc) -> {
-                                    if (loc != null) {
-                                        preCalculatedLocations.put(uuid, loc);
+                        if (leader != null && leader.isOnline()) {
+                            String worldType = "overworld";
+                            if (leader.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER)
+                                worldType = "nether";
+                            if (leader.getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END)
+                                worldType = "end";
+
+                            final String type = worldType;
+                            RTPManager.calculateLocation(leader, name, worldType, (centerLoc) -> {
+                                if (centerLoc != null) {
+                                    // Distribute this location to all players with slight scatter
+                                    for (java.util.UUID uuid : players) {
+                                        // Skip if already has a location? No, overwrite for group sync
+
+                                        org.bukkit.Location target = centerLoc.clone();
+                                        // Scatter +/- 3 blocks
+                                        double dx = (Math.random() * 6) - 3;
+                                        double dz = (Math.random() * 6) - 3;
+                                        target.add(dx, 0, dz);
+
+                                        // Re-adjust Y for overworld to ensure safety
+                                        if (type.equals("overworld")) {
+                                            int highestY = target.getWorld().getHighestBlockYAt(target);
+                                            target.setY(highestY + 1);
+                                        }
+                                        // For nether/end, we keep the center Y (safe-ish assumption for small scatter)
+
+                                        preCalculatedLocations.put(uuid, target);
                                     }
-                                });
-                            }
+                                }
+                            });
                         }
                     }
                 }

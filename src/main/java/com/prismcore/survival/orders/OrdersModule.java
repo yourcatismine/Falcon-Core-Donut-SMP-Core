@@ -27,6 +27,7 @@ public class OrdersModule {
     private OrderManager orderManager;
     private PlayerStateManager stateManager;
     private ChatInputManager chatInputManager;
+    private com.prismcore.survival.orders.util.PlayerNameCache nameCache;
     private OfflineNotificationManager offlineNotifications;
 
     public OrdersModule(PrismSurvival plugin) {
@@ -53,6 +54,7 @@ public class OrdersModule {
         this.orderManager.cleanupExpired();
         this.stateManager = new PlayerStateManager(this);
         this.chatInputManager = new ChatInputManager(this);
+        this.nameCache = new com.prismcore.survival.orders.util.PlayerNameCache(plugin);
         this.offlineNotifications = new OfflineNotificationManager(this);
 
         Bukkit.getPluginManager().registerEvents(new MenuListener(plugin), plugin);
@@ -108,6 +110,10 @@ public class OrdersModule {
 
     public ChatInputManager chat() {
         return this.chatInputManager;
+    }
+
+    public com.prismcore.survival.orders.util.PlayerNameCache getNameCache() {
+        return this.nameCache;
     }
 
     public OfflineNotificationManager getOfflineNotifications() {

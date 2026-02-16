@@ -44,6 +44,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.managers.RedstoneManager redstoneManager;
     private com.prismcore.survival.manager.HazardManager hazardManager;
     private com.prismcore.survival.manager.BalanceLogger balanceLogger;
+    private com.h2ph.managers.PrivateMessageManager privateMessageManager;
 
     @Override
     public void onLoad() {
@@ -104,6 +105,7 @@ public class PrismSurvival extends JavaPlugin {
         this.crateEffectsManager = new com.prismcore.survival.manager.CrateEffectsManager(this);
         this.spawnManager = new com.prismcore.survival.manager.SpawnManager(this);
         this.teleportManager = new com.prismcore.survival.manager.TeleportManager(this);
+        this.privateMessageManager = new com.h2ph.managers.PrivateMessageManager();
 
         // Register Live Sign Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
@@ -336,6 +338,11 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("msg").setExecutor(msgCmd);
         getCommand("msg").setTabCompleter(msgCmd);
 
+        // Register Reply Command
+        com.h2ph.commands.player.ReplyCommand replyCmd = new com.h2ph.commands.player.ReplyCommand();
+        getCommand("reply").setExecutor(replyCmd);
+        getCommand("reply").setTabCompleter(replyCmd);
+
         // Register Settings Command
         com.h2ph.commands.player.SettingsCommand settingsCmd = new com.h2ph.commands.player.SettingsCommand(this);
         getCommand("settings").setExecutor(settingsCmd);
@@ -523,6 +530,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.prismcore.survival.manager.InventoryLogManager getInventoryLogManager() {
         return inventoryLogManager;
+    }
+
+    public com.h2ph.managers.PrivateMessageManager getPrivateMessageManager() {
+        return privateMessageManager;
     }
 
     public String normalizeKeyName(String keyName) {

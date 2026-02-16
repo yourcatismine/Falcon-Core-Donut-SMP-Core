@@ -179,8 +179,9 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
     }
 
     private ItemStack createOrderDisplayItem(Order o) {
-        OfflinePlayer op = Bukkit.getOfflinePlayer((UUID) o.owner);
-        String ownerName = op != null && op.getName() != null ? op.getName() : "Unknown";
+        String ownerName = this.module.getNameCache().getName((UUID) o.owner);
+        if (ownerName == null)
+            ownerName = "Loading...";
 
         long expiryTime = o.creationTime + (7L * 24 * 60 * 60 * 1000); // 7 days from creation
         long remaining = Math.max(0, expiryTime - System.currentTimeMillis());
@@ -373,8 +374,9 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
                     playSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                     return;
                 }
-                OfflinePlayer op = Bukkit.getOfflinePlayer((UUID) target.owner);
-                String ownerName = op != null && op.getName() != null ? op.getName() : "Unknown";
+                String ownerName = this.module.getNameCache().getName((UUID) target.owner);
+                if (ownerName == null)
+                    ownerName = "Loading...";
 
                 com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,

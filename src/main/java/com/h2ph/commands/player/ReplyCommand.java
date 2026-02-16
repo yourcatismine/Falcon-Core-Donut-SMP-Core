@@ -1,5 +1,6 @@
 package com.h2ph.commands.player;
 
+import com.h2ph.managers.PrivateMessageManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -16,9 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class MsgCommand implements CommandExecutor, TabCompleter {
+public class ReplyCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
@@ -29,44 +31,67 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
         }
 
         Player player = (Player) sender;
+        PrivateMessageManager pmManager = com.h2ph.PrismSurvival.getInstance().getPrivateMessageManager();
 
-        if (args.length < 2) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+        if (args.length == 0) {
+            player.sendMessage(ChatColor.RED + "Usage: /reply <message> or /reply <player> <message>");
             return true;
         }
 
-        String targetName = args[0];
+        Player target = null;
+        String message = "";
 
-        // Build the message from args[1] onwards
-        StringBuilder messageBuilder = new StringBuilder();
-        for (int i = 1; i < args.length; i++) {
-            messageBuilder.append(args[i]).append(" ");
-        }
-        String message = messageBuilder.toString().trim();
-
-        Player target = Bukkit.getPlayer(targetName);
-
-        if (target != null && target.getUniqueId().equals(player.getUniqueId())) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            return true;
-        }
-
-        // Check if player exists (online)
-        if (target == null) {
-            // Check if they exist offline
-            if (Bukkit.getOfflinePlayer(targetName).hasPlayedBefore()) {
-                // User is offline
-                String offlineMsg = ChatColor.RED + "This user is not online.";
-                player.sendMessage(offlineMsg);
-                player.sendActionBar(Component.text("This user is not online.", NamedTextColor.RED));
+        // Check if first argument is a player
+        Player potentialTarget = Bukkit.getPlayer(args[0]);
+        if (potentialTarget != null) {
+            // Case: /reply <player> <message>
+            if (args.length < 2) {
+                player.sendMessage(ChatColor.RED + "Usage: /reply <player> <message>");
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            } else {
-                // User does not exist
-                String noExistMsg = ChatColor.RED + "That user does not exist.";
-                player.sendMessage(noExistMsg);
-                player.sendActionBar(Component.text("That user does not exist.", NamedTextColor.RED));
-                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
             }
+            target = potentialTarget;
+
+            // Build message from args[1] onwards
+            StringBuilder messageBuilder = new StringBuilder();
+            for (int i = 1; i < args.length; i++) {
+                messageBuilder.append(args[i]).append(" ");
+            }
+            message = messageBuilder.toString().trim();
+
+            // Check if there is an existing conversation
+            if (!pmManager.hasConversation(player.getUniqueId(), target.getUniqueId())) {
+                player.sendMessage(ChatColor.GRAY + "You dont have a previous private messages to this player.");
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+        } else {
+            // Case: /reply <message> (Reply to last messenger)
+            UUID lastMessengerId = pmManager.getReplyTarget(player.getUniqueId());
+            if (lastMessengerId == null) {
+                player.sendMessage(ChatColor.RED + "You have nobody to reply to.");
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+
+            target = Bukkit.getPlayer(lastMessengerId);
+            if (target == null) {
+                player.sendMessage(ChatColor.RED + "Player is not online.");
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+
+            // Build message from args[0] onwards
+            StringBuilder messageBuilder = new StringBuilder();
+            for (int i = 0; i < args.length; i++) {
+                messageBuilder.append(args[i]).append(" ");
+            }
+            message = messageBuilder.toString().trim();
+        }
+
+        if (target.getUniqueId().equals(player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "You cannot message yourself.");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -96,8 +121,6 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
                 ActivityLogger.LogType.MESSAGE, "PM from " + player.getName() + ": " + message);
 
         // Update reply targets
-        com.h2ph.managers.PrivateMessageManager pmManager = com.h2ph.PrismSurvival.getInstance()
-                .getPrivateMessageManager();
         pmManager.setReplyTarget(target.getUniqueId(), player.getUniqueId());
         pmManager.setReplyTarget(player.getUniqueId(), target.getUniqueId());
 

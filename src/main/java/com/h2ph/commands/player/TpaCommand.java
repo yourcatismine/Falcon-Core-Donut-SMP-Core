@@ -53,23 +53,27 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (target == null || !p.canSee(target)) {
-            String msg;
-            if (target != null) {
-                // Online but hidden -> "Not online" to the sender
-                msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
-            } else {
+            // Check offline player asynchronously to prevent lag
+            Bukkit.getScheduler().runTaskAsynchronously(PrismSurvival.getInstance(), () -> {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
-                if (offlineTarget.hasPlayedBefore()) {
-                    msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
-                } else {
-                    msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
-                }
-            }
+                boolean exists = offlineTarget.hasPlayedBefore();
+                boolean isOnlineButHidden = (target != null);
 
-            p.sendMessage(msg);
-            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                    new net.md_5.bungee.api.chat.TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                Bukkit.getScheduler().runTask(PrismSurvival.getInstance(), () -> {
+                    String msg;
+                    if (isOnlineButHidden) {
+                        msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
+                    } else if (exists) {
+                        msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
+                    } else {
+                        msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
+                    }
+                    p.sendMessage(msg);
+                    p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(msg));
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                });
+            });
             return true;
         }
 

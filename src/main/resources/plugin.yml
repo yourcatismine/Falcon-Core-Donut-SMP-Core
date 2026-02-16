@@ -223,6 +223,11 @@ commands:
     usage: /msg <player> <message>
     aliases: [tell, w, wisper]
 
+  reply:
+    description: Reply to the last private message
+    usage: /reply <message> or /reply <player> <message>
+    aliases: [r]
+
   tpauto:
     description: Automatically accept teleport requests
     usage: /tpauto

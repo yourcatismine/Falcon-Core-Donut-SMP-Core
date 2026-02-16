@@ -40,6 +40,7 @@ public class ShopCommand implements CommandExecutor, Listener {
     private final Map<UUID, BuyingSession> buyingSessions = new HashMap<>();
     private final Map<UUID, ShardPurchaseSession> shardPurchaseSessions = new HashMap<>();
     private final Map<String, FileConfiguration> titleToConfig = new HashMap<>();
+    private final Map<String, Map<Integer, BuyingSession>> sessionLookup = new HashMap<>(); // Cache for faster lookups
 
     private String cachedMainTitle;
     private String cachedShopPrefix;
@@ -116,6 +117,54 @@ public class ShopCommand implements CommandExecutor, Listener {
             if (cfg.contains("gui-title")) {
                 String t = color(cfg.getString("gui-title"));
                 titleToConfig.put(t, cfg);
+            }
+        }
+
+        // Cache session data for faster lookups
+        sessionLookup.clear();
+        for (String title : titleToConfig.keySet()) {
+            FileConfiguration config = titleToConfig.get(title);
+            String fileName = null;
+            for (Map.Entry<String, FileConfiguration> entry : categoryConfigs.entrySet()) {
+                if (entry.getValue().equals(config)) {
+                    fileName = entry.getKey();
+                    break;
+                }
+            }
+            if (fileName == null)
+                continue;
+
+            Map<Integer, BuyingSession> slots = new HashMap<>();
+            ConfigurationSection items = config.getConfigurationSection("items");
+            if (items != null) {
+                for (String key : items.getKeys(false)) {
+                    int slot = items.getInt(key + ".slot");
+
+                    // Only cache standard buying sessions
+                    if (items.contains(key + ".shard_price") || items.contains(key + ".command")) {
+                        continue; // Shard sessions are handled differently (complex logic in findShardSession)
+                    }
+
+                    String matName = items.getString(key + ".material", "STONE");
+                    Material mat = Material.getMaterial(matName.toUpperCase());
+                    if (mat == null)
+                        mat = Material.STONE;
+
+                    ItemStack base = new ItemStack(mat);
+                    double price = items.getDouble(key + ".price");
+                    List<Integer> values = items.getIntegerList(key + ".values");
+                    if (values.isEmpty())
+                        values = Arrays.asList(1, 10, 64);
+
+                    List<String> effects = items.getStringList(key + ".effects");
+                    int duration = items.getInt(key + ".effect_duration", 30);
+                    int level = items.getInt(key + ".effect_level", 1);
+
+                    slots.put(slot, new BuyingSession(base, price, fileName, values, effects, duration, level));
+                }
+            }
+            if (!slots.isEmpty()) {
+                sessionLookup.put(title, slots);
             }
         }
     }
@@ -574,49 +623,17 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private BuyingSession findSessionFromClick(Player player, String guiTitle, int clickedSlot) {
-        FileConfiguration config = titleToConfig.get(guiTitle);
-        if (config == null)
-            return null;
-
-        // Find the filename key for this config
-        String fileName = null;
-        for (Map.Entry<String, FileConfiguration> entry : categoryConfigs.entrySet()) {
-            if (entry.getValue().equals(config)) {
-                fileName = entry.getKey();
-                break;
+        if (sessionLookup.containsKey(guiTitle)) {
+            Map<Integer, BuyingSession> slots = sessionLookup.get(guiTitle);
+            if (slots.containsKey(clickedSlot)) {
+                // Return a copy with quantity 1
+                BuyingSession template = slots.get(clickedSlot);
+                return new BuyingSession(template.baseItem, template.unitPrice, template.categoryFileName,
+                        template.incrementValues, template.potionEffects, template.effectDuration,
+                        template.effectLevel);
             }
         }
-
-        if (fileName == null)
-            return null;
-
-        ConfigurationSection items = config.getConfigurationSection("items");
-        if (items == null)
-            return null;
-
-        for (String key : items.getKeys(false)) {
-            int slot = items.getInt(key + ".slot");
-            if (slot == clickedSlot) {
-                String matName = items.getString(key + ".material", "STONE");
-                Material mat = Material.getMaterial(matName.toUpperCase());
-                if (mat == null)
-                    mat = Material.STONE;
-
-                ItemStack base = new ItemStack(mat);
-                double price = items.getDouble(key + ".price");
-                List<Integer> values = items.getIntegerList(key + ".values");
-                if (values.isEmpty())
-                    values = Arrays.asList(1, 10, 64);
-
-                // Parse potion effects
-                List<String> effects = items.getStringList(key + ".effects");
-                int duration = items.getInt(key + ".effect_duration", 30);
-                int level = items.getInt(key + ".effect_level", 1);
-
-                return new BuyingSession(base, price, fileName, values, effects, duration, level);
-            }
-        }
-        return null;
+        return null; // Fallback or return null if not found
     }
 
     private ItemStack createConfigItem(ConfigurationSection section) {

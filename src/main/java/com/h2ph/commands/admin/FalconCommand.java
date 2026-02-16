@@ -83,21 +83,72 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        player.sendMessage("§cUnknown subcommand. Use auction or order.");
+        if (sub.equals("rtpqueue")) {
+            if (!player.hasPermission("falcon.rtpqueue")) {
+                player.sendMessage("§cYou do not have permission to use this command.");
+                return true;
+            }
+
+            if (args.length < 2) {
+                player.sendMessage("§cUsage: /falcon rtpqueue <create|delete> <region>");
+                return true;
+            }
+
+            String action = args[1].toLowerCase();
+
+            if (action.equals("create")) {
+                if (args.length < 3) {
+                    player.sendMessage("§cUsage: /falcon rtpqueue create <region>");
+                    return true;
+                }
+                String regionName = args[2];
+                plugin.getRTPQueueManager().createQueue(player, regionName);
+                return true;
+            } else if (action.equals("delete")) {
+                if (args.length < 3) {
+                    player.sendMessage("§cUsage: /falcon rtpqueue delete <region>");
+                    return true;
+                }
+                String regionName = args[2];
+                plugin.getRTPQueueManager().deleteQueue(player, regionName);
+                return true;
+            } else {
+                player.sendMessage("§cUsage: /falcon rtpqueue <create|delete> <region>");
+                return true;
+            }
+        }
+
+        player.sendMessage("§cUnknown subcommand. Use auction, order, or rtpqueue.");
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("auction", "order").stream()
+            return Arrays.asList("auction", "order", "rtpqueue").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
-        } else if (args.length == 2 && (args[0].equalsIgnoreCase("auction") || args[0].equalsIgnoreCase("order"))) {
-            return Bukkit.getOnlinePlayers().stream()
-                    .map(Player::getName)
-                    .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                    .collect(Collectors.toList());
+        } else if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("auction") || args[0].equalsIgnoreCase("order")) {
+                return Bukkit.getOnlinePlayers().stream()
+                        .map(Player::getName)
+                        .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("rtpqueue")) {
+                return Arrays.asList("create", "delete").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("rtpqueue")) {
+            if (args[1].equalsIgnoreCase("create")) {
+                return plugin.getRTPQueueManager().getAvailableRegions().stream()
+                        .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[1].equalsIgnoreCase("delete")) {
+                return plugin.getRTPQueueManager().getQueueNames().stream()
+                        .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
         }
         return Collections.emptyList();
     }

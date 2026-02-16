@@ -1,0 +1,49 @@
+package com.h2ph.placeholders;
+
+import com.h2ph.PrismSurvival;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.NotNull;
+
+public class RTPPlaceholders extends PlaceholderExpansion {
+
+    private final PrismSurvival plugin;
+
+    public RTPPlaceholders(PrismSurvival plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    @NotNull
+    public String getIdentifier() {
+        return "prismsmp";
+    }
+
+    @Override
+    @NotNull
+    public String getAuthor() {
+        return "h2ph";
+    }
+
+    @Override
+    @NotNull
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public boolean persist() {
+        return true;
+    }
+
+    @Override
+    public String onRequest(OfflinePlayer player, @NotNull String params) {
+        // %prismsmp_countdown_{region}%
+        if (params.toLowerCase().startsWith("countdown_")) {
+            String regionName = params.substring(10); // Remove "countdown_" prefix
+            return String.valueOf(plugin.getRTPQueueManager().getCountdown(regionName));
+        }
+
+        return null;
+    }
+}

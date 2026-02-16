@@ -32,6 +32,8 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.shards.ShardsManager shardsManager;
     private com.prismcore.survival.auction.AuctionController auctionController;
 
+    private com.h2ph.rtp.RTPQueueManager rtpQueueManager;
+
     private com.h2ph.commands.admin.duels.DuelStatsManager duelStatsManager;
     private com.h2ph.commands.admin.duels.DuelArenaManager duelArenaManager;
 
@@ -270,6 +272,10 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("rtp").setExecutor(rtpCmd);
         getCommand("rtp").setTabCompleter(rtpCmd);
 
+        // Initialize RTP Queue Manager
+        this.rtpQueueManager = new com.h2ph.rtp.RTPQueueManager(this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.RTPQueueListener(this), this);
+
         // Register Rules Command
         this.rulesCommand = new com.h2ph.commands.player.RulesCommand(this);
         getCommand("rules").setExecutor(rulesCommand);
@@ -351,6 +357,7 @@ public class PrismSurvival extends JavaPlugin {
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new com.h2ph.placeholders.PrismPlaceholders(this).register();
+            new com.h2ph.placeholders.RTPPlaceholders(this).register();
             getLogger().info("PlaceholderAPI expansion registered!");
         } else {
             getLogger().warning("PlaceholderAPI not found! Placeholders will not work.");
@@ -443,6 +450,10 @@ public class PrismSurvival extends JavaPlugin {
             this.ordersModule.disable();
         }
 
+        if (this.rtpQueueManager != null) {
+            this.rtpQueueManager.disable();
+        }
+
         if (this.auctionController != null) {
             this.auctionController.disable();
         }
@@ -480,6 +491,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.prismcore.survival.auction.AuctionController getAuctionController() {
         return auctionController;
+    }
+
+    public com.h2ph.rtp.RTPQueueManager getRTPQueueManager() {
+        return rtpQueueManager;
     }
 
     public com.h2ph.maintenance.MaintenanceManager getMaintenanceManager() {

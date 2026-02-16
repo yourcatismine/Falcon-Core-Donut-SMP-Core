@@ -198,6 +198,12 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
 
         List<String> lore = new ArrayList<>();
         lore.add(Utils.formatColors("&f" + o.key.displayName()));
+        List<String> enchantLore = o.key.enchantLoreLines("&7");
+        if (!enchantLore.isEmpty()) {
+            for (String line : enchantLore) {
+                lore.add(Utils.formatColors(line));
+            }
+        }
         lore.add(Utils.formatColors("&a$" + Utils.abbr(o.priceEach) + "&f each"));
         lore.add("");
         lore.add(Utils.formatColors("&6" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + "&7 Delivered"));

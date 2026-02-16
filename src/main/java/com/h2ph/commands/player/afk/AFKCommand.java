@@ -323,17 +323,21 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
         }
 
         java.util.concurrent.atomic.AtomicInteger countdown = new java.util.concurrent.atomic.AtomicInteger(5);
+        final UUID uuid = player.getUniqueId();
+
         BukkitTask task = plugin.getSchedulerAdapter().runTaskTimer(() -> {
-            if (!player.isOnline()) {
-                activeTeleports.remove(player.getUniqueId());
-                // Note: task.cancel() is handled by the wrapper if needed,
-                // but usually we cancel from within the task if possible.
-                // However, runTaskTimer returns a wrapper.
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) {
+                BukkitTask t = activeTeleports.remove(uuid);
+                if (t != null)
+                    t.cancel();
                 return;
             }
 
             if (countdown.get() <= 0) {
-                activeTeleports.remove(player.getUniqueId());
+                BukkitTask t = activeTeleports.remove(uuid);
+                if (t != null)
+                    t.cancel();
 
                 java.io.File file = new java.io.File(plugin.getDataFolder(),
                         "survival/AFK/maps/" + worldName + ".yml");
@@ -342,32 +346,27 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
                             .loadConfiguration(file);
                     org.bukkit.Location loc = config.getLocation("spawn");
                     if (loc != null) {
-                        player.teleport(loc);
-                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+                        p.teleportAsync(loc);
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
                     } else {
-                        player.sendMessage(ChatColor.RED + "Spawn location not found for this map.");
+                        p.sendMessage(ChatColor.RED + "Spawn location not found for this map.");
                     }
                 } else {
-                    player.sendMessage(ChatColor.RED + "Map no longer exists.");
+                    p.sendMessage(ChatColor.RED + "Map no longer exists.");
                 }
-                // Cancellation is tricky inside runTaskTimer if it doesn't pass the task.
-                // But SchedulerAdapter's runTaskTimer wrapper's cancel() works.
-                // Usually repeating tasks in Folia need to cancel themselves via the scheduled
-                // task object.
-                // Let's check SchedulerAdapter again.
                 return;
             }
 
             String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &5" + countdown.get() + "s");
-            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
 
-            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
 
             countdown.decrementAndGet();
         }, 0L, 20L);
 
-        activeTeleports.put(player.getUniqueId(), task);
+        activeTeleports.put(uuid, task);
     }
 
     @Nullable

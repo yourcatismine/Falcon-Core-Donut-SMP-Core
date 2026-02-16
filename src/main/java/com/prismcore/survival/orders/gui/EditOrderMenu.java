@@ -94,6 +94,12 @@ public class EditOrderMenu
 
         List<String> lore = new ArrayList<>();
         lore.add(Utils.formatColors("&f" + this.order.key.displayName()));
+        List<String> enchantLore = this.order.key.enchantLoreLines("&7");
+        if (!enchantLore.isEmpty()) {
+            for (String line : enchantLore) {
+                lore.add(Utils.formatColors(line));
+            }
+        }
         lore.add(Utils.formatColors("&a$" + Utils.abbr(this.order.priceEach) + "&f each"));
         lore.add("");
         lore.add(Utils.formatColors("&6" + Utils.abbr(this.order.delivered) + "/&a" + Utils.abbr(this.order.requested)

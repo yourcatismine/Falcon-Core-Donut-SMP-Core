@@ -238,6 +238,11 @@ commands:
     usage: /settings
     aliases: []
 
+  bounty:
+    description: Manage player bounties
+    usage: /bounty [add <player> <amount>]
+    aliases: [bounties]
+
 permissions:
   prismcore.admin.shards:
     description: Allows administration of player shards

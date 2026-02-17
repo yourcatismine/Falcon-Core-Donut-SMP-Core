@@ -307,21 +307,17 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
     }
 
     private void performTrade(Player player) {
-        // 1. Check ALL required items
-        for (ItemStack required : currentInputs.values()) {
-            if (!player.getInventory().containsAtLeast(required, required.getAmount())) {
-                String failMsg = ChatColor.RED + "You do not have all the required contents.";
-                player.sendMessage(failMsg);
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(failMsg));
-                playSound(player, Sound.ENTITY_VILLAGER_NO);
-                return;
-            }
+        // 1. Simulate transaction to check affordability
+        if (!canAfford(player, currentInputs.values())) {
+            String failMsg = ChatColor.RED + "You do not have all the required contents.";
+            player.sendMessage(failMsg);
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(failMsg));
+            playSound(player, Sound.ENTITY_VILLAGER_NO);
+            return;
         }
 
-        // 2. Remove ALL required items
-        for (ItemStack required : currentInputs.values()) {
-            player.getInventory().removeItem(required);
-        }
+        // 2. Remove Items
+        removeItems(player, currentInputs.values());
 
         // 3. Give Reward
         ItemStack reward = currentOutput.clone();
@@ -337,6 +333,102 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         player.sendMessage(successMsg);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(successMsg));
 
+    }
+
+    private boolean canAfford(Player player, java.util.Collection<ItemStack> requirements) {
+        ItemStack[] contents = player.getInventory().getContents();
+        // Clone to simulate
+        ItemStack[] sim = new ItemStack[contents.length];
+        for (int i = 0; i < contents.length; i++) {
+            if (contents[i] != null) {
+                sim[i] = contents[i].clone();
+            }
+        }
+
+        for (ItemStack req : requirements) {
+            if (req == null || req.getType() == Material.AIR)
+                continue;
+            int needed = req.getAmount();
+            boolean strict = hasCustomMeta(req);
+            com.prismcore.survival.orders.data.ItemKey key = strict ? null
+                    : com.prismcore.survival.orders.data.ItemKey.fromStack(req);
+
+            for (int i = 0; i < sim.length; i++) {
+                if (sim[i] == null || sim[i].getType() == Material.AIR)
+                    continue;
+
+                boolean matches = false;
+                if (strict) {
+                    if (sim[i].isSimilar(req))
+                        matches = true;
+                } else {
+                    if (key != null && key.matches(sim[i]))
+                        matches = true;
+                }
+
+                if (matches) {
+                    int has = sim[i].getAmount();
+                    if (has >= needed) {
+                        sim[i].setAmount(has - needed);
+                        needed = 0;
+                        break;
+                    } else {
+                        needed -= has;
+                        sim[i] = null;
+                    }
+                }
+            }
+
+            if (needed > 0)
+                return false;
+        }
+        return true;
+    }
+
+    private void removeItems(Player player, java.util.Collection<ItemStack> requirements) {
+        ItemStack[] contents = player.getInventory().getContents();
+        for (ItemStack req : requirements) {
+            if (req == null || req.getType() == Material.AIR)
+                continue;
+            int needed = req.getAmount();
+            boolean strict = hasCustomMeta(req);
+            com.prismcore.survival.orders.data.ItemKey key = strict ? null
+                    : com.prismcore.survival.orders.data.ItemKey.fromStack(req);
+
+            for (int i = 0; i < contents.length; i++) {
+                if (contents[i] == null || contents[i].getType() == Material.AIR)
+                    continue;
+
+                boolean matches = false;
+                if (strict) {
+                    if (contents[i].isSimilar(req))
+                        matches = true;
+                } else {
+                    if (key != null && key.matches(contents[i]))
+                        matches = true;
+                }
+
+                if (matches) {
+                    int has = contents[i].getAmount();
+                    if (has >= needed) {
+                        contents[i].setAmount(has - needed);
+                        needed = 0;
+                        break;
+                    } else {
+                        needed -= has;
+                        contents[i] = null;
+                    }
+                }
+            }
+        }
+        player.getInventory().setContents(contents);
+    }
+
+    private boolean hasCustomMeta(ItemStack item) {
+        if (item == null || !item.hasItemMeta())
+            return false;
+        ItemMeta meta = item.getItemMeta();
+        return meta.hasDisplayName() || meta.hasLore();
     }
 
     private void playSound(Player p, Sound s) {

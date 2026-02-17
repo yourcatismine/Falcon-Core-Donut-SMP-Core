@@ -32,10 +32,24 @@ public class BalanceLogger {
         if (data == null)
             return;
 
-        double money = data.getMoney();
+        // Use Vault balance if available, fallback to internal
+        net.milkbowl.vault.economy.Economy eco = getEconomy();
+        double money = (eco != null) ? eco.getBalance(player) : data.getMoney();
         double shards = data.getShards();
 
         plugin.getActivityLogger().log(uuid, ActivityLogger.LogType.MONEY, String.valueOf(money));
         plugin.getActivityLogger().log(uuid, ActivityLogger.LogType.SHARDS, String.valueOf(shards));
+    }
+
+    private net.milkbowl.vault.economy.Economy getEconomy() {
+        if (plugin.getServer().getPluginManager().getPlugin("Vault") == null) {
+            return null;
+        }
+        org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin.getServer()
+                .getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+        if (rsp == null) {
+            return null;
+        }
+        return rsp.getProvider();
     }
 }

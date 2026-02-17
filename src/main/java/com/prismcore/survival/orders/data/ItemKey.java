@@ -223,13 +223,7 @@ public final class ItemKey {
 
     public String displayName() {
         if (this.material == Material.ENCHANTED_BOOK && !this.enchants.isEmpty()) {
-            if (this.enchants.size() == 1) {
-                Map.Entry<String, Integer> e2 = this.enchants.entrySet().iterator().next();
-                return ItemKey.bookEnchantLabel(e2.getKey(), e2.getValue());
-            }
-            return "Enchanted Book (" + this.enchants.entrySet().stream().limit(3L)
-                    .map(e -> ItemKey.bookEnchantLabel((String) e.getKey(), (Integer) e.getValue()))
-                    .collect(Collectors.joining(", ")) + (this.enchants.size() > 3 ? ", ..." : "") + ")";
+            return "Enchanted Book";
         }
         if (ItemKey.isPotionLike(this.material) && this.potionType != null) {
             String prefix;

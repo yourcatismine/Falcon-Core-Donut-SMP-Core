@@ -45,6 +45,8 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.manager.HazardManager hazardManager;
     private com.prismcore.survival.manager.BalanceLogger balanceLogger;
     private com.h2ph.managers.PrivateMessageManager privateMessageManager;
+    private com.prismcore.survival.manager.BountyManager bountyManager;
+    private com.h2ph.utils.SignInput signInput;
 
     @Override
     public void onLoad() {
@@ -106,6 +108,7 @@ public class PrismSurvival extends JavaPlugin {
         this.spawnManager = new com.prismcore.survival.manager.SpawnManager(this);
         this.teleportManager = new com.prismcore.survival.manager.TeleportManager(this);
         this.privateMessageManager = new com.h2ph.managers.PrivateMessageManager();
+        this.bountyManager = new com.prismcore.survival.manager.BountyManager(this);
 
         // Register Live Sign Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
@@ -346,6 +349,18 @@ public class PrismSurvival extends JavaPlugin {
         // Register Settings Command
         com.h2ph.commands.player.SettingsCommand settingsCmd = new com.h2ph.commands.player.SettingsCommand(this);
         getCommand("settings").setExecutor(settingsCmd);
+
+        // Register Bounty Command
+        com.h2ph.commands.player.BountyCommand bountyCommand = new com.h2ph.commands.player.BountyCommand(this);
+        getCommand("bounty").setExecutor(bountyCommand);
+        getCommand("bounty").setTabCompleter(bountyCommand);
+        getCommand("bounties").setExecutor(bountyCommand);
+        getCommand("bounties").setTabCompleter(bountyCommand);
+
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.BountyGUIListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.BountyConfirmGUIListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.BountyListener(this), this);
+
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SettingsGUIListener(), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.MobSpawnListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TpaConfirmGUIListener(), this);
@@ -480,6 +495,10 @@ public class PrismSurvival extends JavaPlugin {
             this.activityLogger.shutdown();
         }
 
+        if (this.bountyManager != null) {
+            this.bountyManager.save();
+        }
+
         getLogger().info("PrismCore has been disabled!");
         instance = null;
     }
@@ -538,6 +557,23 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.managers.PrivateMessageManager getPrivateMessageManager() {
         return privateMessageManager;
+    }
+
+    public com.prismcore.survival.manager.BountyManager getBountyManager() {
+        return bountyManager;
+    }
+
+    public com.h2ph.utils.SignInput getSignInput() {
+        return signInput;
+    }
+
+    public net.milkbowl.vault.economy.Economy getEconomy() {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            return null;
+        }
+        org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = getServer()
+                .getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+        return (rsp == null) ? null : rsp.getProvider();
     }
 
     public String normalizeKeyName(String keyName) {
@@ -806,13 +842,6 @@ public class PrismSurvival extends JavaPlugin {
             loadGlobalRTPConfig();
         }
         return rtpGlobalConfig;
-    }
-
-    // --- SignInput Utility ---
-    private com.h2ph.utils.SignInput signInput;
-
-    public com.h2ph.utils.SignInput getSignInput() {
-        return signInput;
     }
 
     private void printStartupBanner(boolean vaultEnabled) {

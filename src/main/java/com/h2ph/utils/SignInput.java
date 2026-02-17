@@ -9,6 +9,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -116,6 +123,62 @@ public class SignInput implements Listener {
                 // Restore blocks
                 restoreBlocks(uuid);
             }
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (pendingSignLocations.containsValue(event.getBlock().getLocation()) ||
+                pendingSupportLocations.containsValue(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockExplode(BlockExplodeEvent event) {
+        event.blockList().removeIf(block -> pendingSignLocations.containsValue(block.getLocation()) ||
+                pendingSupportLocations.containsValue(block.getLocation()));
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        event.blockList().removeIf(block -> pendingSignLocations.containsValue(block.getLocation()) ||
+                pendingSupportLocations.containsValue(block.getLocation()));
+    }
+
+    @EventHandler
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        for (org.bukkit.block.Block block : event.getBlocks()) {
+            if (pendingSignLocations.containsValue(block.getLocation()) ||
+                    pendingSupportLocations.containsValue(block.getLocation())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        for (org.bukkit.block.Block block : event.getBlocks()) {
+            if (pendingSignLocations.containsValue(block.getLocation()) ||
+                    pendingSupportLocations.containsValue(block.getLocation())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onBlockBurn(BlockBurnEvent event) {
+        if (pendingSignLocations.containsValue(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockFromTo(BlockFromToEvent event) {
+        if (pendingSignLocations.containsValue(event.getToBlock().getLocation())) {
+            event.setCancelled(true);
         }
     }
 

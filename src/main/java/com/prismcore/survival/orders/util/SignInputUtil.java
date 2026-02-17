@@ -46,7 +46,14 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
@@ -546,6 +553,57 @@ public final class SignInputUtil {
         @EventHandler
         public void onQuit(PlayerQuitEvent event) {
             SignInputUtil.cancel(event.getPlayer());
+        }
+
+        @EventHandler
+        public void onBlockBreak(BlockBreakEvent event) {
+            if (SIGN_LOC.containsValue(event.getBlock().getLocation())) {
+                event.setCancelled(true);
+            }
+        }
+
+        @EventHandler
+        public void onBlockExplode(BlockExplodeEvent event) {
+            event.blockList().removeIf(block -> SIGN_LOC.containsValue(block.getLocation()));
+        }
+
+        @EventHandler
+        public void onEntityExplode(EntityExplodeEvent event) {
+            event.blockList().removeIf(block -> SIGN_LOC.containsValue(block.getLocation()));
+        }
+
+        @EventHandler
+        public void onPistonExtend(BlockPistonExtendEvent event) {
+            for (Block block : event.getBlocks()) {
+                if (SIGN_LOC.containsValue(block.getLocation())) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+
+        @EventHandler
+        public void onPistonRetract(BlockPistonRetractEvent event) {
+            for (Block block : event.getBlocks()) {
+                if (SIGN_LOC.containsValue(block.getLocation())) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+
+        @EventHandler
+        public void onBlockBurn(BlockBurnEvent event) {
+            if (SIGN_LOC.containsValue(event.getBlock().getLocation())) {
+                event.setCancelled(true);
+            }
+        }
+
+        @EventHandler
+        public void onBlockFromTo(BlockFromToEvent event) {
+            if (SIGN_LOC.containsValue(event.getToBlock().getLocation())) {
+                event.setCancelled(true);
+            }
         }
     }
 }

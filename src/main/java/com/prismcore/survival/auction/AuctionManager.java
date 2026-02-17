@@ -36,7 +36,7 @@ public class AuctionManager {
 
     public boolean removeItem(AuctionItem item) {
         // Resume amethyst timer when removed from auction
-        resumeAmethystTimer(item.getItemStack());
+        resumeAmethystTimer(item.getItemStack(), item.getListedAt());
         return this.items.remove(item);
     }
 
@@ -249,8 +249,10 @@ public class AuctionManager {
 
     /**
      * Removes the auction pause flag from an item, resuming the timer countdown.
+     * Also adjusts the absolute expiry timestamp to account for time spent in
+     * auction.
      */
-    private void resumeAmethystTimer(ItemStack item) {
+    private void resumeAmethystTimer(ItemStack item, long listedAt) {
         if (item == null || !item.hasItemMeta()) {
             return;
         }
@@ -260,6 +262,19 @@ public class AuctionManager {
         // Remove the auction pause flag if it exists
         if (meta.getPersistentDataContainer().has(ToolsManager.AUCTION_PAUSED_KEY, PersistentDataType.BYTE)) {
             meta.getPersistentDataContainer().remove(ToolsManager.AUCTION_PAUSED_KEY);
+
+            // Adjust EXPIRY_KEY if present to account for time spent in auction
+            if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
+                long currentExpiry = meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY,
+                        PersistentDataType.LONG);
+                long timeInAuction = System.currentTimeMillis() - listedAt;
+
+                if (timeInAuction > 0) {
+                    meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG,
+                            currentExpiry + timeInAuction);
+                }
+            }
+
             item.setItemMeta(meta);
         }
     }

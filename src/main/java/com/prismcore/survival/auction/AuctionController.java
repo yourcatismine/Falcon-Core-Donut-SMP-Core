@@ -182,13 +182,15 @@ public class AuctionController {
                         }
                     }
 
-                    String timeStr = FormatUtils.formatTime((int) (remaining / 1000));
+                    String timeStr = remaining <= 0 ? "&#ff4444Expired"
+                            : FormatUtils.formatTime((int) (remaining / 1000));
                     if (meta.hasLore()) {
                         java.util.List<String> lore = meta.getLore();
                         boolean changed = false;
                         for (int j = 0; j < lore.size(); ++j) {
                             if (lore.get(j).contains("Time left:")) {
-                                String newLine = Utils.formatColors("&fTime left: &#34ee80" + timeStr);
+                                String newLine = Utils
+                                        .formatColors("&fTime left: " + (remaining <= 0 ? "" : "&#34ee80") + timeStr);
                                 if (!lore.get(j).equals(newLine)) {
                                     lore.set(j, newLine);
                                     changed = true;

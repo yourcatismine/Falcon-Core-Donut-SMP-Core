@@ -91,7 +91,7 @@ public class GUIHandler {
             if (remain < 0L) {
                 remain = 0L;
             }
-            String time = FormatUtils.formatTime((int) remain);
+            String time = remain <= 0L ? "&#ff4444Expired" : FormatUtils.formatTime((int) remain);
             String price = Utils.formatNumber(ai.getPrice());
             for (String line : cfg.getStringList("main-gui.lore-item")) {
                 auctionLore.add(Utils.formatColors(line.replace("{priceFormatted}", price)
@@ -106,19 +106,21 @@ public class GUIHandler {
             }
             finalLore.addAll(auctionLore);
 
-            if (player.hasMetadata("ah-admin-view")) {
-                finalLore.add(Utils.formatColors("&7Click to see details"));
+            if (meta != null) {
+                if (player.hasMetadata("ah-admin-view")) {
+                    finalLore.add(Utils.formatColors("&7Click to see details"));
+                }
+
+                meta.setLore(finalLore);
+
+                // Store expiration time in PDC for live updates
+                org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
+                org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
+                long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
+                pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
+
+                item.setItemMeta(meta);
             }
-
-            meta.setLore(finalLore);
-
-            // Store expiration time in PDC for live updates
-            org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
-            long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
-            pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
-
-            item.setItemMeta(meta);
             inv.setItem(i, item);
         }
         GUIHandler.setBottomControls(inv, cfg, sortMode, category, controller, page, totalPages);
@@ -204,24 +206,30 @@ public class GUIHandler {
             String processed = line.replace("{priceFormatted}", priceFmt);
             previewLore.add(Utils.formatColors(processed));
         }
-        im.setLore(previewLore);
-        preview.setItemMeta(im);
+        if (im != null) {
+            im.setLore(previewLore);
+            preview.setItemMeta(im);
+        }
         inv.setItem(13, preview);
         int slotDecline = cfg.getInt("sell-confirm-gui.decline-button.slot");
         ItemStack decline = new ItemStack(
                 Material.valueOf((String) cfg.getString("sell-confirm-gui.decline-button.material")));
         ItemMeta dm = decline.getItemMeta();
-        dm.setDisplayName(Utils.formatColors(cfg.getString("sell-confirm-gui.decline-button.display-name")));
-        dm.setLore(Utils.formatColors(cfg.getStringList("sell-confirm-gui.decline-button.lore")));
-        decline.setItemMeta(dm);
+        if (dm != null) {
+            dm.setDisplayName(Utils.formatColors(cfg.getString("sell-confirm-gui.decline-button.display-name")));
+            dm.setLore(Utils.formatColors(cfg.getStringList("sell-confirm-gui.decline-button.lore")));
+            decline.setItemMeta(dm);
+        }
         inv.setItem(slotDecline, decline);
         int slotConfirm = cfg.getInt("sell-confirm-gui.confirm-button.slot");
         ItemStack confirm = new ItemStack(
                 Material.valueOf((String) cfg.getString("sell-confirm-gui.confirm-button.material")));
         ItemMeta cm = confirm.getItemMeta();
-        cm.setDisplayName(Utils.formatColors(cfg.getString("sell-confirm-gui.confirm-button.display-name")));
-        cm.setLore(Utils.formatColors(cfg.getStringList("sell-confirm-gui.confirm-button.lore")));
-        confirm.setItemMeta(cm);
+        if (cm != null) {
+            cm.setDisplayName(Utils.formatColors(cfg.getString("sell-confirm-gui.confirm-button.display-name")));
+            cm.setLore(Utils.formatColors(cfg.getStringList("sell-confirm-gui.confirm-button.lore")));
+            confirm.setItemMeta(cm);
+        }
         inv.setItem(slotConfirm, confirm);
         player.setMetadata("ah-switching",
                 (MetadataValue) new FixedMetadataValue((Plugin) controller.getPlugin(), (Object) true));
@@ -262,8 +270,10 @@ public class GUIHandler {
             finalLore.add("");
         }
         finalLore.addAll(auctionLore);
-        pm.setLore(finalLore);
-        preview.setItemMeta(pm);
+        if (pm != null) {
+            pm.setLore(finalLore);
+            preview.setItemMeta(pm);
+        }
         inv.setItem(13, preview);
         int slotDecline = cfg.getInt("purchase-confirm-gui.decline-button.slot");
         ItemStack decline = new ItemStack(
@@ -347,7 +357,7 @@ public class GUIHandler {
                 if (remaining < 0L) {
                     remaining = 0L;
                 }
-                String time = FormatUtils.formatTime((int) remaining);
+                String time = remaining <= 0L ? "&#ff4444Expired" : FormatUtils.formatTime((int) remaining);
                 String priceFmt = Utils.formatNumber(ai.getPrice());
                 for (Object lineObj : loreTpl) {
                     String line = (String) lineObj;
@@ -369,23 +379,23 @@ public class GUIHandler {
                 if (refundFrom != null) {
                     finalLore.add(Utils.formatColors("&cRefunded from &d" + refundFrom));
                 } else {
-                    if (remaining == 0L) {
-                        finalLore.add(Utils.formatColors("&#ff4444Expired"));
-                    }
-                    if (!(baseLore.isEmpty() && remaining != 0L || auctionLore.isEmpty())) {
+                    if (!baseLore.isEmpty() && !auctionLore.isEmpty()) {
                         finalLore.add("");
                     }
                     finalLore.addAll(auctionLore);
                 }
-                mm.setLore(finalLore);
+                if (mm != null) {
+                    mm.setLore(finalLore);
 
-                // Store expiration time in PDC for live updates
-                pdc = mm.getPersistentDataContainer();
-                org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
-                long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
-                pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
+                    // Store expiration time in PDC for live updates
+                    pdc = mm.getPersistentDataContainer();
+                    org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
+                            "auction-expire");
+                    long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
+                    pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
 
-                copy.setItemMeta(mm);
+                    copy.setItemMeta(mm);
+                }
                 int slotIndex = i < 18 ? i : i + 1;
                 inv.setItem(slotIndex, copy);
             }
@@ -459,15 +469,17 @@ public class GUIHandler {
                         .replace("{amount}", priceFmt).replace("{time-ago}", timeAgo);
                 lore.add(Utils.formatColors(processed));
             }
-            meta.setLore(lore);
+            if (meta != null) {
+                meta.setLore(lore);
 
-            // Store transaction timestamp in PDC for live updates
-            org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
-                    "transaction-timestamp");
-            pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, txObj.getTimestamp());
+                // Store transaction timestamp in PDC for live updates
+                org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
+                org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
+                        "transaction-timestamp");
+                pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, txObj.getTimestamp());
 
-            display.setItemMeta(meta);
+                display.setItemMeta(meta);
+            }
             inv.setItem(i, display);
         }
         if (page > 1) {
@@ -570,14 +582,14 @@ public class GUIHandler {
             AuctionItem ai = items.get(i);
             ItemStack item = ai.getItemStack().clone();
             ItemMeta meta = item.getItemMeta();
-            List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+            List<String> lore = (meta != null && meta.hasLore()) ? meta.getLore() : new ArrayList<>();
 
             // Add auction details
             long elapsed = (System.currentTimeMillis() - ai.getListedAt()) / 1000L;
             long remain = (long) ai.getDuration() - elapsed;
             if (remain < 0L)
                 remain = 0L;
-            String time = FormatUtils.formatTime((int) remain);
+            String time = remain <= 0L ? "&#ff4444Expired" : FormatUtils.formatTime((int) remain);
             String price = Utils.formatNumber(ai.getPrice());
 
             for (String line : cfg.getStringList("main-gui.lore-item")) {
@@ -586,46 +598,54 @@ public class GUIHandler {
             }
 
             lore.add(Utils.formatColors("&fManage this item"));
-            meta.setLore(lore);
+            if (meta != null) {
+                meta.setLore(lore);
 
-            // Store expiration time for live updates
-            org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
-            long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
-            pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
+                // Store expiration time for live updates
+                org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
+                org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
+                long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
+                pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
 
-            item.setItemMeta(meta);
+                item.setItemMeta(meta);
+            }
             inv.setItem(i, item);
         }
 
         // Slot 48: Delete All Items (Barrier)
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dim = delete.getItemMeta();
-        dim.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴀʟʟ ɪᴛᴇᴍѕ"));
-        List<String> dimLore = new ArrayList<>();
-        dimLore.add(Utils.formatColors("&fClick to delete all items from this player"));
-        dim.setLore(dimLore);
-        delete.setItemMeta(dim);
+        if (dim != null) {
+            dim.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴀʟʟ ɪᴛᴇᴍѕ"));
+            List<String> dimLore = new ArrayList<>();
+            dimLore.add(Utils.formatColors("&fClick to delete all items from this player"));
+            dim.setLore(dimLore);
+            delete.setItemMeta(dim);
+        }
         inv.setItem(48, delete);
 
         // Slot 49: Search
         ItemStack search = new ItemStack(Material.OAK_SIGN);
         ItemMeta sm = search.getItemMeta();
-        sm.setDisplayName(Utils.formatColors("&aѕᴇᴀʀᴄʜ"));
-        List<String> sLore = new ArrayList<>();
-        sLore.add(Utils.formatColors("&fClick to search an item"));
-        sm.setLore(sLore);
-        search.setItemMeta(sm);
+        if (sm != null) {
+            sm.setDisplayName(Utils.formatColors("&aѕᴇᴀʀᴄʜ"));
+            List<String> sLore = new ArrayList<>();
+            sLore.add(Utils.formatColors("&fClick to search an item"));
+            sm.setLore(sLore);
+            search.setItemMeta(sm);
+        }
         inv.setItem(49, search);
 
         // Slot 50: Transactions
         ItemStack tx = new ItemStack(Material.PAPER);
         ItemMeta tm = tx.getItemMeta();
-        tm.setDisplayName(Utils.formatColors("&aᴛʀᴀɴѕᴀᴄᴛɪᴏɴѕ"));
-        List<String> tLore = new ArrayList<>();
-        tLore.add(Utils.formatColors("&fClick to view transactions"));
-        tm.setLore(tLore);
-        tx.setItemMeta(tm);
+        if (tm != null) {
+            tm.setDisplayName(Utils.formatColors("&aᴛʀᴀɴѕᴀᴄᴛɪᴏɴѕ"));
+            List<String> tLore = new ArrayList<>();
+            tLore.add(Utils.formatColors("&fClick to view transactions"));
+            tm.setLore(tLore);
+            tx.setItemMeta(tm);
+        }
         inv.setItem(50, tx);
         admin.setMetadata("ah-switching", new FixedMetadataValue(controller.getPlugin(), true));
         admin.setMetadata("ah-admin-target", new FixedMetadataValue(controller.getPlugin(), targetPlayerName));
@@ -654,22 +674,25 @@ public class GUIHandler {
         // edit/sign item or we create one.
         // Let's use standard format for consistency or hardcode as requested if new.
         // Actually, user standard "edit price" might be from main-gui or similar.
-        // Let's hardcode for now based on user description pattern in other slots.
-        sm.setDisplayName(Utils.formatColors("&aᴇᴅɪᴛ ᴘʀɪᴄᴇ"));
-        List<String> sLore = new ArrayList<>();
-        sLore.add(Utils.formatColors("&fClick to edit the price"));
-        sm.setLore(sLore);
-        sign.setItemMeta(sm);
+        if (sm != null) {
+            sm.setDisplayName(Utils.formatColors("&aᴇᴅɪᴛ ᴘʀɪᴄᴇ"));
+            List<String> sLore = new ArrayList<>();
+            sLore.add(Utils.formatColors("&fClick to edit the price"));
+            sm.setLore(sLore);
+            sign.setItemMeta(sm);
+        }
         inv.setItem(11, sign);
 
         // Slot 12: Take Item (Chest)
         ItemStack take = new ItemStack(Material.CHEST);
         ItemMeta tm = take.getItemMeta();
-        tm.setDisplayName(Utils.formatColors("&aᴛᴀᴋᴇ ɪᴛᴇᴍ"));
-        List<String> tLore = new ArrayList<>();
-        tLore.add(Utils.formatColors("&fClick to take this item from auction"));
-        tm.setLore(tLore);
-        take.setItemMeta(tm);
+        if (tm != null) {
+            tm.setDisplayName(Utils.formatColors("&aᴛᴀᴋᴇ ɪᴛᴛᴇᴍ"));
+            List<String> tLore = new ArrayList<>();
+            tLore.add(Utils.formatColors("&fClick to take this item from auction"));
+            tm.setLore(tLore);
+            take.setItemMeta(tm);
+        }
         inv.setItem(12, take);
 
         // Slot 13: The Item
@@ -679,34 +702,36 @@ public class GUIHandler {
         dLore.add(Utils.formatColors("&fPrice: &a" + Utils.formatNumber(item.getPrice())));
         dLore.add(Utils.formatColors("&fSeller: &a" + item.getSeller()));
         long remaining = (item.getListedAt() + (item.getDuration() * 1000L)) - System.currentTimeMillis();
-        dLore.add(Utils.formatColors("&fTime Left: &a" + FormatUtils.formatTime((int) (remaining / 1000L))));
-        dm.setLore(dLore);
-
-        // PDC for live updates? Item logic might depend on main listener updates, but
-        // this is a static view.
-        // Updating this live might require adding to update task, but user said "Only
-        // this" lore.
-        displayItem.setItemMeta(dm);
+        dLore.add(Utils.formatColors("&fTime Left: "
+                + (remaining <= 0 ? "&#ff4444Expired" : "&a" + FormatUtils.formatTime((int) (remaining / 1000L)))));
+        if (dm != null) {
+            dm.setLore(dLore);
+            displayItem.setItemMeta(dm);
+        }
         inv.setItem(13, displayItem);
 
         // Slot 14: Copy Item (Ender Chest)
         ItemStack copy = new ItemStack(Material.ENDER_CHEST);
         ItemMeta cm = copy.getItemMeta();
-        cm.setDisplayName(Utils.formatColors("&aᴄᴏᴘʏ ɪᴛᴇᴍ"));
-        List<String> cLore = new ArrayList<>();
-        cLore.add(Utils.formatColors("&fClick to get a copy of this item"));
-        cm.setLore(cLore);
-        copy.setItemMeta(cm);
+        if (cm != null) {
+            cm.setDisplayName(Utils.formatColors("&aᴄᴏᴘʏ ɪᴛᴇᴍ"));
+            List<String> cLore = new ArrayList<>();
+            cLore.add(Utils.formatColors("&fClick to get a copy of this item"));
+            cm.setLore(cLore);
+            copy.setItemMeta(cm);
+        }
         inv.setItem(14, copy);
 
         // Slot 15: Delete Item (Barrier)
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dim = delete.getItemMeta();
-        dim.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴛʜɪѕ ɪᴛᴇᴍ"));
-        List<String> dimLore = new ArrayList<>();
-        dimLore.add(Utils.formatColors("&fClick to delete this item"));
-        dim.setLore(dimLore);
-        delete.setItemMeta(dim);
+        if (dim != null) {
+            dim.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴛʜɪѕ ɪᴛᴇᴍ"));
+            List<String> dimLore = new ArrayList<>();
+            dimLore.add(Utils.formatColors("&fClick to delete this item"));
+            dim.setLore(dimLore);
+            delete.setItemMeta(dim);
+        }
         inv.setItem(15, delete);
 
         p.setMetadata("ah-switching", new FixedMetadataValue(controller.getPlugin(), true));
@@ -780,15 +805,17 @@ public class GUIHandler {
 
             // Time line
             lore.add(Utils.formatColors("&a" + timeAgo + " ago"));
-            meta.setLore(lore);
+            if (meta != null) {
+                meta.setLore(lore);
 
-            // Store transaction timestamp for live updates
-            org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
-                    "transaction-timestamp");
-            pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, txObj.getTimestamp());
+                // Store transaction timestamp for live updates
+                org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
+                org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
+                        "transaction-timestamp");
+                pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, txObj.getTimestamp());
 
-            display.setItemMeta(meta);
+                display.setItemMeta(meta);
+            }
             inv.setItem(i, display);
         }
 
@@ -1097,25 +1124,27 @@ public class GUIHandler {
                     String sellerName = seller.getName();
                     ItemStack head = new ItemStack(Material.PLAYER_HEAD);
                     ItemMeta meta = head.getItemMeta();
-                    meta.setDisplayName(Utils.formatColors("&a" + sellerName));
-                    List<String> lore = new ArrayList<>();
-                    lore.add(Utils.formatColors("&7Click to see details"));
-                    meta.setLore(lore);
+                    if (meta != null) {
+                        meta.setDisplayName(Utils.formatColors("&a" + sellerName));
+                        List<String> lore = new ArrayList<>();
+                        lore.add(Utils.formatColors("&7Click to see details"));
+                        meta.setLore(lore);
 
-                    org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-                    org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
-                            "admin-head-target");
-                    pdc.set(key, org.bukkit.persistence.PersistentDataType.STRING, sellerName);
+                        org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
+                        org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
+                                "admin-head-target");
+                        pdc.set(key, org.bukkit.persistence.PersistentDataType.STRING, sellerName);
 
-                    if (meta instanceof org.bukkit.inventory.meta.SkullMeta) {
-                        org.bukkit.inventory.meta.SkullMeta sm = (org.bukkit.inventory.meta.SkullMeta) meta;
-                        sm.setOwningPlayer(seller);
-                        if (sellerName != null) {
-                            sm.setOwner(sellerName);
+                        if (meta instanceof org.bukkit.inventory.meta.SkullMeta) {
+                            org.bukkit.inventory.meta.SkullMeta smHead = (org.bukkit.inventory.meta.SkullMeta) meta;
+                            smHead.setOwningPlayer(seller);
+                            if (sellerName != null) {
+                                smHead.setOwner(sellerName);
+                            }
                         }
-                    }
 
-                    head.setItemMeta(meta);
+                        head.setItemMeta(meta);
+                    }
                     finalInv.setItem(i, head);
                 }
 
@@ -1139,37 +1168,43 @@ public class GUIHandler {
         // Slot 11: Delete Transaction
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dm = delete.getItemMeta();
-        dm.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴛʀᴀɴѕᴀᴄᴛɪᴏɴ"));
-        List<String> dLore = new ArrayList<>();
-        dLore.add(Utils.formatColors("&7Click to permanently delete"));
-        dLore.add(Utils.formatColors("&7this record for both players."));
-        dLore.add("");
-        dLore.add(Utils.formatColors("&fStats will be updated."));
-        dm.setLore(dLore);
-        delete.setItemMeta(dm);
+        if (dm != null) {
+            dm.setDisplayName(Utils.formatColors("&cᴅᴇʟᴇᴛᴇ ᴛʀᴀɴѕᴀᴄᴛɪᴏɴ"));
+            List<String> dLore = new ArrayList<>();
+            dLore.add(Utils.formatColors("&7Click to permanently delete"));
+            dLore.add(Utils.formatColors("&7this record for both players."));
+            dLore.add("");
+            dLore.add(Utils.formatColors("&fStats will be updated."));
+            dm.setLore(dLore);
+            delete.setItemMeta(dm);
+        }
         inv.setItem(11, delete);
 
         // Slot 13: The Item (Info)
         ItemStack item = tx.getItem().clone();
         ItemMeta im = item.getItemMeta();
-        List<String> lore = im.hasLore() ? im.getLore() : new ArrayList<>();
-        lore.add("");
-        lore.add(Utils.formatColors("&fPrice: &a$" + Utils.formatNumber(tx.getPrice())));
-        lore.add(Utils.formatColors("&fSeller: &a" + tx.getSeller()));
-        lore.add(Utils.formatColors("&fBuyer: &a" + tx.getBuyer()));
-        im.setLore(lore);
-        item.setItemMeta(im);
+        if (im != null) {
+            List<String> lore = im.hasLore() ? im.getLore() : new ArrayList<>();
+            lore.add("");
+            lore.add(Utils.formatColors("&fPrice: &a$" + Utils.formatNumber(tx.getPrice())));
+            lore.add(Utils.formatColors("&fSeller: &a" + tx.getSeller()));
+            lore.add(Utils.formatColors("&fBuyer: &a" + tx.getBuyer()));
+            im.setLore(lore);
+            item.setItemMeta(im);
+        }
         inv.setItem(13, item);
 
         // Slot 15: Copy Item
         ItemStack copy = new ItemStack(Material.CHEST);
         ItemMeta cm = copy.getItemMeta();
-        cm.setDisplayName(Utils.formatColors("&aᴄᴏᴘʏ ɪᴛᴇᴍ"));
-        List<String> cLore = new ArrayList<>();
-        cLore.add(Utils.formatColors("&7Click to get a copy of"));
-        cLore.add(Utils.formatColors("&7the transacted item."));
-        cm.setLore(cLore);
-        copy.setItemMeta(cm);
+        if (cm != null) {
+            cm.setDisplayName(Utils.formatColors("&aᴄᴏᴘʏ ɪᴛᴇᴍ"));
+            List<String> cLore = new ArrayList<>();
+            cLore.add(Utils.formatColors("&7Click to get a copy of"));
+            cLore.add(Utils.formatColors("&7the transacted item."));
+            cm.setLore(cLore);
+            copy.setItemMeta(cm);
+        }
         inv.setItem(15, copy);
 
         // Slot 22: Back

@@ -35,8 +35,6 @@ public class AuctionManager {
     }
 
     public boolean removeItem(AuctionItem item) {
-        // Resume amethyst timer when removed from auction
-        resumeAmethystTimer(item.getItemStack(), item.getListedAt());
         return this.items.remove(item);
     }
 
@@ -174,7 +172,11 @@ public class AuctionManager {
 
     public void setPlayerSort(UUID playerUUID, String mode) {
         // Delegate to PlayerData
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+        com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+        if (plugin == null || plugin.getPlayerDataManager() == null) {
+            return;
+        }
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager()
                 .get(playerUUID);
         if (data != null) {
             data.setAuctionSortOrder(mode);
@@ -183,8 +185,11 @@ public class AuctionManager {
 
     public String getPlayerSort(UUID playerUUID) {
         // Delegate to PlayerData
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
-                .get(playerUUID);
+        com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+        if (plugin == null || plugin.getPlayerDataManager() == null) {
+            return "Highest Price";
+        }
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerUUID);
         if (data != null) {
             return data.getAuctionSortOrder();
         }
@@ -192,16 +197,22 @@ public class AuctionManager {
     }
 
     public void setPlayerFilter(UUID playerUUID, String filter) {
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
-                .get(playerUUID);
+        com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+        if (plugin == null || plugin.getPlayerDataManager() == null) {
+            return;
+        }
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerUUID);
         if (data != null) {
             data.setAuctionFilter(filter);
         }
     }
 
     public String getPlayerFilter(UUID playerUUID) {
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
-                .get(playerUUID);
+        com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+        if (plugin == null || plugin.getPlayerDataManager() == null) {
+            return "";
+        }
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerUUID);
         if (data != null) {
             return data.getAuctionFilter();
         }
@@ -209,16 +220,22 @@ public class AuctionManager {
     }
 
     public void setPlayerCategory(UUID playerUUID, String category) {
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
-                .get(playerUUID);
+        com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+        if (plugin == null || plugin.getPlayerDataManager() == null) {
+            return;
+        }
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerUUID);
         if (data != null) {
             data.setAuctionCategory(category);
         }
     }
 
     public String getPlayerCategory(UUID playerUUID) {
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
-                .get(playerUUID);
+        com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+        if (plugin == null || plugin.getPlayerDataManager() == null) {
+            return "All";
+        }
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerUUID);
         if (data != null) {
             return data.getAuctionCategory();
         }
@@ -245,6 +262,16 @@ public class AuctionManager {
             meta.getPersistentDataContainer().set(ToolsManager.AUCTION_PAUSED_KEY, PersistentDataType.BYTE, (byte) 1);
             item.setItemMeta(meta);
         }
+    }
+
+    /**
+     * Helper to get the final item stack for a player, with amethyst timer resumed
+     * if applicable.
+     */
+    public ItemStack getFinalItem(AuctionItem item) {
+        ItemStack stack = item.getItemStack();
+        resumeAmethystTimer(stack, item.getListedAt());
+        return stack;
     }
 
     /**

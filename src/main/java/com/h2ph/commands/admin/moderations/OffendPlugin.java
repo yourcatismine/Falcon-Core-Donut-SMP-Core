@@ -42,7 +42,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
 
         try {
             loadOffendConfig();
-            this.dbManager = new DatabaseManager(plugin);
+            this.dbManager = new DatabaseManager(plugin, plugin.getSurvivalConfig());
 
             String[] commands = { "offend", "unban", "checkban" };
             for (String cmd : commands) {

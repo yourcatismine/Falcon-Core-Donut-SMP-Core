@@ -1,4 +1,4 @@
-# config.yml
+# 
 database_file: "bannedplayers.db"
 
 reasons:
@@ -94,6 +94,5 @@ messages:
     &fBan ID: &b#%id%
     
     &fExpires in: &f%time_left%
-    &7You may be able to appeal this on discord
     
-    &bhttps://discord.gg/psmp
+    &7Appeal at :&f discord.gg/psmp

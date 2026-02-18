@@ -1,0 +1,4 @@
+fallback:
+  enabled: true
+  servers:
+    - name: "fallback"

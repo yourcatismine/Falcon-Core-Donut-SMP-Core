@@ -1,6 +1,13 @@
 region: 
   - "Europe"
 
+database:
+  host: "45.92.16.152"
+  port: 1024
+  database: "s7298_prism_proxy_data"
+  username: "u7298_XcC4Csh9Se"
+  password: "oQbK3FXwFXp=5QT74HKik^Qm"
+
 disabled-fly:
   - world
   - world_nether

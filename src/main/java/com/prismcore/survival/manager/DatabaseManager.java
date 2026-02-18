@@ -14,34 +14,46 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class DatabaseManager {
 
     private final PrismSurvival plugin;
+    private final FileConfiguration config;
     private Connection connection;
 
-    public DatabaseManager(PrismSurvival plugin) {
+    public DatabaseManager(PrismSurvival plugin, FileConfiguration config) {
         this.plugin = plugin;
+        this.config = config;
         initializeDatabase();
     }
 
     private void initializeDatabase() {
-        try {
-            // Path: survival/moderations/offend/database/bans.db
-            File dbDir = new File(plugin.getDataFolder(), "survival/moderations/offend/database");
-            if (!dbDir.exists()) {
-                dbDir.mkdirs();
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Load MySQL settings from config
+                String host = config.getString("database.host", "localhost");
+                int port = config.getInt("database.port", 3306);
+                String database = config.getString("database.database", "falcon");
+                String username = config.getString("database.username", "root");
+                String password = config.getString("database.password", "");
+                String table = config.getString("database.table", "bans");
+
+                // Connect
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                connection = DriverManager.getConnection(
+                        "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false",
+                        username,
+                        password);
+
+                createTables();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to initialize ban database", e);
             }
-            File dbFile = new File(dbDir, "bans.db");
-
-            Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
-
-            createTables();
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to initialize ban database", e);
-        }
+        });
     }
 
     private void createTables() {
@@ -227,7 +239,7 @@ public class DatabaseManager {
     }
 
     public void setOffenseCount(UUID uuid, String reasonKey, int count) {
-        String query = "INSERT OR REPLACE INTO offenses (uuid, reason_key, count) VALUES (?, ?, ?)";
+        String query = "REPLACE INTO offenses (uuid, reason_key, count) VALUES (?, ?, ?)";
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             ps.setString(2, reasonKey);

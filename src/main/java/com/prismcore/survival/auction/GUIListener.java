@@ -336,9 +336,10 @@ public class GUIListener
 
                 String sellerName = ai4.getSeller();
                 boolean paid = EconomyHandler.depositByName(sellerName, ai4.getPrice());
-                p.getInventory().addItem(new ItemStack[] { ai4.getItemStack() });
+                ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai4);
+                p.getInventory().addItem(new ItemStack[] { finalItem });
                 // Item already removed
-                this.controller.getTransactionManager().recordSale(ai4.getItemStack(), ai4.getPrice(), ai4.getSeller(),
+                this.controller.getTransactionManager().recordSale(finalItem, ai4.getPrice(), ai4.getSeller(),
                         p.getName());
                 String itemName = Utils.prettifyMaterialName(ai4.getItemStack().getType());
                 p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.purchase-success")
@@ -421,8 +422,9 @@ public class GUIListener
                         return;
                     }
                     this.controller.getAuctionManager().removeItem(ai5);
-                    p.getInventory().addItem(new ItemStack[] { ai5.getItemStack() });
-                    String itemName = Utils.prettifyMaterialName(ai5.getItemStack().getType());
+                    ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai5);
+                    p.getInventory().addItem(new ItemStack[] { finalItem });
+                    String itemName = Utils.prettifyMaterialName(finalItem.getType());
                     ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                             com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                             "Returned listed item: " + itemName);
@@ -867,8 +869,9 @@ public class GUIListener
                         return;
                     }
                     this.controller.getAuctionManager().removeItem(item);
-                    p.getInventory().addItem(item.getItemStack());
-                    String itemName = Utils.prettifyMaterialName(item.getItemStack().getType());
+                    ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(item);
+                    p.getInventory().addItem(finalItem);
+                    String itemName = Utils.prettifyMaterialName(finalItem.getType());
                     ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                             com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                             "[Admin] Took auction item: " + itemName + " (ID: " + itemId + ")");
@@ -895,8 +898,9 @@ public class GUIListener
                         p.playSound(p.getLocation(), no, 1.0f, 1.0f);
                         return;
                     }
-                    p.getInventory().addItem(item.getItemStack().clone());
-                    String itemName = Utils.prettifyMaterialName(item.getItemStack().getType());
+                    ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(item);
+                    p.getInventory().addItem(finalItem);
+                    String itemName = Utils.prettifyMaterialName(finalItem.getType());
                     ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                             com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                             "[Admin] Copied auction item: " + itemName + " (ID: " + itemId + ")");
@@ -1020,6 +1024,14 @@ public class GUIListener
         if (p.hasMetadata("ah-switching")) {
             p.removeMetadata("ah-switching", (Plugin) this.controller.getPlugin());
             return;
+        }
+
+        // Cleanup filters on manual close
+        if (top instanceof GUIHandler.MainHolder) {
+            p.removeMetadata("ah-filter", (Plugin) this.controller.getPlugin());
+            this.controller.getAuctionManager().setPlayerFilter(p.getUniqueId(), "");
+        } else if (top instanceof GUIHandler.TransactionsHolder) {
+            p.removeMetadata("tx-filter", (Plugin) this.controller.getPlugin());
         }
 
         // Nested close logic
@@ -1183,11 +1195,12 @@ public class GUIListener
 
         String sellerName = ai.getSeller();
         boolean paid = EconomyHandler.depositByName(sellerName, ai.getPrice());
-        p.getInventory().addItem(new ItemStack[] { ai.getItemStack() });
+        ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai);
+        p.getInventory().addItem(new ItemStack[] { finalItem });
         // Item already removed at start of method.
-        this.controller.getTransactionManager().recordSale(ai.getItemStack(), ai.getPrice(), ai.getSeller(),
+        this.controller.getTransactionManager().recordSale(finalItem, ai.getPrice(), ai.getSeller(),
                 p.getName());
-        String itemName = Utils.prettifyMaterialName(ai.getItemStack().getType());
+        String itemName = Utils.prettifyMaterialName(finalItem.getType());
         p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.purchase-success")
                 .replace("{priceFormatted}", Utils.formatNumber(ai.getPrice()))
                 .replace("{seller}", sellerName)

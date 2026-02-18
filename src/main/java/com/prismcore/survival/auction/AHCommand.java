@@ -30,11 +30,26 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
         }
         Player player = (Player) sender;
         FileConfiguration cfg = this.controller.getConfig();
-        Sound villagerNo = Sound.valueOf((String) cfg.getString("sounds.villager-no"));
+        Sound villagerNo;
+        try {
+            villagerNo = Sound.valueOf(cfg.getString("sounds.villager-no", "ENTITY_VILLAGER_NO"));
+        } catch (Exception e) {
+            villagerNo = Sound.ENTITY_VILLAGER_NO;
+        }
         if (args.length == 0) {
-            // player.removeMetadata("ah-filter", (Plugin) this.controller.getPlugin()); //
-            // Keep filter
-            player.removeMetadata("ah-admin-view", (Plugin) this.controller.getPlugin());
+            Plugin plugin = (Plugin) this.controller.getPlugin();
+            if (plugin != null) {
+                player.removeMetadata("ah-filter", plugin);
+                player.removeMetadata("ah-cat", plugin);
+                player.removeMetadata("ah-page", plugin);
+                player.removeMetadata("ah-admin-view", plugin);
+            }
+
+            // Reset persistent data in PlayerData via AuctionManager
+            this.controller.getAuctionManager().setPlayerFilter(player.getUniqueId(), "");
+            this.controller.getAuctionManager().setPlayerCategory(player.getUniqueId(), "All");
+            this.controller.getAuctionManager().setPlayerSort(player.getUniqueId(), "Highest Price");
+
             GUIHandler.openMainGUI(player, 1, this.controller);
             return true;
         }

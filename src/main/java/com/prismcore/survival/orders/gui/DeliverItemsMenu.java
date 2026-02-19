@@ -92,6 +92,7 @@ public class DeliverItemsMenu
         ArrayList<ItemStack> acceptedFromShulkers = new ArrayList<ItemStack>(); // Items extracted from shulkers
         ArrayList<ItemStack> originalShulkers = new ArrayList<ItemStack>(); // Original shulkers before extraction
         ArrayList<ItemStack> returns = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> processedShulkers = new ArrayList<ItemStack>();
         int acceptedAmount = 0;
         for (int i = 0; i < this.inv.getSize(); ++i) {
             ItemStack it = this.inv.getItem(i);
@@ -121,17 +122,45 @@ public class DeliverItemsMenu
                 ItemStack[] cont;
                 BlockStateMeta meta = (BlockStateMeta) it.getItemMeta();
                 ShulkerBox box = (ShulkerBox) meta.getBlockState();
+
+                // Create a copy of the shulker that will be returned to the player (the
+                // "processed" shulker)
+                ItemStack processedShulkerItem = it.clone();
+                BlockStateMeta processedMeta = (BlockStateMeta) processedShulkerItem.getItemMeta();
+                ShulkerBox processedBox = (ShulkerBox) processedMeta.getBlockState();
+                Inventory processedInventory = processedBox.getInventory();
+
                 boolean extractedAny = false;
-                for (ItemStack s : cont = box.getInventory().getContents()) {
+
+                // We iterate over the ORIGINAL box contents to find what to take
+                // But we remove from the PROCESSED box inventory
+                ItemStack[] originalContents = box.getInventory().getContents();
+
+                for (int j = 0; j < originalContents.length; j++) {
+                    ItemStack s = originalContents[j];
+
                     if (s == null || s.getType() == Material.AIR || !key.matches(s))
                         continue;
+
                     int can = Math.min(need - acceptedAmount, s.getAmount());
                     if (can <= 0)
-                        break;
+                        continue; // Should check other slots too if present
+
                     ItemStack clone = s.clone();
                     clone.setAmount(can);
                     acceptedFromShulkers.add(clone); // From shulker
-                    s.setAmount(s.getAmount() - can);
+
+                    // Remove from the processed shulker inventory
+                    // We know the slot index 'j' corresponds to the same slot in processedInventory
+                    ItemStack itemInProcessed = processedInventory.getItem(j);
+                    if (itemInProcessed != null) {
+                        if (itemInProcessed.getAmount() > can) {
+                            itemInProcessed.setAmount(itemInProcessed.getAmount() - can);
+                        } else {
+                            processedInventory.setItem(j, null);
+                        }
+                    }
+
                     acceptedAmount += can;
                     extractedAny = true;
                     if (acceptedAmount >= need)
@@ -139,9 +168,14 @@ public class DeliverItemsMenu
                 }
 
                 if (extractedAny) {
+                    // Update the processed shulker item with the new inventory state
+                    processedMeta.setBlockState(processedBox);
+                    processedShulkerItem.setItemMeta(processedMeta);
+
                     // Store original shulker to return on cancel
                     originalShulkers.add(originalShulker);
-                    // Don't return the modified shulker yet - let ConfirmDeliveryMenu handle it
+                    // Store processed shulker to return on confirm
+                    processedShulkers.add(processedShulkerItem);
                 } else {
                     // No items extracted, return shulker as-is
                     returns.add(it);
@@ -168,10 +202,12 @@ public class DeliverItemsMenu
         int acceptedAmountFinal = acceptedAmount;
         ArrayList<ItemStack> acceptedDirectFinal = new ArrayList<>(acceptedDirect);
         ArrayList<ItemStack> acceptedFromShulkersFinal = new ArrayList<>(acceptedFromShulkers);
+        ArrayList<ItemStack> processedShulkersFinal = new ArrayList<>(processedShulkers);
         ArrayList<ItemStack> originalShulkersFinal = new ArrayList<>(originalShulkers);
         TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
                 () -> new ConfirmDeliveryMenu(this.module, this.p, this.order,
-                        acceptedDirectFinal, acceptedFromShulkersFinal, originalShulkersFinal, acceptedAmountFinal)
+                        acceptedDirectFinal, acceptedFromShulkersFinal, processedShulkersFinal, originalShulkersFinal,
+                        acceptedAmountFinal)
                         .open(),
                 1L);
     }

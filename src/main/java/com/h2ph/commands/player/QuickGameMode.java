@@ -32,17 +32,17 @@ public class QuickGameMode implements CommandExecutor, TabCompleter {
             case "gmc":
                 targetMode = GameMode.CREATIVE;
                 permission = "prismsmp.creative";
-                modeName = "CREATIVE";
+                modeName = "Creative";
                 break;
             case "gms":
                 targetMode = GameMode.SURVIVAL;
                 permission = "prismsmp.survival";
-                modeName = "SURVIVAL";
+                modeName = "Survival";
                 break;
             case "gma":
                 targetMode = GameMode.ADVENTURE;
                 permission = "prismsmp.adventure";
-                modeName = "ADVENTURE";
+                modeName = "Adventure";
                 break;
             default:
                 return false;

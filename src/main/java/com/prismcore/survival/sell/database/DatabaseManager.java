@@ -57,7 +57,7 @@ public class DatabaseManager {
 
         try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(queryBuilder.toString())) {
             stmt.executeUpdate();
-            this.plugin.getLogger().info("Table 'player_stats' verified/created.");
+            // this.plugin.getLogger().info("Table 'player_stats' verified/created.");
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Failed to create table 'player_stats'!");
             e.printStackTrace();
@@ -78,7 +78,8 @@ public class DatabaseManager {
 
         try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(categoryQuery.toString())) {
             stmt.executeUpdate();
-            this.plugin.getLogger().info("Table 'player_category_data' verified/created.");
+            // this.plugin.getLogger().info("Table 'player_category_data'
+            // verified/created.");
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Failed to create table 'player_category_data'!");
             e.printStackTrace();

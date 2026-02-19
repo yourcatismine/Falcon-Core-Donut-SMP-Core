@@ -42,6 +42,7 @@ public class ConfirmDeliveryMenu
     private final Order order;
     private final List<ItemStack> acceptedDirect; // Items placed directly in delivery menu
     private final List<ItemStack> acceptedFromShulkers; // Items extracted from shulker boxes
+    private final List<ItemStack> processedShulkers; // Shulker boxes with delivered items removed
     private final List<ItemStack> originalShulkers; // Original shulker boxes before extraction
     private final int acceptedAmount;
     private Inventory inv;
@@ -49,12 +50,13 @@ public class ConfirmDeliveryMenu
 
     public ConfirmDeliveryMenu(OrdersModule module, Player p, Order order,
             List<ItemStack> acceptedDirect, List<ItemStack> acceptedFromShulkers,
-            List<ItemStack> originalShulkers, int acceptedAmount) {
+            List<ItemStack> processedShulkers, List<ItemStack> originalShulkers, int acceptedAmount) {
         this.module = module;
         this.p = p;
         this.order = order;
         this.acceptedDirect = acceptedDirect;
         this.acceptedFromShulkers = acceptedFromShulkers;
+        this.processedShulkers = processedShulkers;
         this.originalShulkers = originalShulkers;
         this.acceptedAmount = acceptedAmount;
     }
@@ -206,6 +208,11 @@ public class ConfirmDeliveryMenu
             allAccepted.addAll(this.acceptedFromShulkers);
 
             this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount, this.p.getUniqueId());
+
+            // Return the processed shulker boxes (with items removed) to the player
+            for (ItemStack processedShulker : this.processedShulkers) {
+                this.giveBackOrDrop(processedShulker);
+            }
 
             // Log Metrics
             long startTime = this.p.hasMetadata("prismorder.deliveryStartTime")

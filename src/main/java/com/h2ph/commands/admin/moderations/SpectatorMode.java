@@ -62,7 +62,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
             }
         }
 
-        String message = "&7You set your gamemode to &aSPECTATOR&7 mode.";
+        String message = "&7You set your gamemode to &aSpectator&7 mode.";
         player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand()
                 .deserialize(message));
     }

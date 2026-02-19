@@ -118,6 +118,34 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        if (sub.equals("speed")) {
+            if (args.length < 2) {
+                return true;
+            }
+
+            try {
+                float speed;
+                String speedArg = args[1].toLowerCase();
+
+                if (speedArg.equals("normal")) {
+                    speed = 0.1f;
+                } else {
+                    speed = Float.parseFloat(speedArg) / 10.0f;
+                }
+
+                if (speed > 1.0f) {
+                    speed = 1.0f;
+                } else if (speed < 0.0001f) {
+                    speed = 0.0001f;
+                }
+
+                player.setFlySpeed(speed);
+            } catch (Exception ignored) {
+                // No error messages as requested
+            }
+            return true;
+        }
+
         player.sendMessage("§cUnknown subcommand. Use auction, order, or rtpqueue.");
         return true;
     }
@@ -125,7 +153,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("auction", "order", "rtpqueue").stream()
+            return Arrays.asList("auction", "order", "rtpqueue", "speed").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         } else if (args.length == 2) {
@@ -136,6 +164,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("rtpqueue")) {
                 return Arrays.asList("create", "delete").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("speed")) {
+                return Arrays.asList("normal", "1", "2", "3", "4", "5", "1.5").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             }

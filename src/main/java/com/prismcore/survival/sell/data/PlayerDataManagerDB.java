@@ -16,7 +16,6 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerDataManagerDB {
     private final PrismSell plugin;
@@ -41,44 +40,63 @@ public class PlayerDataManagerDB {
      */
     private PlayerData loadPlayerData(UUID uuid) {
         PlayerData data = new PlayerData(uuid);
-        String query = "SELECT category, progress, multiplier, money, shards, break_blocks, placed_blocks, mob_kills, sell_made, shop_spent, playtime, deaths, kills, keys FROM player_data WHERE uuid = ?";
-        try {
-            Connection conn = this.plugin.getDatabaseManager().getConnection();
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        String queryData = "SELECT * FROM player_stats WHERE uuid = ?";
+        String queryCategoryData = "SELECT * FROM player_category_data WHERE uuid = ?";
+
+        try (Connection conn = this.plugin.getDatabaseManager().getConnection()) {
+            // Load global stats
+            try (PreparedStatement stmt = conn.prepareStatement(queryData)) {
                 stmt.setString(1, uuid.toString());
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String categoryName = rs.getString("category");
-                        if (categoryName.equals("BALANCE")) {
-                            data.setMoney(rs.getDouble("money"));
-                            data.setShards(rs.getLong("shards"));
-                            data.setBreakBlocks(rs.getLong("break_blocks"));
-                            data.setPlacedBlocks(rs.getLong("placed_blocks"));
-                            data.setMobKills(rs.getLong("mob_kills"));
-                            data.setSellMade(rs.getDouble("sell_made"));
-                            data.setShopSpent(rs.getDouble("shop_spent"));
-                            data.setPlaytime(rs.getLong("playtime"));
-                            data.setDeaths(rs.getLong("deaths"));
-                            data.setKills(rs.getLong("kills"));
-                            data.setKeys(rs.getLong("keys"));
-                            // Reset dirty flag after loading
-                            data.resetDirty();
-                            continue;
-                        }
-
-                        double progress = rs.getDouble("progress");
-                        double multiplier = rs.getDouble("multiplier");
-                        try {
-                            Category category = Category.valueOf(categoryName);
-                            data.setProgress(category, progress);
-                            data.setMultiplier(category, multiplier);
-                        } catch (IllegalArgumentException e) {
-                            this.plugin.getLogger().warning("Invalid category in database for player "
-                                    + uuid + ": " + categoryName);
-                        }
+                    if (rs.next()) {
+                        data.setMoney(rs.getDouble("money"));
+                        data.setShards(rs.getLong("shards"));
+                        data.setBreakBlocks(rs.getLong("break_blocks"));
+                        data.setPlacedBlocks(rs.getLong("placed_blocks"));
+                        data.setMobKills(rs.getLong("mob_kills"));
+                        data.setSellMade(rs.getDouble("sell_made"));
+                        data.setShopSpent(rs.getDouble("shop_spent"));
+                        data.setPlaytime(rs.getLong("playtime"));
+                        data.setDeaths(rs.getLong("deaths"));
+                        data.setKills(rs.getLong("kills"));
+                        data.setKeys(rs.getLong("keys"));
                     }
                 }
             }
+
+            // Load category data (multipliers + progress)
+            try (PreparedStatement stmt = conn.prepareStatement(queryCategoryData)) {
+                stmt.setString(1, uuid.toString());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        for (Category category : Category.values()) {
+                            // Load Multiplier
+                            String multiplierCol = category.name() + "_multiplier";
+                            try {
+                                double multiplier = rs.getDouble(multiplierCol);
+                                data.setMultiplier(category, multiplier);
+                            } catch (SQLException e) {
+                                this.plugin.getLogger()
+                                        .warning("Missing column " + multiplierCol + " in player_category_data");
+                            }
+
+                            // Load Progress
+                            String progressCol = category.name() + "_progress";
+                            try {
+                                double progress = rs.getDouble(progressCol);
+                                data.setProgress(category, progress);
+                            } catch (SQLException e) {
+                                this.plugin.getLogger()
+                                        .warning("Missing column " + progressCol + " in player_category_data");
+                            }
+                        }
+                    } else {
+                        this.plugin.getLogger().warning("No category data row found for " + uuid + ", using defaults.");
+                    }
+                }
+            }
+
+            data.resetDirty();
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Failed to load player data for " + uuid);
             e.printStackTrace();
@@ -98,69 +116,68 @@ public class PlayerDataManagerDB {
     }
 
     private void savePlayerDataSync(UUID uuid, PlayerData data) {
-        String insertQuery = "INSERT OR REPLACE INTO player_data (uuid, category, progress, multiplier, money, shards, break_blocks, placed_blocks, mob_kills, sell_made, shop_spent, playtime, deaths, kills, keys) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Query for Global Stats
+        String queryData = "INSERT OR REPLACE INTO player_stats (uuid, money, shards, break_blocks, placed_blocks, mob_kills, sell_made, shop_spent, playtime, deaths, kills, keys) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        // Query for Category Data
+        StringBuilder queryCategoryData = new StringBuilder();
+        queryCategoryData.append("INSERT OR REPLACE INTO player_category_data (uuid");
+        for (Category category : Category.values()) {
+            queryCategoryData.append(", ").append(category.name()).append("_multiplier");
+            queryCategoryData.append(", ").append(category.name()).append("_progress");
+        }
+        queryCategoryData.append(") VALUES (?");
+        for (int i = 0; i < Category.values().length * 2; i++) {
+            queryCategoryData.append(", ?");
+        }
+        queryCategoryData.append(")");
+
         try {
             Connection conn = this.plugin.getDatabaseManager().getConnection();
-            try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
-                for (Category category : Category.values()) {
-                    double progress = data.getProgress(category);
-                    double multiplier = data.getMultiplier(category);
-                    insertStmt.setString(1, uuid.toString());
-                    insertStmt.setString(2, category.name());
-                    insertStmt.setDouble(3, progress);
-                    insertStmt.setDouble(4, multiplier);
-                    insertStmt.setDouble(5, 0.0);
-                    insertStmt.setLong(6, 0);
-                    insertStmt.setLong(7, 0);
-                    insertStmt.setLong(8, 0);
-                    insertStmt.setLong(9, 0);
-                    insertStmt.setDouble(10, 0.0);
-                    insertStmt.setDouble(11, 0.0);
-                    insertStmt.setLong(12, 0);
-                    insertStmt.setLong(13, 0);
-                    insertStmt.setLong(14, 0);
-                    insertStmt.setLong(15, 0);
-                    insertStmt.addBatch();
-                }
 
-                // Save Balance & Stats
-                insertStmt.setString(1, uuid.toString());
-                insertStmt.setString(2, "BALANCE");
-                insertStmt.setDouble(3, 0.0);
-                insertStmt.setDouble(4, 0.0);
-                insertStmt.setDouble(5, data.getMoney());
-                insertStmt.setLong(6, data.getShards());
-                insertStmt.setLong(7, data.getBreakBlocks());
-                insertStmt.setLong(8, data.getPlacedBlocks());
-                insertStmt.setLong(9, data.getMobKills());
-                insertStmt.setDouble(10, data.getSellMade());
-                insertStmt.setDouble(11, data.getShopSpent());
-                insertStmt.setLong(12, data.getPlaytime());
-                insertStmt.setLong(13, data.getDeaths());
-                insertStmt.setLong(14, data.getKills());
-                insertStmt.setLong(15, data.getKeys());
-                insertStmt.addBatch();
-
-                insertStmt.executeBatch();
-
-                // Reset dirty flag
-                data.resetDirty();
+            // Save Global Stats
+            try (PreparedStatement insertStmt = conn.prepareStatement(queryData)) {
+                int i = 1;
+                insertStmt.setString(i++, uuid.toString());
+                insertStmt.setDouble(i++, data.getMoney());
+                insertStmt.setLong(i++, data.getShards());
+                insertStmt.setLong(i++, data.getBreakBlocks());
+                insertStmt.setLong(i++, data.getPlacedBlocks());
+                insertStmt.setLong(i++, data.getMobKills());
+                insertStmt.setDouble(i++, data.getSellMade());
+                insertStmt.setDouble(i++, data.getShopSpent());
+                insertStmt.setLong(i++, data.getPlaytime());
+                insertStmt.setLong(i++, data.getDeaths());
+                insertStmt.setLong(i++, data.getKills());
+                insertStmt.setLong(i++, data.getKeys());
+                insertStmt.executeUpdate();
             }
+
+            // Save Category Data
+            try (PreparedStatement insertStmt = conn.prepareStatement(queryCategoryData.toString())) {
+                int i = 1;
+                insertStmt.setString(i++, uuid.toString());
+                for (Category category : Category.values()) {
+                    insertStmt.setDouble(i++, data.getMultiplier(category));
+                    insertStmt.setDouble(i++, data.getProgress(category));
+                }
+                insertStmt.executeUpdate();
+            }
+
+            // Reset dirty flag
+            data.resetDirty();
         } catch (SQLException e) {
-            this.plugin.getLogger().severe("Failed to save player data for " + uuid);
             e.printStackTrace();
         }
     }
 
     public void saveAllData() {
-        this.plugin.getLogger().info("Saving all player data to database...");
         for (UUID uuid : this.cache.keySet()) {
             PlayerData data = this.cache.get(uuid);
             if (data == null)
                 continue;
             this.savePlayerDataSync(uuid, data);
         }
-        this.plugin.getLogger().info("Saved data for " + this.cache.size() + " players.");
     }
 
     public void unloadPlayer(UUID uuid) {

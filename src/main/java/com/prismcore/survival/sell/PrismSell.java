@@ -124,6 +124,8 @@ public class PrismSell {
 
         plugin.getServer().getPluginManager().registerEvents(this.sellGUI, plugin);
         plugin.getServer().getPluginManager().registerEvents(this.progressGUI, plugin);
+        plugin.getServer().getPluginManager()
+                .registerEvents(new com.prismcore.survival.sell.listeners.PlayerStatsListener(this), plugin);
 
         plugin.getLogger().info("PrismSell has been enabled!");
     }

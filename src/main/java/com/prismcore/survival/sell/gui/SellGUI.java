@@ -218,10 +218,63 @@ public class SellGUI
             if (item == null || item.getType() == Material.AIR)
                 continue;
 
-            double price = this.plugin.getPricesManager().getPrice(item);
-            if (price > 0) {
+            double itemTotal = 0.0;
+            boolean contentSold = false;
+
+            // Check for Shulker Box
+            if (item.getItemMeta() instanceof org.bukkit.inventory.meta.BlockStateMeta) {
+                org.bukkit.inventory.meta.BlockStateMeta bsm = (org.bukkit.inventory.meta.BlockStateMeta) item
+                        .getItemMeta();
+                if (bsm.getBlockState() instanceof org.bukkit.block.ShulkerBox) {
+                    org.bukkit.block.ShulkerBox shulker = (org.bukkit.block.ShulkerBox) bsm.getBlockState();
+                    ItemStack[] contents = shulker.getInventory().getContents();
+                    boolean shulkerModified = false;
+
+                    for (int j = 0; j < contents.length; j++) {
+                        ItemStack content = contents[j];
+                        if (content == null || content.getType() == Material.AIR)
+                            continue;
+
+                        double price = this.plugin.getPricesManager().getPrice(content);
+                        if (price > 0) {
+                            Category category = this.plugin.getPricesManager().getCategory(content);
+                            double amount = price * content.getAmount();
+
+                            // Apply multiplier
+                            if (category != null) {
+                                PlayerData data = this.plugin.getPlayerDataManager()
+                                        .getPlayerData(player.getUniqueId());
+                                double multiplier = data.getMultiplier(category);
+                                amount *= multiplier;
+
+                                categoryProgressToAdd.put(category,
+                                        categoryProgressToAdd.getOrDefault(category, 0.0) + amount);
+                            }
+
+                            // Add to item total (multiply by shulker stack amount if stacked, though
+                            // uncommon)
+                            itemTotal += amount * item.getAmount();
+
+                            // Remove item from shulker
+                            contents[j] = null;
+                            shulkerModified = true;
+                            contentSold = true;
+                        }
+                    }
+
+                    if (shulkerModified) {
+                        shulker.getInventory().setContents(contents);
+                        bsm.setBlockState(shulker);
+                        item.setItemMeta(bsm);
+                    }
+                }
+            }
+
+            // Check price of the item itself (might be empty shulker now)
+            double selfPrice = this.plugin.getPricesManager().getPrice(item);
+            if (selfPrice > 0) {
                 Category category = this.plugin.getPricesManager().getCategory(item);
-                double amount = price * item.getAmount();
+                double amount = selfPrice * item.getAmount();
 
                 // Apply multiplier
                 if (category != null) {
@@ -232,7 +285,18 @@ public class SellGUI
                     categoryProgressToAdd.put(category, categoryProgressToAdd.getOrDefault(category, 0.0) + amount);
                 }
 
-                totalSold += amount;
+                itemTotal += amount;
+            }
+
+            if (itemTotal > 0) {
+                totalSold += itemTotal;
+
+                // If selfPrice <= 0, the container is NOT sold, so return it (empty or
+                // partially filled)
+                // If selfPrice > 0, the container IS sold, so don't return it
+                if (selfPrice <= 0) {
+                    unsoldItems.add(item);
+                }
             } else {
                 unsoldItems.add(item);
             }
@@ -258,6 +322,7 @@ public class SellGUI
             PlayerData data = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             for (Map.Entry<Category, Double> entry : categoryProgressToAdd.entrySet()) {
                 data.addProgress(entry.getKey(), entry.getValue());
+                this.checkLevelUp(player, entry.getKey(), data);
             }
         }
 
@@ -269,6 +334,31 @@ public class SellGUI
                     player.getWorld().dropItemNaturally(player.getLocation(), drop);
                 }
                 player.sendMessage(MessageUtil.colorize("&cInventory full! Some items were dropped."));
+            }
+        }
+    }
+
+    private void checkLevelUp(Player player, Category category, PlayerData data) {
+        List<Double> levelPrices = this.plugin.getConfig().getDoubleList("level-prices");
+        double multiplierIncrement = this.plugin.getConfig().getDouble("settings.multiplier-increment", 0.1);
+
+        while (true) {
+            double currentMultiplier = data.getMultiplier(category);
+            int currentLevel = this.getCurrentLevel(currentMultiplier);
+
+            // Check if max level reached
+            if (currentLevel >= levelPrices.size()) {
+                return;
+            }
+
+            double required = levelPrices.get(currentLevel);
+            double progress = data.getProgress(category);
+
+            if (progress >= required) {
+                double newMultiplier = currentMultiplier + multiplierIncrement;
+                data.setMultiplier(category, newMultiplier);
+            } else {
+                break;
             }
         }
     }

@@ -39,12 +39,48 @@ public class DatabaseManager {
     }
 
     private void createTables() {
-        String createPlayerData = "CREATE TABLE IF NOT EXISTS player_data (uuid TEXT NOT NULL,category TEXT NOT NULL,progress REAL NOT NULL,multiplier REAL NOT NULL,money REAL DEFAULT 0,shards BIGINT DEFAULT 0,break_blocks BIGINT DEFAULT 0,placed_blocks BIGINT DEFAULT 0,mob_kills BIGINT DEFAULT 0,sell_made REAL DEFAULT 0,shop_spent REAL DEFAULT 0,playtime BIGINT DEFAULT 0,deaths BIGINT DEFAULT 0,kills BIGINT DEFAULT 0,keys BIGINT DEFAULT 0,PRIMARY KEY (uuid, category))";
-        try (PreparedStatement stmt = this.connection.prepareStatement(createPlayerData)) {
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("CREATE TABLE IF NOT EXISTS player_stats (");
+        queryBuilder.append("uuid TEXT PRIMARY KEY, ");
+        queryBuilder.append("money REAL DEFAULT 0, ");
+        queryBuilder.append("shards BIGINT DEFAULT 0, ");
+        queryBuilder.append("break_blocks BIGINT DEFAULT 0, ");
+        queryBuilder.append("placed_blocks BIGINT DEFAULT 0, ");
+        queryBuilder.append("mob_kills BIGINT DEFAULT 0, ");
+        queryBuilder.append("sell_made REAL DEFAULT 0, ");
+        queryBuilder.append("shop_spent REAL DEFAULT 0, ");
+        queryBuilder.append("playtime BIGINT DEFAULT 0, ");
+        queryBuilder.append("deaths BIGINT DEFAULT 0, ");
+        queryBuilder.append("kills BIGINT DEFAULT 0, ");
+        queryBuilder.append("keys BIGINT DEFAULT 0");
+        queryBuilder.append(")");
+
+        try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(queryBuilder.toString())) {
             stmt.executeUpdate();
-            this.plugin.getLogger().info("Database tables created successfully!");
+            this.plugin.getLogger().info("Table 'player_stats' verified/created.");
         } catch (SQLException e) {
-            this.plugin.getLogger().severe("Failed to create database tables!");
+            this.plugin.getLogger().severe("Failed to create table 'player_stats'!");
+            e.printStackTrace();
+        }
+
+        // Create player_category_data table
+        StringBuilder categoryQuery = new StringBuilder();
+        categoryQuery.append("CREATE TABLE IF NOT EXISTS player_category_data (");
+        categoryQuery.append("uuid TEXT PRIMARY KEY");
+
+        for (com.prismcore.survival.sell.category.Category category : com.prismcore.survival.sell.category.Category
+                .values()) {
+            categoryQuery.append(", ").append(category.name()).append("_multiplier REAL DEFAULT 1.0");
+            categoryQuery.append(", ").append(category.name()).append("_progress REAL DEFAULT 0");
+        }
+
+        categoryQuery.append(")");
+
+        try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(categoryQuery.toString())) {
+            stmt.executeUpdate();
+            this.plugin.getLogger().info("Table 'player_category_data' verified/created.");
+        } catch (SQLException e) {
+            this.plugin.getLogger().severe("Failed to create table 'player_category_data'!");
             e.printStackTrace();
         }
     }

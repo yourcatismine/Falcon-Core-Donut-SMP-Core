@@ -243,6 +243,17 @@ commands:
     usage: /bounty [add <player> <amount>]
     aliases: [bounties]
 
+  sell:
+    description: Open the sell GUI
+    usage: /sell
+    aliases: []
+
+  prismsell:
+    description: Admin commands for the sell module
+    usage: /prismsell
+    permission: prism.admin.sell
+    aliases: []
+
 permissions:
   prismcore.admin.shards:
     description: Allows administration of player shards

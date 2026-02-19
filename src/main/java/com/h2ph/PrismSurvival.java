@@ -39,6 +39,7 @@ public class PrismSurvival extends JavaPlugin {
 
     private com.h2ph.maintenance.MaintenanceManager maintenanceManager;
     private com.prismcore.survival.orders.OrdersModule ordersModule;
+    private com.prismcore.survival.sell.PrismSell prismSell;
     private com.prismcore.survival.manager.ActivityLogger activityLogger;
     private com.prismcore.survival.manager.InventoryLogManager inventoryLogManager;
     private com.h2ph.managers.RedstoneManager redstoneManager;
@@ -399,6 +400,10 @@ public class PrismSurvival extends JavaPlugin {
             getLogger().warning("Vault not found! Economy features will be disabled.");
         }
 
+        // Initialize Sell Module
+        this.prismSell = new com.prismcore.survival.sell.PrismSell(this);
+        this.prismSell.onEnable();
+
         // Initialize Maintenance Manager
         this.maintenanceManager = new com.h2ph.maintenance.MaintenanceManager(this);
 
@@ -463,6 +468,9 @@ public class PrismSurvival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (this.prismSell != null) {
+            this.prismSell.onDisable();
+        }
 
         if (this.apiServer != null) {
             this.apiServer.stop();

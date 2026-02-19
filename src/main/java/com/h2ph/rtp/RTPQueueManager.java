@@ -171,7 +171,7 @@ public class RTPQueueManager {
                                 player.sendTitle(titleText, subtitleText, 0, 30, 0);
                                 if (playTickSound) {
                                     player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f,
-                                            1f);
+                                            2f);
                                 }
                             }
                         }

@@ -123,11 +123,15 @@ public class RTPManager {
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
 
                 // Sound: BLOCK_NOTE_BLOCK_HAT
-                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 2f);
 
                 count.decrementAndGet();
-            } else {
+            } else if (currentCount == 0) {
                 // Teleport!
+                // Locking: Set to -1 so we don't enter this block again in the next tick
+                // while waiting for async callback
+                count.set(-1);
+
                 // Actionbar: Teleporting...
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent
                         .fromLegacyText(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&7Teleporting...")));

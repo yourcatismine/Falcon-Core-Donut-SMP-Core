@@ -269,9 +269,8 @@ public class TpaRequestManager {
                     teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             new net.md_5.bungee.api.chat.TextComponent(msg));
 
-                    // Sounds: Tripwire & Enderman teleport sound per count
-                    teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
-                    teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
+                    // Sounds: BLOCK_NOTE_BLOCK_HAT @ 2.0f
+                    teleporter.playSound(teleporter.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 2f);
 
                     seconds.decrementAndGet();
                 } else {

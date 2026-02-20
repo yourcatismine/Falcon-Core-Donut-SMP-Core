@@ -4,9 +4,42 @@ drill:
   timer: 259200 # 3 days, in seconds
   update-interval: 30  # seconds between countdown updates for ALL tools (1 second for accurate display)
   material: NETHERITE_PICKAXE
-  display-name: "&#860aeeᴀᴍᴇᴛʜʏѕᴛ ᴘɪᴄᴋᴀхᴇ"
+  display-name: "&#860aeeᴘʀɪѕᴍ ᴘɪᴄᴋᴀхᴇ"
   lore:
     - "&7Breaks 9 Blocks at Once"
+    - "&8Self Destruct: "
+    - "&8%countdown%"
+  enchantments:
+    EFFICIENCY: 5
+    UNBREAKING: 3
+    MENDING: 1
+  radius:
+    x: 1
+    y: 1
+    z: 0
+
+  disabled-blocks:
+    - BARRIER
+    - BEDROCK
+    - OBSIDIAN
+  particle:
+    type: REDSTONE
+    color:
+      r: 128
+      g: 0
+      b: 128
+    count: 10
+  sound: BLOCK_AMETHYST_BLOCK_HIT
+
+sellaxe:
+  play-sound: true
+  use-countdown: true
+  timer: 259200 # 3 days, in seconds
+  update-interval: 30  # seconds between countdown updates for ALL tools (1 second for accurate display)
+  material: NETHERITE_AXE
+  display-name: "&#860aeeᴀᴘʀɪѕᴍ ѕᴇʟʟ ᴀхᴇ"
+  lore:
+    - "&7Instantly Sells All Items in A Chest"
     - "&8Self Destruct: "
     - "&8%countdown%"
   enchantments:
@@ -36,7 +69,7 @@ axe:
   use-countdown: true
   timer: 259200 # 3 days, in seconds
   material: NETHERITE_AXE
-  display-name: "&#860aeeᴀᴍᴇᴛʜʏѕᴛ ᴀхᴇ"
+  display-name: "&#860aeeᴘʀɪѕᴍ ᴀхᴇ"
   lore:
     - "&7Breaks Trees Instantly"
     - "&8Self Destruct: "
@@ -58,7 +91,7 @@ shovel:
   use-countdown: true
   timer: 259200 # 3 days, in seconds
   material: NETHERITE_SHOVEL
-  display-name: "&#860aeeᴀᴍᴇᴛʜʏѕᴛ ѕʜᴏᴠᴇʟ"
+  display-name: "&#860aeeᴘʀɪѕᴍ ѕʜᴏᴠᴇʟ"
   lore:
     - "&79 Blocks Per Break"
     - "&8Self Destruct: "
@@ -87,7 +120,7 @@ bucket:
   use-countdown: true
   material: BUCKET
   timer: 259200
-  display-name: "&#860aeeᴀᴍᴇᴛʜʏѕᴛ ʙᴜᴄᴋᴇᴛ"
+  display-name: "&#860aeeᴘʀɪѕᴍ ʙᴜᴄᴋᴇᴛ"
   lore:
     - "&7Drains 27 Water At Once"
     - "&8Self Destruct:"
@@ -122,7 +155,7 @@ multitool:
   material: NETHERITE_AXE
   timer: 259200
 
-  display-name: "&#860aeeᴀᴍᴇᴛʜʏѕᴛ ᴍᴜʟᴛɪᴛᴏᴏʟ"
+  display-name: "&#860aeeᴘʀɪѕᴍ ᴍᴜʟᴛɪᴛᴏᴏʟ"
   lore:
     - "&7Every Tool Inside a Tool"
     - "&8Self Destruct: "

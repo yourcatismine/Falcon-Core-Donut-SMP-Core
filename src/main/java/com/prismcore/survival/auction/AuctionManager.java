@@ -278,6 +278,14 @@ public class AuctionManager {
      * Removes the auction pause flag from an item, resuming the timer countdown.
      * Also adjusts the absolute expiry timestamp to account for time spent in
      * auction.
+     *
+     * NOTE: We do NOT gate this on AUCTION_PAUSED_KEY because
+     * AuctionItem.getItemStack()
+     * returns a clone, meaning pauseAmethystTimer() writes that flag to a discarded
+     * clone and the real stored item never has the flag. Instead, we
+     * unconditionally
+     * adjust any item that has EXPIRY_KEY (i.e. any amethyst tool) when it leaves
+     * the auction.
      */
     private void resumeAmethystTimer(ItemStack item, long listedAt) {
         if (item == null || !item.hasItemMeta()) {
@@ -286,24 +294,24 @@ public class AuctionManager {
 
         ItemMeta meta = item.getItemMeta();
 
-        // Remove the auction pause flag if it exists
-        if (meta.getPersistentDataContainer().has(ToolsManager.AUCTION_PAUSED_KEY, PersistentDataType.BYTE)) {
-            meta.getPersistentDataContainer().remove(ToolsManager.AUCTION_PAUSED_KEY);
+        // Always remove the pause flag if it happens to be present (best-effort
+        // cleanup)
+        meta.getPersistentDataContainer().remove(ToolsManager.AUCTION_PAUSED_KEY);
 
-            // Adjust EXPIRY_KEY if present to account for time spent in auction
-            if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
-                long currentExpiry = meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY,
-                        PersistentDataType.LONG);
-                long timeInAuction = System.currentTimeMillis() - listedAt;
+        // Always adjust EXPIRY_KEY for any amethyst tool leaving the auction,
+        // extending the timer by however long the item was listed.
+        if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
+            long currentExpiry = meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY,
+                    PersistentDataType.LONG);
+            long timeInAuction = System.currentTimeMillis() - listedAt;
 
-                if (timeInAuction > 0) {
-                    meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG,
-                            currentExpiry + timeInAuction);
-                }
+            if (timeInAuction > 0) {
+                meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG,
+                        currentExpiry + timeInAuction);
             }
-
-            item.setItemMeta(meta);
         }
+
+        item.setItemMeta(meta);
     }
 
     public static class OfflineSale {

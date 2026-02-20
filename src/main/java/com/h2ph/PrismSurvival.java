@@ -149,10 +149,9 @@ public class PrismSurvival extends JavaPlugin {
         // Register SignInput Utility
         this.signInput = new com.h2ph.utils.SignInput(this);
         getServer().getPluginManager().registerEvents(this.signInput, this);
-        getCommand("tools").setExecutor(
-                new com.prismcore.survival.tools.ToolCommand(com.prismcore.survival.tools.ToolsManager.getInstance()));
-        getCommand("tools").setTabCompleter(
-                new com.prismcore.survival.tools.ToolCommand(com.prismcore.survival.tools.ToolsManager.getInstance()));
+        // Register SignInput Utility
+        this.signInput = new com.h2ph.utils.SignInput(this);
+        getServer().getPluginManager().registerEvents(this.signInput, this);
 
         // Register shards admin command
         com.h2ph.commands.admin.economy.ShardsCommand shardsCommand = new com.h2ph.commands.admin.economy.ShardsCommand(
@@ -537,6 +536,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.maintenance.MaintenanceManager getMaintenanceManager() {
         return maintenanceManager;
+    }
+
+    public com.prismcore.survival.sell.PrismSell getPrismSell() {
+        return prismSell;
     }
 
     public com.h2ph.commands.admin.duels.DuelArenaManager getDuelArenaManager() {

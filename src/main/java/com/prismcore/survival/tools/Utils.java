@@ -7,16 +7,24 @@ import java.util.stream.Collectors;
 import org.bukkit.ChatColor;
 
 public final class Utils {
-    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private static final Pattern HEX_PATTERN_AMP = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private static final Pattern HEX_PATTERN_HASH = Pattern.compile("#([A-Fa-f0-9]{6})");
+    private static final java.text.DecimalFormat NUMBER_FORMAT = new java.text.DecimalFormat("#,##0.00");
 
     private Utils() {
+    }
+
+    public static String formatNumber(double number) {
+        return NUMBER_FORMAT.format(number);
     }
 
     public static String formatColors(String input) {
         if (input == null) {
             return null;
         }
-        Matcher m = HEX_PATTERN.matcher(input);
+
+        // Handle &#RRGGBB
+        Matcher m = HEX_PATTERN_AMP.matcher(input);
         StringBuffer buf = new StringBuffer(input.length() + 32);
         while (m.find()) {
             String hex = m.group(1);
@@ -27,7 +35,23 @@ public final class Utils {
             m.appendReplacement(buf, Matcher.quoteReplacement(rep.toString()));
         }
         m.appendTail(buf);
-        return ChatColor.translateAlternateColorCodes((char) '&', (String) buf.toString());
+        input = buf.toString();
+
+        // Handle #RRGGBB
+        m = HEX_PATTERN_HASH.matcher(input);
+        buf = new StringBuffer(input.length() + 32);
+        while (m.find()) {
+            String hex = m.group(1);
+            StringBuilder rep = new StringBuilder("\u00a7x");
+            for (char c : hex.toCharArray()) {
+                rep.append('\u00a7').append(c);
+            }
+            m.appendReplacement(buf, Matcher.quoteReplacement(rep.toString()));
+        }
+        m.appendTail(buf);
+        input = buf.toString();
+
+        return ChatColor.translateAlternateColorCodes((char) '&', input);
     }
 
     public static List<String> formatColors(List<String> lines) {

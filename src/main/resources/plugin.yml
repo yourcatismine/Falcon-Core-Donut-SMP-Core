@@ -153,11 +153,7 @@ commands:
     aliases: [preload]
     usage: /prismreload
 
-  tools:
-    description: Manage survival tools
-    usage: /tools give <player> <tool>
-    permission: prism.admin.tools
-    permission-message: You do not have permission to use this command.
+
 
   ah:
     description: Open the auction house

@@ -250,6 +250,13 @@ commands:
     permission: prism.admin.sell
     aliases: []
 
+  echest:
+    description: Open your personal ender chest
+    usage: /echest
+    aliases: [enderchest]
+    permission: prismcore.enderchest
+    permission-message: ""
+
 permissions:
   prismcore.admin.shards:
     description: Allows administration of player shards
@@ -295,4 +302,7 @@ permissions:
     default: op
   prismsmp.fly:
     description: Permission to use /fly
+    default: op
+  prismcore.enderchest:
+    description: Permission to use /echest
     default: op

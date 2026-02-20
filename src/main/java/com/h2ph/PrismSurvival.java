@@ -48,6 +48,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.managers.PrivateMessageManager privateMessageManager;
     private com.prismcore.survival.manager.BountyManager bountyManager;
     private com.h2ph.utils.SignInput signInput;
+    private com.h2ph.managers.EnderChestManager enderChestManager;
 
     @Override
     public void onLoad() {
@@ -403,6 +404,15 @@ public class PrismSurvival extends JavaPlugin {
         this.prismSell = new com.prismcore.survival.sell.PrismSell(this);
         this.prismSell.onEnable();
 
+        // Initialize Ender Chest Manager (requires PrismSell DB)
+        this.enderChestManager = new com.h2ph.managers.EnderChestManager(this);
+
+        // Register Ender Chest Command
+        getCommand("echest").setExecutor(new com.h2ph.commands.player.EnderChestCommand(this));
+
+        // Register Ender Chest GUI Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.EnderChestGUIListener(this), this);
+
         // Initialize Maintenance Manager
         this.maintenanceManager = new com.h2ph.maintenance.MaintenanceManager(this);
 
@@ -498,6 +508,19 @@ public class PrismSurvival extends JavaPlugin {
             }
         }
 
+        // Save all online ender chests
+        if (this.enderChestManager != null) {
+            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                // Close the inventory first if it's an ender chest GUI to ensure save
+                if (player.getOpenInventory().getTopInventory()
+                        .getHolder() instanceof com.h2ph.gui.EnderChestGUI.EnderChestHolder) {
+                    org.bukkit.inventory.ItemStack[] contents = player.getOpenInventory().getTopInventory()
+                            .getContents().clone();
+                    this.enderChestManager.saveEnderChest(player.getUniqueId(), contents);
+                }
+            }
+        }
+
         if (this.activityLogger != null) {
             this.activityLogger.shutdown();
         }
@@ -576,6 +599,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.utils.SignInput getSignInput() {
         return signInput;
+    }
+
+    public com.h2ph.managers.EnderChestManager getEnderChestManager() {
+        return enderChestManager;
     }
 
     public net.milkbowl.vault.economy.Economy getEconomy() {

@@ -84,6 +84,19 @@ public class DatabaseManager {
             this.plugin.getLogger().severe("Failed to create table 'player_category_data'!");
             e.printStackTrace();
         }
+
+        // Create enderchest table — one row per player, all slots packed in 'contents'
+        // UUID is PRIMARY KEY: guaranteed one row per player, no duplicates
+        String enderChestQuery = "CREATE TABLE IF NOT EXISTS enderchest (" +
+                "uuid TEXT PRIMARY KEY, " +
+                "contents TEXT NOT NULL DEFAULT ''" +
+                ")";
+        try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(enderChestQuery)) {
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            this.plugin.getLogger().severe("Failed to create table 'enderchest'!");
+            e.printStackTrace();
+        }
     }
 
     public Connection getConnection() throws SQLException {

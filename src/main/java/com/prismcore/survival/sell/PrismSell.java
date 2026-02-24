@@ -62,6 +62,13 @@ public class PrismSell {
             config.setDefaults(YamlConfiguration.loadConfiguration(
                     new java.io.InputStreamReader(defConfigStream, java.nio.charset.StandardCharsets.UTF_8)));
         }
+
+        if (this.pricesManager != null) {
+            this.pricesManager.loadPrices();
+        }
+        if (this.guiManager != null) {
+            this.guiManager.reload();
+        }
     }
 
     public FileConfiguration getConfig() {

@@ -305,6 +305,11 @@ public class SellGUI
         if (totalSold > 0) {
             this.plugin.getEconomy().deposit(player.getUniqueId(), totalSold);
 
+            // Update sellMade stat and persist immediately — don't wait for quit
+            PlayerData sellData = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
+            sellData.setSellMade(sellData.getSellMade() + totalSold);
+            this.plugin.getPlayerDataManager().savePlayerData(player.getUniqueId());
+
             String formattedAmount = MessageUtil.formatMoney(totalSold);
             String chatMsg = this.plugin.getConfig().getString("messages.sold-total");
             if (chatMsg != null && !chatMsg.isEmpty()) {

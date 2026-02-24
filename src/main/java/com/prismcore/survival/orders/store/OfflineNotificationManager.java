@@ -30,7 +30,9 @@ public class OfflineNotificationManager {
     public List<DeliveryRecord> getAndClear(UUID owner) {
         List<DeliveryRecord> records = this.pending.remove(owner);
         if (records != null) {
-            this.save();
+            module.getPlugin().getSchedulerAdapter().runTaskAsynchronously(() -> {
+                this.save();
+            });
         }
         return records;
     }

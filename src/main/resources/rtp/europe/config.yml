@@ -1,3 +1,4 @@
+auto-rtp-on-death: true
 worlds:
   overworld:
     world: "world"

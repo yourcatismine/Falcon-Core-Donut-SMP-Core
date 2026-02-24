@@ -1,10 +1,6 @@
 package com.prismcore.survival.auction;
 
 import java.util.List;
-import com.prismcore.survival.auction.AuctionItem;
-import com.prismcore.survival.auction.AuctionController;
-import com.prismcore.survival.auction.GUIHandler;
-import com.prismcore.survival.auction.Utils;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -50,7 +46,7 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
             this.controller.getAuctionManager().setPlayerCategory(player.getUniqueId(), "All");
             this.controller.getAuctionManager().setPlayerSort(player.getUniqueId(), "Highest Price");
 
-            GUIHandler.openMainGUI(player, 1, this.controller);
+            GUIHandler.openMainGUI(player, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
             return true;
         }
         if (args.length >= 2 && args[0].equalsIgnoreCase("sell")) {
@@ -72,7 +68,7 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
             double rawPrice = Utils.parsePrice(priceArg);
             if (rawPrice < 0.0) {
                 player.removeMetadata("ah-admin-view", (Plugin) this.controller.getPlugin());
-                GUIHandler.openMainGUI(player, 1, this.controller);
+                GUIHandler.openMainGUI(player, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 return true;
             }
             double maxPrice = cfg.getDouble("settings.max-auction-price", 1000000000000.0);
@@ -109,7 +105,7 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
         player.setMetadata("ah-filter",
                 (MetadataValue) new FixedMetadataValue((Plugin) this.controller.getPlugin(), (Object) searchTerm));
         player.removeMetadata("ah-admin-view", (Plugin) this.controller.getPlugin());
-        GUIHandler.openMainGUI(player, 1, this.controller);
+        GUIHandler.openMainGUI(player, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
         return true;
     }
 

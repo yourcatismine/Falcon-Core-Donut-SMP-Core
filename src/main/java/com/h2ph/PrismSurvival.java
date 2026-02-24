@@ -1,17 +1,22 @@
 package com.h2ph;
 
 import com.prismcore.survival.manager.PlayerDataManager;
+import com.prismcore.survival.manager.DatabaseManager;
 import com.prismcore.survival.scheduler.SchedulerAdapter;
 import com.h2ph.commands.economy.ShopCommand;
 import com.h2ph.commands.player.QuickGameMode;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class PrismSurvival extends JavaPlugin {
 
     private PlayerDataManager playerDataManager;
+    private DatabaseManager databaseManager;
     private SchedulerAdapter schedulerAdapter;
     private ShopCommand shopCommand;
     private com.h2ph.commands.player.RulesCommand rulesCommand;
+    private com.h2ph.commands.player.MediaCommand mediaCommand;
 
     private static PrismSurvival instance;
 
@@ -49,6 +54,20 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.manager.BountyManager bountyManager;
     private com.h2ph.utils.SignInput signInput;
     private com.h2ph.managers.EnderChestManager enderChestManager;
+    private com.h2ph.managers.HomeManager homeManager;
+    private com.h2ph.managers.ScoreboardManager scoreboardManager;
+    private com.prismcore.survival.manager.VoidManager voidManager;
+    private com.h2ph.managers.VanishManager vanishManager;
+    private com.h2ph.managers.RTPDeathManager rtpDeathManager;
+    private com.h2ph.gui.RTPDeathGUI rtpDeathGUI;
+    private com.h2ph.teams.TeamManager teamManager;
+    private com.h2ph.teams.TeamInviteManager teamInviteManager;
+    private com.h2ph.managers.GamertagManager gamertagManager;
+
+    private com.prismcore.survival.limiter.LimiterConfig limiterConfig;
+    private com.prismcore.survival.limiter.LimiterManager limiterManager;
+    private com.prismcore.survival.survival.ChatFilter chatFilter;
+    private com.h2ph.listeners.CommandHideListener commandHideListener;
 
     @Override
     public void onLoad() {
@@ -66,7 +85,8 @@ public class PrismSurvival extends JavaPlugin {
         loadSurvivalConfig();
 
         // Register Command Hide Listener
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CommandHideListener(this), this);
+        this.commandHideListener = new com.h2ph.listeners.CommandHideListener(this);
+        getServer().getPluginManager().registerEvents(commandHideListener, this);
 
         // Register MessageHider
         new com.prismcore.survival.survival.MessageHider(this);
@@ -75,7 +95,8 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.prismcore.survival.survival.ItemMerger(this), this);
 
         // Register ChatFilter
-        getServer().getPluginManager().registerEvents(new com.prismcore.survival.survival.ChatFilter(this), this);
+        this.chatFilter = new com.prismcore.survival.survival.ChatFilter(this);
+        getServer().getPluginManager().registerEvents(chatFilter, this);
 
         // Register ChatFormatter
         getServer().getPluginManager().registerEvents(new com.prismcore.survival.survival.ChatFormatter(this), this);
@@ -96,11 +117,18 @@ public class PrismSurvival extends JavaPlugin {
         // Register Live Command Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveCommandListener(this), this);
 
+        // Register Combat Listener (handles combat tagging, actionbar countdowns and
+        // combat-logout)
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CombatListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SpawnListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.AutoRTPListener(this), this);
+
         // Register Live Sign Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
 
         // Initialize managers
         this.playerDataManager = new PlayerDataManager(this);
+        this.databaseManager = new DatabaseManager(this, getSurvivalConfig());
         this.schedulerAdapter = new SchedulerAdapter(this);
         this.keyAllManager = new com.prismcore.survival.manager.KeyAllManager(this);
         this.carouselManager = new com.prismcore.survival.manager.CarouselManager(this);
@@ -120,6 +148,27 @@ public class PrismSurvival extends JavaPlugin {
 
         // Register Player Connection Listener (For saving data)
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
+
+        // Register Inventory Sync Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventorySyncListener(this), this);
+
+        // Setup Player Inventory Auto-Save Task (Every 10 minutes = 12000 ticks)
+        getSchedulerAdapter().runTaskTimer(() -> {
+            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                try {
+                    String invBase64 = com.prismcore.survival.utils.ItemSerializationManager
+                            .itemStackArrayToBase64(player.getInventory().getContents());
+                    String armorBase64 = com.prismcore.survival.utils.ItemSerializationManager
+                            .itemStackArrayToBase64(player.getInventory().getArmorContents());
+                    getSchedulerAdapter().runTaskAsynchronously(() -> {
+                        getDatabaseManager().saveInventory(player.getUniqueId(), invBase64, armorBase64);
+                    });
+                } catch (Exception e) {
+                    getLogger().log(java.util.logging.Level.SEVERE,
+                            "Failed to serialize inventory for auto-save of " + player.getName(), e);
+                }
+            }
+        }, 12000L, 12000L);
 
         this.activityLogger = new com.prismcore.survival.manager.ActivityLogger(this);
         this.inventoryLogManager = new com.prismcore.survival.manager.InventoryLogManager(this);
@@ -160,12 +209,6 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("shards").setExecutor(shardsCommand);
         getCommand("shards").setTabCompleter(shardsCommand);
 
-        // Register Crate Command
-        com.h2ph.commands.admin.crates.CrateCommand crateCommand = new com.h2ph.commands.admin.crates.CrateCommand(
-                this);
-        getCommand("crate").setExecutor(crateCommand);
-        getCommand("crate").setTabCompleter(crateCommand);
-
         // Register Key Command
         com.h2ph.commands.admin.crates.KeyCommand keyCommand = new com.h2ph.commands.admin.crates.KeyCommand(this);
         getCommand("key").setExecutor(keyCommand);
@@ -193,6 +236,14 @@ public class PrismSurvival extends JavaPlugin {
         com.h2ph.commands.economy.PayCommand payCommand = new com.h2ph.commands.economy.PayCommand(this);
         getCommand("pay").setExecutor(payCommand);
         getCommand("pay").setTabCompleter(payCommand);
+
+        // Register Sell History Command
+        com.h2ph.commands.economy.SellHistoryCommand sellHistoryCommand = new com.h2ph.commands.economy.SellHistoryCommand(
+                this);
+        getCommand("sellhistory").setExecutor(sellHistoryCommand);
+
+        // Register Worth Command
+        getCommand("worth").setExecutor(new com.h2ph.commands.economy.WorthCommand(this));
 
         // Load economy config to check if enabled
         java.io.File ecoConfig = new java.io.File(getDataFolder(), "economy/config.yml");
@@ -254,6 +305,15 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("gmsp").setExecutor(spectatorMode);
         getServer().getPluginManager().registerEvents(spectatorMode, this);
 
+        // Register Mute Command
+        getCommand("mute").setExecutor(new com.h2ph.commands.admin.moderations.MuteCommand(this));
+        getCommand("mute").setTabCompleter(new com.h2ph.commands.admin.moderations.MuteCommand(this));
+
+        getCommand("unmute").setExecutor(new com.h2ph.commands.admin.moderations.UnmuteCommand(this));
+        getCommand("unmute").setTabCompleter(new com.h2ph.commands.admin.moderations.UnmuteCommand(this));
+        getCommand("checkmute").setExecutor(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
+        getCommand("checkmute").setTabCompleter(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
+
         // Initialize Duel Managers
         this.duelStatsManager = new com.h2ph.commands.admin.duels.DuelStatsManager(this);
         this.duelArenaManager = new com.h2ph.commands.admin.duels.DuelArenaManager(this, duelStatsManager);
@@ -282,13 +342,17 @@ public class PrismSurvival extends JavaPlugin {
         this.rtpQueueManager = new com.h2ph.rtp.RTPQueueManager(this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.RTPQueueListener(this), this);
 
+        // Initialize RTP Death Manager
+        this.rtpDeathManager = new com.h2ph.managers.RTPDeathManager(this);
+        this.rtpDeathGUI = new com.h2ph.gui.RTPDeathGUI(this);
+
         // Register Rules Command
         this.rulesCommand = new com.h2ph.commands.player.RulesCommand(this);
         getCommand("rules").setExecutor(rulesCommand);
         getServer().getPluginManager().registerEvents(rulesCommand, this);
 
         // Register Media Command
-        com.h2ph.commands.player.MediaCommand mediaCommand = new com.h2ph.commands.player.MediaCommand(this);
+        this.mediaCommand = new com.h2ph.commands.player.MediaCommand(this);
         getCommand("media").setExecutor(mediaCommand);
         getServer().getPluginManager().registerEvents(mediaCommand, this);
 
@@ -362,6 +426,7 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.BountyConfirmGUIListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.BountyListener(this), this);
 
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.WorthGUIListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SettingsGUIListener(), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.MobSpawnListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TpaConfirmGUIListener(), this);
@@ -376,6 +441,27 @@ public class PrismSurvival extends JavaPlugin {
         com.h2ph.commands.player.FlyCommand flyCommand = new com.h2ph.commands.player.FlyCommand(this);
         getCommand("fly").setExecutor(flyCommand);
         getServer().getPluginManager().registerEvents(flyCommand, this);
+
+        // Register NightVision Command
+        getCommand("nv").setExecutor(new com.h2ph.commands.player.NightVisionCommand(this));
+
+        // Register Discord Command
+        getCommand("discord").setExecutor(new com.h2ph.commands.player.DiscordCommand(this));
+
+        // Register Store Command
+        getCommand("store").setExecutor(new com.h2ph.commands.player.StoreCommand(this));
+
+        // Initialize Vanish Manager
+        this.vanishManager = new com.h2ph.managers.VanishManager(this);
+
+        // Register Vanish Command
+        com.h2ph.commands.admin.moderations.VanishCommand vanishCmd = new com.h2ph.commands.admin.moderations.VanishCommand(
+                this);
+        getCommand("vanish").setExecutor(vanishCmd);
+        getCommand("vanish").setTabCompleter(vanishCmd);
+
+        // Register Vanish Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.VanishListener(this), this);
 
         // Register PlaceholderAPI expansion
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
@@ -413,6 +499,40 @@ public class PrismSurvival extends JavaPlugin {
         // Register Ender Chest GUI Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.EnderChestGUIListener(this), this);
 
+        // Initialize Home Manager
+        this.homeManager = new com.h2ph.managers.HomeManager(this);
+
+        // Register Home Command
+        com.h2ph.commands.player.HomeCommand homeCmd = new com.h2ph.commands.player.HomeCommand(this);
+        getCommand("home").setExecutor(homeCmd);
+        getCommand("home").setTabCompleter(homeCmd);
+
+        // Register Home GUI Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HomeGUIListener(this), this);
+
+        // Register Home Chat Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HomeChatListener(this), this);
+
+        // Initialize Scoreboard Manager
+        this.scoreboardManager = new com.h2ph.managers.ScoreboardManager(this);
+        this.scoreboardManager.setup();
+
+        // Initialize Gamertag Manager
+        this.gamertagManager = new com.h2ph.managers.GamertagManager(this);
+
+        // Initialize Team Managers
+        this.teamManager = new com.h2ph.teams.TeamManager(this);
+        this.teamInviteManager = new com.h2ph.teams.TeamInviteManager(this);
+
+        // Register Team Listeners
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TeamPvPListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TeamChatListener(this), this);
+
+        // Register Team Command
+        com.h2ph.commands.player.TeamCommand teamCommand = new com.h2ph.commands.player.TeamCommand(this);
+        getCommand("team").setExecutor(teamCommand);
+        getCommand("team").setTabCompleter(teamCommand);
+
         // Initialize Maintenance Manager
         this.maintenanceManager = new com.h2ph.maintenance.MaintenanceManager(this);
 
@@ -431,13 +551,48 @@ public class PrismSurvival extends JavaPlugin {
         this.apiServer = new com.h2ph.api.ApiServer(this);
         this.apiServer.start();
 
+        // Start Team Chat Actionbar Reminder
+        startTeamChatTask();
+
         // Register Reload Command
         getCommand("prismreload").setExecutor(new com.h2ph.commands.admin.ReloadCommand(this));
+
+        // Initialize Void Manager
+        this.voidManager = new com.prismcore.survival.manager.VoidManager(this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.VoidProtectionListener(this), this);
+
+        // Initialize Limiter Manager
+        this.limiterConfig = new com.prismcore.survival.limiter.LimiterConfig(this);
+        this.limiterManager = new com.prismcore.survival.limiter.LimiterManager(this, this.limiterConfig);
+        this.limiterManager.start();
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.limiter.LimiterListener(this), this);
 
         // Register Falcon Command
         com.h2ph.commands.admin.FalconCommand falconCommand = new com.h2ph.commands.admin.FalconCommand(this);
         getCommand("falcon").setExecutor(falconCommand);
         getCommand("falcon").setTabCompleter(falconCommand);
+
+        // Register Stats Command
+        getCommand("stats").setExecutor(new com.h2ph.commands.player.StatsCommand(this));
+
+        // Register HideName Command
+        getCommand("hidename").setExecutor(new com.h2ph.commands.player.HideNameCommand(this));
+        // Register InvSee and EnderSee admin commands
+        com.h2ph.commands.admin.moderations.InvSeeCommand invSeeCmd = new com.h2ph.commands.admin.moderations.InvSeeCommand(
+                this);
+        getCommand("invsee").setExecutor(invSeeCmd);
+        getCommand("invsee").setTabCompleter(invSeeCmd);
+
+        com.h2ph.commands.admin.moderations.EnderSeeCommand enderSeeCmd = new com.h2ph.commands.admin.moderations.EnderSeeCommand(
+                this);
+        getCommand("endersee").setExecutor(enderSeeCmd);
+        getCommand("endersee").setTabCompleter(enderSeeCmd);
+
+        // Register InvSee Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InvSeeListener(this), this);
+
+        // Register Operator listener to enforce allowed operators list
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.OperatorListener(this), this);
 
         // Initialize Economy Monitor
         new com.h2ph.economy.EconomyMonitor(this);
@@ -477,6 +632,30 @@ public class PrismSurvival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Save all online players first while databases are still open
+        if (this.playerDataManager != null) {
+            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                this.playerDataManager.savePlayer(player.getUniqueId());
+            }
+        }
+
+        // Save all online ender chests
+        if (this.enderChestManager != null) {
+            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                // Close the inventory first if it's an ender chest GUI to ensure save
+                if (player.getOpenInventory().getTopInventory()
+                        .getHolder() instanceof com.h2ph.gui.EnderChestGUI.EnderChestHolder) {
+                    org.bukkit.inventory.ItemStack[] contents = player.getOpenInventory().getTopInventory()
+                            .getContents().clone();
+                    this.enderChestManager.saveEnderChest(player.getUniqueId(), contents);
+                }
+            }
+        }
+
+        if (this.databaseManager != null) {
+            this.databaseManager.shutdown();
+        }
+
         if (this.prismSell != null) {
             this.prismSell.onDisable();
         }
@@ -497,28 +676,16 @@ public class PrismSurvival extends JavaPlugin {
             this.auctionController.disable();
         }
 
+        if (this.limiterManager != null) {
+            this.limiterManager.shutdown();
+        }
+
         if (this.signInput != null) {
             this.signInput.cleanup();
         }
 
-        // Save all online players
-        if (this.playerDataManager != null) {
-            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                this.playerDataManager.savePlayer(player.getUniqueId());
-            }
-        }
-
-        // Save all online ender chests
-        if (this.enderChestManager != null) {
-            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                // Close the inventory first if it's an ender chest GUI to ensure save
-                if (player.getOpenInventory().getTopInventory()
-                        .getHolder() instanceof com.h2ph.gui.EnderChestGUI.EnderChestHolder) {
-                    org.bukkit.inventory.ItemStack[] contents = player.getOpenInventory().getTopInventory()
-                            .getContents().clone();
-                    this.enderChestManager.saveEnderChest(player.getUniqueId(), contents);
-                }
-            }
+        if (this.scoreboardManager != null) {
+            this.scoreboardManager.shutdown();
         }
 
         if (this.activityLogger != null) {
@@ -535,6 +702,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public PlayerDataManager getPlayerDataManager() {
         return playerDataManager;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
     public SchedulerAdapter getSchedulerAdapter() {
@@ -605,6 +776,70 @@ public class PrismSurvival extends JavaPlugin {
         return enderChestManager;
     }
 
+    public com.h2ph.managers.HomeManager getHomeManager() {
+        return homeManager;
+    }
+
+    public com.h2ph.managers.ScoreboardManager getScoreboardManager() {
+        return scoreboardManager;
+    }
+
+    public com.prismcore.survival.manager.VoidManager getVoidManager() {
+        return voidManager;
+    }
+
+    public com.h2ph.managers.VanishManager getVanishManager() {
+        return vanishManager;
+    }
+
+    public com.h2ph.managers.RTPDeathManager getRTPDeathManager() {
+        return rtpDeathManager;
+    }
+
+    public com.h2ph.gui.RTPDeathGUI getRTPDeathGUI() {
+        return rtpDeathGUI;
+    }
+
+    public com.h2ph.teams.TeamManager getTeamManager() {
+        return teamManager;
+    }
+
+    public com.h2ph.teams.TeamInviteManager getTeamInviteManager() {
+        return teamInviteManager;
+    }
+
+    public com.h2ph.managers.GamertagManager getGamertagManager() {
+        return gamertagManager;
+    }
+
+    public com.prismcore.survival.limiter.LimiterConfig getLimiterConfig() {
+        return limiterConfig;
+    }
+
+    public com.prismcore.survival.limiter.LimiterManager getLimiterManager() {
+        return limiterManager;
+    }
+
+    public com.prismcore.survival.manager.KeyAllManager getKeyAllManager() {
+        return keyAllManager;
+    }
+
+    public com.prismcore.survival.tools.ToolsManager getToolsManager() {
+        return com.prismcore.survival.tools.ToolsManager.getInstance();
+    }
+
+    public com.h2ph.commands.player.MediaCommand getMediaCommand() {
+        return mediaCommand;
+    }
+
+    public com.prismcore.survival.survival.ChatFilter getChatFilter() {
+        return chatFilter;
+    }
+
+    public com.h2ph.listeners.CommandHideListener getCommandHideListener() {
+        return commandHideListener;
+    }
+
     public net.milkbowl.vault.economy.Economy getEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             return null;
@@ -639,6 +874,20 @@ public class PrismSurvival extends JavaPlugin {
         saveResourceSafely("rtp/europe/config.yml");
         saveResourceSafely("rtp/config.yml");
         saveResourceSafely("crates/keys/config.yml");
+        saveResourceSafely("scoreboard/config.yml");
+    }
+
+    private void startTeamChatTask() {
+        getSchedulerAdapter().runTaskTimer(() -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                com.prismcore.survival.manager.PlayerData data = getPlayerDataManager().get(player.getUniqueId());
+                if (data != null && data.isTeamChat() && data.getTeamId() != null) {
+                    player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(
+                                    com.prismcore.survival.orders.Utils.formatColors("&dYou have team chat on.")));
+                }
+            }
+        }, 40L, 40L); // Every 2 seconds
     }
 
     private void saveResourceSafely(String path) {
@@ -786,10 +1035,6 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.api.ApiServer getApiServer() {
         return apiServer;
-    }
-
-    public com.prismcore.survival.manager.KeyAllManager getKeyAllManager() {
-        return keyAllManager;
     }
 
     public com.prismcore.survival.manager.CarouselManager getCarouselManager() {

@@ -52,8 +52,10 @@ public class HazardManager {
 
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String query = "INSERT INTO hazards (uuid, type, details, timestamp) VALUES (?, ?, ?, ?)";
-            try (java.sql.Connection conn = plugin.getActivityLogger().getConnection();
-                    PreparedStatement ps = conn.prepareStatement(query)) {
+            java.sql.Connection conn = plugin.getActivityLogger().getConnection();
+            if (conn == null)
+                return;
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, uuid.toString());
                 ps.setString(2, type);
                 ps.setString(3, details);
@@ -67,8 +69,10 @@ public class HazardManager {
 
     public int getHazardCount(UUID uuid) {
         String query = "SELECT COUNT(*) FROM hazards WHERE uuid = ?";
-        try (java.sql.Connection conn = plugin.getActivityLogger().getConnection();
-                PreparedStatement ps = conn.prepareStatement(query)) {
+        java.sql.Connection conn = plugin.getActivityLogger().getConnection();
+        if (conn == null)
+            return 0;
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -84,8 +88,10 @@ public class HazardManager {
     public List<Map<String, Object>> getHazards(UUID uuid) {
         List<Map<String, Object>> hazards = new ArrayList<>();
         String query = "SELECT type, details, timestamp FROM hazards WHERE uuid = ? ORDER BY timestamp DESC";
-        try (java.sql.Connection conn = plugin.getActivityLogger().getConnection();
-                PreparedStatement ps = conn.prepareStatement(query)) {
+        java.sql.Connection conn = plugin.getActivityLogger().getConnection();
+        if (conn == null)
+            return hazards;
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -104,8 +110,10 @@ public class HazardManager {
 
     public int getTotalHazardousPlayersCount() {
         String query = "SELECT COUNT(DISTINCT uuid) FROM hazards";
-        try (java.sql.Connection conn = plugin.getActivityLogger().getConnection();
-                PreparedStatement ps = conn.prepareStatement(query);
+        java.sql.Connection conn = plugin.getActivityLogger().getConnection();
+        if (conn == null)
+            return 0;
+        try (PreparedStatement ps = conn.prepareStatement(query);
                 ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
@@ -118,8 +126,10 @@ public class HazardManager {
 
     public void resolveHazards(UUID uuid) {
         String query = "DELETE FROM hazards WHERE uuid = ?";
-        try (java.sql.Connection conn = plugin.getActivityLogger().getConnection();
-                PreparedStatement ps = conn.prepareStatement(query)) {
+        java.sql.Connection conn = plugin.getActivityLogger().getConnection();
+        if (conn == null)
+            return;
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {

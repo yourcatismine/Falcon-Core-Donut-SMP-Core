@@ -133,6 +133,12 @@ public class SettingsCommand implements CommandExecutor {
                 createItem(Material.PRISMARINE_SHARD, "&aѕʜᴀʀᴅѕ ɴᴏᴛɪꜰɪᴇʀ", "&fCurrently: " + shardsNotifierStatus,
                         "&a&lON", "&4&lOFF"));
 
+        // Slot 12: Paper - Scoreboard
+        boolean showScoreboard = data != null && data.isShowScoreboard();
+        String scoreboardStatus = showScoreboard ? "&a&lON" : "&4&lOFF";
+        gui.setItem(12,
+                createItem(Material.PAPER, "&aѕᴄᴏʀᴇʙᴏᴀʀᴅ", "&fCurrently: " + scoreboardStatus, "&a&lON", "&4&lOFF"));
+
         player.openInventory(gui);
     }
 

@@ -58,7 +58,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
             try {
                 amount = parseAmount(amountStr);
             } catch (NumberFormatException e) {
-                // No sound, open GUI for invalid amount
                 new BountyGUI(plugin).open(player);
                 return true;
             }
@@ -69,7 +68,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
             }
 
             if (amount > 1_000_000_000_000.0 || !Double.isFinite(amount)) {
-                // No sound, open GUI for invalid amount (exceeding max)
                 new BountyGUI(plugin).open(player);
                 return true;
             }
@@ -79,6 +77,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
             if (econ != null) {
                 if (!econ.has(player, amount)) {
                     player.sendMessage(ChatColor.RED + "You do not have enough money.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
             } else {
@@ -89,6 +88,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
 
                 if (data.getMoney() < amount) {
                     player.sendMessage(ChatColor.RED + "You do not have enough money.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
             }
@@ -105,7 +105,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
                     if (!offlinePlayer.hasPlayedBefore() && !offlinePlayer.isOnline()) {
                         plugin.getSchedulerAdapter().runTask(() -> {
-                            // No sound, open GUI for unknown player
                             new BountyGUI(plugin).open(player);
                         });
                         return;
@@ -178,7 +177,43 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
-        // Hide sub-commands and arguments from tab completion as requested
+        if (!(sender instanceof Player)) {
+            return Collections.emptyList();
+        }
+
+        if (args.length == 1) {
+            java.util.List<String> subs = java.util.Arrays.asList("add");
+            java.util.List<String> completions = new java.util.ArrayList<>();
+            for (String sub : subs) {
+                if (sub.startsWith(args[0].toLowerCase())) {
+                    completions.add(sub);
+                }
+            }
+            return completions;
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("add")) {
+            java.util.List<String> players = new java.util.ArrayList<>();
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
+                    players.add(p.getName());
+                }
+            }
+            return players;
+        }
+
+        if (args.length == 3 && args[0].equalsIgnoreCase("add")) {
+            java.util.List<String> amounts = java.util.Arrays.asList("100", "500", "1k", "5k", "10k", "50k", "100k",
+                    "1m");
+            java.util.List<String> completions = new java.util.ArrayList<>();
+            for (String amount : amounts) {
+                if (amount.startsWith(args[2].toLowerCase())) {
+                    completions.add(amount);
+                }
+            }
+            return completions;
+        }
+
         return Collections.emptyList();
     }
 }

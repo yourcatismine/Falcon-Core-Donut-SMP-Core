@@ -6,17 +6,23 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 public class SpawnManager {
 
     private final PrismSurvival plugin;
     private final File file;
     private FileConfiguration config;
+    private Location globalSpawnCache;
 
     public SpawnManager(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -78,6 +84,65 @@ public class SpawnManager {
             plugin.getLogger().severe("Could not save locations.yml!");
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public Location getGlobalSpawn() {
+        if (globalSpawnCache != null)
+            return globalSpawnCache;
+
+        try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection();
+                PreparedStatement ps = conn.prepareStatement("SELECT spawn FROM server WHERE id = 1")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String raw = rs.getString("spawn");
+                    if (raw == null || raw.isEmpty())
+                        return null;
+                    globalSpawnCache = deserializeLocation(raw);
+                    return globalSpawnCache;
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to get global spawn from database", e);
+        }
+        return null;
+    }
+
+    public void setGlobalSpawn(Location loc) {
+        globalSpawnCache = loc;
+        String serialized = serializeLocation(loc);
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection();
+                    PreparedStatement ps = conn.prepareStatement("UPDATE server SET spawn = ? WHERE id = 1")) {
+                ps.setString(1, serialized);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to set global spawn in database", e);
+            }
+        });
+    }
+
+    private String serializeLocation(Location loc) {
+        return loc.getWorld().getName() + "," + loc.getX() + "," + loc.getY() + "," + loc.getZ() + "," + loc.getYaw()
+                + "," + loc.getPitch();
+    }
+
+    private Location deserializeLocation(String raw) {
+        String[] parts = raw.split(",");
+        if (parts.length < 6)
+            return null;
+        try {
+            org.bukkit.World world = plugin.getServer().getWorld(parts[0]);
+            if (world == null)
+                return null;
+            double x = Double.parseDouble(parts[1]);
+            double y = Double.parseDouble(parts[2]);
+            double z = Double.parseDouble(parts[3]);
+            float yaw = Float.parseFloat(parts[4]);
+            float pitch = Float.parseFloat(parts[5]);
+            return new Location(world, x, y, z, yaw, pitch);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

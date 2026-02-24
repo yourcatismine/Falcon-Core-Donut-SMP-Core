@@ -64,6 +64,9 @@ public class SellAxeListener implements Listener {
 
         double totalValue = 0;
         int itemsSold = 0;
+        java.util.Map<com.prismcore.survival.sell.category.Category, Double> categoryProgressToAdd = new java.util.HashMap<>();
+        com.prismcore.survival.sell.data.PlayerData data = PrismSurvival.getInstance().getPrismSell()
+                .getPlayerDataManager().getPlayerData(player.getUniqueId());
 
         ItemStack[] contents = container.getInventory().getContents();
         for (int i = 0; i < contents.length; i++) {
@@ -89,7 +92,18 @@ public class SellAxeListener implements Listener {
                             double price = PrismSurvival.getInstance().getPrismSell().getPricesManager()
                                     .getPrice(sItem);
                             if (price > 0) {
-                                totalValue += price * sItem.getAmount();
+                                com.prismcore.survival.sell.category.Category category = PrismSurvival.getInstance()
+                                        .getPrismSell().getPricesManager().getCategory(sItem);
+                                double amount = price * sItem.getAmount();
+
+                                if (category != null) {
+                                    double multiplier = data.getMultiplier(category);
+                                    amount *= multiplier;
+                                    categoryProgressToAdd.put(category,
+                                            categoryProgressToAdd.getOrDefault(category, 0.0) + amount);
+                                }
+
+                                totalValue += amount;
                                 itemsSold += sItem.getAmount();
                                 shulker.getInventory().setItem(j, null);
                                 shulkerChanged = true;
@@ -107,7 +121,17 @@ public class SellAxeListener implements Listener {
 
             double price = PrismSurvival.getInstance().getPrismSell().getPricesManager().getPrice(is);
             if (price > 0) {
-                totalValue += price * is.getAmount();
+                com.prismcore.survival.sell.category.Category category = PrismSurvival.getInstance().getPrismSell()
+                        .getPricesManager().getCategory(is);
+                double amount = price * is.getAmount();
+
+                if (category != null) {
+                    double multiplier = data.getMultiplier(category);
+                    amount *= multiplier;
+                    categoryProgressToAdd.put(category, categoryProgressToAdd.getOrDefault(category, 0.0) + amount);
+                }
+
+                totalValue += amount;
                 itemsSold += is.getAmount();
                 container.getInventory().setItem(i, null); // Remove item
             }
@@ -115,6 +139,15 @@ public class SellAxeListener implements Listener {
 
         if (totalValue > 0) {
             PrismSurvival.getInstance().getPrismSell().getEconomy().deposit(player.getUniqueId(), totalValue);
+
+            // Update stats and progress
+            data.setSellMade(data.getSellMade() + totalValue);
+            for (java.util.Map.Entry<com.prismcore.survival.sell.category.Category, Double> entry : categoryProgressToAdd
+                    .entrySet()) {
+                data.addProgress(entry.getKey(), entry.getValue());
+                checkLevelUp(player, entry.getKey(), data);
+            }
+            PrismSurvival.getInstance().getPrismSell().getPlayerDataManager().savePlayerData(player.getUniqueId());
 
             org.bukkit.configuration.file.FileConfiguration sellConfig = PrismSurvival.getInstance().getPrismSell()
                     .getConfig();
@@ -159,5 +192,41 @@ public class SellAxeListener implements Listener {
             }
             return true;
         }
+    }
+
+    private void checkLevelUp(Player player, com.prismcore.survival.sell.category.Category category,
+            com.prismcore.survival.sell.data.PlayerData data) {
+        com.prismcore.survival.sell.PrismSell sellPlugin = PrismSurvival.getInstance().getPrismSell();
+        java.util.List<Double> levelPrices = sellPlugin.getConfig().getDoubleList("level-prices");
+        double multiplierIncrement = sellPlugin.getConfig().getDouble("settings.multiplier-increment", 0.1);
+
+        while (true) {
+            double currentMultiplier = data.getMultiplier(category);
+            int currentLevel = this.getCurrentLevel(currentMultiplier);
+
+            // Check if max level reached
+            if (currentLevel >= levelPrices.size()) {
+                return;
+            }
+
+            double required = levelPrices.get(currentLevel);
+            double progress = data.getProgress(category);
+
+            if (progress >= required) {
+                double newMultiplier = currentMultiplier + multiplierIncrement;
+                data.setMultiplier(category, newMultiplier);
+                // Optional: add level up message or sound here if desired
+            } else {
+                break;
+            }
+        }
+    }
+
+    private int getCurrentLevel(double multiplier) {
+        com.prismcore.survival.sell.PrismSell sellPlugin = PrismSurvival.getInstance().getPrismSell();
+        double baseMultiplier = sellPlugin.getConfig().getDouble("settings.base-multiplier", 1.0);
+        double multiplierIncrement = sellPlugin.getConfig().getDouble("settings.multiplier-increment", 0.1);
+        int level = (int) Math.round((multiplier - baseMultiplier) / multiplierIncrement);
+        return Math.max(0, level);
     }
 }

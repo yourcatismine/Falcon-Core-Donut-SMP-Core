@@ -331,7 +331,13 @@ public class CrateListener implements Listener {
 
             // Success
             data.removeKey(keyName);
-            player.getInventory().addItem(reward.clone());
+            ItemStack toGive = reward.clone();
+            com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
+                    .getInstance();
+            if (toolsManager != null) {
+                toolsManager.refreshExpiryForReward(toGive);
+            }
+            player.getInventory().addItem(toGive);
 
             // Log activity
             plugin.getActivityLogger().log(player.getUniqueId(),

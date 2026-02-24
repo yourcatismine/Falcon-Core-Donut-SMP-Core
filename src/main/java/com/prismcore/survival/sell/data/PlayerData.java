@@ -78,6 +78,9 @@ public class PlayerData {
     private long deaths;
     private long kills;
     private long keys;
+    private double bounty;
+    private long toolExpiry;
+    private String teamId;
 
     public double getMoney() {
         return this.money;
@@ -200,6 +203,28 @@ public class PlayerData {
         }
     }
 
+    public double getBounty() {
+        return bounty;
+    }
+
+    public void setBounty(double bounty) {
+        if (this.bounty != bounty) {
+            this.bounty = bounty;
+            this.markDirty();
+        }
+    }
+
+    public long getToolExpiry() {
+        return toolExpiry;
+    }
+
+    public void setToolExpiry(long toolExpiry) {
+        if (this.toolExpiry != toolExpiry) {
+            this.toolExpiry = toolExpiry;
+            this.markDirty();
+        }
+    }
+
     public boolean isDirty() {
         return this.dirty;
     }
@@ -210,5 +235,16 @@ public class PlayerData {
 
     public void resetDirty() {
         this.dirty = false;
+    }
+
+    public String getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(String teamId) {
+        if (this.teamId == null ? teamId != null : !this.teamId.equals(teamId)) {
+            this.teamId = teamId;
+            this.markDirty();
+        }
     }
 }

@@ -357,6 +357,65 @@ public class ToolsManager {
         player.getInventory().addItem(new org.bukkit.inventory.ItemStack[] { item });
     }
 
+    /**
+     * Refreshes the EXPIRY_KEY on an amethyst tool item so it is valid from "now".
+     *
+     * When amethyst tools are stored in a crate YAML file, the EXPIRY_KEY is baked
+     * in as an absolute timestamp at the moment the crate was configured. By the
+     * time a player actually opens the crate, that timestamp is in the past and the
+     * tool expires immediately upon being received.
+     *
+     * This method reads the configured timer duration for the tool type and resets
+     * the EXPIRY_KEY to (System.currentTimeMillis() + configuredDurationMillis).
+     * Call this on every tool item before giving it as a crate reward.
+     *
+     * @param item the ItemStack to refresh (modified in place)
+     */
+    public void refreshExpiryForReward(org.bukkit.inventory.ItemStack item) {
+        if (item == null || !item.hasItemMeta())
+            return;
+
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+        if (!meta.getPersistentDataContainer().has(EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG))
+            return;
+
+        // Determine the config key for this tool type
+        String configKey = null;
+        if (meta.getPersistentDataContainer().has(MULTI_KEY, org.bukkit.persistence.PersistentDataType.BYTE)) {
+            configKey = "multitool";
+        } else if (meta.getPersistentDataContainer().has(BOOSTER_KEY, org.bukkit.persistence.PersistentDataType.BYTE)) {
+            configKey = "shardbooster";
+        } else if (meta.getPersistentDataContainer().has(SELL_AXE_KEY,
+                org.bukkit.persistence.PersistentDataType.BYTE)) {
+            configKey = "sellaxe";
+        } else {
+            String matName = item.getType().name();
+            if (matName.endsWith("_PICKAXE"))
+                configKey = "drill";
+            else if (matName.endsWith("_AXE"))
+                configKey = "axe";
+            else if (matName.endsWith("_SHOVEL"))
+                configKey = "shovel";
+            else if (matName.endsWith("_BUCKET") || matName.equals("BUCKET"))
+                configKey = "bucket";
+        }
+
+        if (configKey == null)
+            return;
+
+        long timerSec = getConfig().getLong(configKey + ".timer", 0L);
+        if (timerSec <= 0)
+            return;
+
+        long freshExpiry = System.currentTimeMillis() + (timerSec * 1000L);
+        meta.getPersistentDataContainer().set(EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG, freshExpiry);
+
+        // Also clear last-update timestamp so lore refreshes on next scanner tick
+        meta.getPersistentDataContainer().remove(LAST_UPDATE_KEY);
+
+        item.setItemMeta(meta);
+    }
+
     public static final NamespacedKey SELL_AXE_KEY = new NamespacedKey(PrismSurvival.getInstance(), "is-sellaxe");
 
     public void giveSellAxe(Player player, long overrideTimer) {

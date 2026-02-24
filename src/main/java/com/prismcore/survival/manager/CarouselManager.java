@@ -256,6 +256,12 @@ public class CarouselManager {
 
         // 1. Give Reward Logic (CRITICAL: Do this first)
         if (player.isOnline()) {
+            // Refresh expiry so YAML-baked timestamps don't cause instant self-destruct
+            com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
+                    .getInstance();
+            if (toolsManager != null) {
+                toolsManager.refreshExpiryForReward(reward);
+            }
             player.getInventory().addItem(reward);
             // Log activity
             plugin.getActivityLogger().log(player.getUniqueId(),
@@ -340,6 +346,12 @@ public class CarouselManager {
             // Give pending reward immediately
             ItemStack reward = pendingRewards.remove(uuid);
             if (player.isOnline()) {
+                // Refresh expiry so YAML-baked timestamps don't cause instant self-destruct
+                com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
+                        .getInstance();
+                if (toolsManager != null) {
+                    toolsManager.refreshExpiryForReward(reward);
+                }
                 player.getInventory().addItem(reward);
                 player.sendMessage(ChatColor.GREEN + "You received your crate reward!");
                 // Log activity

@@ -37,7 +37,7 @@ sellaxe:
   timer: 259200 # 3 days, in seconds
   update-interval: 30  # seconds between countdown updates for ALL tools (1 second for accurate display)
   material: NETHERITE_AXE
-  display-name: "&#860aeeᴀᴘʀɪѕᴍ ѕᴇʟʟ ᴀхᴇ"
+  display-name: "&#860aeeᴘʀɪѕᴍ ѕᴇʟʟ ᴀхᴇ"
   lore:
     - "&7Instantly Sells All Items in A Chest"
     - "&8Self Destruct: "

@@ -21,7 +21,7 @@ public class KeyAllManager {
         startTask();
     }
 
-    private void loadConfig() {
+    public void loadConfig() {
         configFile = new File(plugin.getDataFolder(), "crates/keys/config.yml");
         // If file doesn't exist in data folder, save resource if available
         if (!configFile.exists()) {

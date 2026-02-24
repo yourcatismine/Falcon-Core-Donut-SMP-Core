@@ -81,9 +81,15 @@ public class RTPManager {
     }
 
     public static void teleportInstant(Player player, String region, String worldType) {
+        teleportInstant(player, region, worldType, false);
+    }
+
+    public static void teleportInstant(Player player, String region, String worldType, boolean silent) {
         // Bypass cooldown and warmup checks for queue system
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent
-                .fromLegacyText(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&7Teleporting...")));
+        if (!silent) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent
+                    .fromLegacyText(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&7Teleporting...")));
+        }
         calculateLocation(player, region, worldType, (target) -> {
             if (target != null) {
                 player.teleportAsync(target);
@@ -238,6 +244,8 @@ public class RTPManager {
 
         World world = Bukkit.getWorld(worldName);
         if (world == null) {
+            main.getLogger().warning(
+                    "[RTP] Could not find world: " + worldName + ". Please check rtp/" + region + "/config.yml");
             cleanup(player);
             if (callback != null)
                 callback.accept(null);

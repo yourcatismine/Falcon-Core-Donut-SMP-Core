@@ -100,11 +100,6 @@ commands:
     permission: prism.admin.checkban
     usage: /checkban <player/ID>
 
-  crate:
-    description: Manage crates
-    permission: prism.crates.admin
-    usage: /crate <create|edit|get> ...
-
   key:
     description: Manage crate keys
     permission: prism.admin.key
@@ -117,7 +112,7 @@ commands:
 
   gmsp:
     description: Silent spectator mode
-    permission: prism.admin.spectator
+    permission: prismsmp.spectator
     usage: /gmsp
 
   gmc:
@@ -141,6 +136,21 @@ commands:
     permission-message: ""
     usage: /fly
 
+  nv:
+    description: Toggle night vision
+    aliases: [nightvision]
+    usage: /nv
+
+  discord:
+    description: View the server discord link
+    usage: /discord
+    aliases: []
+
+  store:
+    description: View the server store link
+    usage: /store
+    aliases: []
+
   duel:
     description: Manage duel regions and settings
     usage: /duel <player|create|settings>
@@ -153,7 +163,20 @@ commands:
     aliases: [preload]
     usage: /prismreload
 
+  mute:
+    description: Mute a player for a certain duration
+    usage: /mute <player> <duration> [reason]
+    permission: prismsmp.admin.mute
 
+  unmute:
+    description: Unmute a player
+    usage: /unmute <player>
+    permission: prismsmp.admin.mute
+
+  checkmute:
+    description: Check the mute details of a player
+    usage: /checkmute <player>
+    permission: prismsmp.admin.mute
 
   ah:
     description: Open the auction house
@@ -234,6 +257,16 @@ commands:
     usage: /settings
     aliases: []
 
+  stats:
+    description: View your player statistics
+    usage: /stats [player]
+
+  hidename:
+    description: Hide your nametag overhead and in chat
+    usage: /hidename
+    permission: prism.hidename
+    aliases: [hide]
+
   bounty:
     description: Manage player bounties
     usage: /bounty [add <player> <amount>]
@@ -243,11 +276,20 @@ commands:
     description: Open the sell GUI
     usage: /sell
     aliases: []
-
+ 
+  sellhistory:
+    description: View your aggregated sell history
+    usage: /sellhistory
+    aliases: [history]
+ 
+  worth:
+    description: View item prices in a GUI
+    usage: /worth
+    aliases: []
+ 
   prismsell:
     description: Admin commands for the sell module
     usage: /prismsell
-    permission: prism.admin.sell
     aliases: []
 
   echest:
@@ -256,6 +298,33 @@ commands:
     aliases: [enderchest]
     permission: prismcore.enderchest
     permission-message: ""
+
+  invsee:
+    description: View another player's inventory
+    usage: /invsee <player>
+    permission: prism.admin.invsee
+    permission-message: You do not have permission to use this command.
+
+  endersee:
+    description: View another player's ender chest
+    usage: /endersee <player>
+    permission: prism.admin.endersee
+    permission-message: You do not have permission to use this command.
+
+  home:
+    description: Open the homes GUI
+    usage: /home
+    permission: prismcore.home.use
+    default: true
+
+  vanish:
+    description: Toggle your visibility to other players
+    usage: /vanish
+    permission: prism.admin.vanish
+
+  team:
+    description: Manage your team
+    usage: /team <subcommand>
 
 permissions:
   prismcore.admin.shards:
@@ -305,4 +374,25 @@ permissions:
     default: op
   prismcore.enderchest:
     description: Permission to use /echest
+    default: op
+  prismcore.home.3:
+    description: Access to home slot 3
+    default: op
+  prismcore.home.4:
+    description: Access to home slot 4
+    default: op
+  prismcore.home.5:
+    description: Access to home slot 5
+    default: op
+  prism.admin.invsee:
+    description: Allows viewing other players' inventories
+    default: op
+  prism.admin.endersee:
+    description: Allows viewing other players' ender chests
+    default: op
+  prismcore.home.use:
+    description: Access to the home system
+    default: true
+  prism.hidename.see:
+    description: Allows seeing real names of hidden players
     default: op

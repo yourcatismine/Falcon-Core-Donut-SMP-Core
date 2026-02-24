@@ -54,12 +54,12 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
 
         if (target == null || !p.canSee(target)) {
             // Check offline player asynchronously to prevent lag
-            Bukkit.getScheduler().runTaskAsynchronously(PrismSurvival.getInstance(), () -> {
+            PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
                 boolean exists = offlineTarget.hasPlayedBefore();
                 boolean isOnlineButHidden = (target != null);
 
-                Bukkit.getScheduler().runTask(PrismSurvival.getInstance(), () -> {
+                PrismSurvival.getInstance().getSchedulerAdapter().runTask(() -> {
                     String msg;
                     if (isOnlineButHidden) {
                         msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
@@ -78,6 +78,17 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (target.getUniqueId().equals(p.getUniqueId())) {
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        // Check if target is in combat
+        if (com.h2ph.listeners.CombatListener.getInstance() != null &&
+                com.h2ph.listeners.CombatListener.getInstance().isInCombat(target)) {
+            String msg = ChatColor.translateAlternateColorCodes('&', "&cThis player is currently on combat.");
+            p.sendMessage(msg);
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -222,7 +233,7 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
                     playerNames.add(player.getName());
                 }
             }
-            return playerNames;
+            return org.bukkit.util.StringUtil.copyPartialMatches(args[0], playerNames, new ArrayList<>());
         }
         return Collections.emptyList();
     }

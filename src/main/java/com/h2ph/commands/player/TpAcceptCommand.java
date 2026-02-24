@@ -84,6 +84,21 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Check if acceptor is in combat
+        if (com.h2ph.listeners.CombatListener.getInstance() != null &&
+                com.h2ph.listeners.CombatListener.getInstance().isInCombat(p)) {
+            String msg = ChatColor.translateAlternateColorCodes('&', "&cYou are currently on combat.");
+            p.sendMessage(msg);
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+
+            // Clear the request as requested: "Well clear the requests say the error
+            // message we had that you are in combat"
+            TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());
+            return true;
+        }
+
         // Use Manager logic
         TpaRequestManager.getInstance().acceptRequest(p, targetPlayer, request.getType());
 

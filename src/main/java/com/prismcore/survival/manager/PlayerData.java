@@ -15,9 +15,17 @@ public class PlayerData {
     private boolean muted;
     private String muteReason;
     private long muteExpiry;
+    private String muteId;
+    private String mutedBy;
+    private long muteDate;
     private final Map<String, Integer> keys = new HashMap<>();
     private String name; // Cached name
     private long shardBoosterExpiry; // Timestamp when shard booster expires
+    private boolean vanished = false;
+    private boolean combatLogged = false;
+    private boolean teamChat = false;
+    private String pendingKickTeamName = null;
+    private boolean nameHidden = false;
 
     public PlayerData(PrismSurvival plugin, UUID uuid) {
         this.plugin = plugin;
@@ -304,6 +312,16 @@ public class PlayerData {
         this.tpaHereRequests = tpaHereRequests;
     }
 
+    private boolean showScoreboard = true; // Default: ON
+
+    public boolean isShowScoreboard() {
+        return showScoreboard;
+    }
+
+    public void setShowScoreboard(boolean showScoreboard) {
+        this.showScoreboard = showScoreboard;
+    }
+
     private boolean payments = true; // Default: ON
 
     public boolean isPayments() {
@@ -387,5 +405,148 @@ public class PlayerData {
 
     public void setMuteExpiry(long muteExpiry) {
         this.muteExpiry = muteExpiry;
+    }
+
+    public String getMuteId() {
+        return muteId;
+    }
+
+    public void setMuteId(String muteId) {
+        this.muteId = muteId;
+    }
+
+    public String getMutedBy() {
+        return mutedBy;
+    }
+
+    public void setMutedBy(String mutedBy) {
+        this.mutedBy = mutedBy;
+    }
+
+    public long getMuteDate() {
+        return muteDate;
+    }
+
+    public void setMuteDate(long muteDate) {
+        this.muteDate = muteDate;
+    }
+
+    public boolean isVanished() {
+        return vanished;
+    }
+
+    public void setVanished(boolean vanished) {
+        this.vanished = vanished;
+    }
+
+    private String teamId = null;
+    private String teamRole = null;
+
+    public String getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(String teamId) {
+        this.teamId = teamId;
+    }
+
+    public String getTeamRole() {
+        return teamRole;
+    }
+
+    public void setTeamRole(String teamRole) {
+        this.teamRole = teamRole;
+    }
+
+    public boolean isTeamChat() {
+        return teamChat;
+    }
+
+    public void setTeamChat(boolean teamChat) {
+        this.teamChat = teamChat;
+    }
+
+    public boolean isCombatLogged() {
+        return combatLogged;
+    }
+
+    public void setCombatLogged(boolean combatLogged) {
+        this.combatLogged = combatLogged;
+    }
+
+    public String getPendingKickTeamName() {
+        return pendingKickTeamName;
+    }
+
+    public void setPendingKickTeamName(String pendingKickTeamName) {
+        this.pendingKickTeamName = pendingKickTeamName;
+    }
+
+    private final Map<String, TeamInvite> teamInvites = new HashMap<>();
+    private String lastInviter = null;
+
+    public void addTeamInvite(String teamId, String inviterName, long expiry) {
+        teamInvites.put(inviterName.toLowerCase(), new TeamInvite(teamId, inviterName, expiry));
+        this.lastInviter = inviterName;
+    }
+
+    public TeamInvite getTeamInvite(String inviterName) {
+        if (inviterName == null)
+            return null;
+        TeamInvite invite = teamInvites.get(inviterName.toLowerCase());
+        if (invite != null && invite.isExpired()) {
+            teamInvites.remove(inviterName.toLowerCase());
+            if (inviterName.equalsIgnoreCase(lastInviter))
+                lastInviter = null;
+            return null;
+        }
+        return invite;
+    }
+
+    public String getLastInviter() {
+        if (lastInviter != null) {
+            TeamInvite invite = getTeamInvite(lastInviter);
+            if (invite == null)
+                lastInviter = null;
+        }
+        return lastInviter;
+    }
+
+    public void removeTeamInvite(String inviterName) {
+        teamInvites.remove(inviterName.toLowerCase());
+        if (inviterName.equalsIgnoreCase(lastInviter))
+            lastInviter = null;
+    }
+
+    public boolean isNameHidden() {
+        return nameHidden;
+    }
+
+    public void setNameHidden(boolean nameHidden) {
+        this.nameHidden = nameHidden;
+    }
+
+    public static class TeamInvite {
+        private final String teamId;
+        private final String inviterName;
+        private final long expiry;
+
+        public TeamInvite(String teamId, String inviterName, long expiry) {
+            this.teamId = teamId;
+            this.inviterName = inviterName;
+            this.expiry = expiry;
+        }
+
+        public String getTeamId() {
+            return teamId;
+        }
+
+        public String getInviterName() {
+            return inviterName;
+        }
+
+        public boolean isExpired() {
+            return System.currentTimeMillis() > expiry;
+        }
     }
 }

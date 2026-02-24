@@ -61,12 +61,13 @@ public class GUIListener
                 return;
             }
 
+            int perPage = cfg.getInt("main-gui.items-per-page", 45);
             int slot = event.getRawSlot();
             int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             if (slot == cfg.getInt("main-gui.items.previous-page.slot")) {
                 if (page > 1 && event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
                     p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
-                    GUIHandler.openMainGUI(p, Math.max(1, page - 1), this.controller);
+                    GUIHandler.openMainGUI(p, Math.max(1, page - 1), this.controller, perPage);
                 }
                 return;
             }
@@ -78,7 +79,7 @@ public class GUIListener
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                         "Changed sort mode to " + nextMode);
-                GUIHandler.openMainGUI(p, page, this.controller);
+                GUIHandler.openMainGUI(p, page, this.controller, perPage);
                 return;
             }
             if (slot == cfg.getInt("main-gui.items.search.slot")) {
@@ -92,7 +93,7 @@ public class GUIListener
                     ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                             com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                             "Searched for '" + term + "' in Auction House");
-                    GUIHandler.openMainGUI(p, 1, this.controller);
+                    GUIHandler.openMainGUI(p, 1, this.controller, perPage);
                 });
                 return;
             }
@@ -107,14 +108,14 @@ public class GUIListener
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                         "Changed category to " + nextCat);
-                GUIHandler.openMainGUI(p, page, this.controller);
+                GUIHandler.openMainGUI(p, page, this.controller, perPage);
                 return;
             }
             if (slot == cfg.getInt("main-gui.items.refresh.slot")) {
                 p.playSound(p.getLocation(), refresh, 1.0f, 1.0f);
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION, "Refreshed Auction House");
-                GUIHandler.openMainGUI(p, page, this.controller);
+                GUIHandler.openMainGUI(p, page, this.controller, perPage);
                 return;
             }
             if (slot == cfg.getInt("main-gui.items.your-items.slot")) {
@@ -125,11 +126,11 @@ public class GUIListener
             if (slot == cfg.getInt("main-gui.items.next-page.slot")) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
                     p.playSound(p.getLocation(), next, 1.0f, 1.0f);
-                    GUIHandler.openMainGUI(p, page + 1, this.controller);
+                    GUIHandler.openMainGUI(p, page + 1, this.controller, perPage);
                 }
                 return;
             }
-            int perPage = cfg.getInt("main-gui.items-per-page", 45);
+
             if (slot >= 0 && slot < perPage) {
                 String term = p.hasMetadata("ah-filter")
                         ? ((MetadataValue) p.getMetadata("ah-filter").get(0)).asString()
@@ -201,7 +202,7 @@ public class GUIListener
             p.setMetadata("ah-cat",
                     (MetadataValue) new FixedMetadataValue((Plugin) this.controller.getPlugin(), (Object) chosen));
             this.controller.getAuctionManager().setPlayerCategory(p.getUniqueId(), chosen); // Persist
-            GUIHandler.openMainGUI(p, 1, this.controller);
+            GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
             return;
         }
         if (top instanceof GUIHandler.SellConfirmHolder) {
@@ -280,7 +281,7 @@ public class GUIListener
             if (slot == this.controller.getConfig().getInt("purchase-confirm-gui.decline-button.slot")) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
-                GUIHandler.openMainGUI(p, page, this.controller);
+                GUIHandler.openMainGUI(p, page, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 return;
             }
             if (slot == this.controller.getConfig().getInt("purchase-confirm-gui.confirm-button.slot")) {
@@ -378,7 +379,12 @@ public class GUIListener
                 p.closeInventory();
                 if (!paid) {
                     this.controller.getPlugin().getLogger().warning("[Auction] Failed to deposit " + ai4.getPrice()
-                            + " to " + sellerName + " via Vault. Check your economy plugin.");
+                            + " to " + sellerName + " via Vault. Check your economy plugin. Recording as pending.");
+                    // If deposit failed (e.g. economy issue or name resolve issue), record it in DB
+                    // too
+                    UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
+                    this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
+                            ai4.getPrice());
                 }
             }
             return;
@@ -400,7 +406,7 @@ public class GUIListener
             int slot = event.getRawSlot();
             if (slot == this.controller.getConfig().getInt("your-items-gui.back-button.slot")) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
-                GUIHandler.openMainGUI(p, 1, this.controller);
+                GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 return;
             }
             if (slot == this.controller.getConfig().getInt("your-items-gui.transactions-button.slot")) {
@@ -533,7 +539,7 @@ public class GUIListener
                     ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                             com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                             "[Admin] Searched for '" + term + "' in auction list");
-                    GUIHandler.openMainGUI(p, 1, this.controller);
+                    GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 });
                 return;
             }
@@ -852,7 +858,7 @@ public class GUIListener
                         String target = p.getMetadata("ah-admin-target").get(0).asString();
                         GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                     } else {
-                        GUIHandler.openMainGUI(p, 1, this.controller);
+                        GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                     }
                 });
                 return;
@@ -883,7 +889,7 @@ public class GUIListener
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                 } else {
-                    GUIHandler.openMainGUI(p, 1, this.controller);
+                    GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 }
                 return;
             }
@@ -912,7 +918,7 @@ public class GUIListener
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                 } else {
-                    GUIHandler.openMainGUI(p, 1, this.controller);
+                    GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 }
                 return;
             }
@@ -944,7 +950,7 @@ public class GUIListener
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                 } else {
-                    GUIHandler.openMainGUI(p, 1, this.controller);
+                    GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 }
                 return;
             }
@@ -1040,7 +1046,7 @@ public class GUIListener
             if (top instanceof GUIHandler.TransactionsHolder) {
                 GUIHandler.openYourItemsGUI(p, this.controller);
             } else if (top instanceof GUIHandler.YourItemsHolder) {
-                GUIHandler.openMainGUI(p, 1, this.controller);
+                GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
             } else if (top instanceof GUIHandler.AdminTransactionsHolder) {
                 String target = p.getMetadata("ah-admin-target").get(0).asString();
                 GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
@@ -1049,7 +1055,7 @@ public class GUIListener
                 if (p.hasMetadata("ah-admin-view")) {
                     GUIHandler.openAdminPlayerListGUI(p, 1, this.controller);
                 } else {
-                    GUIHandler.openMainGUI(p, 1, this.controller);
+                    GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 }
             }
         }, 1L);
@@ -1058,40 +1064,62 @@ public class GUIListener
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player p = event.getPlayer();
-        this.controller.getPlugin().getSchedulerAdapter().runTaskLater(() -> {
-            if (!p.isOnline())
+        this.controller.getPlugin().getSchedulerAdapter().runTaskLaterAsync(() -> {
+            if (!p.isOnline() || !this.controller.getPlugin().isEnabled())
                 return;
+
+            // Claim pending money from database
+            double pendingMoney = this.controller.getPlugin().getDatabaseManager()
+                    .getAndClearAuctionPendingPayments(p.getUniqueId());
+
             List<AuctionManager.OfflineSale> sales = this.controller.getAuctionManager()
                     .getPendingSales(p.getUniqueId());
-            if (sales.isEmpty())
-                return;
 
-            if (sales.size() == 1) {
-                AuctionManager.OfflineSale sale = sales.get(0);
-                String msg = this.controller.getConfig().getString("messages.sold-notify-offline")
-                        .replace("{buyer}", sale.buyer)
-                        .replace("{item}", sale.item)
-                        .replace("{priceFormatted}", Utils.formatNumber(sale.price));
-                String c = Utils.formatColors(msg);
-                p.sendMessage(c);
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
-            } else {
-                double total = sales.stream().mapToDouble(s -> s.price).sum();
-                String msg = this.controller.getConfig().getString("messages.sold-notify-offline-multi")
-                        .replace("{priceFormatted}", Utils.formatNumber(total));
-                String c = Utils.formatColors(msg);
-                p.sendMessage(c);
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
+            if (pendingMoney > 0 || !sales.isEmpty()) {
+                this.controller.getPlugin().getSchedulerAdapter().runTask(() -> {
+                    if (!p.isOnline())
+                        return;
+
+                    if (pendingMoney > 0) {
+                        EconomyHandler.depositPlayer(p, pendingMoney);
+                        String claimMsg = this.controller.getConfig()
+                                .getString("messages.money-claimed",
+                                        "&#34ee80You have received &f${amount} &#34ee80from items sold while you were away!")
+                                .replace("{amount}", Utils.formatNumber(pendingMoney));
+                        p.sendMessage(Utils.formatColors(claimMsg));
+                    }
+
+                    if (!sales.isEmpty()) {
+                        if (sales.size() == 1) {
+                            AuctionManager.OfflineSale sale = sales.get(0);
+                            String msg = this.controller.getConfig().getString("messages.sold-notify-offline")
+                                    .replace("{buyer}", sale.buyer)
+                                    .replace("{item}", sale.item)
+                                    .replace("{priceFormatted}", Utils.formatNumber(sale.price));
+                            String c = Utils.formatColors(msg);
+                            p.sendMessage(c);
+                            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
+                        } else {
+                            double total = sales.stream().mapToDouble(s -> s.price).sum();
+                            String msg = this.controller.getConfig().getString("messages.sold-notify-offline-multi")
+                                    .replace("{priceFormatted}", Utils.formatNumber(total));
+                            String c = Utils.formatColors(msg);
+                            p.sendMessage(c);
+                            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
+                        }
+
+                        try {
+                            Sound notifySound = Sound.valueOf(
+                                    this.controller.getConfig().getString("sounds.sale-notify",
+                                            "ENTITY_EXPERIENCE_ORB_PICKUP"));
+                            p.playSound(p.getLocation(), notifySound, 1.0f, 1.0f);
+                        } catch (Exception ignored) {
+                        }
+
+                        this.controller.getAuctionManager().clearPendingSales(p.getUniqueId());
+                    }
+                });
             }
-
-            try {
-                Sound notifySound = Sound.valueOf(
-                        this.controller.getConfig().getString("sounds.sale-notify", "ENTITY_EXPERIENCE_ORB_PICKUP"));
-                p.playSound(p.getLocation(), notifySound, 1.0f, 1.0f);
-            } catch (Exception ignored) {
-            }
-
-            this.controller.getAuctionManager().clearPendingSales(p.getUniqueId());
         }, 40L); // Delay 2 seconds to ensure player is fully loaded
     }
 
@@ -1145,7 +1173,7 @@ public class GUIListener
                     Sound.valueOf((String) this.controller.getConfig().getString("sounds.villager-no")), 1.0f, 1.0f);
             p.closeInventory();
             int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
-            GUIHandler.openMainGUI(p, page, this.controller);
+            GUIHandler.openMainGUI(p, page, this.controller, GUIHandler.ITEMS_PER_PAGE);
             return;
         }
 
@@ -1237,11 +1265,14 @@ public class GUIListener
 
         if (!paid) {
             this.controller.getPlugin().getLogger().warning("[Auction] Failed to deposit " + ai.getPrice()
-                    + " to " + sellerName + " via Vault. Check your economy plugin.");
+                    + " to " + sellerName + " via Vault. Check your economy plugin. Recording as pending.");
+            // If deposit failed, record it in DB too
+            UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
+            this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID, ai.getPrice());
         }
 
         // Refresh GUI for Quick Buy effect
         int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
-        GUIHandler.openMainGUI(p, page, this.controller);
+        GUIHandler.openMainGUI(p, page, this.controller, GUIHandler.ITEMS_PER_PAGE);
     }
 }

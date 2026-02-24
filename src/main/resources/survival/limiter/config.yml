@@ -1,0 +1,66 @@
+entity-limits:
+  default-limit: 40
+  item-limit: 300
+
+  region-multiplier:
+    entity: 1.0
+    item: 0.1
+
+  check-interval-ticks: 200
+
+  chunk-check-radius: 2
+
+  count-item-stack-amount: false
+
+  ignored-types:
+    - IRON_GOLEM    
+    - VILLAGER      
+
+  ignored-items:
+    - IRON_INGOT
+    - GOLD_INGOT
+    - BLAZE_ROD
+    - KELP
+    - EMERALD
+    - BONE
+
+  custom-limits:
+    ZOMBIE: 24
+    PHANTOM: 5
+    VILLAGER: 80
+    SKELETON: 24
+    CREEPER: 24
+    SQUID: 8
+    GLOW_SQUID: 8
+    
+protection:
+  protect-named-entities: true
+
+  protect-leashed-entities: true
+
+  protect-tamed-animals: true
+
+  protect-equipped-entities: true
+
+  protect-boss-entities: true
+
+settings:
+  debug-removals: true
+
+  clean-protected-if-over-limit: true
+
+  clean-all-loaded-chunks: true
+
+  cleanup-report-scope: ALL
+
+  overload-warning-scope: ALL
+
+  op-global-cleanup-report: true
+
+  op-global-overload-warning: false
+
+  notify-threshold: 90
+
+  notify-cooldown: 10
+
+  notification-radius: 128.0

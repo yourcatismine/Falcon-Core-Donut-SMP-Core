@@ -57,12 +57,12 @@ public class CommandHideListener implements Listener {
         Collection<String> commands = event.getCommands();
         org.bukkit.entity.Player player = event.getPlayer();
 
-        // Remove commands that are NOT in the whitelist or start with emporiumsurvival:
+        // Remove commands that are NOT in the whitelist or start with prismcore:
         // Note: In this event, commands do NOT start with "/"
         commands.removeIf(command -> {
             String lowerCmd = command.toLowerCase();
 
-            // Explicitly hide emporiumsurvival and minecraft prefixed commands
+            // Explicitly hide prismcore and minecraft prefixed commands
             if (lowerCmd.startsWith("prismcore:") || lowerCmd.startsWith("minecraft:")) {
                 return true;
             }
@@ -99,7 +99,7 @@ public class CommandHideListener implements Listener {
             commandName = commandName.substring(0, commandName.indexOf(" "));
         }
 
-        // Remove plugin prefix if present (e.g. "emporiumsurvival:help" -> "help")
+        // Remove plugin prefix if present (e.g. "prismcore:help" -> "help")
         if (commandName.contains(":")) {
             commandName = commandName.substring(commandName.indexOf(":") + 1);
         }

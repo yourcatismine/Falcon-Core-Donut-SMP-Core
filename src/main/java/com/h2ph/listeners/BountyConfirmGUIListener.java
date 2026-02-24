@@ -91,10 +91,6 @@ public class BountyConfirmGUIListener implements Listener {
             target.sendMessage(targetMsg);
             target.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(targetMsg));
         }
-
-        // Broadcast
-        Bukkit.broadcastMessage(color(
-                "&5" + sender.getName() + " &7placed a bounty of &a$" + amountFormatted + " &7on &d" + targetName));
     }
 
     private String color(String s) {

@@ -358,9 +358,16 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             config.set("created-at", System.currentTimeMillis());
 
             // Detect Biome from Center
-            int centerX = (min.getX() + max.getX()) / 2;
-            int centerY = (min.getY() + max.getY()) / 2;
-            int centerZ = (min.getZ() + max.getZ()) / 2;
+            int minX = min.getX();
+            int maxX = max.getX();
+            int minY = min.getY();
+            int maxY = max.getY();
+            int minZ = min.getZ();
+            int maxZ = max.getZ();
+
+            int centerX = (minX + maxX) / 2;
+            int centerY = (minY + maxY) / 2;
+            int centerZ = (minZ + maxZ) / 2;
             org.bukkit.block.Biome biome = bukkitPlayer.getWorld().getBiome(centerX, centerY, centerZ);
 
             // Format Biome Name (e.g. PLAINS -> Plains, DESERT -> Desert)

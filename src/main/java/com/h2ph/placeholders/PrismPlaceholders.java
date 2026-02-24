@@ -125,6 +125,18 @@ public class PrismPlaceholders extends PlaceholderExpansion {
             return formatPlaytime(remaining);
         }
 
+        // %prismcore_sell_made%
+        if (params.equalsIgnoreCase("sell_made")) {
+            if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
+                com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell().getPlayerDataManager()
+                        .getPlayerData(player.getUniqueId());
+                if (sellPd != null) {
+                    return com.prismcore.survival.utils.NumberUtils.format(sellPd.getSellMade());
+                }
+            }
+            return "0";
+        }
+
         return null; // Placeholder is unknown
     }
 

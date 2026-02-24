@@ -6,11 +6,16 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class PlayerDataManager {
 
@@ -128,6 +133,9 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.shards_notifier")) {
                 data.setShardsNotifier(cratesConfig.getBoolean("settings.shards_notifier"));
             }
+            if (cratesConfig.contains("settings.show_scoreboard")) {
+                data.setShowScoreboard(cratesConfig.getBoolean("settings.show_scoreboard"));
+            }
             if (cratesConfig.contains("settings.tp_auto")) {
                 data.setTpAuto(cratesConfig.getBoolean("settings.tp_auto"));
             }
@@ -140,6 +148,55 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.auction_category")) {
                 data.setAuctionCategory(cratesConfig.getString("settings.auction_category"));
             }
+            if (cratesConfig.contains("settings.vanished")) {
+                data.setVanished(cratesConfig.getBoolean("settings.vanished"));
+            }
+            // Load Mute Data
+            if (cratesConfig.contains("mute.muted")) {
+                data.setMuted(cratesConfig.getBoolean("mute.muted"));
+            }
+            if (cratesConfig.contains("mute.reason")) {
+                data.setMuteReason(cratesConfig.getString("mute.reason"));
+            }
+            if (cratesConfig.contains("mute.expiry")) {
+                data.setMuteExpiry(cratesConfig.getLong("mute.expiry"));
+            }
+            if (cratesConfig.contains("mute.id")) {
+                data.setMuteId(cratesConfig.getString("mute.id"));
+            }
+            if (cratesConfig.contains("mute.by")) {
+                data.setMutedBy(cratesConfig.getString("mute.by"));
+            }
+            if (cratesConfig.contains("mute.date")) {
+                data.setMuteDate(cratesConfig.getLong("mute.date"));
+            }
+            if (cratesConfig.contains("combat_logged")) {
+                data.setCombatLogged(cratesConfig.getBoolean("combat_logged"));
+            }
+            if (cratesConfig.contains("pending_kick_team")) {
+                data.setPendingKickTeamName(cratesConfig.getString("pending_kick_team"));
+            }
+        }
+
+        // Load Team Data from SQL (Local Database)
+        try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
+            if (conn != null && !conn.isClosed()) {
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "SELECT ps.team, ps.name_hidden, tm.role FROM player_stats ps " +
+                                "LEFT JOIN team_members tm ON ps.uuid = tm.uuid AND ps.team = tm.team_id " +
+                                "WHERE ps.uuid = ?")) {
+                    stmt.setString(1, uuid.toString());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            data.setTeamId(rs.getString("team"));
+                            data.setTeamRole(rs.getString("role"));
+                            data.setNameHidden(rs.getBoolean("name_hidden"));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load team data from SQL for " + uuid, e);
         }
 
         // Load Money Data
@@ -224,10 +281,22 @@ public class PlayerDataManager {
         cratesConfig.set("settings.tpa_here_requests", data.isTpaHereRequests());
         cratesConfig.set("settings.payments", data.isPayments());
         cratesConfig.set("settings.shards_notifier", data.isShardsNotifier());
+        cratesConfig.set("settings.show_scoreboard", data.isShowScoreboard());
         cratesConfig.set("settings.tp_auto", data.isTpAuto());
         cratesConfig.set("settings.auction_sort", data.getAuctionSortOrder());
         cratesConfig.set("settings.auction_filter", data.getAuctionFilter());
         cratesConfig.set("settings.auction_category", data.getAuctionCategory());
+        cratesConfig.set("settings.vanished", data.isVanished());
+
+        // Save Mute Data
+        cratesConfig.set("mute.muted", data.isMuted());
+        cratesConfig.set("mute.reason", data.getMuteReason());
+        cratesConfig.set("mute.expiry", data.getMuteExpiry());
+        cratesConfig.set("mute.id", data.getMuteId());
+        cratesConfig.set("mute.by", data.getMutedBy());
+        cratesConfig.set("mute.date", data.getMuteDate());
+        cratesConfig.set("combat_logged", data.isCombatLogged());
+        cratesConfig.set("pending_kick_team", data.getPendingKickTeamName());
 
         try {
             cratesConfig.save(cratesFile);
@@ -257,6 +326,30 @@ public class PlayerDataManager {
         } catch (IOException e) {
             plugin.getLogger().severe("Failed to save money data for " + uuid + ": " + e.getMessage());
         }
+
+        // Save name_hidden to SQL
+        plugin.getPrismSell().getDatabaseManager().updateNameHidden(uuid, data.isNameHidden());
+    }
+
+    /**
+     * Saves only the money file for a player asynchronously.
+     * Use this after economy transactions to persist balance immediately
+     * without waiting for the full savePlayer() on logout.
+     */
+    public void saveMoneyAsync(UUID uuid, PlayerData data) {
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            File moneyFile = new File(dataFolderMoney, uuid.toString() + "-money.db");
+            FileConfiguration moneyConfig = new YamlConfiguration();
+            moneyConfig.set("money", data.getMoney());
+            if (data.getName() != null) {
+                moneyConfig.set("cached_name", data.getName());
+            }
+            try {
+                moneyConfig.save(moneyFile);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to async-save money for " + uuid + ": " + e.getMessage());
+            }
+        });
     }
 
     public void unload(UUID uuid) {

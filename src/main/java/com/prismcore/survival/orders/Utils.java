@@ -77,6 +77,21 @@ public final class Utils {
         return lines.stream().map(Utils::formatColors).collect(Collectors.toList());
     }
 
+    public static net.kyori.adventure.text.Component format(String input) {
+        if (input == null)
+            return net.kyori.adventure.text.Component.empty();
+        return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                .deserialize(formatColors(input))
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC,
+                        net.kyori.adventure.text.format.TextDecoration.State.FALSE);
+    }
+
+    public static List<net.kyori.adventure.text.Component> format(List<String> lines) {
+        if (lines == null)
+            return new ArrayList<>();
+        return lines.stream().map(Utils::format).collect(Collectors.toList());
+    }
+
     public static String applyPlaceholders(String s, Map<String, String> ph) {
         if (s == null) {
             return null;

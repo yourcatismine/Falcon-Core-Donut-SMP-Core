@@ -1,0 +1,103 @@
+package com.h2ph.commands.admin.moderations;
+
+import com.h2ph.PrismSurvival;
+import com.prismcore.survival.manager.PlayerData;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+public class UnmuteCommand implements CommandExecutor, TabCompleter {
+
+    private final PrismSurvival plugin;
+
+    public UnmuteCommand(PrismSurvival plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+            @NotNull String[] args) {
+        if (!sender.hasPermission("prismsmp.admin.mute")) {
+            sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
+            return true;
+        }
+
+        if (args.length < 1) {
+            sender.sendMessage(ChatColor.RED + "Usage: /unmute <player>");
+            return true;
+        }
+
+        String targetName = args[0];
+        Player target = Bukkit.getPlayer(targetName);
+        UUID targetUUID;
+        String finalTargetName;
+
+        if (target != null) {
+            targetUUID = target.getUniqueId();
+            finalTargetName = target.getName();
+        } else {
+            // Support offline player unmuting
+            targetUUID = Bukkit.getOfflinePlayer(targetName).getUniqueId();
+            finalTargetName = targetName;
+        }
+
+        PlayerData data = plugin.getPlayerDataManager().get(targetUUID);
+        if (data == null) {
+            sender.sendMessage(ChatColor.RED + "Could not find player data for " + targetName);
+            return true;
+        }
+
+        if (!data.isMuted()) {
+            sender.sendMessage(ChatColor.RED + finalTargetName + " is not muted.");
+            return true;
+        }
+
+        data.setMuted(false);
+        data.setMuteExpiry(0);
+        data.setMuteReason(null);
+        plugin.getPlayerDataManager().savePlayer(targetUUID);
+
+        // Remove from MySQL
+        plugin.getDatabaseManager().removeMute(targetUUID);
+
+        // Admin Message
+        String adminMsg = ChatColor.translateAlternateColorCodes('&', "&d" + finalTargetName + "&7 has been unmuted.");
+        sender.sendMessage(adminMsg);
+        if (sender instanceof Player) {
+            ((Player) sender).spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(adminMsg));
+        }
+
+        // Target Message
+        if (target != null && target.isOnline()) {
+            String targetMsg = ChatColor.translateAlternateColorCodes('&', "&7You have been unmuted.");
+            target.sendMessage(targetMsg);
+            target.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(targetMsg));
+        }
+
+        return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
+            @NotNull String[] args) {
+        if (args.length == 1) {
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+}

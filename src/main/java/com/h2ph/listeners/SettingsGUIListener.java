@@ -310,6 +310,35 @@ public class SettingsGUIListener implements Listener {
                     }
                 }
 
+                // Slot 12: Scoreboard
+                if (slot == 12) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isShowScoreboard();
+                        data.setShowScoreboard(newState);
+                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+
+                        // Update Scoreboard Visibilty
+                        if (newState) {
+                            plugin.getScoreboardManager().reloadScoreboard(p);
+                        } else {
+                            plugin.getScoreboardManager().removeScoreboard(p);
+                        }
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
                 // Allow bottom inventory events (dragging items in player inventory)
                 // BUT prevent shift-clicking into the GUI
             } else {

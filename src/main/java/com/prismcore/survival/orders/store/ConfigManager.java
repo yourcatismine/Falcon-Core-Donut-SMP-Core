@@ -43,8 +43,8 @@ public class ConfigManager {
     }
 
     public void reload() {
-        this.plugin.reloadConfig();
-        this.cfg = this.plugin.getConfig();
+        File configFile = new File(plugin.getDataFolder(), "economy/orders/config.yml");
+        this.cfg = YamlConfiguration.loadConfiguration(configFile);
         this.loadDisabled();
         this.loadLockedWorlds();
     }

@@ -1,0 +1,455 @@
+package com.h2ph.managers;
+
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisplayScoreboard;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTeams;
+import com.github.retrooper.packetevents.protocol.score.ScoreFormat;
+
+import com.h2ph.PrismSurvival;
+import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ScoreboardManager implements Listener {
+
+    private final PrismSurvival plugin;
+    private FileConfiguration config;
+    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
+    private final Map<UUID, Integer> titleIndexMap = new HashMap<>();
+    private final Map<UUID, Integer> lineCountMap = new HashMap<>();
+
+    public ScoreboardManager(PrismSurvival plugin) {
+        this.plugin = plugin;
+        loadConfig();
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
+
+    public void loadConfig() {
+        File configFile = new File(plugin.getDataFolder(), "scoreboard/config.yml");
+        if (!configFile.exists()) {
+            plugin.saveResource("scoreboard/config.yml", false);
+        }
+        config = YamlConfiguration.loadConfiguration(configFile);
+    }
+
+    public void setup() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            initScoreboard(player);
+            startTask(player);
+        }
+    }
+
+    public void shutdown() {
+        for (ScheduledTask task : tasks.values()) {
+            task.cancel();
+        }
+        tasks.clear();
+        titleIndexMap.clear();
+        lineCountMap.clear();
+    }
+
+    /**
+     * Reload a player's scoreboard - useful when team status changes
+     */
+    public void reloadScoreboard(Player player) {
+        if (!config.getBoolean("SCOREBOARD.ENABLED", true))
+            return;
+
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        int oldLineCount = lineCountMap.getOrDefault(player.getUniqueId(), 16);
+
+        for (int i = 0; i < oldLineCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+
+            WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
+                    "PrismCore",
+                    Optional.empty());
+            user.sendPacket(removeScorePacket);
+
+            WrapperPlayServerTeams removeFromTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE_ENTITIES,
+                    Optional.empty(),
+                    Collections.singletonList(entry));
+            user.sendPacket(removeFromTeamPacket);
+
+            WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE,
+                    Optional.empty(),
+                    Collections.emptyList());
+            user.sendPacket(removeTeamPacket);
+        }
+
+        WrapperPlayServerScoreboardObjective removePacket = new WrapperPlayServerScoreboardObjective(
+                "PrismCore",
+                WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
+                Component.empty(),
+                WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                ScoreFormat.blankScore());
+        user.sendPacket(removePacket);
+
+        titleIndexMap.remove(player.getUniqueId());
+        lineCountMap.remove(player.getUniqueId());
+
+        initScoreboard(player);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        initScoreboard(event.getPlayer());
+        startTask(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        stopTask(event.getPlayer());
+        titleIndexMap.remove(event.getPlayer().getUniqueId());
+        lineCountMap.remove(event.getPlayer().getUniqueId());
+    }
+
+    private void startTask(Player player) {
+        stopTask(player);
+        ScheduledTask task = player.getScheduler().runAtFixedRate(plugin, (t) -> {
+            updateScoreboard(player);
+        }, null, 20L, 20L);
+        tasks.put(player.getUniqueId(), task);
+    }
+
+    private void stopTask(Player player) {
+        ScheduledTask task = tasks.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    public void removeScoreboard(Player player) {
+        stopTask(player);
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        int oldLineCount = lineCountMap.getOrDefault(player.getUniqueId(), 0);
+
+        for (int i = 0; i < oldLineCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+
+            WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
+                    "PrismCore",
+                    Optional.empty());
+            user.sendPacket(removeScorePacket);
+
+            WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE,
+                    Optional.empty(),
+                    Collections.emptyList());
+            user.sendPacket(removeTeamPacket);
+        }
+
+        WrapperPlayServerScoreboardObjective removePacket = new WrapperPlayServerScoreboardObjective(
+                "PrismCore",
+                WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
+                Component.empty(),
+                WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                ScoreFormat.blankScore());
+        user.sendPacket(removePacket);
+
+        titleIndexMap.remove(player.getUniqueId());
+        lineCountMap.remove(player.getUniqueId());
+    }
+
+    private void initScoreboard(Player player) {
+        if (!config.getBoolean("SCOREBOARD.ENABLED", true))
+            return;
+
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && !data.isShowScoreboard()) {
+            return;
+        }
+
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        titleIndexMap.put(player.getUniqueId(), 0);
+
+        List<String> titles = config.getStringList("SCOREBOARD.TITLE");
+        String title = titles.isEmpty() ? "PrismSMP" : color(titles.get(0));
+        Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
+
+        WrapperPlayServerScoreboardObjective objectivePacket = new WrapperPlayServerScoreboardObjective(
+                "PrismCore",
+                WrapperPlayServerScoreboardObjective.ObjectiveMode.CREATE,
+                titleComp,
+                WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                ScoreFormat.blankScore());
+        user.sendPacket(objectivePacket);
+
+        WrapperPlayServerDisplayScoreboard displayPacket = new WrapperPlayServerDisplayScoreboard(
+                1,
+                "PrismCore");
+        user.sendPacket(displayPacket);
+
+        List<String> lines = buildLines(player);
+
+        lineCountMap.put(player.getUniqueId(), lines.size());
+        createTeams(user, 0, lines.size());
+
+        sendScores(player, user, lines);
+    }
+
+    public void updateScoreboard(Player player) {
+        if (!config.getBoolean("SCOREBOARD.ENABLED", true))
+            return;
+
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && !data.isShowScoreboard()) {
+            return;
+        }
+
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        List<String> titles = config.getStringList("SCOREBOARD.TITLE");
+        if (!titles.isEmpty()) {
+            int currentIndex = titleIndexMap.getOrDefault(player.getUniqueId(), 0);
+            String title = color(titles.get(currentIndex));
+            Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
+
+            WrapperPlayServerScoreboardObjective updateTitlePacket = new WrapperPlayServerScoreboardObjective(
+                    "PrismCore",
+                    WrapperPlayServerScoreboardObjective.ObjectiveMode.UPDATE,
+                    titleComp,
+                    WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                    ScoreFormat.blankScore());
+            user.sendPacket(updateTitlePacket);
+
+            int nextIndex = (currentIndex + 1) % titles.size();
+            titleIndexMap.put(player.getUniqueId(), nextIndex);
+        }
+
+        List<String> lines = buildLines(player);
+
+        int currentLineCount = lines.size();
+        int cachedCount = lineCountMap.getOrDefault(player.getUniqueId(), 0);
+
+        if (currentLineCount > cachedCount) {
+            createTeams(user, cachedCount, currentLineCount);
+        } else if (currentLineCount < cachedCount) {
+            removeExcessLines(user, currentLineCount, cachedCount);
+        }
+
+        lineCountMap.put(player.getUniqueId(), currentLineCount);
+        sendScores(player, user, lines);
+    }
+
+    private List<String> buildLines(Player player) {
+        List<String> lines = new ArrayList<>(config.getStringList("SCOREBOARD.LINES"));
+
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null) {
+            // Find Playtime index to place Team line under it
+            int playtimeIndex = -1;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).contains("Playtime")) {
+                    playtimeIndex = i;
+                    break;
+                }
+            }
+
+            // Team Line
+            String teamFormat = config.getString("SCOREBOARD.TEAMS");
+            if (teamFormat != null && !teamFormat.isEmpty() && data.getTeamId() != null) {
+                if (playtimeIndex != -1) {
+                    lines.add(playtimeIndex + 1, teamFormat);
+                    // Update playtimeIndex for booster if needed
+                    playtimeIndex++;
+                } else {
+                    if (lines.size() > 2) {
+                        lines.add(lines.size() - 2, teamFormat);
+                    } else {
+                        lines.add(teamFormat);
+                    }
+                }
+            }
+
+            // Shard Booster
+            String boosterFormat = config.getString("SCOREBOARD.SHARD-BOOSTER");
+            if (boosterFormat != null && !boosterFormat.isEmpty() && data.hasActiveShardBooster()) {
+                if (playtimeIndex != -1) {
+                    lines.add(playtimeIndex + 1, boosterFormat);
+                } else {
+                    if (lines.size() > 2) {
+                        lines.add(lines.size() - 2, boosterFormat);
+                    } else {
+                        lines.add(boosterFormat);
+                    }
+                }
+            }
+        }
+        return lines;
+    }
+
+    private void sendScores(Player player, User user, List<String> lines) {
+        int lineCount = lines.size();
+        int score = lineCount;
+
+        for (int i = 0; i < lineCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+            String line = lines.get(i);
+            String text = parsePlaceholders(player, line);
+            Component prefixComp = LegacyComponentSerializer.legacySection().deserialize(text);
+
+            WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                    Component.text(teamName),
+                    prefixComp,
+                    Component.empty(),
+                    WrapperPlayServerTeams.NameTagVisibility.ALWAYS,
+                    WrapperPlayServerTeams.CollisionRule.NEVER,
+                    NamedTextColor.WHITE,
+                    WrapperPlayServerTeams.OptionData.NONE);
+
+            WrapperPlayServerTeams teamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.UPDATE,
+                    Optional.of(teamInfo),
+                    Collections.emptyList());
+            user.sendPacket(teamPacket);
+
+            WrapperPlayServerUpdateScore scorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
+                    "PrismCore",
+                    Optional.of(score));
+            user.sendPacket(scorePacket);
+
+            score--;
+        }
+    }
+
+    private void removeExcessLines(User user, int newCount, int oldCount) {
+        for (int i = newCount; i < oldCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+
+            WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
+                    "PrismCore",
+                    Optional.empty());
+            user.sendPacket(removeScorePacket);
+
+            WrapperPlayServerTeams removeFromTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE_ENTITIES,
+                    Optional.empty(),
+                    Collections.singletonList(entry));
+            user.sendPacket(removeFromTeamPacket);
+
+            WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE,
+                    Optional.empty(),
+                    Collections.emptyList());
+            user.sendPacket(removeTeamPacket);
+        }
+    }
+
+    private void createTeams(User user, int start, int end) {
+        for (int i = start; i < end; i++) {
+            String teamName = "line_" + i;
+            String entry = ChatColor.values()[i].toString();
+
+            WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                    Component.text(teamName),
+                    Component.empty(),
+                    Component.empty(),
+                    WrapperPlayServerTeams.NameTagVisibility.ALWAYS,
+                    WrapperPlayServerTeams.CollisionRule.NEVER,
+                    NamedTextColor.WHITE,
+                    WrapperPlayServerTeams.OptionData.NONE);
+
+            WrapperPlayServerTeams teamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.CREATE,
+                    Optional.of(teamInfo),
+                    Arrays.asList(entry));
+            user.sendPacket(teamPacket);
+        }
+    }
+
+    private String parsePlaceholders(Player player, String text) {
+        // Read region from survival config (list, take first entry)
+        java.util.List<String> regionList = plugin.getSurvivalConfig().getStringList("region");
+        String region = regionList.isEmpty() ? "EU" : regionList.get(0);
+        text = text.replace("{region}", region);
+
+        text = text.replace("{region_ping}", String.valueOf(player.getPing()));
+
+        // Team placeholder
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && data.getTeamId() != null) {
+            com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(data.getTeamId());
+            if (team != null) {
+                String teamName = team.getName();
+                if (!teamName.contains("&") && !teamName.contains("§") && !teamName.contains("#")) {
+                    teamName = "&d" + teamName;
+                }
+                text = text.replace("%team_name%", teamName);
+            } else {
+                text = text.replace("%team_name%", "&dNone");
+            }
+        } else {
+            text = text.replace("%team_name%", "&dNone");
+        }
+
+        if (plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            text = PlaceholderAPI.setPlaceholders(player, text);
+        }
+        return color(text);
+    }
+
+    private String color(String text) {
+        if (text == null)
+            return "";
+        Matcher matcher = HEX_PATTERN.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(buffer, net.md_5.bungee.api.ChatColor.of("#" + matcher.group(1)).toString());
+        }
+        return ChatColor.translateAlternateColorCodes('&', matcher.appendTail(buffer).toString());
+    }
+
+}

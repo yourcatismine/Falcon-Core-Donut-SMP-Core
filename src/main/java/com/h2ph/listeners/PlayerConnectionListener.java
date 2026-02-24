@@ -2,8 +2,13 @@ package com.h2ph.listeners;
 
 import com.h2ph.PrismSurvival;
 import com.prismcore.survival.manager.ActivityLogger;
+import com.prismcore.survival.manager.PlayerData;
+import com.prismcore.survival.orders.Utils;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -15,19 +20,47 @@ public class PlayerConnectionListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.getPlayerDataManager().get(event.getPlayer().getUniqueId())
-                .setLastSeenUpdate(System.currentTimeMillis());
-        plugin.getActivityLogger().log(event.getPlayer().getUniqueId(), ActivityLogger.LogType.GENERAL,
-                "Joined the server");
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+        if (event.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED) {
+            return;
+        }
+
+        // Preload player data asynchronously. This puts it into the cache.
+        PlayerData data = plugin.getPlayerDataManager().get(event.getUniqueId());
+
+        // Preload team as well to prevent ScoreboardManager from blocking on main
+        // thread
+        if (data != null && data.getTeamId() != null) {
+            plugin.getTeamManager().getTeam(data.getTeamId());
+        }
 
         // Log IP for alt-account tracking
         if (plugin.getOffendPlugin() != null && plugin.getOffendPlugin().getDatabaseManager() != null) {
-            String ip = event.getPlayer().getAddress() != null
-                    ? event.getPlayer().getAddress().getAddress().getHostAddress()
-                    : "unknown";
-            plugin.getOffendPlugin().getDatabaseManager().logIP(event.getPlayer().getUniqueId(), ip);
+            String ip = event.getAddress().getHostAddress();
+            plugin.getOffendPlugin().getDatabaseManager().logIP(event.getUniqueId(), ip);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        // This will be instant as data was preloaded in AsyncPlayerPreLoginEvent
+        PlayerData data = plugin.getPlayerDataManager().get(event.getPlayer().getUniqueId());
+        data.setLastSeenUpdate(System.currentTimeMillis());
+
+        plugin.getActivityLogger().log(event.getPlayer().getUniqueId(), ActivityLogger.LogType.GENERAL,
+                "Joined the server");
+
+        // Kick notification
+        if (data.getPendingKickTeamName() != null) {
+            String teamName = data.getPendingKickTeamName();
+            data.setPendingKickTeamName(null);
+
+            Player player = event.getPlayer();
+            String msg = Utils.formatColors("&7You were kicked from " + teamName + "&7 while you were away.");
+            player.sendMessage(msg);
+            player.sendActionBar(net.kyori.adventure.text.Component.text(msg));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f, 1f);
         }
     }
 

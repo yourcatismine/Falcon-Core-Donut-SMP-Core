@@ -24,11 +24,7 @@ import org.bukkit.plugin.Plugin;
 public class GUIHandler {
     public static final int ITEMS_PER_PAGE = 45;
 
-    public static void openMainGUI(Player player, int page, AuctionController controller) {
-        openMainGUI(player, page, controller, 0);
-    }
-
-    public static void openMainGUI(Player player, int page, AuctionController controller, int dummy) {
+    public static void openMainGUI(Player player, int page, AuctionController controller, int perPage) {
         String searchFilter;
         FileConfiguration cfg = controller.getConfig();
         String string = searchFilter = player.hasMetadata("ah-filter")
@@ -68,7 +64,7 @@ public class GUIHandler {
         }
         String sortMode = controller.getAuctionManager().getPlayerSort(player.getUniqueId());
         GUIHandler.sortItems(toDisplay, sortMode);
-        int perPage = cfg.getInt("main-gui.items-per-page", 45);
+        perPage = cfg.getInt("main-gui.items-per-page", perPage);
         int total = toDisplay.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) total / (double) perPage));
         page = Math.max(1, Math.min(page, totalPages));

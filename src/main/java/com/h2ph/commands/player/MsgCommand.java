@@ -30,6 +30,31 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
+        // --- MUTE CHECK ---
+        com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(player.getUniqueId());
+        if (senderData != null && senderData.isMuted()) {
+            String reason = senderData.getMuteReason();
+            if (reason == null || reason.isEmpty())
+                reason = "No Reason Provided";
+            long expiry = senderData.getMuteExpiry();
+
+            String durationLeft = "Permanent";
+            if (expiry > 0) {
+                long totalSeconds = (expiry - System.currentTimeMillis()) / 1000;
+                durationLeft = formatDuration(totalSeconds);
+            }
+
+            String msg = ChatColor.translateAlternateColorCodes('&',
+                    "&7You have been muted for &f" + durationLeft + "&7 Reason:&c " + reason);
+
+            player.sendMessage(msg);
+            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return true;
+        }
+
         if (args.length < 2) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
@@ -122,5 +147,26 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();
+    }
+
+    private String formatDuration(long seconds) {
+        if (seconds <= 0)
+            return "Expired";
+        long d = seconds / 86400;
+        long h = (seconds % 86400) / 3600;
+        long m = (seconds % 3600) / 60;
+        long s = seconds % 60;
+
+        StringBuilder sb = new StringBuilder();
+        if (d > 0)
+            sb.append(d).append("d ");
+        if (h > 0)
+            sb.append(h).append("h ");
+        if (m > 0)
+            sb.append(m).append("m ");
+        if (s > 0 || sb.length() == 0)
+            sb.append(s).append("s");
+
+        return sb.toString().trim();
     }
 }

@@ -33,6 +33,16 @@ public class BountyListener implements Listener {
 
         UUID victimId = victim.getUniqueId();
         if (plugin.getBountyManager().hasBounty(victimId)) {
+            // Check if killer and victim are in the same team
+            com.h2ph.teams.Team vTeam = plugin.getTeamManager().getPlayerTeam(victimId);
+            com.h2ph.teams.Team kTeam = plugin.getTeamManager().getPlayerTeam(killer.getUniqueId());
+
+            if (vTeam != null && kTeam != null && vTeam.getId().equals(kTeam.getId())) {
+                killer.sendMessage(
+                        ChatColor.translateAlternateColorCodes('&', "&cYou cannot claim a bounty on your teammate!"));
+                return;
+            }
+
             double amount = plugin.getBountyManager().getBounty(victimId);
             plugin.getBountyManager().removeBounty(victimId);
 
@@ -49,9 +59,6 @@ public class BountyListener implements Listener {
             }
 
             String amountFormatted = formatNumber(amount);
-            Bukkit.broadcastMessage(
-                    ChatColor.translateAlternateColorCodes('&', "&d" + killer.getName()
-                            + " &7claimed the &a$" + amountFormatted + " &7bounty on &d" + victim.getName()));
 
             killer.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You claimed a bounty of &a$"
                     + amountFormatted + " &7for killing &5" + victim.getName() + "&7!"));

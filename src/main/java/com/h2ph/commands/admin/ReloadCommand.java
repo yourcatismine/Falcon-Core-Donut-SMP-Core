@@ -41,6 +41,14 @@ public class ReloadCommand implements CommandExecutor {
 
             // Chat Filter
             plugin.loadChatFilterConfig();
+            if (plugin.getChatFilter() != null) {
+                plugin.getChatFilter().loadConfigAndPatterns();
+            }
+
+            // Command Whitelist (Hide Listener)
+            if (plugin.getCommandHideListener() != null) {
+                plugin.getCommandHideListener().reload();
+            }
 
             // Update Data (Optional)
             plugin.loadUpdateFromConfig();
@@ -81,6 +89,56 @@ public class ReloadCommand implements CommandExecutor {
             // Spawn Manager
             if (plugin.getSpawnManager() != null) {
                 plugin.getSpawnManager().reloadConfig();
+            }
+
+            // KeyAll Manager
+            if (plugin.getKeyAllManager() != null) {
+                plugin.getKeyAllManager().loadConfig();
+            }
+
+            // Scoreboard Manager
+            if (plugin.getScoreboardManager() != null) {
+                plugin.getScoreboardManager().loadConfig();
+            }
+
+            // Limiter Config
+            if (plugin.getLimiterConfig() != null) {
+                plugin.getLimiterConfig().loadConfig();
+            }
+
+            // Void Manager
+            if (plugin.getVoidManager() != null) {
+                plugin.getVoidManager().loadRegions();
+            }
+
+            // Tools Manager
+            if (plugin.getToolsManager() != null) {
+                plugin.getToolsManager().reloadConfig();
+            }
+
+            // Sell Module
+            if (plugin.getPrismSell() != null) {
+                plugin.getPrismSell().reloadConfig();
+            }
+
+            // Orders Module
+            if (plugin.getOrdersModule() != null && plugin.getOrdersModule().cfg() != null) {
+                plugin.getOrdersModule().cfg().reload();
+            }
+
+            // Crate Location Registry
+            if (plugin.getCrateLocationRegistry() != null) {
+                plugin.getCrateLocationRegistry().load();
+            }
+
+            // Bounty Manager
+            if (plugin.getBountyManager() != null) {
+                plugin.getBountyManager().load();
+            }
+
+            // Media Command
+            if (plugin.getMediaCommand() != null) {
+                plugin.getMediaCommand().loadConfig();
             }
 
             // AntiXray - Removed

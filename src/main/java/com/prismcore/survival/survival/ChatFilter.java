@@ -33,7 +33,7 @@ public class ChatFilter implements Listener {
     }
 
     // Reloads config and builds the smart regex patterns
-    private void loadConfigAndPatterns() {
+    public void loadConfigAndPatterns() {
         FileConfiguration config = plugin.getChatFilterConfig();
         this.badWordPatterns.clear();
 
@@ -66,16 +66,24 @@ public class ChatFilter implements Listener {
         if (data != null && data.isMuted()) {
             event.setCancelled(true);
             String reason = data.getMuteReason();
+            if (reason == null || reason.isEmpty())
+                reason = "No Reason Provided";
             long expiry = data.getMuteExpiry();
-            String msg = ChatColor.RED + "You are currently muted.";
-            if (reason != null && !reason.isEmpty()) {
-                msg += " Reason: " + reason;
-            }
+
+            // Calculate remaining duration string
+            String durationLeft = "Permanent";
             if (expiry > 0) {
-                long seconds = (expiry - System.currentTimeMillis()) / 1000;
-                msg += " Time left: " + formatDuration(seconds);
+                long totalSeconds = (expiry - System.currentTimeMillis()) / 1000;
+                durationLeft = formatDuration(totalSeconds);
             }
+
+            String msg = ChatColor.translateAlternateColorCodes('&',
+                    "&7You have been muted for &f" + durationLeft + "&7 Reason:&c " + reason);
+
             player.sendMessage(msg);
+            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
 

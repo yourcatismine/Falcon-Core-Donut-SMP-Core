@@ -219,4 +219,8 @@ public class PricesManager {
         }
         return null;
     }
+
+    public Map<ItemKey, Double> getPrices() {
+        return Collections.unmodifiableMap(this.prices);
+    }
 }

@@ -8,7 +8,6 @@ package com.prismcore.survival.sell.data;
 
 import com.prismcore.survival.sell.PrismSell;
 import com.prismcore.survival.sell.category.Category;
-import com.prismcore.survival.sell.data.PlayerData;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,54 +43,60 @@ public class PlayerDataManagerDB {
         String queryCategoryData = "SELECT * FROM player_category_data WHERE uuid = ?";
 
         try (Connection conn = this.plugin.getDatabaseManager().getConnection()) {
-            // Load global stats
-            try (PreparedStatement stmt = conn.prepareStatement(queryData)) {
-                stmt.setString(1, uuid.toString());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        data.setMoney(rs.getDouble("money"));
-                        data.setShards(rs.getLong("shards"));
-                        data.setBreakBlocks(rs.getLong("break_blocks"));
-                        data.setPlacedBlocks(rs.getLong("placed_blocks"));
-                        data.setMobKills(rs.getLong("mob_kills"));
-                        data.setSellMade(rs.getDouble("sell_made"));
-                        data.setShopSpent(rs.getDouble("shop_spent"));
-                        data.setPlaytime(rs.getLong("playtime"));
-                        data.setDeaths(rs.getLong("deaths"));
-                        data.setKills(rs.getLong("kills"));
-                        data.setKeys(rs.getLong("keys"));
+            if (conn != null && !conn.isClosed()) {
+                // Load global stats
+                try (PreparedStatement stmt = conn.prepareStatement(queryData)) {
+                    stmt.setString(1, uuid.toString());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            data.setMoney(rs.getDouble("money"));
+                            data.setShards(rs.getLong("shards"));
+                            data.setBreakBlocks(rs.getLong("break_blocks"));
+                            data.setPlacedBlocks(rs.getLong("placed_blocks"));
+                            data.setMobKills(rs.getLong("mob_kills"));
+                            data.setSellMade(rs.getDouble("sell_made"));
+                            data.setShopSpent(rs.getDouble("shop_spent"));
+                            data.setPlaytime(rs.getLong("playtime"));
+                            data.setDeaths(rs.getLong("deaths"));
+                            data.setKills(rs.getLong("kills"));
+                            data.setKeys(rs.getLong("keys"));
+                            data.setBounty(rs.getDouble("bounty"));
+                            data.setToolExpiry(rs.getLong("tool_expiry"));
+                            data.setTeamId(rs.getString("team"));
+                        }
                     }
                 }
-            }
 
-            // Load category data (multipliers + progress)
-            try (PreparedStatement stmt = conn.prepareStatement(queryCategoryData)) {
-                stmt.setString(1, uuid.toString());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        for (Category category : Category.values()) {
-                            // Load Multiplier
-                            String multiplierCol = category.name() + "_multiplier";
-                            try {
-                                double multiplier = rs.getDouble(multiplierCol);
-                                data.setMultiplier(category, multiplier);
-                            } catch (SQLException e) {
-                                this.plugin.getLogger()
-                                        .warning("Missing column " + multiplierCol + " in player_category_data");
-                            }
+                // Load category data (multipliers + progress)
+                try (PreparedStatement stmt = conn.prepareStatement(queryCategoryData)) {
+                    stmt.setString(1, uuid.toString());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            for (Category category : Category.values()) {
+                                // Load Multiplier
+                                String multiplierCol = category.name() + "_multiplier";
+                                try {
+                                    double multiplier = rs.getDouble(multiplierCol);
+                                    data.setMultiplier(category, multiplier);
+                                } catch (SQLException e) {
+                                    this.plugin.getLogger()
+                                            .warning("Missing column " + multiplierCol + " in player_category_data");
+                                }
 
-                            // Load Progress
-                            String progressCol = category.name() + "_progress";
-                            try {
-                                double progress = rs.getDouble(progressCol);
-                                data.setProgress(category, progress);
-                            } catch (SQLException e) {
-                                this.plugin.getLogger()
-                                        .warning("Missing column " + progressCol + " in player_category_data");
+                                // Load Progress
+                                String progressCol = category.name() + "_progress";
+                                try {
+                                    double progress = rs.getDouble(progressCol);
+                                    data.setProgress(category, progress);
+                                } catch (SQLException e) {
+                                    this.plugin.getLogger()
+                                            .warning("Missing column " + progressCol + " in player_category_data");
+                                }
                             }
+                        } else {
+                            this.plugin.getLogger()
+                                    .warning("No category data row found for " + uuid + ", using defaults.");
                         }
-                    } else {
-                        this.plugin.getLogger().warning("No category data row found for " + uuid + ", using defaults.");
                     }
                 }
             }
@@ -117,11 +122,18 @@ public class PlayerDataManagerDB {
 
     private void savePlayerDataSync(UUID uuid, PlayerData data) {
         // Query for Global Stats
-        String queryData = "INSERT OR REPLACE INTO player_stats (uuid, money, shards, break_blocks, placed_blocks, mob_kills, sell_made, shop_spent, playtime, deaths, kills, keys) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String queryData = "INSERT INTO player_stats (uuid, money, shards, break_blocks, placed_blocks, mob_kills, sell_made, shop_spent, playtime, deaths, kills, `keys`, bounty, tool_expiry, team) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                +
+                " ON DUPLICATE KEY UPDATE money=VALUES(money), shards=VALUES(shards), break_blocks=VALUES(break_blocks),"
+                +
+                " placed_blocks=VALUES(placed_blocks), mob_kills=VALUES(mob_kills), sell_made=VALUES(sell_made)," +
+                " shop_spent=VALUES(shop_spent), playtime=VALUES(playtime), deaths=VALUES(deaths), kills=VALUES(kills),"
+                +
+                " `keys`=VALUES(`keys`), bounty=VALUES(bounty), tool_expiry=VALUES(tool_expiry), team=VALUES(team)";
 
         // Query for Category Data
         StringBuilder queryCategoryData = new StringBuilder();
-        queryCategoryData.append("INSERT OR REPLACE INTO player_category_data (uuid");
+        queryCategoryData.append("INSERT INTO player_category_data (uuid");
         for (Category category : Category.values()) {
             queryCategoryData.append(", ").append(category.name()).append("_multiplier");
             queryCategoryData.append(", ").append(category.name()).append("_progress");
@@ -130,10 +142,19 @@ public class PlayerDataManagerDB {
         for (int i = 0; i < Category.values().length * 2; i++) {
             queryCategoryData.append(", ?");
         }
-        queryCategoryData.append(")");
+        queryCategoryData.append(") ON DUPLICATE KEY UPDATE ");
+        boolean firstCol = true;
+        for (Category category : Category.values()) {
+            if (!firstCol)
+                queryCategoryData.append(", ");
+            queryCategoryData.append(category.name()).append("_multiplier=VALUES(").append(category.name())
+                    .append("_multiplier)");
+            queryCategoryData.append(", ").append(category.name()).append("_progress=VALUES(").append(category.name())
+                    .append("_progress)");
+            firstCol = false;
+        }
 
-        try {
-            Connection conn = this.plugin.getDatabaseManager().getConnection();
+        try (Connection conn = this.plugin.getDatabaseManager().getConnection()) {
 
             // Save Global Stats
             try (PreparedStatement insertStmt = conn.prepareStatement(queryData)) {
@@ -150,6 +171,9 @@ public class PlayerDataManagerDB {
                 insertStmt.setLong(i++, data.getDeaths());
                 insertStmt.setLong(i++, data.getKills());
                 insertStmt.setLong(i++, data.getKeys());
+                insertStmt.setDouble(i++, data.getBounty());
+                insertStmt.setLong(i++, data.getToolExpiry());
+                insertStmt.setString(i++, data.getTeamId());
                 insertStmt.executeUpdate();
             }
 

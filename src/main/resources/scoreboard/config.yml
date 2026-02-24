@@ -1,0 +1,17 @@
+SCOREBOARD:
+  ENABLED: true
+  SHARD-BOOSTER: "&#A303F9⚡ &fBooster &#A303F9%prismcore_shard_booster%"
+  TEAMS: "&#5729DD🪓 &fTeam %team_name%"
+  TITLE:
+    - "&#B300FF&lPrismSMP"
+  LINES:
+    - ""
+    - "&#00FC00&l$ &fMoney &#00FC00%prismcore_balance%     "
+    - "&#A303F9★ &fShards &#A303F9%prismcore_shards%      "
+    - "&#FC0000🗡 &fKills &#FC0000%prismcore_kills%      "
+    - "&#F97603☠ &fDeaths &#F97603%prismcore_deaths%   "
+    - "&#B300FF⌛ &fKeyall &#B300FF%prismcore_keyall%"
+    - "&#FF00CF⌚ &fPlaytime &#FF00CF%prismcore_playtime%   "
+    - ""
+    - "&7{region} &7(&5{region_ping}ms&7)"
+    - "&7ᴘʀɪѕᴍѕᴍᴘ.ᴛᴇʙᴇx.ɪᴏ"

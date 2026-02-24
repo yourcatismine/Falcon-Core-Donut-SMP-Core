@@ -24,7 +24,7 @@ public class UpdateCommand implements CommandExecutor {
             return true;
         }
         Player p = (Player) sender;
-        if (!p.isOp() && !p.hasPermission("emporium.update")) {
+        if (!p.isOp() && !p.hasPermission("prism.update")) {
             p.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
         }

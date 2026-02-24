@@ -1,9 +1,7 @@
 package com.prismcore.survival.survival;
 
 import com.h2ph.PrismSurvival;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
+import com.h2ph.utils.LuckPermsUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,10 +11,8 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class ChatFormatter implements Listener {
 
-    private final PrismSurvival plugin;
-
     public ChatFormatter(PrismSurvival plugin) {
-        this.plugin = plugin;
+        // Plugin instance is currently unused but kept for constructor compatibility
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -63,25 +59,10 @@ public class ChatFormatter implements Listener {
     }
 
     private String getPlayerGroup(Player player) {
-        if (org.bukkit.Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
-            return "default";
-        }
-        try {
-            LuckPerms lp = LuckPermsProvider.get();
-            User user = lp.getUserManager().getUser(player.getUniqueId());
-            if (user != null) {
-                return user.getPrimaryGroup();
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to fetch LuckPerms group for " + player.getName());
-        }
-        return "default";
+        return LuckPermsUtils.getPrimaryGroup(player);
     }
 
     private String getPlayerPrefix(Player player) {
-        if (org.bukkit.Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
-            return "";
-        }
-        return getPlayerGroup(player);
+        return LuckPermsUtils.getPrefix(player);
     }
 }

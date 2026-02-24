@@ -52,9 +52,13 @@ public class SetSpawnCommand implements TabExecutor {
 
         String name = args[0];
         boolean ok = spawnManager.saveSpawn(name, p.getLocation());
-        if (ok)
+        if (ok) {
             p.sendMessage(ChatColor.GREEN + "Saved spawn '" + name + "'.");
-        else
+            // If the name is "spawn" or "default", sync it to the global database spawn
+            if (name.equalsIgnoreCase("spawn") || name.equalsIgnoreCase("default")) {
+                spawnManager.setGlobalSpawn(p.getLocation());
+            }
+        } else
             p.sendMessage(ChatColor.RED + "Failed to save spawn. Check server logs.");
         return true;
     }

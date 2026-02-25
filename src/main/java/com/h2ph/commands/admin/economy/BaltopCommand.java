@@ -209,15 +209,26 @@ public class BaltopCommand implements CommandExecutor, Listener {
         SkullMeta meta = (SkullMeta) head.getItemMeta();
 
         if (meta != null) {
-            // Safe to call async
-            meta.setOwningPlayer(Bukkit.getOfflinePlayer(entry.uuid));
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&a" + entry.name));
+            try {
+                // Strip colors from the entry name to prevent invalid profile names
+                String cleanName = ChatColor.stripColor(entry.name);
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.translateAlternateColorCodes('&',
-                    "&fMoney:&7 $" + formatNumber(entry.value) + "&a (#" + rank + ")"));
-            meta.setLore(lore);
-            head.setItemMeta(meta);
+                // Create a profile with the UUID and clean name
+                org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(entry.uuid, cleanName);
+                meta.setOwnerProfile(profile);
+
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&a" + entry.name));
+
+                List<String> lore = new ArrayList<>();
+                lore.add(ChatColor.translateAlternateColorCodes('&',
+                        "&fMoney:&7 $" + formatNumber(entry.value) + "&a (#" + rank + ")"));
+                meta.setLore(lore);
+                head.setItemMeta(meta);
+            } catch (Exception e) {
+                // Safety catch to prevent one bad head from breaking the entire GUI
+                plugin.getLogger().warning(
+                        "Failed to create head item for " + entry.name + " (" + entry.uuid + "): " + e.getMessage());
+            }
         }
 
         return head;

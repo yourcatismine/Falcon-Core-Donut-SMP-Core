@@ -2,6 +2,8 @@ package com.prismcore.survival.auction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import net.md_5.bungee.api.ChatMessageType;
@@ -336,7 +338,6 @@ public class GUIListener
                 }
 
                 String sellerName = ai4.getSeller();
-                boolean paid = EconomyHandler.depositByName(sellerName, ai4.getPrice());
                 ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai4);
                 p.getInventory().addItem(new ItemStack[] { finalItem });
                 // Item already removed
@@ -355,6 +356,7 @@ public class GUIListener
                 }
                 Player seller = Bukkit.getPlayer((String) sellerName);
                 if (seller != null && seller.isOnline()) {
+                    EconomyHandler.depositPlayer(seller, ai4.getPrice(), "Auction Sale");
                     String soldFmt = this.controller.getConfig().getString("messages.sold-notify")
                             .replace("{item}", itemName).replace("{buyer}", p.getName())
                             .replace("{priceFormatted}", Utils.formatNumber(ai4.getPrice()));
@@ -375,14 +377,7 @@ public class GUIListener
                     UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
                     this.controller.getAuctionManager().addPendingSale(sellerUUID, p.getName(), itemName,
                             ai4.getPrice());
-                }
-                p.closeInventory();
-                if (!paid) {
-                    this.controller.getPlugin().getLogger().warning("[Auction] Failed to deposit " + ai4.getPrice()
-                            + " to " + sellerName + " via Vault. Check your economy plugin. Recording as pending.");
-                    // If deposit failed (e.g. economy issue or name resolve issue), record it in DB
-                    // too
-                    UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
+                    // Record payment in database to be claimed on join
                     this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
                             ai4.getPrice());
                 }
@@ -714,32 +709,38 @@ public class GUIListener
 
             int perPage = cfg.getInt("transactions-gui.items-per-page", 45);
             if (slot >= 0 && slot < perPage) {
-                List<Transaction> fullTx = this.controller.getTransactionManager()
-                        .getPlayerTransactions(Bukkit.getOfflinePlayer(target).getUniqueId());
+                p.playSound(p.getLocation(), def, 1.0f, 1.0f);
+                CompletableFuture.runAsync(() -> {
+                    List<Transaction> fullTx = this.controller.getTransactionManager()
+                            .getPlayerTransactions(Bukkit.getOfflinePlayer(target).getUniqueId());
 
-                String txFilter = p.hasMetadata("tx-filter")
-                        ? p.getMetadata("tx-filter").get(0).asString().toLowerCase()
-                        : "";
+                    String txFilter = p.hasMetadata("tx-filter")
+                            ? p.getMetadata("tx-filter").get(0).asString().toLowerCase()
+                            : "";
 
-                List<Transaction> filtered = fullTx.stream().filter(tx -> {
-                    if (txFilter.isEmpty())
-                        return true;
-                    String itemName = Utils.prettifyMaterialName(tx.getItem().getType()).toLowerCase();
-                    String buyer = tx.getBuyer().toLowerCase();
-                    String seller = tx.getSeller().toLowerCase();
-                    String priceStr = String.valueOf(tx.getPrice());
-                    String priceFmt = Utils.formatNumber(tx.getPrice()).toLowerCase();
+                    List<Transaction> filtered = fullTx.stream().filter(tx -> {
+                        if (txFilter.isEmpty())
+                            return true;
+                        String itemName = Utils.prettifyMaterialName(tx.getItem().getType()).toLowerCase();
+                        String buyer = tx.getBuyer().toLowerCase();
+                        String seller = tx.getSeller().toLowerCase();
+                        String priceStr = String.valueOf(tx.getPrice());
+                        String priceFmt = Utils.formatNumber(tx.getPrice()).toLowerCase();
 
-                    return itemName.contains(txFilter) || buyer.contains(txFilter) || seller.contains(txFilter)
-                            || priceStr.contains(txFilter) || priceFmt.contains(txFilter);
-                }).collect(Collectors.toList());
+                        return itemName.contains(txFilter) || buyer.contains(txFilter) || seller.contains(txFilter)
+                                || priceStr.contains(txFilter) || priceFmt.contains(txFilter);
+                    }).collect(Collectors.toList());
 
-                int idx = (page - 1) * perPage + slot;
-                if (idx < filtered.size()) {
-                    Transaction tx = filtered.get(idx);
-                    p.playSound(p.getLocation(), def, 1.0f, 1.0f);
-                    GUIHandler.openTransactionManagementGUI(p, tx, this.controller);
-                }
+                    int idx = (page - 1) * perPage + slot;
+                    if (idx < filtered.size()) {
+                        Transaction tx = filtered.get(idx);
+                        Bukkit.getScheduler().runTask(this.controller.getPlugin(), () -> {
+                            if (!p.isOnline())
+                                return;
+                            GUIHandler.openTransactionManagementGUI(p, tx, this.controller);
+                        });
+                    }
+                });
             }
         }
 
@@ -1081,7 +1082,7 @@ public class GUIListener
                         return;
 
                     if (pendingMoney > 0) {
-                        EconomyHandler.depositPlayer(p, pendingMoney);
+                        EconomyHandler.depositPlayer(p, pendingMoney, "Offline Auction Earnings");
                         String claimMsg = this.controller.getConfig()
                                 .getString("messages.money-claimed",
                                         "&#34ee80You have received &f${amount} &#34ee80from items sold while you were away!")
@@ -1222,7 +1223,6 @@ public class GUIListener
         }
 
         String sellerName = ai.getSeller();
-        boolean paid = EconomyHandler.depositByName(sellerName, ai.getPrice());
         ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai);
         p.getInventory().addItem(new ItemStack[] { finalItem });
         // Item already removed at start of method.
@@ -1241,6 +1241,7 @@ public class GUIListener
         }
         Player seller = Bukkit.getPlayer((String) sellerName);
         if (seller != null && seller.isOnline()) {
+            EconomyHandler.depositPlayer(seller, ai.getPrice(), "Auction Sale");
             String soldFmt = this.controller.getConfig().getString("messages.sold-notify")
                     .replace("{item}", itemName).replace("{buyer}", p.getName())
                     .replace("{priceFormatted}", Utils.formatNumber(ai.getPrice()));
@@ -1261,13 +1262,7 @@ public class GUIListener
             UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
             this.controller.getAuctionManager().addPendingSale(sellerUUID, p.getName(), itemName,
                     ai.getPrice());
-        }
-
-        if (!paid) {
-            this.controller.getPlugin().getLogger().warning("[Auction] Failed to deposit " + ai.getPrice()
-                    + " to " + sellerName + " via Vault. Check your economy plugin. Recording as pending.");
-            // If deposit failed, record it in DB too
-            UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
+            // Record payment in database to be claimed on join
             this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID, ai.getPrice());
         }
 

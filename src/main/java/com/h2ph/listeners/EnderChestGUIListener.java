@@ -81,10 +81,14 @@ public class EnderChestGUIListener implements Listener {
 
         // Only save and remove from active map if this is the last viewer
         if (e.getInventory().getViewers().size() <= 1) {
-            EnderChestGUI.getActiveInventories().remove(ownerUUID);
             // Save async — REPLACE INTO upserts the single row for this UUID
-            plugin.getSchedulerAdapter()
-                    .runTaskAsync(() -> plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents));
+            plugin.getSchedulerAdapter().runTaskAsync(() -> {
+                plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents);
+                // Only remove from cache if no one re-opened it in the meantime
+                if (e.getInventory().getViewers().isEmpty()) {
+                    EnderChestGUI.getActiveInventories().remove(ownerUUID);
+                }
+            });
         }
     }
 
@@ -112,9 +116,14 @@ public class EnderChestGUIListener implements Listener {
 
         // Only save and remove from active map if this is the last viewer
         if (openInv.getViewers().size() <= 1) {
-            EnderChestGUI.getActiveInventories().remove(ownerUUID);
             // Synchronous save on quit
             plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents);
+
+            // Only remove from cache if no one else is viewing it (unlikely on quit, but
+            // safe)
+            if (openInv.getViewers().isEmpty()) {
+                EnderChestGUI.getActiveInventories().remove(ownerUUID);
+            }
         }
     }
 }

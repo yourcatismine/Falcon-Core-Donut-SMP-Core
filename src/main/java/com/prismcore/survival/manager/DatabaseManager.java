@@ -158,6 +158,30 @@ public class DatabaseManager {
                     ")";
             s.execute(inventoryTable);
 
+            // Table for Auction Transactions
+            String transactionsTable = "CREATE TABLE IF NOT EXISTS auction_transactions (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "player_uuid VARCHAR(36) NOT NULL," +
+                    "item_data LONGTEXT NOT NULL," +
+                    "price DOUBLE NOT NULL," +
+                    "buyer_name VARCHAR(16) NOT NULL," +
+                    "seller_name VARCHAR(16) NOT NULL," +
+                    "timestamp BIGINT NOT NULL," +
+                    "is_sale TINYINT(1) NOT NULL," +
+                    "INDEX (player_uuid)," +
+                    "INDEX (timestamp)" +
+                    ")";
+            s.execute(transactionsTable);
+
+            // Table for Player Stats (Money and Shards)
+            String statsTable = "CREATE TABLE IF NOT EXISTS player_stats (" +
+                    "uuid VARCHAR(36) NOT NULL PRIMARY KEY," +
+                    "money DOUBLE DEFAULT 0," +
+                    "shards DOUBLE DEFAULT 0," +
+                    "last_updated BIGINT" +
+                    ")";
+            s.execute(statsTable);
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -679,5 +703,107 @@ public class DatabaseManager {
             e.printStackTrace();
         }
         return null;
+    }
+
+    // --- Auction Transaction Methods ---
+
+    public void addAuctionTransaction(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
+        String query = "INSERT INTO auction_transactions (player_uuid, item_data, price, buyer_name, seller_name, timestamp, is_sale) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            String itemData = com.prismcore.survival.utils.ItemSerializationManager
+                    .itemStackArrayToBase64(new org.bukkit.inventory.ItemStack[] { tx.getItem() });
+            ps.setString(2, itemData);
+            ps.setDouble(3, tx.getPrice());
+            ps.setString(4, tx.getBuyer());
+            ps.setString(5, tx.getSeller());
+            ps.setLong(6, tx.getTimestamp());
+            ps.setBoolean(7, tx.isSale());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<com.prismcore.survival.auction.Transaction> getAuctionTransactions(UUID playerUuid) {
+        List<com.prismcore.survival.auction.Transaction> list = new ArrayList<>();
+        String query = "SELECT * FROM auction_transactions WHERE player_uuid = ? ORDER BY timestamp DESC LIMIT 50";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String itemData = rs.getString("item_data");
+                    org.bukkit.inventory.ItemStack[] items = com.prismcore.survival.utils.ItemSerializationManager
+                            .itemStackArrayFromBase64(itemData);
+                    if (items.length > 0) {
+                        list.add(new com.prismcore.survival.auction.Transaction(
+                                items[0],
+                                rs.getDouble("price"),
+                                rs.getString("buyer_name"),
+                                rs.getString("seller_name"),
+                                rs.getLong("timestamp"),
+                                rs.getBoolean("is_sale")));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public void deleteAuctionTransaction(UUID playerUuid, long timestamp, double price) {
+        String query = "DELETE FROM auction_transactions WHERE player_uuid = ? AND timestamp = ? AND price = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            ps.setLong(2, timestamp);
+            ps.setDouble(3, price);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // --- Player Stats Methods ---
+
+    public void savePlayerStats(UUID uuid, double money, double shards) {
+        String query = "REPLACE INTO player_stats (uuid, money, shards, last_updated) VALUES (?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.setDouble(2, money);
+            ps.setDouble(3, shards);
+            ps.setLong(4, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save player stats for " + uuid, e);
+        }
+    }
+
+    public double[] loadPlayerStats(UUID uuid) {
+        String query = "SELECT money, shards FROM player_stats WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new double[] { rs.getDouble("money"), rs.getDouble("shards") };
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load player stats for " + uuid, e);
+        }
+        return null;
+    }
+
+    public void updateOfflineBalance(UUID uuid, double balance, boolean isShards) {
+        String column = isShards ? "shards" : "money";
+        String query = "UPDATE player_stats SET " + column + " = ?, last_updated = ? WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDouble(1, balance);
+            ps.setLong(2, System.currentTimeMillis());
+            ps.setString(3, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to update offline balance for " + uuid, e);
+        }
     }
 }

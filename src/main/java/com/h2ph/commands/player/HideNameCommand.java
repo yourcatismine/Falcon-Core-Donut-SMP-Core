@@ -74,6 +74,8 @@ public class HideNameCommand implements CommandExecutor, Listener {
             p.setPlayerListName(p.getName());
 
             // 2. Restore Overhead Name (Flash Refresh)
+            // We use refreshPlayer but internally it will now only refresh those who need
+            // it
             refreshPlayer(p, p.getName());
 
         } else {
@@ -84,7 +86,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
             sendActionBar(p, "&7Your gamertag is hidden.");
             p.playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
 
-            String obf = ChatColor.MAGIC + "xyza"; // Fully obfuscated name
+            String obf = ChatColor.MAGIC + p.getName(); // Fully obfuscated name based on gamertag
 
             // 1. Set Chat (Obfuscated) but Tablist (Real Name)
             p.setDisplayName(obf);
@@ -100,7 +102,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
     public void onChat(AsyncPlayerChatEvent evt) {
         // Enforce the obfuscated name in chat format
         if (plugin.getPlayerDataManager().get(evt.getPlayer().getUniqueId()).isNameHidden()) {
-            evt.getPlayer().setDisplayName(ChatColor.MAGIC + "xyza");
+            evt.getPlayer().setDisplayName(ChatColor.MAGIC + evt.getPlayer().getName());
         }
     }
 
@@ -146,7 +148,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
 
             // Wait 5 ticks for login to finish, then apply the visual hack
             plugin.getSchedulerAdapter().runTaskLater(() -> {
-                String obf = ChatColor.MAGIC + "xyza";
+                String obf = ChatColor.MAGIC + p.getName();
                 p.setDisplayName(obf);
                 p.setPlayerListName(p.getName()); // Show real name in Tab
                 refreshPlayer(p, obf); // Refreshes for everyone online
@@ -157,16 +159,19 @@ public class HideNameCommand implements CommandExecutor, Listener {
         // We wait a bit longer (10 ticks) to ensure the client is ready for packet
         // updates
         plugin.getSchedulerAdapter().runTaskLater(() -> {
-            String obf = ChatColor.MAGIC + "xyza";
-
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.equals(p))
                     continue;
 
                 if (plugin.getPlayerDataManager().get(player.getUniqueId()).isNameHidden()) {
-                    // If the new joiner is an admin with bypass, show them the REAL name
-                    String nameToSee = p.hasPermission("prism.hidename.see") ? player.getName() : obf;
-                    refreshPlayerForObserver(player, p, nameToSee);
+                    // If the new joiner is an admin with bypass, we skip the refresh
+                    // so they continue seeing the real name in the correct TAB position.
+                    if (p.hasPermission("prism.hidename.see")) {
+                        continue;
+                    }
+
+                    String obf = ChatColor.MAGIC + player.getName();
+                    refreshPlayerForObserver(player, p, obf);
                 }
             }
         }, 10L);
@@ -188,21 +193,26 @@ public class HideNameCommand implements CommandExecutor, Listener {
     private void refreshPlayer(Player target, String nameToSend) {
         String realName = target.getName();
 
-        // 1. Swap to Fake
+        // 1. Swap to Fake (briefly to send packets)
         setGameProfileName(target, nameToSend);
 
-        // 2. Hide/Show for observers
+        // 2. Hide/Show for observers WHO SHOULD SEE A CHANGE
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.equals(target))
                 continue;
+
+            // if they have permission to see real names, they ALWAYS see real names,
+            // so we skip the refresh for them entirely. This preserves their sorting.
+            if (online.hasPermission("prism.hidename.see")) {
+                continue;
+            }
 
             // Simple hide/show forces the server to resend the ADD_PLAYER info packet
             online.hidePlayer(plugin, target);
             online.showPlayer(plugin, target);
         }
 
-        // 3. Restore to Real after a short delay (1 tick)
-        // This ensures the packets are crafted and potentially sent with the fake name
+        // 3. Restore to Real after a short delay (2 ticks)
         plugin.getSchedulerAdapter().runTaskLater(() -> setGameProfileName(target, realName), 2L);
     }
 

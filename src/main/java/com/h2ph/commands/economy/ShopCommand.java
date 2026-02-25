@@ -41,6 +41,8 @@ public class ShopCommand implements CommandExecutor, Listener {
     private final Map<UUID, ShardPurchaseSession> shardPurchaseSessions = new HashMap<>();
     private final Map<String, FileConfiguration> titleToConfig = new HashMap<>();
     private final Map<String, Map<Integer, BuyingSession>> sessionLookup = new HashMap<>(); // Cache for faster lookups
+    private final Map<String, Map<Integer, ShardPurchaseSession>> shardSessionLookup = new HashMap<>(); // Cache for
+                                                                                                        // shards
 
     private String cachedMainTitle;
     private String cachedShopPrefix;
@@ -165,6 +167,41 @@ public class ShopCommand implements CommandExecutor, Listener {
             }
             if (!slots.isEmpty()) {
                 sessionLookup.put(title, slots);
+            }
+
+            // --- Shard Session Caching ---
+            Map<Integer, ShardPurchaseSession> shardSlots = new HashMap<>();
+            if (items != null) {
+                for (String key : items.getKeys(false)) {
+                    int slot = items.getInt(key + ".slot");
+                    // Only treat as shard shop item if it has shard_price OR has a command field
+                    if (items.contains(key + ".shard_price") || items.contains(key + ".command")) {
+                        String matName = items.getString(key + ".material", "STONE");
+                        Material mat = Material.getMaterial(matName.toUpperCase());
+                        if (mat == null)
+                            mat = Material.STONE;
+
+                        String displayName = items.getString(key + ".name", "");
+                        String currency = items.getString(key + ".currency", "SHARDS").toUpperCase();
+                        double price;
+
+                        if (currency.equals("MONEY")) {
+                            price = items.getDouble(key + ".price", 0.0);
+                        } else {
+                            price = items.getDouble(key + ".shard_price", items.getDouble(key + ".price", 0.0));
+                        }
+
+                        String keyType = items.getString(key + ".key_type");
+                        String spawnerType = items.getString(key + ".spawner_type");
+                        String command = items.getString(key + ".command");
+
+                        shardSlots.put(slot, new ShardPurchaseSession(mat, displayName, price, currency, fileName,
+                                keyType, spawnerType, command));
+                    }
+                }
+            }
+            if (!shardSlots.isEmpty()) {
+                shardSessionLookup.put(title, shardSlots);
             }
         }
     }
@@ -623,17 +660,17 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private BuyingSession findSessionFromClick(Player player, String guiTitle, int clickedSlot) {
-        if (sessionLookup.containsKey(guiTitle)) {
-            Map<Integer, BuyingSession> slots = sessionLookup.get(guiTitle);
-            if (slots.containsKey(clickedSlot)) {
+        Map<Integer, BuyingSession> slots = sessionLookup.get(guiTitle);
+        if (slots != null) {
+            BuyingSession template = slots.get(clickedSlot);
+            if (template != null) {
                 // Return a copy with quantity 1
-                BuyingSession template = slots.get(clickedSlot);
                 return new BuyingSession(template.baseItem, template.unitPrice, template.categoryFileName,
                         template.incrementValues, template.potionEffects, template.effectDuration,
                         template.effectLevel);
             }
         }
-        return null; // Fallback or return null if not found
+        return null;
     }
 
     private ItemStack createConfigItem(ConfigurationSection section) {
@@ -666,6 +703,10 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private String color(String s) {
+        if (s == null || s.isEmpty())
+            return "";
+        if (!s.contains("&"))
+            return s;
         return ChatColor.translateAlternateColorCodes('&', s);
     }
 
@@ -808,54 +849,8 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private ShardPurchaseSession findShardSessionFromClick(Player player, String guiTitle, int clickedSlot) {
-        FileConfiguration config = titleToConfig.get(guiTitle);
-        if (config == null)
-            return null;
-
-        String fileName = null;
-        for (Map.Entry<String, FileConfiguration> entry : categoryConfigs.entrySet()) {
-            if (entry.getValue().equals(config)) {
-                fileName = entry.getKey();
-                break;
-            }
-        }
-        if (fileName == null)
-            return null;
-
-        ConfigurationSection items = config.getConfigurationSection("items");
-        if (items == null)
-            return null;
-
-        for (String key : items.getKeys(false)) {
-            int slot = items.getInt(key + ".slot");
-            // Only treat as shard shop item if it has shard_price OR has a command field
-            // Regular items with just price + currency:MONEY should use normal buying flow
-            if (slot == clickedSlot
-                    && (items.contains(key + ".shard_price") || items.contains(key + ".command"))) {
-                String matName = items.getString(key + ".material", "STONE");
-                Material mat = Material.getMaterial(matName.toUpperCase());
-                if (mat == null)
-                    mat = Material.STONE;
-
-                String displayName = items.getString(key + ".name", "");
-                String currency = items.getString(key + ".currency", "SHARDS").toUpperCase();
-                double price;
-
-                if (currency.equals("MONEY")) {
-                    price = items.getDouble(key + ".price", 0.0);
-                } else {
-                    price = items.getInt(key + ".shard_price", items.getInt(key + ".price", 0));
-                }
-
-                String keyType = items.getString(key + ".key", null);
-                String spawnerType = items.getString(key + ".spawner", null);
-                String command = items.getString(key + ".command", null);
-
-                return new ShardPurchaseSession(key, displayName, price, currency, keyType, spawnerType,
-                        command, fileName, mat);
-            }
-        }
-        return null;
+        Map<Integer, ShardPurchaseSession> slots = shardSessionLookup.get(guiTitle);
+        return slots != null ? slots.get(clickedSlot) : null;
     }
 
     private void openShardConfirmation(Player player, ShardPurchaseSession session) {
@@ -925,27 +920,25 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private static class ShardPurchaseSession {
-        String itemKey;
+        Material displayMaterial;
         String displayName;
         double price;
         String currency;
+        String categoryFile;
         String keyType;
         String spawnerType;
         String command;
-        String categoryFile;
-        Material displayMaterial;
 
-        public ShardPurchaseSession(String itemKey, String displayName, double price, String currency,
-                String keyType, String spawnerType, String command, String categoryFile, Material displayMaterial) {
-            this.itemKey = itemKey;
+        public ShardPurchaseSession(Material displayMaterial, String displayName, double price, String currency,
+                String categoryFile, String keyType, String spawnerType, String command) {
+            this.displayMaterial = displayMaterial;
             this.displayName = displayName;
             this.price = price;
             this.currency = currency;
+            this.categoryFile = categoryFile;
             this.keyType = keyType;
             this.spawnerType = spawnerType;
             this.command = command;
-            this.categoryFile = categoryFile;
-            this.displayMaterial = displayMaterial;
         }
     }
 }

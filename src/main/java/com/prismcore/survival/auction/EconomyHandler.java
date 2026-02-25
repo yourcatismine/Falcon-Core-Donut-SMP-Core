@@ -40,6 +40,10 @@ public class EconomyHandler {
     }
 
     public static boolean chargePlayer(Player player, double amount) {
+        return chargePlayer(player, amount, "Auction");
+    }
+
+    public static boolean chargePlayer(Player player, double amount, String source) {
         if (useVault && vaultEcon != null) {
             if (vaultEcon.getBalance((OfflinePlayer) player) < amount) {
                 return false;
@@ -54,42 +58,54 @@ public class EconomyHandler {
             if (data.getMoney() < amount) {
                 return false;
             }
-            data.removeMoney(amount, "Auction");
-            // Internal economy usually auto-saves or logic is handled in manager,
-            // but we might want to trigger a save or update if necessary.
-            // PlayerDataManager saves on quit/interval.
+            data.removeMoney(amount, source);
+            plugin.getPlayerDataManager().saveMoneyAsync(player.getUniqueId(), data);
             return true;
         }
     }
 
     public static void depositPlayer(Player player, double amount) {
+        depositPlayer(player, amount, "General");
+    }
+
+    public static void depositPlayer(Player player, double amount, String source) {
+        depositOfflinePlayer(player, amount, source);
+    }
+
+    public static void depositOfflinePlayer(OfflinePlayer player, double amount) {
+        depositOfflinePlayer(player, amount, "General");
+    }
+
+    public static void depositOfflinePlayer(OfflinePlayer player, double amount, String source) {
         if (useVault && vaultEcon != null) {
-            vaultEcon.depositPlayer((OfflinePlayer) player, amount);
+            vaultEcon.depositPlayer(player, amount);
         } else {
             // Internal Economy
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null) {
-                data.addMoney(amount, "Auction");
+                data.addMoney(amount, source);
+                plugin.getPlayerDataManager().saveMoneyAsync(player.getUniqueId(), data);
             }
         }
     }
 
     public static boolean depositByName(String playerName, double amount) {
+        return depositByName(playerName, amount, "Auction");
+    }
+
+    public static boolean depositByName(String playerName, double amount, String source) {
         if (useVault && vaultEcon != null) {
             OfflinePlayer off = plugin.getServer().getOfflinePlayer(playerName);
             EconomyResponse res = vaultEcon.depositPlayer(off, amount);
             return res != null && res.transactionSuccess();
         } else {
             // Internal Economy
-            // Need UUID for PlayerDataManager.
-            // Try to resolve UUID from name via Bukkit (might be offline).
-            // This is tricky if offline.
             OfflinePlayer off = plugin.getServer().getOfflinePlayer(playerName);
             if (off.hasPlayedBefore() || off.isOnline()) {
                 PlayerData data = plugin.getPlayerDataManager().get(off.getUniqueId());
-                // getPlayerData might load from DB if not cached
                 if (data != null) {
-                    data.addMoney(amount, "Auction");
+                    data.addMoney(amount, source);
+                    plugin.getPlayerDataManager().saveMoneyAsync(off.getUniqueId(), data);
                     return true;
                 }
             }

@@ -23,8 +23,6 @@ public class ChatFormatter implements Listener {
         String format;
         if (prefix == null || prefix.isEmpty()) {
             format = "&7%player_name%:&f %message%";
-        } else if (getPlayerGroup(player).equalsIgnoreCase("default")) {
-            format = "&7%player_name%:&f %message%";
         } else {
             format = "%prefix%&7%player_name%:&f %message%";
         }
@@ -56,10 +54,6 @@ public class ChatFormatter implements Listener {
 
         // 2. Translate legacy colors (&7, &f, etc)
         return ChatColor.translateAlternateColorCodes('&', message);
-    }
-
-    private String getPlayerGroup(Player player) {
-        return LuckPermsUtils.getPrimaryGroup(player);
     }
 
     private String getPlayerPrefix(Player player) {

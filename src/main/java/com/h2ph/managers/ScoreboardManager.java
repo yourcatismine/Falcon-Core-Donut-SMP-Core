@@ -37,6 +37,9 @@ public class ScoreboardManager implements Listener {
     private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
     private final Map<UUID, Integer> titleIndexMap = new HashMap<>();
     private final Map<UUID, Integer> lineCountMap = new HashMap<>();
+    private final Map<UUID, List<String>> lastSentLines = new HashMap<>();
+    private final Map<UUID, String> lastSentTitle = new HashMap<>();
+    private String cachedRegion = null;
 
     public ScoreboardManager(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -50,6 +53,10 @@ public class ScoreboardManager implements Listener {
             plugin.saveResource("scoreboard/config.yml", false);
         }
         config = YamlConfiguration.loadConfiguration(configFile);
+
+        // Cache region
+        java.util.List<String> regionList = plugin.getSurvivalConfig().getStringList("region");
+        cachedRegion = regionList.isEmpty() ? "EU" : regionList.get(0);
     }
 
     public void setup() {
@@ -130,8 +137,11 @@ public class ScoreboardManager implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         stopTask(event.getPlayer());
-        titleIndexMap.remove(event.getPlayer().getUniqueId());
-        lineCountMap.remove(event.getPlayer().getUniqueId());
+        UUID uuid = event.getPlayer().getUniqueId();
+        titleIndexMap.remove(uuid);
+        lineCountMap.remove(uuid);
+        lastSentLines.remove(uuid);
+        lastSentTitle.remove(uuid);
     }
 
     private void startTask(Player player) {
@@ -221,11 +231,16 @@ public class ScoreboardManager implements Listener {
         user.sendPacket(displayPacket);
 
         List<String> lines = buildLines(player);
+        List<String> parsedLines = new ArrayList<>();
+        for (String line : lines) {
+            parsedLines.add(parsePlaceholders(player, line));
+        }
 
-        lineCountMap.put(player.getUniqueId(), lines.size());
-        createTeams(user, 0, lines.size());
+        lineCountMap.put(player.getUniqueId(), parsedLines.size());
+        createTeams(user, 0, parsedLines.size());
 
-        sendScores(player, user, lines);
+        lastSentLines.put(player.getUniqueId(), new ArrayList<>(parsedLines));
+        sendScores(player, user, parsedLines);
     }
 
     public void updateScoreboard(Player player) {
@@ -244,24 +259,42 @@ public class ScoreboardManager implements Listener {
         List<String> titles = config.getStringList("SCOREBOARD.TITLE");
         if (!titles.isEmpty()) {
             int currentIndex = titleIndexMap.getOrDefault(player.getUniqueId(), 0);
-            String title = color(titles.get(currentIndex));
-            Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
+            String rawTitle = titles.get(currentIndex);
+            String lastTitle = lastSentTitle.get(player.getUniqueId());
 
-            WrapperPlayServerScoreboardObjective updateTitlePacket = new WrapperPlayServerScoreboardObjective(
-                    "PrismCore",
-                    WrapperPlayServerScoreboardObjective.ObjectiveMode.UPDATE,
-                    titleComp,
-                    WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
-                    ScoreFormat.blankScore());
-            user.sendPacket(updateTitlePacket);
+            if (lastTitle == null || !lastTitle.equals(rawTitle)) {
+                String title = color(rawTitle);
+                Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
+
+                WrapperPlayServerScoreboardObjective updateTitlePacket = new WrapperPlayServerScoreboardObjective(
+                        "PrismCore",
+                        WrapperPlayServerScoreboardObjective.ObjectiveMode.UPDATE,
+                        titleComp,
+                        WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                        ScoreFormat.blankScore());
+                user.sendPacket(updateTitlePacket);
+                lastSentTitle.put(player.getUniqueId(), rawTitle);
+            }
 
             int nextIndex = (currentIndex + 1) % titles.size();
             titleIndexMap.put(player.getUniqueId(), nextIndex);
         }
 
         List<String> lines = buildLines(player);
+        List<String> parsedLines = new ArrayList<>();
+        for (String line : lines) {
+            parsedLines.add(parsePlaceholders(player, line));
+        }
 
-        int currentLineCount = lines.size();
+        List<String> lastLines = lastSentLines.get(player.getUniqueId());
+
+        // Compare parsed lines to ensure dynamic placeholders (balance, ping) trigger
+        // updates
+        if (lastLines != null && parsedLines.equals(lastLines)) {
+            return;
+        }
+
+        int currentLineCount = parsedLines.size();
         int cachedCount = lineCountMap.getOrDefault(player.getUniqueId(), 0);
 
         if (currentLineCount > cachedCount) {
@@ -271,7 +304,8 @@ public class ScoreboardManager implements Listener {
         }
 
         lineCountMap.put(player.getUniqueId(), currentLineCount);
-        sendScores(player, user, lines);
+        lastSentLines.put(player.getUniqueId(), new ArrayList<>(parsedLines));
+        sendScores(player, user, parsedLines);
     }
 
     private List<String> buildLines(Player player) {
@@ -321,15 +355,14 @@ public class ScoreboardManager implements Listener {
         return lines;
     }
 
-    private void sendScores(Player player, User user, List<String> lines) {
-        int lineCount = lines.size();
+    private void sendScores(Player player, User user, List<String> parsedLines) {
+        int lineCount = parsedLines.size();
         int score = lineCount;
 
         for (int i = 0; i < lineCount; i++) {
             String entry = ChatColor.values()[i].toString();
             String teamName = "line_" + i;
-            String line = lines.get(i);
-            String text = parsePlaceholders(player, line);
+            String text = parsedLines.get(i);
             Component prefixComp = LegacyComponentSerializer.legacySection().deserialize(text);
 
             WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
@@ -411,39 +444,48 @@ public class ScoreboardManager implements Listener {
     }
 
     private String parsePlaceholders(Player player, String text) {
-        // Read region from survival config (list, take first entry)
-        java.util.List<String> regionList = plugin.getSurvivalConfig().getStringList("region");
-        String region = regionList.isEmpty() ? "EU" : regionList.get(0);
-        text = text.replace("{region}", region);
+        if (text.contains("{region}")) {
+            text = text.replace("{region}", cachedRegion != null ? cachedRegion : "EU");
+        }
 
-        text = text.replace("{region_ping}", String.valueOf(player.getPing()));
+        if (text.contains("{region_ping}")) {
+            text = text.replace("{region_ping}", String.valueOf(player.getPing()));
+        }
 
         // Team placeholder
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
-        if (data != null && data.getTeamId() != null) {
-            com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(data.getTeamId());
-            if (team != null) {
-                String teamName = team.getName();
-                if (!teamName.contains("&") && !teamName.contains("§") && !teamName.contains("#")) {
-                    teamName = "&d" + teamName;
+        if (text.contains("%team_name%")) {
+            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+            if (data != null && data.getTeamId() != null) {
+                com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(data.getTeamId());
+                if (team != null) {
+                    String teamName = team.getName();
+                    if (!teamName.contains("&") && !teamName.contains("§") && !teamName.contains("#")) {
+                        teamName = "&d" + teamName;
+                    }
+                    text = text.replace("%team_name%", teamName);
+                } else {
+                    text = text.replace("%team_name%", "&dNone");
                 }
-                text = text.replace("%team_name%", teamName);
             } else {
                 text = text.replace("%team_name%", "&dNone");
             }
-        } else {
-            text = text.replace("%team_name%", "&dNone");
         }
 
-        if (plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+        if (text.contains("%") && plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             text = PlaceholderAPI.setPlaceholders(player, text);
         }
         return color(text);
     }
 
     private String color(String text) {
-        if (text == null)
+        if (text == null || text.isEmpty())
             return "";
+
+        // Fast path: skip regex if no hex indicator is present
+        if (!text.contains("&#")) {
+            return ChatColor.translateAlternateColorCodes('&', text);
+        }
+
         Matcher matcher = HEX_PATTERN.matcher(text);
         StringBuffer buffer = new StringBuffer();
         while (matcher.find()) {

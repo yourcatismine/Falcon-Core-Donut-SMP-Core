@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Material;
@@ -418,12 +420,44 @@ public class GUIHandler {
     }
 
     public static void openTransactionsGUI(Player player, int page, AuctionController controller) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                List<Transaction> allTx = controller.getTransactionManager()
+                        .getPlayerTransactions(player.getUniqueId());
+                double totalSpent = controller.getTransactionManager().getTotalSpent(allTx);
+                double totalMade = controller.getTransactionManager().getTotalMade(allTx);
+
+                controller.getPlugin().getSchedulerAdapter().runTask(() -> {
+                    try {
+                        if (!player.isOnline())
+                            return;
+                        openTransactionsGUI(player, page, controller, allTx, totalSpent, totalMade);
+                    } catch (Exception e) {
+                        player.sendMessage(
+                                Utils.formatColors("&cFailed to open transactions GUI. See console for details."));
+                        controller.getPlugin().getLogger().log(Level.SEVERE,
+                                "Error opening transactions GUI for " + player.getName(), e);
+                    }
+                });
+            } catch (Exception e) {
+                controller.getPlugin().getLogger().log(Level.SEVERE,
+                        "Error loading transactions for " + player.getName(), e);
+                controller.getPlugin().getSchedulerAdapter().runTask(() -> {
+                    if (player.isOnline()) {
+                        player.sendMessage(Utils.formatColors("&cError loading your transaction history."));
+                    }
+                });
+            }
+        });
+    }
+
+    public static void openTransactionsGUI(Player player, int page, AuctionController controller,
+            List<Transaction> allTx, double totalSpent, double totalMade) {
         FileConfiguration cfg = controller.getConfig();
         String raw = player.hasMetadata("tx-filter")
                 ? ((MetadataValue) player.getMetadata("tx-filter").get(0)).asString()
                 : "";
         String searchTerm = raw == null ? "" : raw.trim().toLowerCase();
-        List<Transaction> allTx = controller.getTransactionManager().getPlayerTransactions(player.getUniqueId());
         List filtered = allTx.stream().filter(tx -> {
             if (searchTerm.isEmpty()) {
                 return true;
@@ -451,7 +485,7 @@ public class GUIHandler {
             Transaction txObj = (Transaction) pageTx.get(i);
             ItemStack display = txObj.getItem().clone();
             ItemMeta meta = display.getItemMeta();
-            List loreTpl = txObj.isSale() ? cfg.getStringList("transactions-gui.lore-sold")
+            List<String> loreTpl = txObj.isSale() ? cfg.getStringList("transactions-gui.lore-sold")
                     : cfg.getStringList("transactions-gui.lore-bought");
             ArrayList<String> lore = new ArrayList<String>();
             long elapsedSeconds = (System.currentTimeMillis() - txObj.getTimestamp()) / 1000L;
@@ -459,8 +493,7 @@ public class GUIHandler {
             String otherPlayer = txObj.isSale() ? txObj.getBuyer() : txObj.getSeller();
             String itemName = Utils.prettifyMaterialName(txObj.getItem().getType());
             String priceFmt = Utils.formatNumber(txObj.getPrice());
-            for (Object lineObj : loreTpl) {
-                String line = (String) lineObj;
+            for (String line : loreTpl) {
                 String processed = line.replace("{player}", otherPlayer).replace("{item}", itemName)
                         .replace("{amount}", priceFmt).replace("{time-ago}", timeAgo);
                 lore.add(Utils.formatColors(processed));
@@ -497,8 +530,6 @@ public class GUIHandler {
                 Material.valueOf((String) cfg.getString("transactions-gui.stats-button.material")));
         ItemMeta stm = stats.getItemMeta();
         stm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.stats-button.display-name")));
-        double totalSpent = controller.getTransactionManager().getTotalSpent(player.getUniqueId());
-        double totalMade = controller.getTransactionManager().getTotalMade(player.getUniqueId());
         ArrayList<String> statsLore = new ArrayList<String>();
         for (Object lineObj : cfg.getStringList("transactions-gui.stats-button.lore")) {
             String line = (String) lineObj;
@@ -744,8 +775,22 @@ public class GUIHandler {
 
     public static void openAdminTransactionsGUI(Player admin, org.bukkit.OfflinePlayer target, int page,
             AuctionController controller) {
+        CompletableFuture.runAsync(() -> {
+            List<Transaction> fullTx = controller.getTransactionManager().getPlayerTransactions(target.getUniqueId());
+            double totalSpent = controller.getTransactionManager().getTotalSpent(fullTx);
+            double totalMade = controller.getTransactionManager().getTotalMade(fullTx);
+
+            Bukkit.getScheduler().runTask(controller.getPlugin(), () -> {
+                if (!admin.isOnline())
+                    return;
+                openAdminTransactionsGUI(admin, target, page, controller, fullTx, totalSpent, totalMade);
+            });
+        });
+    }
+
+    public static void openAdminTransactionsGUI(Player admin, org.bukkit.OfflinePlayer target, int page,
+            AuctionController controller, List<Transaction> fullTx, double totalSpent, double totalMade) {
         FileConfiguration cfg = controller.getConfig();
-        List<Transaction> fullTx = controller.getTransactionManager().getPlayerTransactions(target.getUniqueId());
 
         String filter = admin.hasMetadata("tx-filter")
                 ? admin.getMetadata("tx-filter").get(0).asString().toLowerCase()
@@ -792,9 +837,6 @@ public class GUIHandler {
             String itemName = Utils.prettifyMaterialName(txObj.getItem().getType());
             String priceFmt = Utils.formatNumber(txObj.getPrice());
 
-            // Custom Lore Format Request:
-            // &a{PLAYER}&f bought &a{PLAYER}'s&f {ITEM} for &a${PRICE}
-            // Logic: {BUYER} bought {SELLER}'s {ITEM} for ${PRICE}
             String line = Utils.formatColors("&a" + txObj.getBuyer() + "&f bought &a" + txObj.getSeller() + "'s&f "
                     + itemName + " for &a$" + priceFmt);
             lore.add(line);
@@ -815,35 +857,10 @@ public class GUIHandler {
             inv.setItem(i, display);
         }
 
-        // Slot 45: Previous Page (Back Arrow) - Only if page >= 2
-        // Requirement: "same name and lore" (implies config)
         if (page >= 2) {
             ItemStack prev = GUIHandler.makeItem(cfg, "transactions-gui.items.previous-page");
             inv.setItem(45, prev);
         } else {
-            // If not page 2+, show the custom "Back to Details" button or nothing?
-            // User said "only show this previous back arrow if the page is at page 2",
-            // implying if page 1, don't show it?
-            // But previously we had a "Back to Details" button.
-            // Given the strict requirement "In slot 45 a previous back arrow again same
-            // name and lore but only show this previous back arrow if the page is at page
-            // 2"
-            // it likely means REPLACE the custom back button with this logic depending on
-            // page.
-            // However, how does one go back to details then?
-            // Let's assume on Page 1, we KEEP the "Back to Details" button.
-            // But the user said "In slot 45 a previous back arrow... only show THIS... if
-            // page >= 2".
-            // This implies slot 45 changes function.
-            // Wait, usually slot 45 is back to previous menu.
-            // If page 1, slot 45 is usually "Back to Menu".
-            // If page > 1, slot 45 is "Previous Page".
-            // Let's implement standard pagination logic: Page 1 -> Back to Details, Page >
-            // 1 -> Previous Page.
-            // But user specifically asked for "only show this previous back arrow if the
-            // page is at page 2".
-            // Let's stick to: Page > 1 -> Previous Page item. Page 1 -> Back to Details
-            // item.
             ItemStack back = new ItemStack(Material.RED_STAINED_GLASS_PANE);
             ItemMeta bm = back.getItemMeta();
             bm.setDisplayName(Utils.formatColors("&cʙᴀᴄᴋ ᴛᴏ ᴅᴇᴛᴀɪʟѕ"));
@@ -851,15 +868,10 @@ public class GUIHandler {
             inv.setItem(45, back);
         }
 
-        // Slot 48: Stats Paper
-        // "In slot 48 a paper with stats name in config and same lore total made and
-        // total spent"
         int slotStats = 48;
-        ItemStack stats = new ItemStack(Material.PAPER); // Hardcoded paper as requested "a paper"
+        ItemStack stats = new ItemStack(Material.PAPER);
         ItemMeta stm = stats.getItemMeta();
         stm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.stats-button.display-name")));
-        double totalSpent = controller.getTransactionManager().getTotalSpent(target.getUniqueId());
-        double totalMade = controller.getTransactionManager().getTotalMade(target.getUniqueId());
         ArrayList<String> statsLore = new ArrayList<String>();
         for (String line : cfg.getStringList("transactions-gui.stats-button.lore")) {
             String processed = line.replace("{spent-amount}", Utils.formatNumber(totalSpent))
@@ -870,34 +882,17 @@ public class GUIHandler {
         stats.setItemMeta(stm);
         inv.setItem(slotStats, stats);
 
-        // Slot 49: Refresh
-        // "In slot 49 a refrresh again same name and lore to config"
         int slotRefresh = 49;
         ItemStack refresh = GUIHandler.makeItem(cfg, "transactions-gui.items.refresh");
         inv.setItem(slotRefresh, refresh);
 
-        // Slot 50: Search (Oak Sign)
-        // "In slot 50 an oak sign again to search"
         int slotSearch = 50;
         ItemStack search = new ItemStack(Material.OAK_SIGN);
-        ItemMeta xm = search.getItemMeta();
-        // Assuming there is a config path for search item similar to main-gui or using
-        // transactions-gui path if exists
-        // Converting "same name and lore" implies matching config.
-        // Let's use "transactions-gui.items.search" if it exists, roughly matching
-        // standard pattern
-        if (cfg.contains("transactions-gui.items.search")) {
-            xm.setDisplayName(Utils.formatColors(cfg.getString("transactions-gui.items.search.display-name")));
-            xm.setLore(Utils.formatColors(cfg.getStringList("transactions-gui.items.search.lore")));
-        } else {
-            // Fallback if config section missing (though user implies it exists)
-            xm.setDisplayName(Utils.formatColors("&aSearch"));
-        }
-        search.setItemMeta(xm);
+        ItemMeta searchMeta = search.getItemMeta();
+        searchMeta.setDisplayName(Utils.formatColors("&aѕᴇᴀʀᴄʜ"));
+        search.setItemMeta(searchMeta);
         inv.setItem(slotSearch, search);
 
-        // Slot 53: Next Arrow
-        // "In slot 53 a next arrow same name and lore"
         if (page < totalPages) {
             ItemStack next = GUIHandler.makeItem(cfg, "transactions-gui.items.next-page");
             inv.setItem(53, next);
@@ -905,8 +900,6 @@ public class GUIHandler {
 
         admin.setMetadata("ah-switching", new FixedMetadataValue(controller.getPlugin(), true));
         admin.setMetadata("ah-admin-target", new FixedMetadataValue(controller.getPlugin(), target.getName()));
-        admin.setMetadata("tx-page", new FixedMetadataValue(controller.getPlugin(), page));
-
         admin.openInventory(inv);
         controller.startUpdateTask(admin);
     }

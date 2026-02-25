@@ -37,19 +37,13 @@ public class ItemMerger implements Listener {
                     return;
                 }
 
-                // Scan nearby entities
+                // Scan nearby entities (Filtered scan is slightly faster on Paper/Folia)
                 for (Entity entity : item.getNearbyEntities(RADIUS, RADIUS, RADIUS)) {
-                    if (!(entity instanceof Item)) {
+                    if (!(entity instanceof Item other)) {
                         continue;
                     }
 
-                    Item other = (Item) entity;
-                    if (!other.isValid() || other.isDead()) {
-                        continue;
-                    }
-
-                    // Strict distance check
-                    if (item.getLocation().distance(other.getLocation()) > RADIUS) {
+                    if (!other.isValid() || other.isDead() || other.equals(item)) {
                         continue;
                     }
 

@@ -155,18 +155,25 @@ public class PrismSurvival extends JavaPlugin {
         // Setup Player Inventory Auto-Save Task (Every 10 minutes = 12000 ticks)
         getSchedulerAdapter().runTaskTimer(() -> {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                try {
-                    String invBase64 = com.prismcore.survival.utils.ItemSerializationManager
-                            .itemStackArrayToBase64(player.getInventory().getContents());
-                    String armorBase64 = com.prismcore.survival.utils.ItemSerializationManager
-                            .itemStackArrayToBase64(player.getInventory().getArmorContents());
-                    getSchedulerAdapter().runTaskAsynchronously(() -> {
-                        getDatabaseManager().saveInventory(player.getUniqueId(), invBase64, armorBase64);
-                    });
-                } catch (Exception e) {
-                    getLogger().log(java.util.logging.Level.SEVERE,
-                            "Failed to serialize inventory for auto-save of " + player.getName(), e);
-                }
+                // Capture inventory contents on main thread (clone array for safety)
+                final org.bukkit.inventory.ItemStack[] contents = player.getInventory().getContents().clone();
+                final org.bukkit.inventory.ItemStack[] armor = player.getInventory().getArmorContents().clone();
+                final java.util.UUID uuid = player.getUniqueId();
+                final String name = player.getName();
+
+                // Serialize and save asynchronously to avoid blocking the main thread
+                getSchedulerAdapter().runTaskAsynchronously(() -> {
+                    try {
+                        String invBase64 = com.prismcore.survival.utils.ItemSerializationManager
+                                .itemStackArrayToBase64(contents);
+                        String armorBase64 = com.prismcore.survival.utils.ItemSerializationManager
+                                .itemStackArrayToBase64(armor);
+                        getDatabaseManager().saveInventory(uuid, invBase64, armorBase64);
+                    } catch (Exception e) {
+                        getLogger().log(java.util.logging.Level.SEVERE,
+                                "Failed to serialize inventory for auto-save of " + name, e);
+                    }
+                });
             }
         }, 12000L, 12000L);
 

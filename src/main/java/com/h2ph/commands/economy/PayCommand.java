@@ -114,8 +114,10 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         }
 
         PlayerData senderData = plugin.getPlayerDataManager().get(sender.getUniqueId());
-        if (senderData == null)
+        if (senderData == null) {
+            // This should rarely happen for an online player, but if it does, load it
             senderData = plugin.getPlayerDataManager().loadPlayer(sender.getUniqueId());
+        }
 
         if (senderData.getMoney() < amount) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cYou do not have enough money.");
@@ -124,54 +126,72 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        PlayerData targetData = plugin.getPlayerDataManager().get(targetId);
-        // If target is not in memory (offline), load them
-        boolean targetWasLoaded = targetData != null;
-        if (targetData == null) {
-            targetData = plugin.getPlayerDataManager().loadPlayer(targetId);
-        }
+        final PlayerData finalSenderData = senderData;
 
-        // Check if target has disabled payments
-        if (!targetData.isPayments()) {
-            sendError(sender, "&cUser disabled payments.");
-            return;
-        }
+        // Finalize transaction asynchronously to avoid TPS drop from DB/File IO
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            PlayerData targetData = plugin.getPlayerDataManager().get(targetId);
+            boolean targetWasLoaded = targetData != null;
+            if (targetData == null) {
+                targetData = plugin.getPlayerDataManager().loadPlayer(targetId);
+            }
 
-        // Transaction
-        senderData.removeMoney(amount, "Payment to " + targetName);
-        targetData.addMoney(amount, "Payment from " + sender.getName());
+            if (targetData == null) {
+                plugin.getSchedulerAdapter().runTask(() -> sendError(sender, "&cCould not load data for that player."));
+                return;
+            }
 
-        // Save
-        plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
-        plugin.getPlayerDataManager().savePlayer(targetId);
+            final PlayerData finalTargetData = targetData;
 
-        // Unload target if they were not loaded and are offline to save memory?
-        // PlayerDataManager doesn't seem to have explicit unload logic in the view I
-        // saw besides `unload` which saves.
-        // If they are offline, we probably should unload, but for now let's just save.
-        // The manager has an `unload` method.
-        if (!targetWasLoaded && Bukkit.getPlayer(targetId) == null) {
-            plugin.getPlayerDataManager().unload(targetId);
-        }
+            // Check if target has disabled payments
+            if (!finalTargetData.isPayments()) {
+                plugin.getSchedulerAdapter().runTask(() -> sendError(sender, "&cUser disabled payments."));
+                return;
+            }
 
-        // Success Messages
+            // Return to main thread for the actual economy modification to ensure safety
+            plugin.getSchedulerAdapter().runTask(() -> {
+                // Transaction using global EconomyHandler (Vault-aware)
+                if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(sender, amount,
+                        "Payment to " + targetName)) {
+                    sendError(sender, "&cTransaction failed.");
+                    return;
+                }
+
+                // Deposit to target (handles offline/Vault automatically)
+                com.prismcore.survival.auction.EconomyHandler.depositOfflinePlayer(Bukkit.getOfflinePlayer(targetId),
+                        amount,
+                        "Payment from " + sender.getName());
+
+                // Save data asynchronously
+                plugin.getSchedulerAdapter().runTaskAsync(() -> {
+                    if (!com.prismcore.survival.auction.EconomyHandler.usingVault()) {
+                        plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayer(targetId);
+
+                        if (!targetWasLoaded && Bukkit.getPlayer(targetId) == null) {
+                            plugin.getPlayerDataManager().unload(targetId);
+                        }
+                    }
+                });
+
+                // Success Messages and Notifications
+                sendSuccess(sender, targetId, targetName, amount, finalTargetData);
+            });
+        });
+    }
+
+    private void sendSuccess(Player sender, UUID targetId, String targetName, double amount, PlayerData targetData) {
         String moneyFormatted = formatNumber(amount);
-
-        // Sender Message
-        // "&7You paid &5{player}&a ${money}"
         String senderMsg = ChatColor.translateAlternateColorCodes('&',
                 "&7You paid &5" + targetName + "&a $" + moneyFormatted);
         sender.sendMessage(senderMsg);
         sender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(senderMsg));
-        // No sound for success
 
-        // Receiver Message
-        // "&5{player}&7 has paid you&a ${money}"
         Player targetOnline = Bukkit.getPlayer(targetId);
         if (targetOnline != null) {
-            // Check if they want alerts
             if (!targetData.isPayAlerts()) {
-                return; // Pay Alerts OFF = No Notification
+                return;
             }
 
             String targetMsg = ChatColor.translateAlternateColorCodes('&',
@@ -179,7 +199,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             targetOnline.sendMessage(targetMsg);
             targetOnline.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(targetMsg));
 
-            // Sound Notification
             if (targetData.isSoundNotifications()) {
                 targetOnline.playSound(targetOnline.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
             }

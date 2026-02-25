@@ -154,6 +154,7 @@ public class RTPManager {
                         return;
                     }
 
+                    cleanup(player);
                     player.teleportAsync(target).thenAccept(success -> {
                         if (success) {
                             String successMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
@@ -169,7 +170,6 @@ public class RTPManager {
                             player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                                     "&cTeleport failed unexpectly."));
                         }
-                        cleanup(player);
                     });
                 });
             }

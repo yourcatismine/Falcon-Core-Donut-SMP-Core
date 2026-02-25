@@ -53,43 +53,43 @@ public class PlayerData {
         return shards;
     }
 
-    public void setShards(double shards) {
+    public synchronized void setShards(double shards) {
         this.setShards(shards, "Manual Set");
     }
 
-    public void setShards(double shards, String source) {
+    public synchronized void setShards(double shards, String source) {
         double old = this.shards;
         this.shards = shards;
         logEconomyChange(shards - old, "SHARDS", source);
     }
 
-    public void addShards(double amount) {
+    public synchronized void addShards(double amount) {
         this.addShards(amount, "Unknown");
     }
 
-    public void addShards(double amount, String source) {
+    public synchronized void addShards(double amount, String source) {
         this.shards += amount;
         logEconomyChange(amount, "SHARDS", source);
     }
 
-    public void removeShards(double amount) {
+    public synchronized void removeShards(double amount) {
         this.removeShards(amount, "Unknown");
     }
 
-    public void removeShards(double amount, String source) {
+    public synchronized void removeShards(double amount, String source) {
         this.shards -= amount;
         logEconomyChange(-amount, "SHARDS", source);
     }
 
-    public double getMoney() {
+    public synchronized double getMoney() {
         return money;
     }
 
-    public void setMoney(double money) {
+    public synchronized void setMoney(double money) {
         this.setMoney(money, "Manual Set");
     }
 
-    public void setMoney(double money, String source) {
+    public synchronized void setMoney(double money, String source) {
         if (!Double.isFinite(money))
             return;
         double old = this.money;
@@ -97,22 +97,22 @@ public class PlayerData {
         logEconomyChange(money - old, "MONEY", source);
     }
 
-    public void addMoney(double amount) {
+    public synchronized void addMoney(double amount) {
         this.addMoney(amount, "Unknown");
     }
 
-    public void addMoney(double amount, String source) {
+    public synchronized void addMoney(double amount, String source) {
         if (!Double.isFinite(amount) || amount < 0)
             return;
         this.money += amount;
         logEconomyChange(amount, "MONEY", source);
     }
 
-    public void removeMoney(double amount) {
+    public synchronized void removeMoney(double amount) {
         this.removeMoney(amount, "Unknown");
     }
 
-    public void removeMoney(double amount, String source) {
+    public synchronized void removeMoney(double amount, String source) {
         if (!Double.isFinite(amount) || amount < 0)
             return;
         this.money -= amount;

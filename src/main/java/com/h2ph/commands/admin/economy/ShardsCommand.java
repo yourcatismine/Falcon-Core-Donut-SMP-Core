@@ -135,6 +135,15 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         }
 
         PlayerData data = plugin.getPlayerDataManager().get(target.getUniqueId());
+        if (data == null) {
+            data = plugin.getPlayerDataManager().loadPlayer(target.getUniqueId());
+        }
+
+        if (data == null) {
+            sender.sendMessage(ChatColor.RED + "Could not load data for " + target.getName());
+            return;
+        }
+
         int shards = (int) data.getShards();
         String formattedShards = formatNumber(shards);
 
@@ -142,6 +151,11 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(message);
         sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(message));
+
+        // Unload if they are offline and weren't loaded
+        if (!target.isOnline()) {
+            plugin.getPlayerDataManager().unload(target.getUniqueId());
+        }
     }
 
     /**
@@ -238,6 +252,11 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void processPay(Player sender, OfflinePlayer target, int amount) {
+        if (!Bukkit.isPrimaryThread()) {
+            plugin.getSchedulerAdapter().runTask(() -> processPay(sender, target, amount));
+            return;
+        }
+
         if (!target.hasPlayedBefore() && !target.isOnline()) {
             String errorMsg = ChatColor.RED + "That player does not exist.";
             sender.sendMessage(errorMsg);
@@ -247,42 +266,68 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
         // Load sender data
         PlayerData senderData = plugin.getPlayerDataManager().get(sender.getUniqueId());
-        double senderShards = senderData.getShards();
+        if (senderData == null) {
+            senderData = plugin.getPlayerDataManager().loadPlayer(sender.getUniqueId());
+        }
 
-        if (senderShards < amount) {
+        if (senderData.getShards() < amount) {
             sender.sendMessage(ChatColor.RED + "You do not have enough shards!");
             playSound(sender, org.bukkit.Sound.ENTITY_VILLAGER_NO);
             return;
         }
 
-        // Load target data
-        PlayerData targetData = plugin.getPlayerDataManager().get(target.getUniqueId());
+        final PlayerData finalSenderData = senderData;
 
-        // Execute transaction
-        senderData.removeShards(amount, "Payment to " + target.getName());
-        targetData.addShards(amount, "Payment from " + sender.getName());
-
-        // Save data
-        plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
-        plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
-
-        // Notify sender
-        sender.sendMessage(ChatColor.GRAY + "You paid " + target.getName() + " " +
-                ChatColor.DARK_PURPLE + formatNumber(amount) + " shards");
-        playSound(sender, org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME);
-
-        // Notify target if online
-        if (target.isOnline()) {
-            Player targetPlayer = target.getPlayer();
-            if (targetPlayer != null) {
-                String receiverMsg = ChatColor.DARK_PURPLE + sender.getName() + ChatColor.GRAY + " paid you " +
-                        ChatColor.DARK_PURPLE + formatNumber(amount);
-                targetPlayer.sendMessage(receiverMsg);
-                targetPlayer.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                        new net.md_5.bungee.api.chat.TextComponent(receiverMsg));
-                playSound(targetPlayer, org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_PLACE);
+        // Move IO to async thread
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            PlayerData targetData = plugin.getPlayerDataManager().get(target.getUniqueId());
+            boolean targetWasLoaded = targetData != null;
+            if (targetData == null) {
+                targetData = plugin.getPlayerDataManager().loadPlayer(target.getUniqueId());
             }
-        }
+
+            if (targetData == null) {
+                plugin.getSchedulerAdapter().runTask(
+                        () -> sender.sendMessage(ChatColor.RED + "Could not load data for " + target.getName()));
+                return;
+            }
+
+            final PlayerData finalTargetData = targetData;
+
+            // Execute transaction on main thread for safety
+            plugin.getSchedulerAdapter().runTask(() -> {
+                finalSenderData.removeShards(amount, "Payment to " + target.getName());
+                finalTargetData.addShards(amount, "Payment from " + sender.getName());
+
+                // Save data async
+                plugin.getSchedulerAdapter().runTaskAsync(() -> {
+                    plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
+                    plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+
+                    if (!targetWasLoaded && !target.isOnline()) {
+                        plugin.getPlayerDataManager().unload(target.getUniqueId());
+                    }
+                });
+
+                // Notify sender
+                sender.sendMessage(ChatColor.GRAY + "You paid " + target.getName() + " " +
+                        ChatColor.DARK_PURPLE + formatNumber(amount) + " shards");
+                playSound(sender, org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME);
+
+                // Notify target if online
+                if (target.isOnline()) {
+                    Player targetPlayer = target.getPlayer();
+                    if (targetPlayer != null) {
+                        String receiverMsg = ChatColor.DARK_PURPLE + sender.getName() + ChatColor.GRAY + " paid you " +
+                                ChatColor.DARK_PURPLE + formatNumber(amount);
+                        targetPlayer.sendMessage(receiverMsg);
+                        targetPlayer.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                                new net.md_5.bungee.api.chat.TextComponent(receiverMsg));
+                        playSound(targetPlayer, org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_PLACE);
+                    }
+                }
+            });
+        });
     }
 
     /**
@@ -362,6 +407,16 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         }
 
         PlayerData data = plugin.getPlayerDataManager().get(target.getUniqueId());
+        boolean wasLoaded = data != null;
+        if (data == null) {
+            data = plugin.getPlayerDataManager().loadPlayer(target.getUniqueId());
+        }
+
+        if (data == null) {
+            sender.sendMessage(ChatColor.RED + "Could not load data for " + target.getName());
+            return;
+        }
+
         double currentShards = data.getShards();
         double newShards = currentShards;
 
@@ -392,6 +447,9 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+        if (!wasLoaded && !target.isOnline()) {
+            plugin.getPlayerDataManager().unload(target.getUniqueId());
+        }
         playSound(sender, org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
 
         if (target.isOnline()) {

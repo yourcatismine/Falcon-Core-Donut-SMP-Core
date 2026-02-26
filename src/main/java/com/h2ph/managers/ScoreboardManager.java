@@ -39,6 +39,7 @@ public class ScoreboardManager implements Listener {
     private final Map<UUID, Integer> lineCountMap = new HashMap<>();
     private final Map<UUID, List<String>> lastSentLines = new HashMap<>();
     private final Map<UUID, String> lastSentTitle = new HashMap<>();
+    private final Map<UUID, Component[]> lastSentComponents = new HashMap<>();
     private String cachedRegion = null;
 
     public ScoreboardManager(PrismSurvival plugin) {
@@ -142,6 +143,7 @@ public class ScoreboardManager implements Listener {
         lineCountMap.remove(uuid);
         lastSentLines.remove(uuid);
         lastSentTitle.remove(uuid);
+        lastSentComponents.remove(uuid);
     }
 
     private void startTask(Player player) {
@@ -305,7 +307,56 @@ public class ScoreboardManager implements Listener {
 
         lineCountMap.put(player.getUniqueId(), currentLineCount);
         lastSentLines.put(player.getUniqueId(), new ArrayList<>(parsedLines));
-        sendScores(player, user, parsedLines);
+
+        // Differential update: only send scores/teams for lines that changed
+        sendScoresDifferential(player, user, parsedLines, lastLines);
+    }
+
+    private void sendScoresDifferential(Player player, User user, List<String> parsedLines, List<String> lastLines) {
+        int lineCount = parsedLines.size();
+        int score = lineCount;
+        Component[] lastComponents = lastSentComponents.computeIfAbsent(player.getUniqueId(), k -> new Component[16]);
+
+        for (int i = 0; i < lineCount; i++) {
+            String text = parsedLines.get(i);
+
+            // Skip if the line hasn't changed
+            if (lastLines != null && i < lastLines.size() && text.equals(lastLines.get(i))
+                    && lastComponents[i] != null) {
+                score--;
+                continue;
+            }
+
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+            Component prefixComp = LegacyComponentSerializer.legacySection().deserialize(text);
+            lastComponents[i] = prefixComp;
+
+            WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                    Component.text(teamName),
+                    prefixComp,
+                    Component.empty(),
+                    WrapperPlayServerTeams.NameTagVisibility.ALWAYS,
+                    WrapperPlayServerTeams.CollisionRule.NEVER,
+                    NamedTextColor.WHITE,
+                    WrapperPlayServerTeams.OptionData.NONE);
+
+            WrapperPlayServerTeams teamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.UPDATE,
+                    Optional.of(teamInfo),
+                    Collections.emptyList());
+            user.sendPacket(teamPacket);
+
+            WrapperPlayServerUpdateScore scorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
+                    "PrismCore",
+                    Optional.of(score));
+            user.sendPacket(scorePacket);
+
+            score--;
+        }
     }
 
     private List<String> buildLines(Player player) {

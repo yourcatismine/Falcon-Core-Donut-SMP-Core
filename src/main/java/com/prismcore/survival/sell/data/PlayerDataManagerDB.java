@@ -49,20 +49,14 @@ public class PlayerDataManagerDB {
                     stmt.setString(1, uuid.toString());
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
-                            data.setMoney(rs.getDouble("money"));
-                            data.setShards(rs.getLong("shards"));
                             data.setBreakBlocks(rs.getLong("break_blocks"));
                             data.setPlacedBlocks(rs.getLong("placed_blocks"));
                             data.setMobKills(rs.getLong("mob_kills"));
                             data.setSellMade(rs.getDouble("sell_made"));
-                            data.setShopSpent(rs.getDouble("shop_spent"));
                             data.setPlaytime(rs.getLong("playtime"));
                             data.setDeaths(rs.getLong("deaths"));
                             data.setKills(rs.getLong("kills"));
-                            data.setKeys(rs.getLong("keys"));
-                            data.setBounty(rs.getDouble("bounty"));
                             data.setToolExpiry(rs.getLong("tool_expiry"));
-                            data.setTeamId(rs.getString("team"));
                         }
                     }
                 }
@@ -122,14 +116,14 @@ public class PlayerDataManagerDB {
 
     private void savePlayerDataSync(UUID uuid, PlayerData data) {
         // Query for Global Stats
-        String queryData = "INSERT INTO player_stats (uuid, money, shards, break_blocks, placed_blocks, mob_kills, sell_made, shop_spent, playtime, deaths, kills, `keys`, bounty, tool_expiry, team) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        String queryData = "INSERT INTO player_stats (uuid, break_blocks, placed_blocks, mob_kills, sell_made, playtime, deaths, kills, tool_expiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 +
-                " ON DUPLICATE KEY UPDATE money=VALUES(money), shards=VALUES(shards), break_blocks=VALUES(break_blocks),"
+                " ON DUPLICATE KEY UPDATE break_blocks=VALUES(break_blocks),"
                 +
                 " placed_blocks=VALUES(placed_blocks), mob_kills=VALUES(mob_kills), sell_made=VALUES(sell_made)," +
-                " shop_spent=VALUES(shop_spent), playtime=VALUES(playtime), deaths=VALUES(deaths), kills=VALUES(kills),"
+                " playtime=VALUES(playtime), deaths=VALUES(deaths), kills=VALUES(kills),"
                 +
-                " `keys`=VALUES(`keys`), bounty=VALUES(bounty), tool_expiry=VALUES(tool_expiry), team=VALUES(team)";
+                " tool_expiry=VALUES(tool_expiry)";
 
         // Query for Category Data
         StringBuilder queryCategoryData = new StringBuilder();
@@ -160,20 +154,14 @@ public class PlayerDataManagerDB {
             try (PreparedStatement insertStmt = conn.prepareStatement(queryData)) {
                 int i = 1;
                 insertStmt.setString(i++, uuid.toString());
-                insertStmt.setDouble(i++, data.getMoney());
-                insertStmt.setLong(i++, data.getShards());
                 insertStmt.setLong(i++, data.getBreakBlocks());
                 insertStmt.setLong(i++, data.getPlacedBlocks());
                 insertStmt.setLong(i++, data.getMobKills());
                 insertStmt.setDouble(i++, data.getSellMade());
-                insertStmt.setDouble(i++, data.getShopSpent());
                 insertStmt.setLong(i++, data.getPlaytime());
                 insertStmt.setLong(i++, data.getDeaths());
                 insertStmt.setLong(i++, data.getKills());
-                insertStmt.setLong(i++, data.getKeys());
-                insertStmt.setDouble(i++, data.getBounty());
                 insertStmt.setLong(i++, data.getToolExpiry());
-                insertStmt.setString(i++, data.getTeamId());
                 insertStmt.executeUpdate();
             }
 

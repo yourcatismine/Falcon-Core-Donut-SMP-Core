@@ -12,7 +12,6 @@ public class PlayerData {
     private final UUID uuid;
     private final Map<Category, Double> categoryProgress;
     private final Map<Category, Double> categoryMultipliers;
-    private double money;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -68,41 +67,14 @@ public class PlayerData {
     private boolean dirty;
 
     // Extended Stats
-    private long shards;
     private long breakBlocks;
     private long placedBlocks;
     private long mobKills;
     private double sellMade;
-    private double shopSpent;
     private long playtime;
     private long deaths;
     private long kills;
-    private long keys;
-    private double bounty;
     private long toolExpiry;
-    private String teamId;
-
-    public double getMoney() {
-        return this.money;
-    }
-
-    public void setMoney(double money) {
-        if (this.money != money) {
-            this.money = money;
-            this.markDirty();
-        }
-    }
-
-    public long getShards() {
-        return shards;
-    }
-
-    public void setShards(long shards) {
-        if (this.shards != shards) {
-            this.shards = shards;
-            this.markDirty();
-        }
-    }
 
     public long getBreakBlocks() {
         return breakBlocks;
@@ -148,17 +120,6 @@ public class PlayerData {
         }
     }
 
-    public double getShopSpent() {
-        return shopSpent;
-    }
-
-    public void setShopSpent(double shopSpent) {
-        if (this.shopSpent != shopSpent) {
-            this.shopSpent = shopSpent;
-            this.markDirty();
-        }
-    }
-
     public long getPlaytime() {
         return playtime;
     }
@@ -192,28 +153,6 @@ public class PlayerData {
         }
     }
 
-    public long getKeys() {
-        return keys;
-    }
-
-    public void setKeys(long keys) {
-        if (this.keys != keys) {
-            this.keys = keys;
-            this.markDirty();
-        }
-    }
-
-    public double getBounty() {
-        return bounty;
-    }
-
-    public void setBounty(double bounty) {
-        if (this.bounty != bounty) {
-            this.bounty = bounty;
-            this.markDirty();
-        }
-    }
-
     public long getToolExpiry() {
         return toolExpiry;
     }
@@ -237,14 +176,4 @@ public class PlayerData {
         this.dirty = false;
     }
 
-    public String getTeamId() {
-        return teamId;
-    }
-
-    public void setTeamId(String teamId) {
-        if (this.teamId == null ? teamId != null : !this.teamId.equals(teamId)) {
-            this.teamId = teamId;
-            this.markDirty();
-        }
-    }
 }

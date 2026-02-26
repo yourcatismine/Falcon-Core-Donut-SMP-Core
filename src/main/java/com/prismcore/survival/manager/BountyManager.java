@@ -14,7 +14,6 @@ public class BountyManager {
 
     private final PrismSurvival plugin;
     private final File file;
-    private FileConfiguration config;
     private final Map<UUID, BountyEntry> activeBounties = new HashMap<>();
 
     public BountyManager(PrismSurvival plugin) {
@@ -24,52 +23,63 @@ public class BountyManager {
     }
 
     public void load() {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().warning("Could not create bounties.yml: " + e.getMessage());
-            }
-        }
-        config = YamlConfiguration.loadConfiguration(file);
         activeBounties.clear();
-        if (config.contains("bounties")) {
-            for (String key : config.getConfigurationSection("bounties").getKeys(false)) {
-                try {
-                    UUID uuid = UUID.fromString(key);
-                    double amount = config.getDouble("bounties." + key + ".amount");
-                    long timestamp = config.getLong("bounties." + key + ".timestamp");
-                    activeBounties.put(uuid, new BountyEntry(amount, timestamp));
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid UUID in bounties.yml: " + key);
+
+        // Load from Database
+        Map<UUID, Double> dbBounties = plugin.getDatabaseManager().loadAllBounties();
+        for (Map.Entry<UUID, Double> entry : dbBounties.entrySet()) {
+            activeBounties.put(entry.getKey(), new BountyEntry(entry.getValue(), System.currentTimeMillis()));
+        }
+
+        // Migration from YML if it exists
+        if (file.exists()) {
+            FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+            if (config.contains("bounties")) {
+                plugin.getLogger().info("Migrating bounties from YML to Database...");
+                boolean migrated = false;
+                for (String key : config.getConfigurationSection("bounties").getKeys(false)) {
+                    try {
+                        UUID uuid = UUID.fromString(key);
+                        double amount = config.getDouble("bounties." + key + ".amount");
+
+                        // Add to memory and save to DB
+                        double finalAmount = activeBounties.getOrDefault(uuid, new BountyEntry(0.0, 0L)).getAmount()
+                                + amount;
+                        activeBounties.put(uuid, new BountyEntry(finalAmount, System.currentTimeMillis()));
+                        plugin.getDatabaseManager().saveBounty(uuid, finalAmount);
+                        migrated = true;
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().warning("Invalid UUID in bounties.yml: " + key);
+                    }
                 }
+                if (migrated) {
+                    plugin.getLogger().info("Bounty migration complete. Deleting legacy bounties.yml.");
+                    file.delete();
+                }
+            } else {
+                file.delete(); // Empty or invalid file
             }
         }
     }
 
     public void save() {
-        config.set("bounties", null); // Clear existing
-        for (Map.Entry<UUID, BountyEntry> entry : activeBounties.entrySet()) {
-            config.set("bounties." + entry.getKey().toString() + ".amount", entry.getValue().getAmount());
-            config.set("bounties." + entry.getKey().toString() + ".timestamp", entry.getValue().getTimestamp());
-        }
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save bounties.yml: " + e.getMessage());
-        }
+        // No-op for YML saving, as everything is saved to DB immediately
     }
 
     public void addBounty(UUID target, double amount) {
         BountyEntry current = activeBounties.getOrDefault(target, new BountyEntry(0.0, System.currentTimeMillis()));
-        activeBounties.put(target, new BountyEntry(current.getAmount() + amount, System.currentTimeMillis()));
-        save();
+        double newAmount = current.getAmount() + amount;
+        activeBounties.put(target, new BountyEntry(newAmount, System.currentTimeMillis()));
+
+        // Save to Database
+        plugin.getDatabaseManager().saveBounty(target, newAmount);
     }
 
     public void removeBounty(UUID target) {
         activeBounties.remove(target);
-        save();
+
+        // Delete from Database
+        plugin.getDatabaseManager().deleteBounty(target);
     }
 
     public double getBounty(UUID target) {

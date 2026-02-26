@@ -21,22 +21,12 @@ public class PlayerDataManager {
 
     private final PrismSurvival plugin;
     private final Map<UUID, PlayerData> playerDataMap = new ConcurrentHashMap<>();
-    private final File dataFolderShards;
-    private final File dataFolderMoney;
     private final File dataFolderCrates;
 
     public PlayerDataManager(PrismSurvival plugin) {
         this.plugin = plugin;
-        this.dataFolderShards = new File(plugin.getDataFolder(), "economy/shards/players");
-        this.dataFolderMoney = new File(plugin.getDataFolder(), "economy/money/players");
         this.dataFolderCrates = new File(plugin.getDataFolder(), "crates/data");
 
-        if (!dataFolderShards.exists()) {
-            dataFolderShards.mkdirs();
-        }
-        if (!dataFolderMoney.exists()) {
-            dataFolderMoney.mkdirs();
-        }
         if (!dataFolderCrates.exists()) {
             dataFolderCrates.mkdirs();
         }
@@ -56,29 +46,27 @@ public class PlayerDataManager {
     public PlayerData loadPlayer(UUID uuid) {
         PlayerData data = new PlayerData(plugin, uuid);
 
-        // Load Stats from Database (Money and Shards)
-        double[] stats = plugin.getDatabaseManager().loadPlayerStats(uuid);
+        // Load Stats from Database (Money, Shards, ShopSpent)
+        DatabaseManager.PlayerDataStats stats = plugin.getDatabaseManager().loadPlayerStats(uuid);
         boolean migratedFromYml = false;
 
         if (stats != null) {
-            data.setMoney(stats[0], "Database Load");
-            data.setShards(stats[1], "Database Load");
+            data.setMoney(stats.money, "Database Load");
+            data.setShards(stats.shards, "Database Load");
+            data.setShopSpent(stats.shopSpent);
         }
 
         // Load Shards Data (Migration/Fallback)
-        File shardsFile = new File(dataFolderShards, uuid.toString() + "-shards.db");
+        File legacyShardsFolder = new File(plugin.getDataFolder(), "economy/shards/players");
+        File shardsFile = new File(legacyShardsFolder, uuid.toString() + "-shards.db");
         if (shardsFile.exists()) {
             FileConfiguration config = YamlConfiguration.loadConfiguration(shardsFile);
             if (stats == null) {
                 data.setShards(config.getDouble("shards", 0.0), "YML Fallback");
+                data.setShopSpent(config.getDouble("shop_spent", 0.0));
                 migratedFromYml = true;
             }
-            data.setShopSpent(config.getDouble("shop_spent", 0.0));
 
-            // Legacy key loading (migration support, optional)
-            // If keys exist here but NOT in new file, we could load them.
-            // But let's prioritize the new file, and if new file doesn't exist, check old.
-            // Or just load old, then load new (new overwrites).
             if (config.contains("keys")) {
                 for (String key : config.getConfigurationSection("keys").getKeys(false)) {
                     int count = config.getInt("keys." + key, 0);
@@ -212,7 +200,8 @@ public class PlayerDataManager {
         }
 
         // Load Money Data (Migration/Fallback)
-        File moneyFile = new File(dataFolderMoney, uuid.toString() + "-money.db");
+        File legacyMoneyFolder = new File(plugin.getDataFolder(), "economy/money/players");
+        File moneyFile = new File(legacyMoneyFolder, uuid.toString() + "-money.db");
         if (moneyFile.exists()) {
             FileConfiguration moneyConfig = YamlConfiguration.loadConfiguration(moneyFile);
             if (stats == null) {
@@ -229,7 +218,8 @@ public class PlayerDataManager {
         if (migratedFromYml) {
             final PlayerData finalData = data;
             plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
-                plugin.getDatabaseManager().savePlayerStats(uuid, finalData.getMoney(), finalData.getShards());
+                plugin.getDatabaseManager().savePlayerStats(uuid, finalData);
+                plugin.getDatabaseManager().savePlayerName(uuid, finalData.getName());
             });
         }
 
@@ -251,6 +241,11 @@ public class PlayerDataManager {
             }
         }
 
+        // Cache/Update name in DB for leaderboards
+        if (data.getName() != null) {
+            plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
+        }
+
         return data;
     }
 
@@ -261,28 +256,17 @@ public class PlayerDataManager {
         }
     }
 
+    public void savePlayerAsync(UUID uuid) {
+        PlayerData data = playerDataMap.get(uuid);
+        if (data != null) {
+            plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayer(uuid, data));
+        }
+    }
+
     public void savePlayer(UUID uuid, PlayerData data) {
 
-        // Save Shards Data
-        File shardsFile = new File(dataFolderShards, uuid.toString() + "-shards.db");
-        FileConfiguration shardsConfig = new YamlConfiguration();
-
-        shardsConfig.set("shards", data.getShards());
-        shardsConfig.set("shop_spent", data.getShopSpent());
-
-        // We do NOT save keys here anymore to migrate fully away over time,
-        // OR we keep saving them for backup?
-        // User wants SPECIFIC file. Let's strictly save to new file.
-        // To clean up old file, we stop writing keys to it.
-
-        try {
-            shardsConfig.save(shardsFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save shards data for " + uuid + ": " + e.getMessage());
-        }
-
-        // Save Balances to Database
-        plugin.getDatabaseManager().savePlayerStats(uuid, data.getMoney(), data.getShards());
+        // Legacy YML saving removed - Database is source of truth
+        plugin.getDatabaseManager().savePlayerStats(uuid, data);
 
         // Save Keys Data (New Location)
         File cratesFile = new File(dataFolderCrates, uuid.toString() + ".db");
@@ -333,27 +317,9 @@ public class PlayerDataManager {
             plugin.getLogger().severe("Failed to save crates data for " + uuid + ": " + e.getMessage());
         }
 
-        // Save Money Data
-        File moneyFile = new File(dataFolderMoney, uuid.toString() + "-money.db");
-        FileConfiguration moneyConfig = new YamlConfiguration();
-
-        moneyConfig.set("money", data.getMoney());
-        // Save cached name
+        // Save name to SQL for leaderboards
         if (data.getName() != null) {
-            moneyConfig.set("cached_name", data.getName());
-        } else {
-            // Try to fetch if missing
-            org.bukkit.OfflinePlayer op = org.bukkit.Bukkit.getOfflinePlayer(uuid);
-            if (op.getName() != null) {
-                moneyConfig.set("cached_name", op.getName());
-                data.setName(op.getName());
-            }
-        }
-
-        try {
-            moneyConfig.save(moneyFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save money data for " + uuid + ": " + e.getMessage());
+            plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
         }
 
         // Save name_hidden to SQL
@@ -368,19 +334,8 @@ public class PlayerDataManager {
     public void saveMoneyAsync(UUID uuid, PlayerData data) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             // Save to Database
-            plugin.getDatabaseManager().savePlayerStats(uuid, data.getMoney(), data.getShards());
-
-            File moneyFile = new File(dataFolderMoney, uuid.toString() + "-money.db");
-            FileConfiguration moneyConfig = new YamlConfiguration();
-            moneyConfig.set("money", data.getMoney());
-            if (data.getName() != null) {
-                moneyConfig.set("cached_name", data.getName());
-            }
-            try {
-                moneyConfig.save(moneyFile);
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to async-save money for " + uuid + ": " + e.getMessage());
-            }
+            plugin.getDatabaseManager().savePlayerStats(uuid, data);
+            plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
         });
     }
 
@@ -412,48 +367,7 @@ public class PlayerDataManager {
     }
 
     public List<LeaderboardEntry> getTopShards(int limit) {
-        if (cachedShardsTop != null && (System.currentTimeMillis() - lastShardsUpdate < CACHE_DURATION)) {
-            return cachedShardsTop.size() > limit ? cachedShardsTop.subList(0, limit) : cachedShardsTop;
-        }
-
-        List<LeaderboardEntry> entries = new ArrayList<>();
-        if (dataFolderShards.exists()) {
-            File[] files = dataFolderShards.listFiles((dir, name) -> name.endsWith("-shards.db"));
-            if (files != null) {
-                for (File file : files) {
-                    FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-                    double amount = config.getDouble("shards", 0.0);
-                    if (amount > 0) {
-                        String uuidStr = file.getName().replace("-shards.db", "");
-                        try {
-                            UUID uuid = UUID.fromString(uuidStr);
-
-                            // Try to get name from file first
-                            String name = config.getString("cached_name");
-
-                            // If missing, we MUST fetch it
-                            if (name == null) {
-                                org.bukkit.OfflinePlayer op = org.bukkit.Bukkit.getOfflinePlayer(uuid);
-                                name = op.getName();
-                                // We don't save back to file here to avoid blocking during a full scan.
-                                // Names are naturally cached during player login/quit.
-                            }
-
-                            if (name != null) {
-                                entries.add(new LeaderboardEntry(org.bukkit.ChatColor.stripColor(name), uuid, amount));
-                            }
-                        } catch (IllegalArgumentException ignored) {
-                        }
-                    }
-                }
-            }
-        }
-
-        entries.sort((a, b) -> Double.compare(b.value, a.value));
-        cachedShardsTop = entries;
-        lastShardsUpdate = System.currentTimeMillis();
-
-        return entries.size() > limit ? entries.subList(0, limit) : entries;
+        return plugin.getDatabaseManager().getTopShards(limit);
     }
 
     private void fetchVaultTopMoney() {
@@ -512,57 +426,22 @@ public class PlayerDataManager {
         // Check if we should use Vault
         if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
             triggerVaultUpdateAsync();
-            // Fallthrough to look at internal storage as temporary placeholder
+            // Fallthrough to look at internal database as temporary placeholder
         }
 
-        List<LeaderboardEntry> entries = new ArrayList<>();
-        if (dataFolderMoney.exists()) {
-            File[] files = dataFolderMoney.listFiles((dir, name) -> name.endsWith("-money.db"));
-            if (files != null) {
-                for (File file : files) {
-                    FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-                    double amount = config.getDouble("money", 0.0);
-                    if (amount > 0) {
-                        String uuidStr = file.getName().replace("-money.db", "");
-                        try {
-                            UUID uuid = UUID.fromString(uuidStr);
-
-                            // Try to get name from file first
-                            String name = config.getString("cached_name");
-
-                            // If missing, we MUST fetch it
-                            if (name == null) {
-                                org.bukkit.OfflinePlayer op = org.bukkit.Bukkit.getOfflinePlayer(uuid);
-                                name = op.getName();
-                            }
-
-                            if (name != null) {
-                                entries.add(new LeaderboardEntry(org.bukkit.ChatColor.stripColor(name), uuid, amount));
-                            }
-                        } catch (IllegalArgumentException ignored) {
-                        }
-                    }
-                }
-            }
-        }
-
-        entries.sort((a, b) -> Double.compare(b.value, a.value));
+        List<LeaderboardEntry> entries = plugin.getDatabaseManager().getTopMoney(limit);
 
         // If we have nothing from Vault yet, we don't overwrite cachedMoneyTop heavily
         // unless we have to.
         // Actually, let's allow internal storage to be the "initial" cache.
         if (cachedMoneyTop == null || cachedMoneyTop.isEmpty()) {
-            // Only set valid cache if we found entries, otherwise keep it null so Vault
-            // update tries again?
-            // Or set it to empty so we don't query disk every time?
-            // Let's safe-guard:
             if (!entries.isEmpty()) {
                 cachedMoneyTop = entries;
                 lastMoneyUpdate = System.currentTimeMillis();
             }
         }
 
-        return entries.size() > limit ? entries.subList(0, limit) : entries;
+        return entries;
     }
 
     private void triggerVaultUpdateAsync() {

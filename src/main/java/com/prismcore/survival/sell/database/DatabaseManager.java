@@ -85,14 +85,77 @@ public class DatabaseManager {
 
             stmt.execute(queryBuilder.toString());
 
-            // Migration: Add columns if they don't exist
-            try {
-                stmt.execute("ALTER TABLE player_stats ADD COLUMN `team` VARCHAR(36) DEFAULT NULL");
-            } catch (SQLException ignored) {
+            // teams table
+            String teamsTable = "CREATE TABLE IF NOT EXISTS teams (" +
+                    "id VARCHAR(36) PRIMARY KEY, " +
+                    "name VARCHAR(32) NOT NULL, " +
+                    "owner_uuid VARCHAR(36) NOT NULL, " +
+                    "created_at BIGINT NOT NULL, " +
+                    "pvp_enabled BOOLEAN DEFAULT FALSE, " +
+                    "home_world VARCHAR(64), " +
+                    "home_x DOUBLE, " +
+                    "home_y DOUBLE, " +
+                    "home_z DOUBLE, " +
+                    "home_yaw FLOAT, " +
+                    "home_pitch FLOAT, " +
+                    "home_server VARCHAR(32)" +
+                    ")";
+            stmt.execute(teamsTable);
+
+            // team_members table
+            String teamMembersTable = "CREATE TABLE IF NOT EXISTS team_members (" +
+                    "team_id VARCHAR(36) NOT NULL, " +
+                    "uuid VARCHAR(36) NOT NULL, " +
+                    "role VARCHAR(16) NOT NULL, " +
+                    "joined_at BIGINT NOT NULL, " +
+                    "PRIMARY KEY (team_id, uuid), " +
+                    "INDEX (uuid)" +
+                    ")";
+            stmt.execute(teamMembersTable);
+
+            // enderchest table
+            String enderchestTable = "CREATE TABLE IF NOT EXISTS enderchest (" +
+                    "uuid VARCHAR(36) PRIMARY KEY, " +
+                    "contents TEXT" +
+                    ")";
+            stmt.execute(enderchestTable);
+
+            // player_category_data table
+            StringBuilder categoryDataQuery = new StringBuilder("CREATE TABLE IF NOT EXISTS player_category_data (");
+            categoryDataQuery.append("uuid VARCHAR(36) PRIMARY KEY");
+            for (com.prismcore.survival.sell.category.Category category : com.prismcore.survival.sell.category.Category
+                    .values()) {
+                categoryDataQuery.append(", ").append(category.name()).append("_multiplier DOUBLE DEFAULT 1.0");
+                categoryDataQuery.append(", ").append(category.name()).append("_progress DOUBLE DEFAULT 0.0");
             }
-            try {
-                stmt.execute("ALTER TABLE player_stats ADD COLUMN `name_hidden` BOOLEAN DEFAULT FALSE");
-            } catch (SQLException ignored) {
+            categoryDataQuery.append(")");
+            stmt.execute(categoryDataQuery.toString());
+
+            // Migration: Add columns if they don't exist
+            String[] statsColumns = {
+                    "money DOUBLE DEFAULT 0",
+                    "shards BIGINT DEFAULT 0",
+                    "break_blocks BIGINT DEFAULT 0",
+                    "placed_blocks BIGINT DEFAULT 0",
+                    "mob_kills BIGINT DEFAULT 0",
+                    "sell_made DOUBLE DEFAULT 0",
+                    "shop_spent DOUBLE DEFAULT 0",
+                    "playtime BIGINT DEFAULT 0",
+                    "deaths BIGINT DEFAULT 0",
+                    "kills BIGINT DEFAULT 0",
+                    "`keys` BIGINT DEFAULT 0",
+                    "bounty DOUBLE DEFAULT 0",
+                    "tool_expiry BIGINT DEFAULT 0",
+                    "team VARCHAR(36) DEFAULT NULL",
+                    "name_hidden BOOLEAN DEFAULT FALSE"
+            };
+
+            for (String columnDef : statsColumns) {
+                try {
+                    stmt.execute("ALTER TABLE player_stats ADD COLUMN " + columnDef);
+                } catch (SQLException ignored) {
+                    // Column already exists
+                }
             }
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Failed to create table/insert row!");

@@ -116,14 +116,16 @@ public class EnderChestGUIListener implements Listener {
 
         // Only save and remove from active map if this is the last viewer
         if (openInv.getViewers().size() <= 1) {
-            // Synchronous save on quit
-            plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents);
+            // Asynchronous save on quit
+            plugin.getSchedulerAdapter().runTaskAsync(() -> {
+                plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents);
 
-            // Only remove from cache if no one else is viewing it (unlikely on quit, but
-            // safe)
-            if (openInv.getViewers().isEmpty()) {
-                EnderChestGUI.getActiveInventories().remove(ownerUUID);
-            }
+                // Only remove from cache if no one else is viewing it (unlikely on quit, but
+                // safe)
+                if (openInv.getViewers().isEmpty()) {
+                    EnderChestGUI.getActiveInventories().remove(ownerUUID);
+                }
+            });
         }
     }
 }

@@ -659,10 +659,6 @@ public class PrismSurvival extends JavaPlugin {
             }
         }
 
-        if (this.databaseManager != null) {
-            this.databaseManager.shutdown();
-        }
-
         if (this.prismSell != null) {
             this.prismSell.onDisable();
         }
@@ -701,6 +697,10 @@ public class PrismSurvival extends JavaPlugin {
 
         if (this.bountyManager != null) {
             this.bountyManager.save();
+        }
+
+        if (this.databaseManager != null) {
+            this.databaseManager.shutdown();
         }
 
         getLogger().info("PrismCore has been disabled!");

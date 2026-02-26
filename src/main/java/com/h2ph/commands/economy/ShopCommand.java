@@ -805,7 +805,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             }
             // Deduct shards
             pd.removeShards(session.price, "Shop: " + session.displayMaterial.name());
-            plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
 
         // Execute command if present, otherwise fall back to old logic
@@ -820,7 +820,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                 // It's a key - increment count (normalize key name first)
                 String normalizedKey = plugin.normalizeKeyName(session.keyType);
                 pd.addKey(normalizedKey);
-                plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+                plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
             } else if (session.spawnerType != null) {
                 // It's a spawner - execute spawner command
                 String cmd = "spawner give " + player.getName() + " " + session.spawnerType + " 1";
@@ -834,7 +834,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                     econ.depositPlayer(player, session.price);
                 } else {
                     pd.setShards(pd.getShards() + session.price, "Shop Refund");
-                    plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+                    plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
                 }
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
                 return;

@@ -139,7 +139,7 @@ public class PrismEconomy implements Economy {
         }
 
         data.removeMoney(amount, "Vault");
-        plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         return new EconomyResponse(amount, data.getMoney(), EconomyResponse.ResponseType.SUCCESS, null);
     }
 
@@ -167,7 +167,7 @@ public class PrismEconomy implements Economy {
 
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         data.addMoney(amount, "Vault");
-        plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
         return new EconomyResponse(amount, data.getMoney(), EconomyResponse.ResponseType.SUCCESS, null);
     }

@@ -143,6 +143,8 @@ public class DatabaseManager {
             String auctionPendingTable = "CREATE TABLE IF NOT EXISTS auction_pending_payments (" +
                     "uuid VARCHAR(36) NOT NULL," +
                     "amount DOUBLE NOT NULL," +
+                    "buyer_name VARCHAR(16) DEFAULT NULL," +
+                    "item_name VARCHAR(100) DEFAULT NULL," +
                     "timestamp BIGINT NOT NULL," +
                     "PRIMARY KEY (uuid, timestamp)" +
                     ")";
@@ -177,10 +179,106 @@ public class DatabaseManager {
             String statsTable = "CREATE TABLE IF NOT EXISTS player_stats (" +
                     "uuid VARCHAR(36) NOT NULL PRIMARY KEY," +
                     "money DOUBLE DEFAULT 0," +
-                    "shards DOUBLE DEFAULT 0," +
+                    "shards BIGINT DEFAULT 0," +
+                    "break_blocks BIGINT DEFAULT 0," +
+                    "placed_blocks BIGINT DEFAULT 0," +
+                    "mob_kills BIGINT DEFAULT 0," +
+                    "sell_made DOUBLE DEFAULT 0," +
+                    "shop_spent DOUBLE DEFAULT 0," +
+                    "playtime BIGINT DEFAULT 0," +
+                    "deaths BIGINT DEFAULT 0," +
+                    "kills BIGINT DEFAULT 0," +
+                    "`keys` BIGINT DEFAULT 0," +
+                    "bounty DOUBLE DEFAULT 0," +
+                    "tool_expiry BIGINT DEFAULT 0," +
+                    "team VARCHAR(36) DEFAULT NULL," +
+                    "name_hidden BOOLEAN DEFAULT FALSE," +
                     "last_updated BIGINT" +
                     ")";
             s.execute(statsTable);
+
+            // Migration for Player Stats
+            String[] statsColumns = {
+                    "money DOUBLE DEFAULT 0",
+                    "shards BIGINT DEFAULT 0",
+                    "break_blocks BIGINT DEFAULT 0",
+                    "placed_blocks BIGINT DEFAULT 0",
+                    "mob_kills BIGINT DEFAULT 0",
+                    "sell_made DOUBLE DEFAULT 0",
+                    "shop_spent DOUBLE DEFAULT 0",
+                    "playtime BIGINT DEFAULT 0",
+                    "deaths BIGINT DEFAULT 0",
+                    "kills BIGINT DEFAULT 0",
+                    "`keys` BIGINT DEFAULT 0",
+                    "bounty DOUBLE DEFAULT 0",
+                    "tool_expiry BIGINT DEFAULT 0",
+                    "team VARCHAR(36) DEFAULT NULL",
+                    "name_hidden BOOLEAN DEFAULT FALSE"
+            };
+
+            for (String columnDef : statsColumns) {
+                try {
+                    s.execute("ALTER TABLE player_stats ADD COLUMN " + columnDef);
+                } catch (SQLException ignored) {
+                }
+            }
+
+            // Table for Orders
+            String ordersTable = "CREATE TABLE IF NOT EXISTS prism_orders (" +
+                    "id VARCHAR(36) NOT NULL PRIMARY KEY," +
+                    "owner VARCHAR(36) NOT NULL," +
+                    "item_key TEXT NOT NULL," +
+                    "requested INT NOT NULL," +
+                    "delivered INT NOT NULL," +
+                    "price_each DOUBLE NOT NULL," +
+                    "paid DOUBLE NOT NULL," +
+                    "canceled TINYINT(1) NOT NULL," +
+                    "completed TINYINT(1) NOT NULL," +
+                    "creation_time BIGINT NOT NULL," +
+                    "storage LONGTEXT," + // Base64 serialized List<ItemStack>
+                    "INDEX (owner)" +
+                    ")";
+            s.execute(ordersTable);
+
+            // Table for Bounties
+            String bountiesTable = "CREATE TABLE IF NOT EXISTS player_bounties (" +
+                    "target_uuid VARCHAR(36) NOT NULL PRIMARY KEY," +
+                    "amount DOUBLE NOT NULL," +
+                    "last_updated BIGINT NOT NULL" +
+                    ")";
+            s.execute(bountiesTable);
+
+            // Table for Active Auction Items
+            String activeAuctionsTable = "CREATE TABLE IF NOT EXISTS active_auction_listings (" +
+                    "id VARCHAR(36) NOT NULL PRIMARY KEY," +
+                    "seller VARCHAR(16) NOT NULL," +
+                    "item_stack LONGTEXT NOT NULL," +
+                    "price DOUBLE NOT NULL," +
+                    "listed_at BIGINT NOT NULL," +
+                    "duration INT NOT NULL," +
+                    "INDEX (seller)" +
+                    ")";
+            s.execute(activeAuctionsTable);
+
+            // Table for Player Names (Caching for leaderboards)
+            String playerNamesTable = "CREATE TABLE IF NOT EXISTS player_names (" +
+                    "uuid VARCHAR(36) NOT NULL PRIMARY KEY," +
+                    "cached_name VARCHAR(16) NOT NULL" +
+                    ")";
+            s.execute(playerNamesTable);
+
+            // Migration for Auction Pending Payments
+            String[] auctionPendingColumns = {
+                    "buyer_name VARCHAR(16) DEFAULT NULL",
+                    "item_name VARCHAR(100) DEFAULT NULL"
+            };
+
+            for (String columnDef : auctionPendingColumns) {
+                try {
+                    s.execute("ALTER TABLE auction_pending_payments ADD COLUMN " + columnDef);
+                } catch (SQLException ignored) {
+                }
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -629,21 +727,23 @@ public class DatabaseManager {
         return names;
     }
 
-    public void addAuctionPendingPayment(UUID uuid, double amount) {
-        String query = "INSERT INTO auction_pending_payments (uuid, amount, timestamp) VALUES (?, ?, ?)";
+    public void addAuctionPendingPayment(UUID uuid, double amount, String buyerName, String itemName) {
+        String query = "INSERT INTO auction_pending_payments (uuid, amount, buyer_name, item_name, timestamp) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             ps.setDouble(2, amount);
-            ps.setLong(3, System.currentTimeMillis());
+            ps.setString(3, buyerName);
+            ps.setString(4, itemName);
+            ps.setLong(5, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public double getAndClearAuctionPendingPayments(UUID uuid) {
-        double total = 0;
-        String selectQuery = "SELECT amount FROM auction_pending_payments WHERE uuid = ?";
+    public List<com.prismcore.survival.auction.AuctionManager.OfflineSale> getAndClearDetailedPendingSales(UUID uuid) {
+        List<com.prismcore.survival.auction.AuctionManager.OfflineSale> sales = new ArrayList<>();
+        String selectQuery = "SELECT amount, buyer_name, item_name FROM auction_pending_payments WHERE uuid = ?";
         String deleteQuery = "DELETE FROM auction_pending_payments WHERE uuid = ?";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -652,11 +752,17 @@ public class DatabaseManager {
                     psSelect.setString(1, uuid.toString());
                     try (ResultSet rs = psSelect.executeQuery()) {
                         while (rs.next()) {
-                            total += rs.getDouble("amount");
+                            double amount = rs.getDouble("amount");
+                            String buyer = rs.getString("buyer_name");
+                            String item = rs.getString("item_name");
+                            sales.add(new com.prismcore.survival.auction.AuctionManager.OfflineSale(
+                                    buyer != null ? buyer : "Unknown",
+                                    item != null ? item : "Unknown",
+                                    amount));
                         }
                     }
                 }
-                if (total > 0) {
+                if (!sales.isEmpty()) {
                     try (PreparedStatement psDelete = conn.prepareStatement(deleteQuery)) {
                         psDelete.setString(1, uuid.toString());
                         psDelete.executeUpdate();
@@ -672,7 +778,14 @@ public class DatabaseManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return total;
+        return sales;
+    }
+
+    // Keep legacy for compatibility during transitions if needed, or remove if
+    // fully updated
+    public double getAndClearAuctionPendingPayments(UUID uuid) {
+        List<com.prismcore.survival.auction.AuctionManager.OfflineSale> sales = getAndClearDetailedPendingSales(uuid);
+        return sales.stream().mapToDouble(s -> s.price).sum();
     }
 
     // --- Inventory Sync Methods ---
@@ -766,32 +879,117 @@ public class DatabaseManager {
 
     // --- Player Stats Methods ---
 
-    public void savePlayerStats(UUID uuid, double money, double shards) {
-        String query = "REPLACE INTO player_stats (uuid, money, shards, last_updated) VALUES (?, ?, ?, ?)";
+    public void savePlayerStats(UUID uuid, PlayerData data) {
+        String query = "UPDATE player_stats SET money = ?, shards = ?, shop_spent = ?, last_updated = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, uuid.toString());
-            ps.setDouble(2, money);
-            ps.setDouble(3, shards);
+            ps.setDouble(1, data.getMoney());
+            ps.setDouble(2, data.getShards());
+            ps.setDouble(3, data.getShopSpent());
             ps.setLong(4, System.currentTimeMillis());
-            ps.executeUpdate();
+            ps.setString(5, uuid.toString());
+            int affected = ps.executeUpdate();
+
+            // Fallback to INSERT if update failed (on duplicate key update is also possible
+            // but more complex with this schema if not primary key)
+            if (affected == 0) {
+                String insertQuery = "INSERT INTO player_stats (uuid, money, shards, shop_spent, last_updated) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement ips = conn.prepareStatement(insertQuery)) {
+                    ips.setString(1, uuid.toString());
+                    ips.setDouble(2, data.getMoney());
+                    ips.setDouble(3, data.getShards());
+                    ips.setDouble(4, data.getShopSpent());
+                    ips.setLong(5, System.currentTimeMillis());
+                    ips.executeUpdate();
+                }
+            }
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save player stats for " + uuid, e);
         }
     }
 
-    public double[] loadPlayerStats(UUID uuid) {
-        String query = "SELECT money, shards FROM player_stats WHERE uuid = ?";
+    public PlayerDataStats loadPlayerStats(UUID uuid) {
+        String query = "SELECT money, shards, shop_spent FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new double[] { rs.getDouble("money"), rs.getDouble("shards") };
+                    return new PlayerDataStats(rs.getDouble("money"), rs.getDouble("shards"),
+                            rs.getDouble("shop_spent"));
                 }
             }
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to load player stats for " + uuid, e);
         }
         return null;
+    }
+
+    public static class PlayerDataStats {
+        public double money;
+        public double shards;
+        public double shopSpent;
+
+        public PlayerDataStats(double money, double shards, double shopSpent) {
+            this.money = money;
+            this.shards = shards;
+            this.shopSpent = shopSpent;
+        }
+    }
+
+    public void savePlayerName(UUID uuid, String name) {
+        if (name == null)
+            return;
+        String query = "REPLACE INTO player_names (uuid, cached_name) VALUES (?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, name);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save player name for " + uuid, e);
+        }
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopShards(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        String query = "SELECT ps.uuid, ps.shards, COALESCE(pn.cached_name, ps.uuid) as name " +
+                "FROM player_stats ps " +
+                "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+                "WHERE ps.shards > 0 ORDER BY ps.shards DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("shards")));
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to fetch top shards leaderboard", e);
+        }
+        return entries;
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopMoney(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        String query = "SELECT ps.uuid, ps.money, COALESCE(pn.cached_name, ps.uuid) as name " +
+                "FROM player_stats ps " +
+                "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+                "WHERE ps.money > 0 ORDER BY ps.money DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("money")));
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to fetch top money leaderboard", e);
+        }
+        return entries;
     }
 
     public void updateOfflineBalance(UUID uuid, double balance, boolean isShards) {
@@ -804,6 +1002,186 @@ public class DatabaseManager {
             ps.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to update offline balance for " + uuid, e);
+        }
+    }
+
+    // --- Bounty Persistence Methods ---
+
+    public java.util.Map<UUID, Double> loadAllBounties() {
+        java.util.Map<UUID, Double> bounties = new java.util.HashMap<>();
+        String query = "SELECT target_uuid, amount FROM player_bounties";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bounties.put(UUID.fromString(rs.getString("target_uuid")), rs.getDouble("amount"));
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load all bounties", e);
+        }
+        return bounties;
+    }
+
+    public void saveBounty(UUID target, double amount) {
+        String query = "REPLACE INTO player_bounties (target_uuid, amount, last_updated) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, target.toString());
+            ps.setDouble(2, amount);
+            ps.setLong(3, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save bounty for " + target, e);
+        }
+    }
+
+    public void deleteBounty(UUID target) {
+        String query = "DELETE FROM player_bounties WHERE target_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, target.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to delete bounty for " + target, e);
+        }
+    }
+
+    // --- Order Persistence Methods ---
+
+    public java.util.List<com.prismcore.survival.orders.data.Order> loadAllOrders() {
+        java.util.List<com.prismcore.survival.orders.data.Order> orders = new java.util.ArrayList<>();
+        String query = "SELECT * FROM prism_orders";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    try {
+                        UUID id = UUID.fromString(rs.getString("id"));
+                        UUID owner = UUID.fromString(rs.getString("owner"));
+                        String itemKey = rs.getString("item_key");
+                        int requested = rs.getInt("requested");
+                        int delivered = rs.getInt("delivered");
+                        double priceEach = rs.getDouble("price_each");
+                        double paid = rs.getDouble("paid");
+                        boolean canceled = rs.getBoolean("canceled");
+                        boolean completed = rs.getBoolean("completed");
+                        long creationTime = rs.getLong("creation_time");
+                        String storageBase64 = rs.getString("storage");
+
+                        com.prismcore.survival.orders.data.Order order = new com.prismcore.survival.orders.data.Order(
+                                id, owner, com.prismcore.survival.orders.data.ItemKey.deserialize(itemKey), requested,
+                                delivered, priceEach, paid, canceled, completed,
+                                creationTime);
+
+                        if (storageBase64 != null && !storageBase64.isEmpty()) {
+                            order.setStorage(com.prismcore.survival.utils.ItemSerializationManager
+                                    .itemStackListFromBase64(storageBase64));
+                        }
+                        orders.add(order);
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.SEVERE, "Failed to parse order from DB", e);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load all orders", e);
+        }
+        return orders;
+    }
+
+    public void saveOrder(com.prismcore.survival.orders.data.Order order) {
+        String query = "REPLACE INTO prism_orders (id, owner, item_key, requested, delivered, price_each, paid, canceled, completed, creation_time, storage) "
+                +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, order.getId().toString());
+            ps.setString(2, order.getOwner().toString());
+            ps.setString(3, order.getItemKey());
+            ps.setInt(4, order.getRequested());
+            ps.setInt(5, order.getDelivered());
+            ps.setDouble(6, order.getPriceEach());
+            ps.setDouble(7, order.getPaid());
+            ps.setBoolean(8, order.isCanceled());
+            ps.setBoolean(9, order.isCompleted());
+            ps.setLong(10, order.getCreationTime());
+
+            String storageBase64 = "";
+            if (order.getStorage() != null && !order.getStorage().isEmpty()) {
+                storageBase64 = com.prismcore.survival.utils.ItemSerializationManager
+                        .itemStackListToBase64(order.getStorage());
+            }
+            ps.setString(11, storageBase64);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save order " + order.getId(), e);
+        }
+    }
+
+    public void deleteOrder(UUID orderId) {
+        String query = "DELETE FROM prism_orders WHERE id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, orderId.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to delete order " + orderId, e);
+        }
+    }
+
+    // --- Auction Items Persistence Methods ---
+
+    public java.util.List<com.prismcore.survival.auction.AuctionItem> loadAllAuctionItems() {
+        java.util.List<com.prismcore.survival.auction.AuctionItem> items = new java.util.ArrayList<>();
+        String query = "SELECT * FROM active_auction_listings";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    try {
+                        UUID id = UUID.fromString(rs.getString("id"));
+                        String seller = rs.getString("seller");
+                        String itemBase64 = rs.getString("item_stack");
+                        double price = rs.getDouble("price");
+                        long listedAt = rs.getLong("listed_at");
+                        int duration = rs.getInt("duration");
+
+                        org.bukkit.inventory.ItemStack itemStack = com.prismcore.survival.utils.ItemSerializationManager
+                                .itemStackArrayFromBase64(itemBase64)[0];
+                        items.add(new com.prismcore.survival.auction.AuctionItem(id, seller, itemStack, price, listedAt,
+                                duration));
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.SEVERE, "Failed to parse auction item from DB", e);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load all auction items", e);
+        }
+        return items;
+    }
+
+    public void saveAuctionItem(com.prismcore.survival.auction.AuctionItem item) {
+        String query = "REPLACE INTO active_auction_listings (id, seller, item_stack, price, listed_at, duration) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, item.getId().toString());
+            ps.setString(2, item.getSeller());
+
+            String itemBase64 = com.prismcore.survival.utils.ItemSerializationManager
+                    .itemStackArrayToBase64(new org.bukkit.inventory.ItemStack[] { item.getItemStack() });
+            ps.setString(3, itemBase64);
+
+            ps.setDouble(4, item.getPrice());
+            ps.setLong(5, item.getListedAt());
+            ps.setInt(6, item.getDuration());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save auction item " + item.getId(), e);
+        }
+    }
+
+    public void deleteAuctionItem(UUID itemId) {
+        String query = "DELETE FROM active_auction_listings WHERE id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, itemId.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to delete auction item " + itemId, e);
         }
     }
 }

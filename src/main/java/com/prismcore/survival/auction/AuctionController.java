@@ -79,11 +79,11 @@ public class AuctionController {
 
     private void setupStorageFile() {
         this.storageFile = new File(plugin.getDataFolder(), "economy/auction/storage.yml");
-        if (!this.storageFile.exists()) {
-            this.storageFile.getParentFile().mkdirs();
-            plugin.saveResource("economy/auction/storage.yml", false);
+        if (this.storageFile.exists()) {
+            this.storageConfig = YamlConfiguration.loadConfiguration(this.storageFile);
+        } else {
+            this.storageConfig = new YamlConfiguration();
         }
-        this.storageConfig = YamlConfiguration.loadConfiguration(this.storageFile);
     }
 
     private void setupFilterFile() {

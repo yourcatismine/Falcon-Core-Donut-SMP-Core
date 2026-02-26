@@ -29,6 +29,9 @@ import org.bukkit.plugin.Plugin;
 public class GUIListener
         implements Listener {
     private final AuctionController controller;
+    private final java.util.Map<UUID, List<AuctionItem>> filteredCache = new java.util.HashMap<>();
+    private final java.util.Map<UUID, Long> cacheTimestamp = new java.util.HashMap<>();
+    private final java.util.Map<String, List<String>> categoryCache = new java.util.HashMap<>();
 
     public GUIListener(AuctionController controller) {
         this.controller = controller;
@@ -143,16 +146,35 @@ public class GUIListener
                 term = term.trim().toLowerCase();
                 String cat = p.hasMetadata("ah-cat") ? ((MetadataValue) p.getMetadata("ah-cat").get(0)).asString()
                         : "All";
-                String finalTerm = term;
-                List<AuctionItem> filtered = this.controller.getAuctionManager().getActiveItems().stream()
-                        .filter(ai -> {
-                            boolean ms = finalTerm.isEmpty() || ai.getSearchName().contains(finalTerm)
-                                    || ai.getSearchSeller().contains(finalTerm);
-                            boolean mc = cat.equals("All") || this.controller.getFilterConfig().getStringList(cat)
-                                    .contains(ai.getItemStack().getType().name());
-                            return ms && mc;
-                        }).collect(Collectors.toList());
-                GUIHandler.sortItems(filtered, this.controller.getAuctionManager().getPlayerSort(p.getUniqueId()));
+                String sort = this.controller.getAuctionManager().getPlayerSort(p.getUniqueId());
+
+                // Cache logic
+                UUID uuid = p.getUniqueId();
+                long lastUpdate = this.controller.getAuctionManager().getLastUpdate();
+                List<AuctionItem> filtered;
+
+                if (filteredCache.containsKey(uuid) && cacheTimestamp.getOrDefault(uuid, 0L) == lastUpdate) {
+                    filtered = filteredCache.get(uuid);
+                } else {
+                    String finalTerm = term;
+                    List<String> catFilter = cat.equals("All") ? null
+                            : categoryCache.computeIfAbsent(cat,
+                                    k -> this.controller.getFilterConfig().getStringList(k));
+
+                    filtered = this.controller.getAuctionManager().getActiveItems().stream()
+                            .filter(ai -> {
+                                boolean ms = finalTerm.isEmpty() || ai.getSearchName().contains(finalTerm)
+                                        || ai.getSearchSeller().contains(finalTerm);
+                                boolean mc = catFilter == null
+                                        || catFilter.contains(ai.getItemStack().getType().name());
+                                return ms && mc;
+                            }).collect(Collectors.toList());
+
+                    GUIHandler.sortItems(filtered, sort);
+                    filteredCache.put(uuid, filtered);
+                    cacheTimestamp.put(uuid, lastUpdate);
+                }
+
                 int idx = (page - 1) * perPage + slot;
                 if (idx < filtered.size()) {
                     p.playSound(p.getLocation(), def, 1.0f, 1.0f);
@@ -251,7 +273,6 @@ public class GUIListener
                         System.currentTimeMillis(),
                         this.controller.getAuctionManager().getDefaultTime());
                 this.controller.getAuctionManager().addItem(auctionItem);
-                this.controller.getAuctionManager().saveToConfig();
 
                 String itemName = Utils.prettifyMaterialName(held.getType());
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
@@ -375,11 +396,9 @@ public class GUIListener
                 } else {
                     // Offline notification logic
                     UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
-                    this.controller.getAuctionManager().addPendingSale(sellerUUID, p.getName(), itemName,
-                            ai4.getPrice());
-                    // Record payment in database to be claimed on join
+                    // Record payment in database with detailed info
                     this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
-                            ai4.getPrice());
+                            ai4.getPrice(), p.getName(), itemName);
                 }
             }
             return;
@@ -1069,55 +1088,48 @@ public class GUIListener
             if (!p.isOnline() || !this.controller.getPlugin().isEnabled())
                 return;
 
-            // Claim pending money from database
-            double pendingMoney = this.controller.getPlugin().getDatabaseManager()
-                    .getAndClearAuctionPendingPayments(p.getUniqueId());
+            // Claim pending sales from database (includes amount, buyer, and item)
+            List<AuctionManager.OfflineSale> sales = this.controller.getPlugin().getDatabaseManager()
+                    .getAndClearDetailedPendingSales(p.getUniqueId());
 
-            List<AuctionManager.OfflineSale> sales = this.controller.getAuctionManager()
-                    .getPendingSales(p.getUniqueId());
-
-            if (pendingMoney > 0 || !sales.isEmpty()) {
+            if (!sales.isEmpty()) {
                 this.controller.getPlugin().getSchedulerAdapter().runTask(() -> {
                     if (!p.isOnline())
                         return;
 
-                    if (pendingMoney > 0) {
-                        EconomyHandler.depositPlayer(p, pendingMoney, "Offline Auction Earnings");
-                        String claimMsg = this.controller.getConfig()
-                                .getString("messages.money-claimed",
-                                        "&#34ee80You have received &f${amount} &#34ee80from items sold while you were away!")
-                                .replace("{amount}", Utils.formatNumber(pendingMoney));
-                        p.sendMessage(Utils.formatColors(claimMsg));
+                    double totalMoney = sales.stream().mapToDouble(s -> s.price).sum();
+                    EconomyHandler.depositPlayer(p, totalMoney, "Offline Auction Earnings");
+
+                    if (sales.size() == 1) {
+                        AuctionManager.OfflineSale sale = sales.get(0);
+                        String msg = this.controller.getConfig().getString("messages.sold-notify-offline")
+                                .replace("{buyer}", sale.buyer)
+                                .replace("{item}", sale.item)
+                                .replace("{priceFormatted}", Utils.formatNumber(sale.price));
+                        String c = Utils.formatColors(msg);
+                        p.sendMessage(c);
+                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
+                    } else {
+                        String msg = this.controller.getConfig().getString("messages.sold-notify-offline-multi")
+                                .replace("{priceFormatted}", Utils.formatNumber(totalMoney));
+                        String c = Utils.formatColors(msg);
+                        p.sendMessage(c);
+                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
+
+                        // Also send detailed summary for multiple sales
+                        p.sendMessage(Utils.formatColors("&#34ee80Detailed summary of offline sales:"));
+                        for (AuctionManager.OfflineSale sale : sales) {
+                            p.sendMessage(Utils.formatColors("&7- &f" + sale.item + " &7sold to &f" + sale.buyer
+                                    + " &7for &a$" + Utils.formatNumber(sale.price)));
+                        }
                     }
 
-                    if (!sales.isEmpty()) {
-                        if (sales.size() == 1) {
-                            AuctionManager.OfflineSale sale = sales.get(0);
-                            String msg = this.controller.getConfig().getString("messages.sold-notify-offline")
-                                    .replace("{buyer}", sale.buyer)
-                                    .replace("{item}", sale.item)
-                                    .replace("{priceFormatted}", Utils.formatNumber(sale.price));
-                            String c = Utils.formatColors(msg);
-                            p.sendMessage(c);
-                            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
-                        } else {
-                            double total = sales.stream().mapToDouble(s -> s.price).sum();
-                            String msg = this.controller.getConfig().getString("messages.sold-notify-offline-multi")
-                                    .replace("{priceFormatted}", Utils.formatNumber(total));
-                            String c = Utils.formatColors(msg);
-                            p.sendMessage(c);
-                            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
-                        }
-
-                        try {
-                            Sound notifySound = Sound.valueOf(
-                                    this.controller.getConfig().getString("sounds.sale-notify",
-                                            "ENTITY_EXPERIENCE_ORB_PICKUP"));
-                            p.playSound(p.getLocation(), notifySound, 1.0f, 1.0f);
-                        } catch (Exception ignored) {
-                        }
-
-                        this.controller.getAuctionManager().clearPendingSales(p.getUniqueId());
+                    try {
+                        Sound notifySound = Sound.valueOf(
+                                this.controller.getConfig().getString("sounds.sale-notify",
+                                        "ENTITY_EXPERIENCE_ORB_PICKUP"));
+                        p.playSound(p.getLocation(), notifySound, 1.0f, 1.0f);
+                    } catch (Exception ignored) {
                     }
                 });
             }
@@ -1260,10 +1272,9 @@ public class GUIListener
         } else {
             // Offline notification logic
             UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
-            this.controller.getAuctionManager().addPendingSale(sellerUUID, p.getName(), itemName,
-                    ai.getPrice());
-            // Record payment in database to be claimed on join
-            this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID, ai.getPrice());
+            // Record payment in database with detailed info
+            this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
+                    ai.getPrice(), p.getName(), itemName);
         }
 
         // Refresh GUI for Quick Buy effect

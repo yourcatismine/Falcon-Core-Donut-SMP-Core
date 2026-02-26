@@ -69,4 +69,15 @@ public class ItemSerializationManager {
             throw new IOException("Unable to decode class type.", e);
         }
     }
+
+    public static String itemStackListToBase64(java.util.List<ItemStack> items) {
+        if (items == null)
+            return "";
+        return itemStackArrayToBase64(items.toArray(new ItemStack[0]));
+    }
+
+    public static java.util.List<ItemStack> itemStackListFromBase64(String data) throws IOException {
+        ItemStack[] array = itemStackArrayFromBase64(data);
+        return java.util.Arrays.asList(array);
+    }
 }

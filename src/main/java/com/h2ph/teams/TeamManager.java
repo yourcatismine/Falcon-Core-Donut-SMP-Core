@@ -247,13 +247,6 @@ public class TeamManager {
             data.setTeamId(teamId);
             data.setTeamRole(role);
         }
-
-        // Sync to PrismSell PlayerData
-        com.prismcore.survival.sell.data.PlayerData sellData = plugin.getPrismSell().getPlayerDataManager()
-                .getPlayerData(uuid);
-        if (sellData != null) {
-            sellData.setTeamId(teamId);
-        }
     }
 
     public java.util.Set<UUID> getTeamMemberUuids(String teamId) {
@@ -297,8 +290,12 @@ public class TeamManager {
                                 if (name == null)
                                     name = "Unknown";
 
-                                double money = plugin.getPrismSell().getPlayerDataManager().getPlayerData(uuid)
-                                        .getMoney();
+                                double money = 0;
+                                com.prismcore.survival.manager.PlayerData pData = plugin.getPlayerDataManager()
+                                        .get(uuid);
+                                if (pData != null) {
+                                    money = pData.getMoney();
+                                }
                                 boolean online = Bukkit.getPlayer(uuid) != null;
 
                                 list.add(new TeamMemberData(uuid, name, joinedAt, money, online));

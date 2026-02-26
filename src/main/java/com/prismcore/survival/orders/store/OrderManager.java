@@ -1,26 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.md_5.bungee.api.ChatMessageType
- *  net.md_5.bungee.api.chat.TextComponent
- *  org.bukkit.Bukkit
- *  org.bukkit.Material
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.configuration.file.YamlConfiguration
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.Player
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.plugin.Plugin
- */
 package com.prismcore.survival.orders.store;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,8 +24,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import com.h2ph.PrismSurvival;
 import com.prismcore.survival.manager.ActivityLogger;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -56,20 +36,10 @@ public class OrderManager {
 
     public OrderManager(Plugin pl) {
         this.pl = pl;
-
-        // Main storage: economy/orders/order
         this.ordersDir = new File(pl.getDataFolder(), "economy/orders/order");
-        if (!this.ordersDir.exists()) {
-            this.ordersDir.mkdirs();
-        }
-
-        // Legacy storage: economy/orders/orders
         this.legacyDir = new File(pl.getDataFolder(), "economy/orders/orders");
-
         this.loadAll();
     }
-
-    // ...
 
     public Collection<Order> all() {
         return this.orders.values();
@@ -107,9 +77,9 @@ public class OrderManager {
         int remaining = o.remainingAmount();
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
         double refund = (double) remaining * price;
-        OfflinePlayer owner = Bukkit.getOfflinePlayer((UUID) o.owner);
+        OfflinePlayer owner = Bukkit.getOfflinePlayer(o.owner);
         if (owner.isOnline()) {
-            OrdersModule.getInstance().vault().give((OfflinePlayer) owner.getPlayer(), refund);
+            OrdersModule.getInstance().vault().give(owner, refund);
         }
         o.requested = o.delivered;
         o.completed = true;
@@ -145,11 +115,11 @@ public class OrderManager {
 
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
         double receive = (double) acceptedAmount * price;
-        Player delivererPlayer = Bukkit.getPlayer((UUID) deliverer);
+        Player delivererPlayer = Bukkit.getPlayer(deliverer);
         String delivererName = "Someone";
 
         if (delivererPlayer != null) {
-            OrdersModule.getInstance().vault().give((OfflinePlayer) delivererPlayer, receive);
+            OrdersModule.getInstance().vault().give(delivererPlayer, receive);
             delivererName = delivererPlayer.getName();
         } else {
             OfflinePlayer op = Bukkit.getOfflinePlayer(deliverer);
@@ -183,7 +153,6 @@ public class OrderManager {
         PrismSurvival.getInstance().getActivityLogger().log(deliverer, ActivityLogger.LogType.ORDER,
                 "You delivered " + acceptedAmount + " " + o.key.displayName() + " to " + ownerName);
 
-        // 1. Notify Deliverer (if online)
         if (delivererPlayer != null) {
             String msg = Utils.formatColors(
                     "&7You have delivered &a" + formattedAmount + "&7 of &a" + itemName + "&7 to &5" + ownerName);
@@ -193,16 +162,13 @@ public class OrderManager {
                     1.0f, 1.0f);
         }
 
-        // 2. Notify Owner
         if (ownerPlayer != null) {
-            // Online Owner
             String msg = Utils
                     .formatColors("&5" + delivererName + "&7 delivered you &a" + formattedAmount + " &a" + itemName);
             ownerPlayer.sendMessage(msg);
             ownerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
             ownerPlayer.playSound(ownerPlayer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
         } else {
-            // Offline Owner
             OrdersModule.getInstance().getOfflineNotifications().addNotification(o.owner, delivererName, itemName,
                     acceptedAmount, receive);
         }
@@ -210,174 +176,57 @@ public class OrderManager {
 
     public void deleteOrder(Order o) {
         this.orders.remove(o.id);
-        File f = new File(this.ordersDir, o.id.toString() + ".yml");
-        if (f.exists()) {
-            f.delete();
-        }
+        PrismSurvival.getInstance().getDatabaseManager().deleteOrder(o.id);
     }
 
     private void loadAll() {
         this.orders.clear();
+        pl.getLogger().info("Loading orders from database...");
+        List<Order> dbOrders = PrismSurvival.getInstance().getDatabaseManager().loadAllOrders();
+        for (Order o : dbOrders) {
+            this.orders.put(o.id, o);
+        }
 
-        pl.getLogger().info("DEBUG: Loading orders...");
+        // Migration logic
+        if (ordersDir.exists() || legacyDir.exists()) {
+            pl.getLogger().info("Checking for legacy order files to migrate...");
+            if (ordersDir.exists())
+                loadDirectory(ordersDir, false);
+            if (legacyDir.exists())
+                loadDirectory(legacyDir, true);
 
-        // 1. Load MAIN orders first (authoritative)
-        loadDirectory(ordersDir, false);
-
-        // 2. Load LEGACY orders second (migration)
-        if (legacyDir.exists() && legacyDir.isDirectory()) {
-            pl.getLogger().info("DEBUG: Checking legacy directory: " + legacyDir.getAbsolutePath());
-            loadDirectory(legacyDir, true);
+            // Cleanup legacy directories if empty
+            cleanupLegacyDirs();
         }
     }
 
     private void loadDirectory(File dir, boolean isLegacy) {
         File[] files = dir.listFiles();
-        if (files == null) {
+        if (files == null)
             return;
-        }
-
-        pl.getLogger().info("DEBUG: Found " + files.length + " files in " + dir.getName());
 
         for (File f : files) {
-            if (f.isDirectory())
+            if (f.isDirectory() || !f.getName().endsWith(".yml"))
                 continue;
-
-            boolean matches = f.getName().toLowerCase(Locale.ROOT)
-                    .matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.yml");
-
-            if (!matches) {
-                // pl.getLogger().info("DEBUG: Skipping non-matching file " + f.getName());
-                continue;
-            }
-
             loadOrderFile(f, isLegacy);
         }
-    }
-
-    public void saveOrder(Order o) {
-        // Clone items on main thread (fast) for thread safety, then serialize async
-        // Clone items on main thread (fast) for thread safety, then serialize async
-        List<ItemStack> storageClone = new ArrayList<>();
-        // Synchronize iteration to avoid ConcurrentModificationException
-        synchronized (o.storage) {
-            for (ItemStack item : o.storage) {
-                if (item != null && item.getType() != Material.AIR) {
-                    storageClone.add(item.clone());
-                }
-            }
-        }
-
-        // Capture all order data for async save
-        final UUID orderId = o.id;
-        final String ownerStr = o.owner.toString();
-        final String itemStr = o.key.serialize();
-        final int requested = o.requested;
-        final int delivered = o.delivered;
-        final double priceEach = o.priceEach;
-        final double paid = o.paid;
-        final boolean canceled = o.canceled;
-        final boolean completed = o.completed;
-        final long creationTime = o.creationTime;
-
-        // Run EVERYTHING async - including Base64 serialization
-        PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
-            // Serialize items to Base64 on async thread
-            List<String> storageBase64 = new ArrayList<>();
-            for (ItemStack item : storageClone) {
-                String encoded = itemToBase64(item);
-                if (encoded != null) {
-                    storageBase64.add(encoded);
-                }
-            }
-
-            File f = new File(ordersDir, orderId.toString() + ".yml");
-            YamlConfiguration cfg = new YamlConfiguration();
-
-            cfg.set("id", orderId.toString());
-            cfg.set("owner", ownerStr);
-            cfg.set("item", itemStr);
-            cfg.set("requested", requested);
-            cfg.set("delivered", delivered);
-            cfg.set("priceEach", priceEach);
-            cfg.set("paid", paid);
-            cfg.set("canceled", canceled);
-            cfg.set("completed", completed);
-            cfg.set("creationTime", creationTime);
-            cfg.set("storage", storageBase64);
-
-            try {
-                cfg.save(f);
-            } catch (IOException ex) {
-                pl.getLogger().severe("Failed to save order " + orderId + ": " + ex.getMessage());
-            }
-        });
-    }
-
-    public void saveAll() {
-        for (Order o : this.orders.values()) {
-            this.saveOrder(o);
-        }
-    }
-
-    public void cleanupExpired() {
-        long now = System.currentTimeMillis();
-        // 7 days active + 30 days grace = 37 days total life
-        long maxAge = 37L * 24 * 60 * 60 * 1000L;
-
-        List<Order> toRemove = new ArrayList<>();
-        for (Order o : this.orders.values()) {
-            if (now > o.creationTime + maxAge) {
-                toRemove.add(o);
-            }
-        }
-
-        for (Order o : toRemove) {
-            this.orders.remove(o.id);
-            File f = new File(this.ordersDir, o.id.toString() + ".yml");
-            if (f.exists()) {
-                f.delete();
-            }
-        }
-        if (!toRemove.isEmpty()) {
-            this.pl.getLogger().info("Cleaned up " + toRemove.size() + " expired orders.");
-        }
-    }
-
-    private void saveRoot() {
-        // Deprecated/Unused in new system
     }
 
     private void loadOrderFile(File f, boolean isLegacy) {
         try {
             YamlConfiguration cfg = YamlConfiguration.loadConfiguration(f);
-
             String idStr = f.getName().replace(".yml", "");
-            UUID id;
-            try {
-                id = UUID.fromString(idStr);
-            } catch (IllegalArgumentException e) {
-                // Try to read 'id' from inside if filename is weird, or skip
-                String internalId = cfg.getString("id");
-                if (internalId != null) {
-                    id = UUID.fromString(internalId);
-                } else {
-                    pl.getLogger().warning("Skipping invalid order file: " + f.getName());
-                    return;
-                }
-            }
+            UUID id = UUID.fromString(idStr);
 
-            // Check if already loaded (Main wins over Legacy)
             if (isLegacy && this.orders.containsKey(id)) {
+                f.delete();
                 return;
             }
 
             String ownerStr = cfg.getString("owner");
             String itemStr = cfg.getString("item");
-
-            if (ownerStr == null || itemStr == null) {
+            if (ownerStr == null || itemStr == null)
                 return;
-            }
 
             Order o = new Order();
             o.id = id;
@@ -387,104 +236,86 @@ public class OrderManager {
             o.delivered = cfg.getInt("delivered");
             o.priceEach = cfg.getDouble("priceEach");
             o.paid = cfg.getDouble("paid");
-
-            if (!Double.isFinite(o.priceEach))
-                o.priceEach = 0.0;
-            if (!Double.isFinite(o.paid))
-                o.paid = 0.0;
-
             o.canceled = cfg.getBoolean("canceled");
             o.completed = cfg.getBoolean("completed");
-
-            if (isLegacy) {
-                // If it was canceled, we skip it (effectively deleting it from the new system)
-                if (o.canceled) {
-                    return;
-                }
-                // Reset creation time for migrated orders
-                o.creationTime = System.currentTimeMillis();
-                // isLegacy forces save at the end of method
-            } else {
-                o.creationTime = cfg.getLong("creationTime", 0L);
-                if (o.creationTime == 0L) {
-                    o.creationTime = System.currentTimeMillis();
-                    // Force save to persist the new expiration timer
-                    this.saveOrder(o);
-                }
-            }
+            o.creationTime = cfg.getLong("creationTime", System.currentTimeMillis());
 
             // Load storage
             List<?> raw = cfg.getList("storage");
             if (raw != null) {
                 for (Object ois : raw) {
                     if (ois instanceof String) {
-                        ItemStack item = itemFromBase64((String) ois);
-                        if (item != null) {
-                            o.storage.add(item);
-                        } else {
-                            this.pl.getLogger().warning("Failed to deserialize item for order " + o.id);
+                        try {
+                            ItemStack[] items = com.prismcore.survival.utils.ItemSerializationManager
+                                    .itemStackArrayFromBase64((String) ois);
+                            for (ItemStack item : items)
+                                if (item != null)
+                                    o.storage.add(item);
+                        } catch (Exception e) {
                         }
                     } else if (ois instanceof ItemStack) {
                         o.storage.add((ItemStack) ois);
                     }
                 }
             }
-            if (isLegacy) {
-                // If it's fully delivered, completed, and storage is empty, we don't need to
-                // migrate it
-                if (o.completed && o.requested == o.delivered && o.storage.isEmpty()) {
-                    return;
-                }
-            }
 
+            // Save to DB and put in memory
             this.orders.put(o.id, o);
-
-            if (isLegacy) {
-                this.saveOrder(o); // Save to new location
-            }
+            PrismSurvival.getInstance().getDatabaseManager().saveOrder(o);
+            f.delete(); // Delete after successful migration
         } catch (Exception ex) {
-            this.pl.getLogger().warning("Skipping corrupt order file '" + f.getName() + "': " + ex.getMessage());
+            pl.getLogger().warning("Failed to migrate order file " + f.getName());
         }
     }
 
-    /**
-     * Serialize an ItemStack to a Base64 string.
-     */
-    private static String itemToBase64(ItemStack item) {
-        if (item == null)
-            return null;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos);
-            oos.writeObject(item);
-            oos.close();
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+    public void saveOrder(Order o) {
+        saveOrder(o, true);
+    }
+
+    public void saveOrder(Order o, boolean async) {
+        if (async) {
+            PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
+                PrismSurvival.getInstance().getDatabaseManager().saveOrder(o);
+            });
+        } else {
+            PrismSurvival.getInstance().getDatabaseManager().saveOrder(o);
         }
     }
 
-    /**
-     * Deserialize an ItemStack from a Base64 string.
-     */
-    private static ItemStack itemFromBase64(String base64) {
-        if (base64 == null || base64.isEmpty())
-            return null;
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(base64));
-            BukkitObjectInputStream ois = new BukkitObjectInputStream(bais);
-            ItemStack item = (ItemStack) ois.readObject();
-            ois.close();
-            return item;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+    public void saveAll() {
+        for (Order o : this.orders.values()) {
+            this.saveOrder(o, false);
         }
     }
 
-    public static String nice(Material m) {
-        String s = m.name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
+    private void cleanupLegacyDirs() {
+        deleteDirIfEmpty(legacyDir);
+        deleteDirIfEmpty(ordersDir);
+    }
+
+    private void deleteDirIfEmpty(File dir) {
+        if (dir.exists() && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files == null || files.length == 0) {
+                dir.delete();
+            }
+        }
+    }
+
+    public void cleanupExpired() {
+        long now = System.currentTimeMillis();
+        long maxAge = 37L * 24 * 60 * 60 * 1000L;
+        List<Order> toRemove = new ArrayList<>();
+        for (Order o : this.orders.values()) {
+            if (now > o.creationTime + maxAge)
+                toRemove.add(o);
+        }
+        for (Order o : toRemove)
+            deleteOrder(o);
+    }
+
+    public static String nice(org.bukkit.Material m) {
+        String s = m.name().toLowerCase(java.util.Locale.ENGLISH).replace('_', ' ');
         String[] parts = s.split("\\s+");
         StringBuilder out = new StringBuilder();
         for (String part : parts) {

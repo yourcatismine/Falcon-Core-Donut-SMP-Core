@@ -15,6 +15,10 @@ public class DatabaseManager {
     private final PrismSell plugin;
     private HikariDataSource dataSource;
 
+    public boolean isConnected() {
+        return dataSource != null && !dataSource.isClosed();
+    }
+
     public DatabaseManager(PrismSell plugin) {
         this.plugin = plugin;
     }
@@ -54,8 +58,7 @@ public class DatabaseManager {
             this.dataSource = new HikariDataSource(hikariConfig);
             this.createTables();
         } catch (Exception e) {
-            this.plugin.getLogger().severe("Failed to connect to MySQL database with HikariCP!");
-            e.printStackTrace();
+            this.plugin.getLogger().warning("Failed to connect to MySQL database with HikariCP!");
         }
     }
 
@@ -158,8 +161,7 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            this.plugin.getLogger().severe("Failed to create table/insert row!");
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
@@ -178,17 +180,21 @@ public class DatabaseManager {
     }
 
     public void updateNameHidden(java.util.UUID uuid, boolean hidden) {
+        if (!isConnected())
+            return;
         String query = "UPDATE player_stats SET name_hidden = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setBoolean(1, hidden);
             ps.setString(2, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public boolean isNameHidden(java.util.UUID uuid) {
+        if (!isConnected())
+            return false;
         String query = "SELECT name_hidden FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -198,7 +204,7 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return false;
     }

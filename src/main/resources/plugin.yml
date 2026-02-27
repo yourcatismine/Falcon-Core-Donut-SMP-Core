@@ -4,7 +4,7 @@ main: com.h2ph.PrismSurvival
 api-version: '1.21'
 author: h2ph
 folia-supported: true
-description: Advanced shop system with multi-currency support
+description: Falcon was tamed by h2ph
 depend: [Vault, packetevents]
 softdepend: [PlaceholderAPI, WorldEdit, FastAsyncWorldEdit, LuckPerms]
 

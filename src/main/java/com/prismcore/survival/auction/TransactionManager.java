@@ -23,8 +23,8 @@ public class TransactionManager {
         UUID buyerUuid = controller.getPlugin().getServer().getOfflinePlayer(buyer).getUniqueId();
 
         // Save to Database
-        controller.getPlugin().getDatabaseManager().addAuctionTransaction(sellerUuid, txSeller);
-        controller.getPlugin().getDatabaseManager().addAuctionTransaction(buyerUuid, txBuyer);
+        controller.getPlugin().getDatabaseManager().addAuctionTransactionAsync(sellerUuid, txSeller);
+        controller.getPlugin().getDatabaseManager().addAuctionTransactionAsync(buyerUuid, txBuyer);
 
         String itemName = Utils.prettifyMaterialName(item.getType());
         controller.getPlugin().getActivityLogger().log(sellerUuid, ActivityLogger.LogType.AUCTION,
@@ -104,9 +104,9 @@ public class TransactionManager {
         UUID buyerUuid = this.controller.getPlugin().getServer().getOfflinePlayer(tx.getBuyer()).getUniqueId();
 
         // Delete from DB
-        controller.getPlugin().getDatabaseManager().deleteAuctionTransaction(sellerUuid, tx.getTimestamp(),
+        controller.getPlugin().getDatabaseManager().deleteAuctionTransactionAsync(sellerUuid, tx.getTimestamp(),
                 tx.getPrice());
-        controller.getPlugin().getDatabaseManager().deleteAuctionTransaction(buyerUuid, tx.getTimestamp(),
+        controller.getPlugin().getDatabaseManager().deleteAuctionTransactionAsync(buyerUuid, tx.getTimestamp(),
                 tx.getPrice());
 
         this.controller.getPlugin().getActivityLogger().log(sellerUuid, ActivityLogger.LogType.AUCTION,

@@ -61,7 +61,7 @@ public class ShardBoosterListener implements Listener {
         // Activate booster for player
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         data.setShardBoosterExpiry(expiryMillis);
-        plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
         // Get config for messages and sounds
         ConfigurationSection cfg = manager.getConfig().getConfigurationSection("shardbooster");

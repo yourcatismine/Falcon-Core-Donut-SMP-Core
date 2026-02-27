@@ -45,7 +45,7 @@ public class SettingsGUIListener implements Listener {
                         boolean newState = !data.isHideChat();
                         data.setHideChat(newState);
                         // Save immediately
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String hideChatStatus = newState ? "&a&lON" : "&4&lOFF";
@@ -67,7 +67,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isPrivateMessages();
                         data.setPrivateMessages(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -89,7 +89,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isPayAlerts();
                         data.setPayAlerts(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -118,7 +118,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isQuickAuctionBuy();
                         data.setQuickAuctionBuy(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -144,7 +144,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isDisableMobSpawns();
                         data.setDisableMobSpawns(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -165,7 +165,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isSoundNotifications();
                         data.setSoundNotifications(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -186,7 +186,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isTpaConfirmMenus();
                         data.setTpaConfirmMenus(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -207,7 +207,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isDuelRequests();
                         data.setDuelRequests(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -229,7 +229,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isTpaRequests();
                         data.setTpaRequests(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -251,7 +251,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isTpaHereRequests();
                         data.setTpaHereRequests(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -273,7 +273,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isPayments();
                         data.setPayments(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -295,7 +295,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isShardsNotifier();
                         data.setShardsNotifier(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Item
                         String status = newState ? "&a&lON" : "&4&lOFF";
@@ -317,7 +317,7 @@ public class SettingsGUIListener implements Listener {
                     if (data != null) {
                         boolean newState = !data.isShowScoreboard();
                         data.setShowScoreboard(newState);
-                        plugin.getPlayerDataManager().savePlayer(p.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
 
                         // Update Scoreboard Visibilty
                         if (newState) {

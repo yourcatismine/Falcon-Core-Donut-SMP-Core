@@ -150,7 +150,7 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
                 break;
         }
 
-        plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+        plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
         playSound(sender, org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
 
         if (target.isOnline() && target.getPlayer() != null) {

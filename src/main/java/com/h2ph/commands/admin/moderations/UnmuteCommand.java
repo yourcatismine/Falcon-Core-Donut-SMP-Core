@@ -67,7 +67,7 @@ public class UnmuteCommand implements CommandExecutor, TabCompleter {
         data.setMuted(false);
         data.setMuteExpiry(0);
         data.setMuteReason(null);
-        plugin.getPlayerDataManager().savePlayer(targetUUID);
+        plugin.getPlayerDataManager().savePlayerAsync(targetUUID);
 
         // Remove from MySQL
         plugin.getDatabaseManager().removeMute(targetUUID);

@@ -7,6 +7,7 @@
  */
 package com.prismcore.survival.sell.data;
 
+import com.h2ph.PrismSurvival;
 import com.prismcore.survival.sell.PrismSell;
 import com.prismcore.survival.sell.category.Category;
 import com.prismcore.survival.sell.data.PlayerData;
@@ -91,6 +92,15 @@ public class PlayerDataManager {
             this.plugin.getLogger().severe("Could not save player data for " + String.valueOf(uuid));
             e.printStackTrace();
         }
+    }
+
+    public void savePlayerDataAsync(UUID uuid) {
+        PlayerData data = this.playerDataMap.get(uuid);
+        if (data == null) {
+            return;
+        }
+        // Use PrismSurvival's scheduler adapter if available, or just Bukkit async
+        PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> savePlayerData(uuid));
     }
 
     public void saveAllData() {

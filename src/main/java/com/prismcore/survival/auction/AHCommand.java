@@ -52,10 +52,11 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
         if (args.length >= 2 && args[0].equalsIgnoreCase("sell")) {
             int max = cfg.getInt("settings.max-auction-listed");
             int currentCount = 0;
-            for (AuctionItem ai : this.controller.getAuctionManager().getActiveItems()) {
-                if (!ai.getSeller().equals(player.getName()))
-                    continue;
-                ++currentCount;
+            long now = System.currentTimeMillis();
+            for (AuctionItem ai : this.controller.getAuctionManager().getItems()) {
+                if (ai.getSeller().equals(player.getName()) && !this.controller.getAuctionManager().isExpired(ai)) {
+                    ++currentCount;
+                }
             }
             if (currentCount >= max) {
                 String msg = cfg.getString("messages.max-listings").replace("{count}", String.valueOf(currentCount))

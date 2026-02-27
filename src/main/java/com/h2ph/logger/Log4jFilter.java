@@ -38,6 +38,8 @@ public class Log4jFilter extends AbstractFilter {
             return false;
         return msg.contains("Status: 429") ||
                 msg.contains("Couldn't look up profile properties") ||
-                msg.contains("MinecraftClientHttpException");
+                msg.contains("MinecraftClientHttpException") ||
+                msg.contains("Could not connect to database!") ||
+                msg.contains("Attempted reconnect");
     }
 }

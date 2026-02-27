@@ -78,9 +78,7 @@ public class OrderManager {
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
         double refund = (double) remaining * price;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(o.owner);
-        if (owner.isOnline()) {
-            OrdersModule.getInstance().vault().give(owner, refund);
-        }
+        OrdersModule.getInstance().vault().give(owner, refund);
         o.requested = o.delivered;
         o.completed = true;
         this.saveOrder(o);

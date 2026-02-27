@@ -207,7 +207,7 @@ public class CombatListener implements Listener {
             if (data != null) {
                 data.setCombatLogged(true);
                 // Save immediately to ensure persistence
-                plugin.getPlayerDataManager().savePlayer(uuid);
+                plugin.getPlayerDataManager().savePlayerAsync(uuid);
             }
         } catch (Throwable ignored) {
         }

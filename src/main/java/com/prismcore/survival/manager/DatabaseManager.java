@@ -7,20 +7,15 @@ import org.bukkit.OfflinePlayer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.configuration.file.FileConfiguration;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 public class DatabaseManager {
@@ -68,7 +63,8 @@ public class DatabaseManager {
 
             createTables();
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to initialize ban database with HikariCP", e);
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to initialize database with HikariCP. Some features will be unavailable.");
         }
     }
 
@@ -281,7 +277,7 @@ public class DatabaseManager {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Suppress stack trace when database is offline
         }
     }
 
@@ -291,6 +287,17 @@ public class DatabaseManager {
             throw new SQLException("DataSource is not initialized");
         }
         return dataSource.getConnection();
+    }
+
+    public boolean isConnected() {
+        if (dataSource == null || dataSource.isClosed()) {
+            return false;
+        }
+        try (Connection conn = dataSource.getConnection()) {
+            return conn != null && !conn.isClosed();
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     public void shutdown() {
@@ -309,6 +316,8 @@ public class DatabaseManager {
         List<String> names = new ArrayList<>();
         // Unique names from active bans
         // A ban is active if expiry == -1 OR expiry > current time
+        if (!isConnected())
+            return names;
         String query = "SELECT DISTINCT player_name FROM bans WHERE expiry = -1 OR expiry > ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setLong(1, System.currentTimeMillis());
@@ -318,12 +327,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return names;
     }
 
     public BanInfo getBanInfo(UUID uuid) {
+        if (!isConnected())
+            return null;
         // Get the most relevant active ban (e.g. latest or permanent)
         String query = "SELECT * FROM bans WHERE uuid = ? AND (expiry = -1 OR expiry > ?) ORDER BY date_banned DESC LIMIT 1";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
@@ -335,12 +346,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
 
     public BanInfo getBanInfoByName(String name) {
+        if (!isConnected())
+            return null;
         String query = "SELECT * FROM bans WHERE player_name LIKE ? AND (expiry = -1 OR expiry > ?) ORDER BY date_banned DESC LIMIT 1";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, name);
@@ -351,12 +364,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
 
     public BanInfo getBanInfoById(String banId) {
+        if (!isConnected())
+            return null;
         String query = "SELECT * FROM bans WHERE ban_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, banId);
@@ -366,12 +381,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
 
     public void removeBan(String playerName) {
+        if (!isConnected())
+            return;
         // Unban essentially means removing the active ban record or marking it
         // inactive.
         // OffendPlugin expects 'removeBan'. We'll delete the entry for simplicity as it
@@ -381,27 +398,31 @@ public class DatabaseManager {
             ps.setString(1, playerName);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public void removeBan(UUID uuid) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM bans WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public void removeBanById(String banId) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM bans WHERE ban_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, banId);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
@@ -422,6 +443,8 @@ public class DatabaseManager {
     }
 
     public void setOffenseCount(UUID uuid, String reasonKey, int count) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO offenses (uuid, reason_key, count) VALUES (?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -429,7 +452,7 @@ public class DatabaseManager {
             ps.setInt(3, count);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
@@ -478,6 +501,8 @@ public class DatabaseManager {
 
     public void addBan(UUID uuid, String playerName, String banId, String reasonKey, String displayReason,
             int offenseCount, long date, long expires, String bannedBy) {
+        if (!isConnected())
+            return;
         // Insert into Bans table
         String query = "REPLACE INTO bans (uuid, player_name, ban_id, reason_key, display_reason, offense_count, date_banned, expiry, banned_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
@@ -492,11 +517,13 @@ public class DatabaseManager {
             ps.setString(9, bannedBy);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public void logIP(UUID uuid, String ip) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO ip_logs (uuid, ip, last_seen) VALUES (?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -504,11 +531,13 @@ public class DatabaseManager {
             ps.setLong(3, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public String getLastIP(UUID uuid) {
+        if (!isConnected())
+            return null;
         String query = "SELECT ip FROM ip_logs WHERE uuid = ? ORDER BY last_seen DESC LIMIT 1";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -518,13 +547,13 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
 
     public List<String> getAlts(UUID uuid, String ip) {
-        if (ip == null)
+        if (!isConnected() || ip == null)
             return new ArrayList<>();
         List<String> alts = new ArrayList<>();
         String query = "SELECT DISTINCT uuid FROM ip_logs WHERE ip = ? AND uuid != ?";
@@ -543,7 +572,7 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return alts;
     }
@@ -556,6 +585,8 @@ public class DatabaseManager {
 
     public void addMute(UUID uuid, String playerName, String muteId, String reason, long date, long expiry,
             String mutedBy) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO mutes (uuid, player_name, mute_id, reason, date_muted, expiry, muted_by) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -567,21 +598,25 @@ public class DatabaseManager {
             ps.setString(7, mutedBy);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public void removeMute(UUID uuid) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM mutes WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public MuteInfo getMuteInfo(UUID uuid) {
+        if (!isConnected())
+            return null;
         String query = "SELECT * FROM mutes WHERE uuid = ? AND (expiry = -1 OR expiry > ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -592,12 +627,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
 
     public MuteInfo getMuteInfoByName(String name) {
+        if (!isConnected())
+            return null;
         String query = "SELECT * FROM mutes WHERE player_name LIKE ? AND (expiry = -1 OR expiry > ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, name);
@@ -608,12 +645,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
 
     public List<String> getMutedPlayerNames() {
+        if (!isConnected())
+            return new ArrayList<>();
         List<String> names = new ArrayList<>();
         String query = "SELECT DISTINCT player_name FROM mutes WHERE expiry = -1 OR expiry > ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
@@ -624,7 +663,7 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return names;
     }
@@ -680,26 +719,32 @@ public class DatabaseManager {
     // --- Allowed Operators Methods ---
 
     public void addAllowedOperator(String playerName) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO allowed_operators (player_name) VALUES (?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, playerName);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public void removeAllowedOperator(String playerName) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM allowed_operators WHERE player_name = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, playerName);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public boolean isAllowedOperator(String playerName) {
+        if (!isConnected())
+            return false;
         String query = "SELECT player_name FROM allowed_operators WHERE player_name = ? LIMIT 1";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, playerName);
@@ -707,13 +752,15 @@ public class DatabaseManager {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return false;
     }
 
     public java.util.List<String> getAllowedOperators() {
         java.util.List<String> names = new java.util.ArrayList<>();
+        if (!isConnected())
+            return names;
         String query = "SELECT player_name FROM allowed_operators";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             try (ResultSet rs = ps.executeQuery()) {
@@ -722,12 +769,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return names;
     }
 
     public void addAuctionPendingPayment(UUID uuid, double amount, String buyerName, String itemName) {
+        if (!isConnected())
+            return;
         String query = "INSERT INTO auction_pending_payments (uuid, amount, buyer_name, item_name, timestamp) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -737,12 +786,14 @@ public class DatabaseManager {
             ps.setLong(5, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public List<com.prismcore.survival.auction.AuctionManager.OfflineSale> getAndClearDetailedPendingSales(UUID uuid) {
         List<com.prismcore.survival.auction.AuctionManager.OfflineSale> sales = new ArrayList<>();
+        if (!isConnected())
+            return sales;
         String selectQuery = "SELECT amount, buyer_name, item_name FROM auction_pending_payments WHERE uuid = ?";
         String deleteQuery = "DELETE FROM auction_pending_payments WHERE uuid = ?";
         try (Connection conn = getConnection()) {
@@ -771,12 +822,12 @@ public class DatabaseManager {
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
-                e.printStackTrace();
+                // Silently fail
             } finally {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return sales;
     }
@@ -791,6 +842,8 @@ public class DatabaseManager {
     // --- Inventory Sync Methods ---
 
     public void saveInventory(UUID uuid, String inventoryBase64, String armorBase64) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO player_inventories (uuid, inventory_data, armor_data, last_updated) VALUES (?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -799,11 +852,13 @@ public class DatabaseManager {
             ps.setLong(4, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public String[] loadInventory(UUID uuid) {
+        if (!isConnected())
+            return null;
         String query = "SELECT inventory_data, armor_data FROM player_inventories WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -813,7 +868,7 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return null;
     }
@@ -821,6 +876,8 @@ public class DatabaseManager {
     // --- Auction Transaction Methods ---
 
     public void addAuctionTransaction(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
+        if (!isConnected())
+            return;
         String query = "INSERT INTO auction_transactions (player_uuid, item_data, price, buyer_name, seller_name, timestamp, is_sale) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, playerUuid.toString());
@@ -834,12 +891,14 @@ public class DatabaseManager {
             ps.setBoolean(7, tx.isSale());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     public List<com.prismcore.survival.auction.Transaction> getAuctionTransactions(UUID playerUuid) {
         List<com.prismcore.survival.auction.Transaction> list = new ArrayList<>();
+        if (!isConnected())
+            return list;
         String query = "SELECT * FROM auction_transactions WHERE player_uuid = ? ORDER BY timestamp DESC LIMIT 50";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, playerUuid.toString());
@@ -860,12 +919,14 @@ public class DatabaseManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            // Silently fail
         }
         return list;
     }
 
     public void deleteAuctionTransaction(UUID playerUuid, long timestamp, double price) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM auction_transactions WHERE player_uuid = ? AND timestamp = ? AND price = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, playerUuid.toString());
@@ -873,13 +934,15 @@ public class DatabaseManager {
             ps.setDouble(3, price);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently fail
         }
     }
 
     // --- Player Stats Methods ---
 
     public void savePlayerStats(UUID uuid, PlayerData data) {
+        if (!isConnected())
+            return;
         String query = "UPDATE player_stats SET money = ?, shards = ?, shop_spent = ?, last_updated = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setDouble(1, data.getMoney());
@@ -903,11 +966,13 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save player stats for " + uuid, e);
+            // Silently fail
         }
     }
 
     public PlayerDataStats loadPlayerStats(UUID uuid) {
+        if (!isConnected())
+            return null;
         String query = "SELECT money, shards, shop_spent FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
@@ -918,7 +983,7 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load player stats for " + uuid, e);
+            // Silently fail
         }
         return null;
     }
@@ -936,7 +1001,7 @@ public class DatabaseManager {
     }
 
     public void savePlayerName(UUID uuid, String name) {
-        if (name == null)
+        if (!isConnected() || name == null)
             return;
         String query = "REPLACE INTO player_names (uuid, cached_name) VALUES (?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
@@ -944,12 +1009,14 @@ public class DatabaseManager {
             ps.setString(2, name);
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save player name for " + uuid, e);
+            // Silently fail
         }
     }
 
     public List<PlayerDataManager.LeaderboardEntry> getTopShards(int limit) {
         List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
         String query = "SELECT ps.uuid, ps.shards, COALESCE(pn.cached_name, ps.uuid) as name " +
                 "FROM player_stats ps " +
                 "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
@@ -965,13 +1032,15 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to fetch top shards leaderboard", e);
+            // Silently fail
         }
         return entries;
     }
 
     public List<PlayerDataManager.LeaderboardEntry> getTopMoney(int limit) {
         List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
         String query = "SELECT ps.uuid, ps.money, COALESCE(pn.cached_name, ps.uuid) as name " +
                 "FROM player_stats ps " +
                 "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
@@ -987,12 +1056,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to fetch top money leaderboard", e);
+            // Silently fail
         }
         return entries;
     }
 
     public void updateOfflineBalance(UUID uuid, double balance, boolean isShards) {
+        if (!isConnected())
+            return;
         String column = isShards ? "shards" : "money";
         String query = "UPDATE player_stats SET " + column + " = ?, last_updated = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
@@ -1001,7 +1072,7 @@ public class DatabaseManager {
             ps.setString(3, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to update offline balance for " + uuid, e);
+            // Silently fail
         }
     }
 
@@ -1009,6 +1080,8 @@ public class DatabaseManager {
 
     public java.util.Map<UUID, Double> loadAllBounties() {
         java.util.Map<UUID, Double> bounties = new java.util.HashMap<>();
+        if (!isConnected())
+            return bounties;
         String query = "SELECT target_uuid, amount FROM player_bounties";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             try (ResultSet rs = ps.executeQuery()) {
@@ -1017,12 +1090,14 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load all bounties", e);
+            // Silently fail
         }
         return bounties;
     }
 
     public void saveBounty(UUID target, double amount) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO player_bounties (target_uuid, amount, last_updated) VALUES (?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, target.toString());
@@ -1030,17 +1105,19 @@ public class DatabaseManager {
             ps.setLong(3, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save bounty for " + target, e);
+            // Silently fail
         }
     }
 
     public void deleteBounty(UUID target) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM player_bounties WHERE target_uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, target.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to delete bounty for " + target, e);
+            // Silently fail
         }
     }
 
@@ -1048,6 +1125,8 @@ public class DatabaseManager {
 
     public java.util.List<com.prismcore.survival.orders.data.Order> loadAllOrders() {
         java.util.List<com.prismcore.survival.orders.data.Order> orders = new java.util.ArrayList<>();
+        if (!isConnected())
+            return orders;
         String query = "SELECT * FROM prism_orders";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             try (ResultSet rs = ps.executeQuery()) {
@@ -1076,17 +1155,19 @@ public class DatabaseManager {
                         }
                         orders.add(order);
                     } catch (Exception e) {
-                        plugin.getLogger().log(Level.SEVERE, "Failed to parse order from DB", e);
+                        // Silently fail parse error
                     }
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load all orders", e);
+            // Silently fail loading
         }
         return orders;
     }
 
     public void saveOrder(com.prismcore.survival.orders.data.Order order) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO prism_orders (id, owner, item_key, requested, delivered, price_each, paid, canceled, completed, creation_time, storage) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -1111,17 +1192,19 @@ public class DatabaseManager {
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save order " + order.getId(), e);
+            // Silently fail
         }
     }
 
     public void deleteOrder(UUID orderId) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM prism_orders WHERE id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, orderId.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to delete order " + orderId, e);
+            // Silently fail
         }
     }
 
@@ -1129,6 +1212,8 @@ public class DatabaseManager {
 
     public java.util.List<com.prismcore.survival.auction.AuctionItem> loadAllAuctionItems() {
         java.util.List<com.prismcore.survival.auction.AuctionItem> items = new java.util.ArrayList<>();
+        if (!isConnected())
+            return items;
         String query = "SELECT * FROM active_auction_listings";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             try (ResultSet rs = ps.executeQuery()) {
@@ -1146,17 +1231,19 @@ public class DatabaseManager {
                         items.add(new com.prismcore.survival.auction.AuctionItem(id, seller, itemStack, price, listedAt,
                                 duration));
                     } catch (Exception e) {
-                        plugin.getLogger().log(Level.SEVERE, "Failed to parse auction item from DB", e);
+                        // Silently fail parse error
                     }
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load all auction items", e);
+            // Silently fail loading
         }
         return items;
     }
 
     public void saveAuctionItem(com.prismcore.survival.auction.AuctionItem item) {
+        if (!isConnected())
+            return;
         String query = "REPLACE INTO active_auction_listings (id, seller, item_stack, price, listed_at, duration) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, item.getId().toString());
@@ -1171,17 +1258,39 @@ public class DatabaseManager {
             ps.setInt(6, item.getDuration());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save auction item " + item.getId(), e);
+            // Silently fail
         }
     }
 
+    public void saveAuctionItemAsync(com.prismcore.survival.auction.AuctionItem item) {
+        CompletableFuture.runAsync(() -> saveAuctionItem(item));
+    }
+
     public void deleteAuctionItem(UUID itemId) {
+        if (!isConnected())
+            return;
         String query = "DELETE FROM active_auction_listings WHERE id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, itemId.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to delete auction item " + itemId, e);
+            // Silently fail
         }
+    }
+
+    public void deleteAuctionItemAsync(UUID itemId) {
+        CompletableFuture.runAsync(() -> deleteAuctionItem(itemId));
+    }
+
+    public void savePlayerNameAsync(UUID uuid, String name) {
+        CompletableFuture.runAsync(() -> savePlayerName(uuid, name));
+    }
+
+    public void addAuctionTransactionAsync(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
+        CompletableFuture.runAsync(() -> addAuctionTransaction(playerUuid, tx));
+    }
+
+    public void deleteAuctionTransactionAsync(UUID playerUuid, long timestamp, double price) {
+        CompletableFuture.runAsync(() -> deleteAuctionTransaction(playerUuid, timestamp, price));
     }
 }

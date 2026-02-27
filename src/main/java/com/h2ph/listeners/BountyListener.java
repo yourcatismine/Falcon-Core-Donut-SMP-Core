@@ -55,7 +55,7 @@ public class BountyListener implements Listener {
                     killerData = plugin.getPlayerDataManager().loadPlayer(killer.getUniqueId());
 
                 killerData.addMoney(amount, "Bounty claim on " + victim.getName());
-                plugin.getPlayerDataManager().savePlayer(killer.getUniqueId());
+                plugin.getPlayerDataManager().savePlayerAsync(killer.getUniqueId());
             }
 
             String amountFormatted = formatNumber(amount);

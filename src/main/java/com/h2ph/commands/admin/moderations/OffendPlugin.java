@@ -598,7 +598,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     pd.setShards(0, "Wipe");
                     pd.setShopSpent(0);
                     pd.getAllKeys().clear(); // Wipe all keys
-                    plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+                    plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
                 }
             } catch (Throwable ignored) {
             }

@@ -147,7 +147,7 @@ public class SellAxeListener implements Listener {
                 data.addProgress(entry.getKey(), entry.getValue());
                 checkLevelUp(player, entry.getKey(), data);
             }
-            PrismSurvival.getInstance().getPrismSell().getPlayerDataManager().savePlayerData(player.getUniqueId());
+            PrismSurvival.getInstance().getPrismSell().getPlayerDataManager().savePlayerDataAsync(player.getUniqueId());
 
             org.bukkit.configuration.file.FileConfiguration sellConfig = PrismSurvival.getInstance().getPrismSell()
                     .getConfig();

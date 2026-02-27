@@ -121,7 +121,7 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
         data.setKeyCount(keyName, nevv);
 
         if (!target.isOnline()) {
-            plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+            plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
         }
 
         if (!silentSender) {

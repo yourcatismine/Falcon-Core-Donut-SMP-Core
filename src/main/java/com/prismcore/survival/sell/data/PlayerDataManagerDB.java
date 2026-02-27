@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerDataManagerDB {
@@ -105,13 +106,17 @@ public class PlayerDataManagerDB {
 
     public void savePlayerData(UUID uuid) {
         PlayerData data = this.cache.get(uuid);
-        if (data == null) {
+        if (data == null || !data.isDirty()) {
             return;
         }
-        if (!data.isDirty()) {
-            return;
+        this.savePlayerDataSync(uuid, data);
+    }
+
+    public void savePlayerDataAsync(UUID uuid) {
+        PlayerData data = this.cache.get(uuid);
+        if (data != null && data.isDirty()) {
+            CompletableFuture.runAsync(() -> this.savePlayerDataSync(uuid, data));
         }
-        java.util.concurrent.CompletableFuture.runAsync(() -> this.savePlayerDataSync(uuid, data));
     }
 
     private void savePlayerDataSync(UUID uuid, PlayerData data) {
@@ -193,7 +198,7 @@ public class PlayerDataManagerDB {
     }
 
     public void unloadPlayer(UUID uuid) {
-        this.savePlayerData(uuid);
+        savePlayerDataAsync(uuid);
         this.cache.remove(uuid);
     }
 }

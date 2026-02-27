@@ -166,8 +166,8 @@ public class PayCommand implements CommandExecutor, TabCompleter {
                 // Save data asynchronously
                 plugin.getSchedulerAdapter().runTaskAsync(() -> {
                     if (!com.prismcore.survival.auction.EconomyHandler.usingVault()) {
-                        plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
-                        plugin.getPlayerDataManager().savePlayer(targetId);
+                        plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+                        plugin.getPlayerDataManager().savePlayerAsync(targetId);
 
                         if (!targetWasLoaded && Bukkit.getPlayer(targetId) == null) {
                             plugin.getPlayerDataManager().unload(targetId);

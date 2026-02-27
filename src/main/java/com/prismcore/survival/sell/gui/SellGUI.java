@@ -308,7 +308,7 @@ public class SellGUI
             // Update sellMade stat and persist immediately — don't wait for quit
             PlayerData sellData = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             sellData.setSellMade(sellData.getSellMade() + totalSold);
-            this.plugin.getPlayerDataManager().savePlayerData(player.getUniqueId());
+            this.plugin.getPlayerDataManager().savePlayerDataAsync(player.getUniqueId());
 
             String formattedAmount = MessageUtil.formatMoney(totalSold);
             String chatMsg = this.plugin.getConfig().getString("messages.sold-total");

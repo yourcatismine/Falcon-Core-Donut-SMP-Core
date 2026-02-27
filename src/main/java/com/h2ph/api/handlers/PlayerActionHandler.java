@@ -160,7 +160,7 @@ public class PlayerActionHandler implements HttpHandler {
                     if (pd.getName() == null && target.getName() != null) {
                         pd.setName(target.getName());
                     }
-                    plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+                    plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
 
                     success = true;
                     message = "Resident " + (target.getName() != null ? target.getName() : target.getUniqueId())

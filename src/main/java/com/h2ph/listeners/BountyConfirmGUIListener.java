@@ -72,7 +72,7 @@ public class BountyConfirmGUIListener implements Listener {
             }
 
             senderData.removeMoney(amount, "Bounty on " + targetName);
-            plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
+            plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
         }
 
         plugin.getBountyManager().addBounty(targetId, amount);

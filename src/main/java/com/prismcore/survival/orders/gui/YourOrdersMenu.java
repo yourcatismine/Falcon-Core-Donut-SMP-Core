@@ -52,8 +52,7 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
         // Orders first, then New Order button
         List<Order> list = this.module.orders().all().stream()
                 .filter(o -> o.owner.equals(this.p.getUniqueId()))
-                .filter(o -> !o.canceled)
-                // .filter(o -> !o.completed) // Show completed orders for collection
+                .filter(o -> (!o.canceled && !o.completed) || !o.storage.isEmpty())
                 .sorted((o1, o2) -> Long.compare(o2.creationTime, o1.creationTime))
                 .collect(Collectors.toList());
 
@@ -203,8 +202,7 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
         if (slot >= 0 && slot <= 17) {
             List<Order> list = this.module.orders().all().stream()
                     .filter(o -> o.owner.equals(this.p.getUniqueId()))
-                    .filter(o -> !o.canceled)
-                    // .filter(o -> !o.completed)
+                    .filter(o -> (!o.canceled && !o.completed) || !o.storage.isEmpty())
                     .sorted((o1, o2) -> Long.compare(o2.creationTime, o1.creationTime))
                     .collect(Collectors.toList());
 
@@ -247,8 +245,7 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
             // Next Page
             List<Order> list = this.module.orders().all().stream()
                     .filter(o -> o.owner.equals(this.p.getUniqueId()))
-                    .filter(o -> !o.canceled)
-                    // .filter(o -> !o.completed)
+                    .filter(o -> (!o.canceled && !o.completed) || !o.storage.isEmpty())
                     .sorted((o1, o2) -> Long.compare(o2.creationTime, o1.creationTime))
                     .collect(Collectors.toList());
             int totalItems = list.size() + 1;

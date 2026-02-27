@@ -300,14 +300,12 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                 finalTargetData.addShards(amount, "Payment from " + sender.getName());
 
                 // Save data async
-                plugin.getSchedulerAdapter().runTaskAsync(() -> {
-                    plugin.getPlayerDataManager().savePlayer(sender.getUniqueId());
-                    plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+                plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+                plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
 
-                    if (!targetWasLoaded && !target.isOnline()) {
-                        plugin.getPlayerDataManager().unload(target.getUniqueId());
-                    }
-                });
+                if (!targetWasLoaded && !target.isOnline()) {
+                    plugin.getPlayerDataManager().unload(target.getUniqueId());
+                }
 
                 // Notify sender
                 sender.sendMessage(ChatColor.GRAY + "You paid " + target.getName() + " " +
@@ -446,7 +444,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                 break;
         }
 
-        plugin.getPlayerDataManager().savePlayer(target.getUniqueId());
+        plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
         if (!wasLoaded && !target.isOnline()) {
             plugin.getPlayerDataManager().unload(target.getUniqueId());
         }

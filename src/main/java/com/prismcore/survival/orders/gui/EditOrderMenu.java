@@ -130,9 +130,13 @@ public class EditOrderMenu
         // Buttons
         boolean hasItemsToCollect = !this.order.storage.isEmpty();
 
-        // Cancel (Slot 13) - Allow if empty storage (to dismiss completed or cancel
-        // active)
-        if (!hasItemsToCollect) {
+        // Cancel (Slot 13)
+        if (hasItemsToCollect) {
+            this.inv.setItem(13,
+                    makeButton(Material.BARRIER, "&cᴄᴀɴᴄᴇʟ",
+                            List.of("&fCollect pending items first", "&7You cannot cancel while",
+                                    "&7delivered items are waiting.")));
+        } else {
             this.inv.setItem(13,
                     makeButton(Material.RED_TERRACOTTA, "&aᴄᴀɴᴄᴇʟ", List.of("&fClick to cancel/remove this order")));
         }
@@ -186,6 +190,9 @@ public class EditOrderMenu
                 this.p.setMetadata(META_SUPPRESS_CLOSE,
                         (MetadataValue) new FixedMetadataValue((Plugin) this.module.getPlugin(), (Object) true));
                 new DeleteOrderMenu(this.module, this.p, this.order).open();
+            } else {
+                this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                this.p.sendMessage(Utils.formatColors("&cPlease collect your items before cancelling!"));
             }
             return;
         }

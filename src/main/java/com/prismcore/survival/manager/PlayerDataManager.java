@@ -47,7 +47,10 @@ public class PlayerDataManager {
         PlayerData data = new PlayerData(plugin, uuid);
 
         // Load Stats from Database (Money, Shards, ShopSpent)
-        DatabaseManager.PlayerDataStats stats = plugin.getDatabaseManager().loadPlayerStats(uuid);
+        DatabaseManager.PlayerDataStats stats = null;
+        if (plugin.getDatabaseManager().isConnected()) {
+            stats = plugin.getDatabaseManager().loadPlayerStats(uuid);
+        }
         boolean migratedFromYml = false;
 
         if (stats != null) {
@@ -179,24 +182,26 @@ public class PlayerDataManager {
         }
 
         // Load Team Data from SQL (Local Database)
-        try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-            if (conn != null && !conn.isClosed()) {
-                try (PreparedStatement stmt = conn.prepareStatement(
-                        "SELECT ps.team, ps.name_hidden, tm.role FROM player_stats ps " +
-                                "LEFT JOIN team_members tm ON ps.uuid = tm.uuid AND ps.team = tm.team_id " +
-                                "WHERE ps.uuid = ?")) {
-                    stmt.setString(1, uuid.toString());
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        if (rs.next()) {
-                            data.setTeamId(rs.getString("team"));
-                            data.setTeamRole(rs.getString("role"));
-                            data.setNameHidden(rs.getBoolean("name_hidden"));
+        if (plugin.getPrismSell().getDatabaseManager().isConnected()) {
+            try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
+                if (conn != null && !conn.isClosed()) {
+                    try (PreparedStatement stmt = conn.prepareStatement(
+                            "SELECT ps.team, ps.name_hidden, tm.role FROM player_stats ps " +
+                                    "LEFT JOIN team_members tm ON ps.uuid = tm.uuid AND ps.team = tm.team_id " +
+                                    "WHERE ps.uuid = ?")) {
+                        stmt.setString(1, uuid.toString());
+                        try (ResultSet rs = stmt.executeQuery()) {
+                            if (rs.next()) {
+                                data.setTeamId(rs.getString("team"));
+                                data.setTeamRole(rs.getString("role"));
+                                data.setNameHidden(rs.getBoolean("name_hidden"));
+                            }
                         }
                     }
                 }
+            } catch (SQLException e) {
+                // Silently fail
             }
-        } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load team data from SQL for " + uuid, e);
         }
 
         // Load Money Data (Migration/Fallback)
@@ -243,7 +248,7 @@ public class PlayerDataManager {
 
         // Cache/Update name in DB for leaderboards
         if (data.getName() != null) {
-            plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
+            plugin.getDatabaseManager().savePlayerNameAsync(uuid, data.getName());
         }
 
         return data;
@@ -319,11 +324,13 @@ public class PlayerDataManager {
 
         // Save name to SQL for leaderboards
         if (data.getName() != null) {
-            plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
+            plugin.getDatabaseManager().savePlayerNameAsync(uuid, data.getName());
         }
 
         // Save name_hidden to SQL
-        plugin.getPrismSell().getDatabaseManager().updateNameHidden(uuid, data.isNameHidden());
+        if (plugin.getPrismSell().getDatabaseManager().isConnected()) {
+            plugin.getPrismSell().getDatabaseManager().updateNameHidden(uuid, data.isNameHidden());
+        }
     }
 
     /**

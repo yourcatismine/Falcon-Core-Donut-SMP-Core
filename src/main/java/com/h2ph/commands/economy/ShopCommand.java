@@ -634,7 +634,8 @@ public class ShopCommand implements CommandExecutor, Listener {
         com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (pd != null) {
             pd.addShopSpent(totalCost);
-            plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+            // Save player data asynchronously to avoid server hangs
+            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
     }
 
@@ -820,6 +821,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                 // It's a key - increment count (normalize key name first)
                 String normalizedKey = plugin.normalizeKeyName(session.keyType);
                 pd.addKey(normalizedKey);
+                // Save player data asynchronously to avoid server hangs
                 plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
             } else if (session.spawnerType != null) {
                 // It's a spawner - execute spawner command

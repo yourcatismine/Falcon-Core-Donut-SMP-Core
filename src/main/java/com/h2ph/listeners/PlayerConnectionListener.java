@@ -26,6 +26,13 @@ public class PlayerConnectionListener implements Listener {
             return;
         }
 
+        // Check if database is connected
+        if (!plugin.getDatabaseManager().isConnected()) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
+                    Utils.formatColors("&cThe database cannot fetch your data."));
+            return;
+        }
+
         // Preload player data asynchronously. This puts it into the cache.
         PlayerData data = plugin.getPlayerDataManager().get(event.getUniqueId());
 

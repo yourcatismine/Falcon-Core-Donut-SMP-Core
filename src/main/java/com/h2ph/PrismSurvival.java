@@ -1156,6 +1156,15 @@ public class PrismSurvival extends JavaPlugin {
                 "&8&m--------------------------------------------------"));
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&f  &lMODULE STATUS:"));
 
+        // Database Status
+        if (databaseManager != null && databaseManager.isConnected()) {
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&b  [+] &fDatabase System: &a&lONLINE"));
+        } else {
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&b  [-] &fDatabase System: &c&lOFFLINE &7(Data cannot be fetched)"));
+        }
+
         // Economy Status
         if (vaultEnabled && getServer().getPluginManager().getPlugin("Vault") != null) {
             console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',

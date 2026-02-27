@@ -83,7 +83,7 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
         data.setMutedBy(sender.getName());
         data.setMuteDate(System.currentTimeMillis());
 
-        plugin.getPlayerDataManager().savePlayer(targetUUID);
+        plugin.getPlayerDataManager().savePlayerAsync(targetUUID);
 
         // Save to MySQL
         plugin.getDatabaseManager().addMute(targetUUID, finalTargetName, muteId, reason, data.getMuteDate(), expiry,

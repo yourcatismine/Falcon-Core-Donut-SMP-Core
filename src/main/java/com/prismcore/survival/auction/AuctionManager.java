@@ -27,14 +27,14 @@ public class AuctionManager {
     public void addItem(AuctionItem item) {
         pauseAmethystTimer(item.getItemStack());
         this.items.add(item);
-        PrismSurvival.getInstance().getDatabaseManager().saveAuctionItem(item);
+        PrismSurvival.getInstance().getDatabaseManager().saveAuctionItemAsync(item);
         this.lastUpdate = System.currentTimeMillis();
     }
 
     public boolean removeItem(AuctionItem item) {
         boolean removed = this.items.remove(item);
         if (removed) {
-            PrismSurvival.getInstance().getDatabaseManager().deleteAuctionItem(item.getId());
+            PrismSurvival.getInstance().getDatabaseManager().deleteAuctionItemAsync(item.getId());
             this.lastUpdate = System.currentTimeMillis();
         }
         return removed;
@@ -68,7 +68,7 @@ public class AuctionManager {
         for (AuctionItem ai : this.items) {
             if (ai.getId().equals(auctionId)) {
                 ai.setPrice(newPrice);
-                PrismSurvival.getInstance().getDatabaseManager().saveAuctionItem(ai);
+                PrismSurvival.getInstance().getDatabaseManager().saveAuctionItemAsync(ai);
                 return;
             }
         }
@@ -78,7 +78,7 @@ public class AuctionManager {
         boolean changed = this.items.removeIf(ai -> {
             boolean match = ai.getSeller().equalsIgnoreCase(sellerName);
             if (match) {
-                PrismSurvival.getInstance().getDatabaseManager().deleteAuctionItem(ai.getId());
+                PrismSurvival.getInstance().getDatabaseManager().deleteAuctionItemAsync(ai.getId());
             }
             return match;
         });

@@ -582,6 +582,11 @@ public class PrismSurvival extends JavaPlugin {
         // Register Stats Command
         getCommand("stats").setExecutor(new com.h2ph.commands.player.StatsCommand(this));
 
+        // Register WhereAmI Command
+        com.h2ph.commands.player.WhereAmICommand whereAmICommand = new com.h2ph.commands.player.WhereAmICommand(this);
+        getCommand("whereami").setExecutor(whereAmICommand);
+        getCommand("whereami").setTabCompleter(whereAmICommand);
+
         // Register HideName Command
         getCommand("hidename").setExecutor(new com.h2ph.commands.player.HideNameCommand(this));
         // Register InvSee and EnderSee admin commands

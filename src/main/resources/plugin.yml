@@ -257,6 +257,10 @@ commands:
     usage: /settings
     aliases: []
 
+  whereami:
+    description: View your current location or another player's location
+    usage: /whereami [player]
+
   stats:
     description: View your player statistics
     usage: /stats [player]

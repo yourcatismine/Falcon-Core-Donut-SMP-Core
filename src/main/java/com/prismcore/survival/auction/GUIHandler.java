@@ -111,11 +111,13 @@ public class GUIHandler {
 
                 meta.setLore(finalLore);
 
-                // Store expiration time in PDC for live updates
+                // Store expiration time and auction item ID in PDC for live updates and secure purchasing
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-                org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
+                org.bukkit.NamespacedKey expireKey = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
+                org.bukkit.NamespacedKey itemIdKey = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-item-id");
                 long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
-                pdc.set(key, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
+                pdc.set(expireKey, org.bukkit.persistence.PersistentDataType.LONG, expirationTime);
+                pdc.set(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING, ai.getId().toString());
 
                 item.setItemMeta(meta);
             }
@@ -355,6 +357,19 @@ public class GUIHandler {
                 if (remaining < 0L) {
                     remaining = 0L;
                 }
+                
+                // Check if this is an amethyst tool - if so, calculate remaining time from tool expiry
+                org.bukkit.persistence.PersistentDataContainer pdc = mm.getPersistentDataContainer();
+                if (pdc.has(com.prismcore.survival.tools.ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG)) {
+                    // This is an amethyst tool - calculate remaining time from tool expiry timestamp
+                    Long toolExpiry = pdc.get(com.prismcore.survival.tools.ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG);
+                    if (toolExpiry != null) {
+                        long toolRemaining = (toolExpiry - System.currentTimeMillis()) / 1000L;
+                        // Use the tool's remaining time instead of auction duration
+                        remaining = Math.max(0, toolRemaining);
+                    }
+                }
+                
                 String time = remaining <= 0L ? "&#ff4444Expired" : FormatUtils.formatTime((int) remaining);
                 String priceFmt = Utils.formatNumber(ai.getPrice());
                 for (Object lineObj : loreTpl) {
@@ -364,7 +379,6 @@ public class GUIHandler {
                     auctionLore.add(Utils.formatColors(processed));
                 }
                 // Check if this is a refunded item from Falcon Orders
-                org.bukkit.persistence.PersistentDataContainer pdc = mm.getPersistentDataContainer();
                 org.bukkit.NamespacedKey refundKey = new org.bukkit.NamespacedKey(controller.getPlugin(),
                         "refund-from");
                 String refundFrom = pdc.get(refundKey, org.bukkit.persistence.PersistentDataType.STRING);
@@ -386,7 +400,6 @@ public class GUIHandler {
                     mm.setLore(finalLore);
 
                     // Store expiration time in PDC for live updates
-                    pdc = mm.getPersistentDataContainer();
                     org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
                             "auction-expire");
                     long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);

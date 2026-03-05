@@ -247,10 +247,6 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
         com.prismcore.survival.auction.AuctionController auction = com.h2ph.PrismSurvival.getInstance()
                 .getAuctionController();
         if (auction != null) {
-            NamespacedKey delivererKey = new NamespacedKey(module.getPlugin(), "deliverer-uuid");
-            NamespacedKey recipientKey = new NamespacedKey(module.getPlugin(), "recipient-name");
-            NamespacedKey refundFromKey = new NamespacedKey(module.getPlugin(), "refund-from");
-
             synchronized (o.storage) {
                 for (ItemStack item : o.storage) {
                     if (item == null || item.getType() == Material.AIR)
@@ -260,9 +256,9 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                     if (meta == null)
                         continue;
 
-                    String delivererUuidStr = meta.getPersistentDataContainer().get(delivererKey,
+                    String delivererUuidStr = meta.getPersistentDataContainer().get(OrdersModule.DELIVERER_KEY,
                             PersistentDataType.STRING);
-                    String recipientName = meta.getPersistentDataContainer().get(recipientKey,
+                    String recipientName = meta.getPersistentDataContainer().get(OrdersModule.RECIPIENT_KEY,
                             PersistentDataType.STRING);
 
                     if (delivererUuidStr != null) {
@@ -273,7 +269,8 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
                             // Add refund-from tag for GUI lore
                             if (recipientName != null) {
-                                meta.getPersistentDataContainer().set(refundFromKey, PersistentDataType.STRING,
+                                meta.getPersistentDataContainer().set(OrdersModule.REFUND_FROM_KEY,
+                                        PersistentDataType.STRING,
                                         recipientName);
                                 item.setItemMeta(meta);
                             }

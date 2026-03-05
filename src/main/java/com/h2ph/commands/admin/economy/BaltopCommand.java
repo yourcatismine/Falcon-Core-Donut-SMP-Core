@@ -210,12 +210,9 @@ public class BaltopCommand implements CommandExecutor, Listener {
 
         if (meta != null) {
             try {
-                // Strip colors from the entry name to prevent invalid profile names
-                String cleanName = ChatColor.stripColor(entry.name);
-
-                // Create a profile with the UUID and clean name
-                org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(entry.uuid, cleanName);
-                meta.setOwnerProfile(profile);
+                // Use UUID to get the offline player and properly load skin texture
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.uuid);
+                meta.setOwningPlayer(offlinePlayer);
 
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&a" + entry.name));
 

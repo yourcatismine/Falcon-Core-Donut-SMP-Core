@@ -184,6 +184,14 @@ public class TeleportManager {
         }
     }
 
+    /**
+     * Public method to cancel an active teleport task for a player.
+     * Use this when a player joins or leaves to ensure a clean state.
+     */
+    public void cancelActiveTask(UUID uuid) {
+        cancelTask(uuid);
+    }
+
     private String color(String s) {
         return ChatColor.translateAlternateColorCodes('&', s);
     }

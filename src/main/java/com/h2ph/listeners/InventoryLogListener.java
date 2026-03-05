@@ -22,18 +22,18 @@ public class InventoryLogListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player) {
-            plugin.getInventoryLogManager().checkAndLog((Player) event.getPlayer());
+            plugin.getInventoryLogManager().checkAndLog((Player) event.getPlayer(), true);
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.getInventoryLogManager().checkAndLog(event.getPlayer());
+        plugin.getInventoryLogManager().checkAndLog(event.getPlayer(), true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.getInventoryLogManager().checkAndLog(event.getPlayer());
+        plugin.getInventoryLogManager().checkAndLog(event.getPlayer(), true);
         plugin.getInventoryLogManager().clearCache(event.getPlayer().getUniqueId());
     }
 

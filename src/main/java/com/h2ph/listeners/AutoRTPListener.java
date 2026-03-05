@@ -1,8 +1,6 @@
 package com.h2ph.listeners;
 
 import com.h2ph.PrismSurvival;
-import com.h2ph.rtp.RTPManager;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,33 +20,28 @@ public class AutoRTPListener implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
 
-        // Ignore players who have a bed spawnpoint (only skip if they actually spawned
-        // at bed)
+        // Ignore players who have a bed spawnpoint (only skip if they actually spawned at bed)
         if (event.isBedSpawn()) {
             return;
         }
 
-        // Load RTP config for Europe region
-        FileConfiguration rtpConfig = plugin.getRTPRegionConfig("europe");
-        if (rtpConfig == null || rtpConfig.getKeys(false).isEmpty()) {
-            return;
-        }
-
-        // Check if auto-RTP on death is enabled
-        if (!rtpConfig.getBoolean("auto-rtp-on-death", false)) {
-            return;
-        }
-
-        // Folia compatibility: teleportInstant uses teleportAsync internally
+        // Folia compatibility: teleport to spawn and give respawn gear
         plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
             if (player.isOnline()) {
-                // Use silent=true to remove "Teleporting.." message
-                RTPManager.teleportInstant(player, "europe", "overworld", true);
+                // Use world-specific spawn logic instead of always using global spawn
+                String worldName = player.getWorld().getName();
+                org.bukkit.Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
+                if (spawn != null) {
+                    player.teleportAsync(spawn);
+                }
 
-                // Give death items
-                for (ItemStack item : plugin.getRTPDeathManager().getItems()) {
-                    if (item != null) {
-                        player.getInventory().addItem(item.clone());
+                // Give respawn gear (auto armor) - only if player has the setting enabled
+                com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+                if (data != null && data.isRespawnRTP()) {
+                    for (ItemStack item : plugin.getRespawnGearManager().getItems()) {
+                        if (item != null) {
+                            player.getInventory().addItem(item.clone());
+                        }
                     }
                 }
             }

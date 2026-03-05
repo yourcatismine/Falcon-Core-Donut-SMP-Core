@@ -236,7 +236,8 @@ public class WorthGUI {
 
     private String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
-        scaled = Math.floor(scaled * 100) / 100.0;
+        // Use Math.floor with 10x scaling to match other formatting methods
+        scaled = Math.floor(scaled * 10) / 10.0;
         if (scaled == (long) scaled) {
             return String.valueOf((long) scaled) + suffix;
         }

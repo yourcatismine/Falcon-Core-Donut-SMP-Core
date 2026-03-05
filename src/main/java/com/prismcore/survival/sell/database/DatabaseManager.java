@@ -50,8 +50,9 @@ public class DatabaseManager {
 
             // Connection health/timeout settings
             hikariConfig.setConnectionTimeout(30000);
-            hikariConfig.setIdleTimeout(600000);
-            hikariConfig.setMaxLifetime(1800000);
+            hikariConfig.setIdleTimeout(300000); // 5 minutes
+            hikariConfig.setMaxLifetime(600000); // 10 minutes
+            hikariConfig.setKeepaliveTime(300000); // 5 minutes
             hikariConfig.setMinimumIdle(2);
             hikariConfig.setMaximumPoolSize(10);
 
@@ -122,6 +123,32 @@ public class DatabaseManager {
                     "contents TEXT" +
                     ")";
             stmt.execute(enderchestTable);
+
+            // sell_history table
+            String sellHistoryTable = "CREATE TABLE IF NOT EXISTS sell_history (" +
+                    "uuid VARCHAR(36) NOT NULL, " +
+                    "item VARCHAR(64) NOT NULL, " +
+                    "amount BIGINT DEFAULT 0, " +
+                    "total DOUBLE DEFAULT 0, " +
+                    "PRIMARY KEY (uuid, item), " +
+                    "INDEX (uuid)" +
+                    ")";
+            stmt.execute(sellHistoryTable);
+
+            // player_homes table
+            String playerHomesTable = "CREATE TABLE IF NOT EXISTS player_homes (" +
+                    "uuid VARCHAR(36) NOT NULL, " +
+                    "home_index INT NOT NULL, " +
+                    "world VARCHAR(64) NOT NULL, " +
+                    "x DOUBLE NOT NULL, " +
+                    "y DOUBLE NOT NULL, " +
+                    "z DOUBLE NOT NULL, " +
+                    "yaw FLOAT NOT NULL, " +
+                    "pitch FLOAT NOT NULL, " +
+                    "home_name VARCHAR(64), " +
+                    "PRIMARY KEY (uuid, home_index)" +
+                    ")";
+            stmt.execute(playerHomesTable);
 
             // player_category_data table
             StringBuilder categoryDataQuery = new StringBuilder("CREATE TABLE IF NOT EXISTS player_category_data (");
@@ -207,5 +234,87 @@ public class DatabaseManager {
             // Silently fail
         }
         return false;
+    }
+
+    public void saveSellHistoryAsync(java.util.UUID uuid, java.util.Map<String, double[]> history) {
+        if (!isConnected() || history == null || history.isEmpty())
+            return;
+        this.plugin.getPlugin().getSchedulerAdapter().runTaskAsync(() -> {
+            String query = "INSERT INTO sell_history (uuid, item, amount, total) VALUES (?, ?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount), total = total + VALUES(total)";
+            try (Connection conn = getConnection(); java.sql.PreparedStatement ps = conn.prepareStatement(query)) {
+                for (java.util.Map.Entry<String, double[]> entry : history.entrySet()) {
+                    ps.setString(1, uuid.toString());
+                    ps.setString(2, entry.getKey());
+                    ps.setLong(3, (long) entry.getValue()[0]);
+                    ps.setDouble(4, entry.getValue()[1]);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            } catch (SQLException e) {
+                this.plugin.getLogger().warning("Failed to save sell history for " + uuid + ": " + e.getMessage());
+            }
+        });
+    }
+
+    public void getSellHistoryAsync(java.util.UUID uuid,
+            java.util.function.Consumer<java.util.Map<String, double[]>> callback) {
+        if (!isConnected()) {
+            this.plugin.getPlugin().getSchedulerAdapter().runTask(() -> callback.accept(new java.util.HashMap<>()));
+            return;
+        }
+        this.plugin.getPlugin().getSchedulerAdapter().runTaskAsync(() -> {
+            java.util.Map<String, double[]> history = new java.util.HashMap<>();
+            String query = "SELECT item, amount, total FROM sell_history WHERE uuid = ?";
+            try (Connection conn = getConnection(); java.sql.PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, uuid.toString());
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String item = rs.getString("item");
+                        long amount = rs.getLong("amount");
+                        double total = rs.getDouble("total");
+                        history.put(item, new double[] { (double) amount, total });
+                    }
+                }
+            } catch (SQLException e) {
+                this.plugin.getLogger().warning("Failed to load sell history for " + uuid + ": " + e.getMessage());
+            }
+            this.plugin.getPlugin().getSchedulerAdapter().runTask(() -> callback.accept(history));
+        });
+    }
+
+    public void wipeAllPlayerData(java.util.UUID uuid) {
+        if (!isConnected())
+            return;
+        String uuidStr = uuid.toString();
+        try (Connection conn = getConnection()) {
+            // 1. Player Stats
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM player_stats WHERE uuid = ?")) {
+                ps.setString(1, uuidStr);
+                ps.executeUpdate();
+            }
+            // 2. Sell History
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM sell_history WHERE uuid = ?")) {
+                ps.setString(1, uuidStr);
+                ps.executeUpdate();
+            }
+            // 3. Player Homes
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM player_homes WHERE uuid = ?")) {
+                ps.setString(1, uuidStr);
+                ps.executeUpdate();
+            }
+            // 4. Player Category Data
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM player_category_data WHERE uuid = ?")) {
+                ps.setString(1, uuidStr);
+                ps.executeUpdate();
+            }
+            // 5. Enderchest
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM enderchest WHERE uuid = ?")) {
+                ps.setString(1, uuidStr);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            this.plugin.getLogger().warning("Failed to perform deep wipe for " + uuid + ": " + e.getMessage());
+        }
     }
 }

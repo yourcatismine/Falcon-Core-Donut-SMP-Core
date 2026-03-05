@@ -40,6 +40,10 @@ public class AxeBlockBreakListener implements Listener {
                 .has(ToolsManager.MULTI_KEY, PersistentDataType.BYTE)) {
             return;
         }
+        if (held0 != null && held0.hasItemMeta() && held0.getItemMeta().getPersistentDataContainer()
+                .has(ToolsManager.SELL_AXE_KEY, PersistentDataType.BYTE)) {
+            return;
+        }
         if (CHOPPING.get().booleanValue()) {
             return;
         }

@@ -59,8 +59,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                 int end = Math.min(start + 45, order.storage.size());
                 int slot = 0;
 
-                NamespacedKey delivererKey = new NamespacedKey(module.getPlugin(), "deliverer-uuid");
-
                 for (int i = start; i < end; i++) {
                     ItemStack item = order.storage.get(i);
                     if (item == null || item.getType() == Material.AIR)
@@ -72,7 +70,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                         List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
 
                         // Add "Delivered by" info
-                        String delivererUuidStr = meta.getPersistentDataContainer().get(delivererKey,
+                        String delivererUuidStr = meta.getPersistentDataContainer().get(OrdersModule.DELIVERER_KEY,
                                 PersistentDataType.STRING);
                         if (delivererUuidStr != null) {
                             try {
@@ -151,7 +149,8 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                 if (itemIndex < order.storage.size()) {
                     ItemStack targetItem = order.storage.get(itemIndex);
                     if (targetItem != null && targetItem.getType() != Material.AIR) {
-                        HashMap<Integer, ItemStack> leftovers = admin.getInventory().addItem(targetItem.clone());
+                        HashMap<Integer, ItemStack> leftovers = admin.getInventory()
+                                .addItem(Utils.stripOrderMetadata(targetItem.clone()));
                         order.storage.remove(itemIndex);
 
                         if (!leftovers.isEmpty()) {

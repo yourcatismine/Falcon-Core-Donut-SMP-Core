@@ -294,6 +294,15 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
             final PlayerData finalTargetData = targetData;
 
+            // Check if target has ignored the sender
+            if (finalTargetData.isIgnoring(sender.getUniqueId())) {
+                plugin.getSchedulerAdapter().runTask(() -> {
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player."));
+                    playSound(sender, org.bukkit.Sound.ENTITY_VILLAGER_NO);
+                });
+                return;
+            }
+
             // Execute transaction on main thread for safety
             plugin.getSchedulerAdapter().runTask(() -> {
                 finalSenderData.removeShards(amount, "Payment to " + target.getName());
@@ -563,11 +572,13 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         if (args[0].equalsIgnoreCase("pay")) {
             // Second argument: player name
             if (args.length == 2) {
-                return Bukkit.getOnlinePlayers().stream()
-                        .map(Player::getName)
-                        .filter(name -> !name.equals(sender.getName())) // Don't show self
-                        .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                // Use async player name cache to prevent TPS drops
+                completions = plugin.getPlayerNameCache().getCompletions(args[1]);
+                // Remove self from suggestions for shards command
+                if (sender instanceof Player) {
+                    completions.remove(sender.getName());
+                }
+                return completions;
             }
             // Third argument: amount suggestions
             if (args.length == 3) {
@@ -584,10 +595,8 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             if (action.equals("give") || action.equals("set") || action.equals("remove")) {
                 // Second argument: player name
                 if (args.length == 2) {
-                    return Bukkit.getOnlinePlayers().stream()
-                            .map(Player::getName)
-                            .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                            .collect(Collectors.toList());
+                    // Use async player name cache to prevent TPS drops
+                    return plugin.getPlayerNameCache().getCompletions(args[1]);
                 }
 
                 // Third argument: amount suggestions

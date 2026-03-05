@@ -116,4 +116,8 @@ public class TransactionManager {
                 "[Admin] Deleted transaction for " + Utils.prettifyMaterialName(tx.getItem().getType())
                         + " (Buyer side)");
     }
+
+    public void wipeTransactions(UUID uuid) {
+        controller.getPlugin().getDatabaseManager().wipeAuctionTransactions(uuid);
+    }
 }

@@ -20,7 +20,7 @@ import java.util.UUID;
 public class BountyConfirmGUIListener implements Listener {
 
     private final PrismSurvival plugin;
-    private static final DecimalFormat DF = new DecimalFormat("#.##");
+    private static final DecimalFormat DF = new DecimalFormat("#.#");
 
     public BountyConfirmGUIListener(PrismSurvival plugin) {
         this.plugin = plugin;

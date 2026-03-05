@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
@@ -22,10 +26,18 @@ public class ActivityLogger {
     private final ReentrantLock lock = new ReentrantLock();
     private volatile Connection connection;
     private volatile boolean shuttingDown = false;
+    private final ConcurrentLinkedQueue<LogEntry> logQueue = new ConcurrentLinkedQueue<>();
+    private final ScheduledExecutorService worker;
 
     public ActivityLogger(PrismSurvival plugin) {
         this.plugin = plugin;
         initializeDatabase();
+        this.worker = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "PrismActivityLogger-Worker");
+            t.setDaemon(true);
+            return t;
+        });
+        this.worker.scheduleAtFixedRate(this::processQueue, 1, 1, TimeUnit.SECONDS);
     }
 
     private void initializeDatabase() {
@@ -90,6 +102,17 @@ public class ActivityLogger {
 
     public void shutdown() {
         shuttingDown = true;
+        worker.shutdown();
+        try {
+            if (!worker.awaitTermination(5, TimeUnit.SECONDS)) {
+                worker.shutdownNow();
+            }
+            // Final drain
+            processQueue();
+        } catch (InterruptedException e) {
+            worker.shutdownNow();
+        }
+
         lock.lock();
         try {
             if (connection != null && !connection.isClosed()) {
@@ -102,34 +125,85 @@ public class ActivityLogger {
         }
     }
 
+    private void processQueue() {
+        if (logQueue.isEmpty())
+            return;
+
+        Connection conn = getConnection();
+        if (conn == null)
+            return;
+
+        String query = "INSERT INTO activity_logs (uuid, type, content, timestamp) VALUES (?, ?, ?, ?)";
+        try {
+            boolean autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                LogEntry entry;
+                int count = 0;
+                while ((entry = logQueue.poll()) != null) {
+                    ps.setString(1, entry.uuid.toString());
+                    ps.setString(2, entry.type.name());
+                    ps.setString(3, entry.content);
+                    ps.setLong(4, entry.timestamp);
+                    ps.addBatch();
+                    count++;
+                    if (count >= 500) { // Batch limit
+                        ps.executeBatch();
+                        count = 0;
+                    }
+                }
+                if (count > 0) {
+                    ps.executeBatch();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                if (!shuttingDown) {
+                    plugin.getLogger().log(Level.SEVERE, "Failed to process activity log batch", e);
+                }
+            } finally {
+                conn.setAutoCommit(autoCommit);
+            }
+        } catch (SQLException e) {
+            if (!shuttingDown) {
+                plugin.getLogger().log(Level.SEVERE, "Database error during activity log processing", e);
+            }
+        }
+    }
+
     public void log(UUID uuid, LogType type, String content) {
         if (shuttingDown)
             return;
-        plugin.getSchedulerAdapter().runTaskAsync(() -> {
-            if (shuttingDown)
-                return;
-            // Broadcast live
-            if (plugin.getApiServer() != null) {
-                plugin.getApiServer().broadcastActivityLog(uuid, type, content);
-            }
 
-            String query = "INSERT INTO activity_logs (uuid, type, content, timestamp) VALUES (?, ?, ?, ?)";
-            Connection conn = getConnection();
-            if (conn == null)
-                return;
+        // Capture timestamp and data immediately on the calling thread
+        LogEntry entry = new LogEntry(uuid, type, content, System.currentTimeMillis());
+        logQueue.add(entry);
 
-            try (PreparedStatement ps = conn.prepareStatement(query)) {
-                ps.setString(1, uuid.toString());
-                ps.setString(2, type.name());
-                ps.setString(3, content);
-                ps.setLong(4, System.currentTimeMillis());
-                ps.executeUpdate();
-            } catch (SQLException e) {
+        // Broadcast live - this can still be async via Folia for immediate feedback if
+        // needed
+        // but let's keep it simple for now or use the global scheduler for just the
+        // broadcast
+        if (plugin.getApiServer() != null) {
+            plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 if (!shuttingDown) {
-                    e.printStackTrace();
+                    plugin.getApiServer().broadcastActivityLog(uuid, type, content);
                 }
-            }
-        });
+            });
+        }
+    }
+
+    private static class LogEntry {
+        final UUID uuid;
+        final LogType type;
+        final String content;
+        final long timestamp;
+
+        LogEntry(UUID uuid, LogType type, String content, long timestamp) {
+            this.uuid = uuid;
+            this.type = type;
+            this.content = content;
+            this.timestamp = timestamp;
+        }
     }
 
     public List<Map<String, Object>> getLogs(UUID uuid, LogType type, int limit, int offset) {

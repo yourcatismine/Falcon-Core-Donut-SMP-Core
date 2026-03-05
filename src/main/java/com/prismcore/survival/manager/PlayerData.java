@@ -2,7 +2,9 @@ package com.prismcore.survival.manager;
 
 import com.h2ph.PrismSurvival;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class PlayerData {
@@ -26,6 +28,8 @@ public class PlayerData {
     private boolean teamChat = false;
     private String pendingKickTeamName = null;
     private boolean nameHidden = false;
+    private String ip;
+    private boolean unloading = false;
 
     public PlayerData(PrismSurvival plugin, UUID uuid) {
         this.plugin = plugin;
@@ -136,7 +140,7 @@ public class PlayerData {
         ActivityLogger.LogType logType = type.equals("MONEY") ? ActivityLogger.LogType.MONEY
                 : ActivityLogger.LogType.SHARDS;
 
-        if (plugin.getActivityLogger() != null) {
+        if (plugin.getActivityLogger() != null && source != null && !source.equals("Database Load")) {
             plugin.getActivityLogger().log(uuid, logType, content);
         }
     }
@@ -233,6 +237,16 @@ public class PlayerData {
         this.privateMessages = privateMessages;
     }
 
+    private boolean fastCrystals = false;
+
+    public boolean isFastCrystals() {
+        return fastCrystals;
+    }
+
+    public void setFastCrystals(boolean fastCrystals) {
+        this.fastCrystals = fastCrystals;
+    }
+
     private boolean payAlerts = true; // Default: ON (Receive Alerts)
 
     public boolean isPayAlerts() {
@@ -245,6 +259,7 @@ public class PlayerData {
 
     private boolean quickAuctionBuy = false;
     private boolean disableMobSpawns = false;
+    private boolean checkHistory = false; // Default: History logging OFF
 
     public boolean isDisableMobSpawns() {
         return disableMobSpawns;
@@ -252,6 +267,14 @@ public class PlayerData {
 
     public void setDisableMobSpawns(boolean disableMobSpawns) {
         this.disableMobSpawns = disableMobSpawns;
+    }
+
+    public boolean isCheckHistory() {
+        return checkHistory;
+    }
+
+    public void setCheckHistory(boolean checkHistory) {
+        this.checkHistory = checkHistory;
     } // Default: OFF
 
     public boolean isQuickAuctionBuy() {
@@ -343,6 +366,7 @@ public class PlayerData {
     }
 
     private boolean tpAuto = false; // Default: OFF
+    private boolean respawnRTP = true; // Default: ON
 
     public boolean isTpAuto() {
         return tpAuto;
@@ -350,6 +374,14 @@ public class PlayerData {
 
     public void setTpAuto(boolean tpAuto) {
         this.tpAuto = tpAuto;
+    }
+
+    public boolean isRespawnRTP() {
+        return respawnRTP;
+    }
+
+    public void setRespawnRTP(boolean respawnRTP) {
+        this.respawnRTP = respawnRTP;
     }
 
     private String auctionSortOrder = "Highest Price"; // Default
@@ -482,6 +514,32 @@ public class PlayerData {
         this.pendingKickTeamName = pendingKickTeamName;
     }
 
+    // Ignore system - players this player has ignored
+    private final Set<UUID> ignoredPlayers = new HashSet<>();
+
+    public boolean isIgnoring(UUID playerUuid) {
+        return ignoredPlayers.contains(playerUuid);
+    }
+
+    public boolean addIgnoredPlayer(UUID playerUuid) {
+        return ignoredPlayers.add(playerUuid);
+    }
+
+    public boolean removeIgnoredPlayer(UUID playerUuid) {
+        return ignoredPlayers.remove(playerUuid);
+    }
+
+    public Set<UUID> getIgnoredPlayers() {
+        return new HashSet<>(ignoredPlayers);
+    }
+
+    public void setIgnoredPlayers(Set<UUID> ignoredPlayers) {
+        this.ignoredPlayers.clear();
+        if (ignoredPlayers != null) {
+            this.ignoredPlayers.addAll(ignoredPlayers);
+        }
+    }
+
     private final Map<String, TeamInvite> teamInvites = new HashMap<>();
     private String lastInviter = null;
 
@@ -524,6 +582,22 @@ public class PlayerData {
 
     public void setNameHidden(boolean nameHidden) {
         this.nameHidden = nameHidden;
+    }
+
+    public boolean isUnloading() {
+        return unloading;
+    }
+
+    public void setUnloading(boolean unloading) {
+        this.unloading = unloading;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
     public static class TeamInvite {

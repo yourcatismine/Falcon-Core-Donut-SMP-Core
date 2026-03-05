@@ -227,6 +227,7 @@ public class CollectItemsMenu
                     Location eye = this.p.getEyeLocation();
                     for (ItemStack item : toDrop) {
                         if (item != null && item.getType() != Material.AIR) {
+                            Utils.stripOrderMetadata(item);
                             Item dropped = this.p.getWorld().dropItem(eye, item);
                             dropped.setVelocity(eye.getDirection().multiply(0.25));
                         }
@@ -269,7 +270,7 @@ public class CollectItemsMenu
                             return;
                         lastClickTime = now;
 
-                        ItemStack toAdd = item.clone();
+                        ItemStack toAdd = Utils.stripOrderMetadata(item.clone());
                         int initialAmount = toAdd.getAmount();
 
                         // If it's a shift click, try to add to inventory.
@@ -316,22 +317,28 @@ public class CollectItemsMenu
                                 this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f, 1.0f);
                                 this.internalPageSwitch = true;
                                 this.open();
-                            } else if (cursor.isSimilar(toAdd)) {
-                                // Merge with cursor?
-                                int canTake = cursor.getMaxStackSize() - cursor.getAmount();
-                                if (canTake > 0) {
-                                    int toTake = Math.min(canTake, initialAmount);
-                                    cursor.setAmount(cursor.getAmount() + toTake);
+                            } else {
+                                // Strip metadata from cursor before comparison to ensure they match natural
+                                // items
+                                ItemStack cursorStripped = Utils.stripOrderMetadata(cursor.clone());
+                                if (cursorStripped.isSimilar(toAdd)) {
+                                    // Merge with cursor?
+                                    int canTake = cursor.getMaxStackSize() - cursor.getAmount();
+                                    if (canTake > 0) {
+                                        int toTake = Math.min(canTake, initialAmount);
+                                        cursor.setAmount(cursor.getAmount() + toTake);
 
-                                    if (toTake >= initialAmount) {
-                                        this.order.storage.remove(index);
-                                    } else {
-                                        item.setAmount(initialAmount - toTake);
+                                        if (toTake >= initialAmount) {
+                                            this.order.storage.remove(index);
+                                        } else {
+                                            item.setAmount(initialAmount - toTake);
+                                        }
+                                        this.module.orders().saveOrder(this.order);
+                                        this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f,
+                                                1.0f);
+                                        this.internalPageSwitch = true;
+                                        this.open();
                                     }
-                                    this.module.orders().saveOrder(this.order);
-                                    this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f, 1.0f);
-                                    this.internalPageSwitch = true;
-                                    this.open();
                                 }
                             }
                         }

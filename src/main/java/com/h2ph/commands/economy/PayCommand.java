@@ -28,7 +28,7 @@ public class PayCommand implements CommandExecutor, TabCompleter {
     private final PrismSurvival plugin;
     // Reuse format from BalanceCommand for consistency if needed, but we need
     // parsing here.
-    private static final DecimalFormat DF = new DecimalFormat("#.##");
+    private static final DecimalFormat DF = new DecimalFormat("#.#");
 
     public PayCommand(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -149,6 +149,12 @@ public class PayCommand implements CommandExecutor, TabCompleter {
                 return;
             }
 
+            // Check if target has ignored the sender
+            if (finalTargetData.isIgnoring(sender.getUniqueId())) {
+                plugin.getSchedulerAdapter().runTask(() -> sendError(sender, "&7You are ignored by this player."));
+                return;
+            }
+
             // Return to main thread for the actual economy modification to ensure safety
             plugin.getSchedulerAdapter().runTask(() -> {
                 // Transaction using global EconomyHandler (Vault-aware)
@@ -264,11 +270,8 @@ public class PayCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            String token = args[0].toLowerCase();
-            return Bukkit.getOnlinePlayers().stream()
-                    .map(Player::getName)
-                    .filter(s -> s.toLowerCase().startsWith(token))
-                    .collect(Collectors.toList());
+            // Use async player name cache to prevent TPS drops
+            return plugin.getPlayerNameCache().getCompletions(args[0]);
         } else if (args.length == 2) {
             // Suggest amounts?
             List<String> suggestions = new ArrayList<>();

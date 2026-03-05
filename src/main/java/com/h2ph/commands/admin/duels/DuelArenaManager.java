@@ -48,6 +48,8 @@ public class DuelArenaManager {
     private static class ArenaRegion {
         final String name;
         final String worldName;
+        final String spawn1WorldName;
+        final String spawn2WorldName;
         final String biome;
         final double minX, minY, minZ;
         final double maxX, maxY, maxZ;
@@ -58,6 +60,8 @@ public class DuelArenaManager {
         ArenaRegion(String name, YamlConfiguration config) {
             this.name = name;
             this.worldName = config.getString("world");
+            this.spawn1WorldName = config.getString("spawn1.world");
+            this.spawn2WorldName = config.getString("spawn2.world");
             this.biome = config.getString("biome");
             this.lootingMinutes = config.getInt("looting-minutes", 5);
 
@@ -307,6 +311,11 @@ public class DuelArenaManager {
 
         Location spawn1 = arenaRegion.spawn1;
         Location spawn2 = arenaRegion.spawn2;
+
+        // Extra safety check for null worlds
+        if (spawn1.getWorld() == null || spawn2.getWorld() == null) {
+            return false;
+        }
 
         // Teleport
         player1.teleportAsync(spawn1);
@@ -739,14 +748,16 @@ public class DuelArenaManager {
     }
 
     public void teleportToSpawn(Player player) {
-        // Use SpawnManager
-        Location spawn = plugin.getSpawnManager().getSpawn("spawn");
+        // Use world-specific spawn logic
+        String worldName = player.getWorld().getName();
+        Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
+        
         if (spawn != null) {
             player.teleportAsync(spawn);
         } else {
             // Fallback: World Spawn
             player.teleportAsync(org.bukkit.Bukkit.getWorlds().get(0).getSpawnLocation());
-            player.sendMessage(ChatColor.RED + "Global spawn not set, teleported to world spawn.");
+            player.sendMessage(ChatColor.RED + "No spawn set for this world, teleported to default world spawn.");
         }
     }
 
@@ -762,6 +773,23 @@ public class DuelArenaManager {
             // Check if actively used FIRST - skip if someone is still playing
             if (playerArenas.containsValue(region.name)) {
                 continue; // Arena is in use, don't touch it
+            }
+
+            // World Validation & Recovery
+            if (region.spawn1.getWorld() == null) {
+                org.bukkit.World w = org.bukkit.Bukkit.getWorld(region.spawn1WorldName);
+                if (w != null)
+                    region.spawn1.setWorld(w);
+            }
+            if (region.spawn2.getWorld() == null) {
+                org.bukkit.World w = org.bukkit.Bukkit.getWorld(region.spawn2WorldName);
+                if (w != null)
+                    region.spawn2.setWorld(w);
+            }
+
+            // If worlds are still null, skip this arena
+            if (region.spawn1.getWorld() == null || region.spawn2.getWorld() == null) {
+                continue;
             }
 
             // Only restore dirty arenas if they're NOT in use

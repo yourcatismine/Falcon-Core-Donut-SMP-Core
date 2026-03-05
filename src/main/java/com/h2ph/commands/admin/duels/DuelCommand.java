@@ -253,6 +253,18 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
+            // Check if target has ignored the sender
+            if (targetData != null && targetData.isIgnoring(creator.getUniqueId())) {
+                String errorMsg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
+                creator.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                        new net.md_5.bungee.api.chat.TextComponent(errorMsg));
+                try {
+                    creator.playSound(creator.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                } catch (Exception ignored) {
+                }
+                return true;
+            }
+
             DuelCreationGUI gui = new DuelCreationGUI(plugin, requestManager, creator, target);
             plugin.getServer().getPluginManager().registerEvents(gui, plugin);
             gui.open();

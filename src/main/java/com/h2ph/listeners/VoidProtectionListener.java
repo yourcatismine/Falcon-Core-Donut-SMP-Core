@@ -44,13 +44,22 @@ public class VoidProtectionListener implements Listener {
         Location spawnLoc = null;
         String spawnName = "default";
 
+        String worldName = p.getWorld().getName();
+        
         if (plugin.getSpawnManager() != null) {
-            spawnLoc = plugin.getSpawnManager().getSpawn("spawn"); // Try "spawn" first
+            // Use the new world-specific spawn logic
+            spawnLoc = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
+            spawnName = "world spawn";
+            
+            // If no world-specific spawn, try named spawns as fallback
             if (spawnLoc == null) {
-                java.util.List<String> spawns = plugin.getSpawnManager().listSpawns();
-                if (!spawns.isEmpty()) {
-                    spawnName = spawns.get(0);
-                    spawnLoc = plugin.getSpawnManager().getSpawn(spawnName);
+                spawnLoc = plugin.getSpawnManager().getSpawn("spawn"); // Try "spawn" first
+                if (spawnLoc == null) {
+                    java.util.List<String> spawns = plugin.getSpawnManager().listSpawns();
+                    if (!spawns.isEmpty()) {
+                        spawnName = spawns.get(0);
+                        spawnLoc = plugin.getSpawnManager().getSpawn(spawnName);
+                    }
                 }
             }
         }

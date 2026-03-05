@@ -1,5 +1,5 @@
 interval: 60
-amount: 1
+amount: 2
 permission: "prism.shards.passive"
 
 # Kill Reward Configuration
@@ -10,10 +10,10 @@ kill-reward:
 # Messages
 messages:
   passive:
-    chat: "&7You have received &5{shard} shards."
-    actionbar: "&7You have received &5{shard} shards."
+    chat: "&7You have received &5{shard} prisms."
+    actionbar: "&7You have received &5{shard} prisms."
   active:
-    actionbar: "&5+{shards} shards&7 for killing &f{PLAYER}"
+    actionbar: "&5+{shards} prisms&7 for killing &f{PLAYER}"
 
 # Sounds
 sounds:

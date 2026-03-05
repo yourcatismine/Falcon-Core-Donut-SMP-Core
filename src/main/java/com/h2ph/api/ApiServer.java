@@ -83,6 +83,9 @@ public class ApiServer {
             registerContext("/api/players/history/live", new ActivityLiveFeedHandler());
             registerContext("/api/players/hazards/summary", new com.h2ph.api.handlers.HazardSummaryHandler(plugin));
             registerContext("/api/players/hazards/resolve", new com.h2ph.api.handlers.HazardResolveHandler(plugin));
+            registerContext("/api/operators/list", new com.h2ph.api.handlers.OperatorListHandler(plugin));
+            registerContext("/api/operators/add", new com.h2ph.api.handlers.OperatorAddHandler(plugin));
+            registerContext("/api/operators/remove", new com.h2ph.api.handlers.OperatorRemoveHandler(plugin));
 
             server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool());
             server.start();
@@ -485,29 +488,27 @@ public class ApiServer {
 
     public void broadcastActivityLog(java.util.UUID uuid, com.prismcore.survival.manager.ActivityLogger.LogType type,
             String content) {
-        plugin.getSchedulerAdapter().runTaskAsync(() -> {
-            String json = String.format(
-                    "{\"uuid\": \"%s\", \"type\": \"%s\", \"content\": \"%s\", \"timestamp\": %d}",
-                    uuid.toString(),
-                    type.name(),
-                    escape(content),
-                    System.currentTimeMillis());
+        String json = String.format(
+                "{\"uuid\": \"%s\", \"type\": \"%s\", \"content\": \"%s\", \"timestamp\": %d}",
+                uuid.toString(),
+                type.name(),
+                escape(content),
+                System.currentTimeMillis());
 
-            String event = "data: " + json + "\n\n";
-            byte[] bytes = event.getBytes(StandardCharsets.UTF_8);
+        String event = "data: " + json + "\n\n";
+        byte[] bytes = event.getBytes(StandardCharsets.UTF_8);
 
-            List<HttpExchange> toRemove = new ArrayList<>();
-            for (HttpExchange client : activityClients) {
-                try {
-                    OutputStream os = client.getResponseBody();
-                    os.write(bytes);
-                    os.flush();
-                } catch (IOException e) {
-                    toRemove.add(client);
-                }
+        List<HttpExchange> toRemove = new ArrayList<>();
+        for (HttpExchange client : activityClients) {
+            try {
+                OutputStream os = client.getResponseBody();
+                os.write(bytes);
+                os.flush();
+            } catch (IOException e) {
+                toRemove.add(client);
             }
-            activityClients.removeAll(toRemove);
-        });
+        }
+        activityClients.removeAll(toRemove);
     }
 
     private class ActivityLiveFeedHandler implements HttpHandler {

@@ -3,12 +3,10 @@ package com.h2ph.listeners;
 import com.h2ph.PrismSurvival;
 import com.prismcore.survival.manager.PlayerData;
 import org.bukkit.entity.Monster;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Slime;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
-
-import java.util.Comparator;
 
 public class MobSpawnListener implements Listener {
 
@@ -20,29 +18,28 @@ public class MobSpawnListener implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        // Only care about natural spawns of Monsters (Hostile mobs)
+        // Only care about natural spawns of Monsters (Hostile mobs) and Slimes
         if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) {
             return;
         }
 
-        if (!(event.getEntity() instanceof Monster)) {
+        if (!(event.getEntity() instanceof Monster) && !(event.getEntity() instanceof Slime)) {
             return;
         }
 
-        // Find nearest player within standard spawn range (128 blocks)
-        // If the nearest player has the setting enabled, cancel the spawn.
-        // This effectively creates a "personal safe zone".
+        // Radius should be exactly 150 as requested.
+        // If ANY player within 150 blocks has the setting enabled, cancel the spawn.
+        double radiusSquared = 150.0 * 150.0;
 
-        Player nearest = event.getLocation().getWorld().getPlayers().stream()
-                .filter(p -> p.getLocation().distanceSquared(event.getLocation()) <= 128 * 128)
-                .min(Comparator.comparingDouble(p -> p.getLocation().distanceSquared(event.getLocation())))
-                .orElse(null);
+        boolean shouldCancel = event.getLocation().getWorld().getPlayers().stream()
+                .filter(p -> p.getLocation().distanceSquared(event.getLocation()) <= radiusSquared)
+                .anyMatch(p -> {
+                    PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    return data != null && data.isDisableMobSpawns();
+                });
 
-        if (nearest != null) {
-            PlayerData data = plugin.getPlayerDataManager().get(nearest.getUniqueId());
-            if (data != null && data.isDisableMobSpawns()) {
-                event.setCancelled(true);
-            }
+        if (shouldCancel) {
+            event.setCancelled(true);
         }
     }
 }

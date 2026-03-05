@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import com.prismcore.survival.tools.ToolsManager;
+import com.prismcore.survival.tools.Utils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -284,16 +285,80 @@ public class AuctionManager {
             return;
         ItemMeta meta = item.getItemMeta();
         meta.getPersistentDataContainer().remove(ToolsManager.AUCTION_PAUSED_KEY);
+        
         if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
             long currentExpiry = meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY,
                     PersistentDataType.LONG);
             long timeInAuction = System.currentTimeMillis() - listedAt;
             if (timeInAuction > 0) {
+                long newExpiry = currentExpiry + timeInAuction;
                 meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG,
-                        currentExpiry + timeInAuction);
+                        newExpiry);
+                
+                // Update lore to reflect the new countdown
+                updateToolLore(item, meta, newExpiry);
             }
         }
         item.setItemMeta(meta);
+    }
+    
+    /**
+     * Updates an amethyst tool's lore to display the correct countdown after auction.
+     */
+    private void updateToolLore(ItemStack item, ItemMeta meta, long expiryTime) {
+        String configKey = getToolConfigKey(item);
+        if (configKey == null)
+            return;
+            
+        FileConfiguration cfg = ToolsManager.getInstance().getConfig();
+        if (!cfg.getBoolean(configKey + ".use-countdown", true))
+            return;
+            
+        long remainingSeconds = (expiryTime - System.currentTimeMillis()) / 1000L;
+        if (remainingSeconds < 0)
+            remainingSeconds = 0;
+            
+        String countdown = Utils.formatDuration(remainingSeconds);
+        List<String> templateLore = cfg.getStringList(configKey + ".lore");
+        List<String> updatedLore = templateLore.stream()
+                .map(line -> line.replace("%countdown%", countdown))
+                .map(Utils::formatColors)
+                .toList();
+
+        meta.setLore(updatedLore);
+    }
+    
+    /**
+     * Determines the tool type (drill, axe, shovel, etc.)
+     */
+    private String getToolConfigKey(ItemStack item) {
+        if (item == null || !item.hasItemMeta())
+            return null;
+            
+        ItemMeta meta = item.getItemMeta();
+        
+        if (meta.getPersistentDataContainer().has(ToolsManager.MULTI_KEY, PersistentDataType.BYTE)) {
+            return "multitool";
+        }
+        if (meta.getPersistentDataContainer().has(ToolsManager.BOOSTER_KEY, PersistentDataType.BYTE)) {
+            return "shardbooster";
+        }
+        if (meta.getPersistentDataContainer().has(ToolsManager.SELL_AXE_KEY, PersistentDataType.BYTE)) {
+            return "sellaxe";
+        }
+
+        String matName = item.getType().name();
+        if (matName.endsWith("_PICKAXE")) {
+            return "drill";
+        } else if (matName.endsWith("_AXE")) {
+            return "axe";
+        } else if (matName.endsWith("_SHOVEL")) {
+            return "shovel";
+        } else if (matName.endsWith("_BUCKET") || matName.equals("BUCKET")) {
+            return "bucket";
+        }
+
+        return null;
     }
 
     public static class OfflineSale {

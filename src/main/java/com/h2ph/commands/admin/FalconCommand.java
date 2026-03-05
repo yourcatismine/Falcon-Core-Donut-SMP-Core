@@ -42,35 +42,11 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             sender.sendMessage(
-                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|operator|limiter|crate> [args]");
+                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor> [args]");
             return true;
         }
 
         String sub = args[0].toLowerCase();
-
-        // operator subcommand can be run from console or player
-        if (sub.equals("operator")) {
-            if (args.length < 2) {
-                sender.sendMessage("§cUsage: /falcon operator <player>  or /falcon operator remove <player>");
-                return true;
-            }
-
-            if (args[1].equalsIgnoreCase("remove")) {
-                if (args.length < 3) {
-                    sender.sendMessage("§cUsage: /falcon operator remove <player>");
-                    return true;
-                }
-                String target = args[2];
-                plugin.getDatabaseManager().removeAllowedOperator(target);
-                sender.sendMessage("§aRemoved allowed operator: §f" + target);
-                return true;
-            }
-
-            String targetName = args[1];
-            plugin.getDatabaseManager().addAllowedOperator(targetName);
-            sender.sendMessage("§aAdded allowed operator: §f" + targetName);
-            return true;
-        }
 
         if (!(sender instanceof Player)) {
             sender.sendMessage("This command is only for players.");
@@ -306,27 +282,27 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
         }
-        if (sub.equals("rtpdeath")) {
-            if (!player.hasPermission("falcon.rtpdeath")) {
+        if (sub.equals("respawngear")) {
+            if (!player.hasPermission("falcon.respawngear")) {
                 player.sendMessage("§cYou do not have permission to use this command.");
                 return true;
             }
 
             if (args.length < 2) {
-                player.sendMessage("§cUsage: /falcon rtpdeath <setup|delete>");
+                player.sendMessage("§cUsage: /falcon respawngear <setup|delete>");
                 return true;
             }
 
             String action = args[1].toLowerCase();
             if (action.equals("setup")) {
-                plugin.getRTPDeathGUI().open(player);
+                plugin.getRespawnGearGUI().open(player);
                 return true;
             } else if (action.equals("delete")) {
-                plugin.getRTPDeathManager().clearItems();
-                player.sendMessage("§aRTP on Death items have been deleted.");
+                plugin.getRespawnGearManager().clearItems();
+                player.sendMessage("§aRespawn gear items have been deleted.");
                 return true;
             } else {
-                player.sendMessage("§cUsage: /falcon rtpdeath <setup|delete>");
+                player.sendMessage("§cUsage: /falcon respawngear <setup|delete>");
                 return true;
             }
         }
@@ -404,8 +380,16 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return handleCrate(player, args);
         }
 
+        if (sub.equals("crystal")) {
+            return handleCrystal(player, args);
+        }
+
+        if (sub.equals("anchor")) {
+            return handleAnchor(player, args);
+        }
+
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, rtpdeath, limiter, or crate.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, or anchor.");
         return true;
     }
 
@@ -680,22 +664,20 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
-                    .asList("auction", "order", "rtpqueue", "speed", "tools", "void", "operator", "rtpdeath", "limiter",
-                            "crate")
+                    .asList("auction", "order", "rtpqueue", "speed", "tools", "void", "respawngear", "limiter",
+                            "crate", "crystal", "anchor")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         } else if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("rtpdeath")) {
+            if (args[0].equalsIgnoreCase("respawngear")) {
                 return Arrays.asList("setup", "delete").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             }
             if (args[0].equalsIgnoreCase("auction") || args[0].equalsIgnoreCase("order")) {
-                return Bukkit.getOnlinePlayers().stream()
-                        .map(Player::getName)
-                        .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                // Use async player name cache to prevent TPS drops
+                return plugin.getPlayerNameCache().getCompletions(args[1]);
             } else if (args[0].equalsIgnoreCase("rtpqueue")) {
                 return Arrays.asList("create", "delete").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
@@ -709,16 +691,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                         .stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
-            } else if (args[0].equalsIgnoreCase("operator")) {
-                // suggest online players and existing allowed operators
-                java.util.List<String> suggestions = new java.util.ArrayList<>();
-                Bukkit.getOnlinePlayers().forEach(p -> suggestions.add(p.getName()));
-                try {
-                    suggestions.addAll(plugin.getDatabaseManager().getAllowedOperators());
-                } catch (Exception ignored) {
-                }
-                final String pref = args[1].toLowerCase();
-                return suggestions.stream().filter(s -> s.toLowerCase().startsWith(pref)).collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("void")) {
                 return Arrays.asList("create").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
@@ -731,6 +703,14 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 List<String> subcommands = Arrays.asList("create", "edit", "get", "delete", "effects");
                 return subcommands.stream()
                         .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("crystal")) {
+                return Arrays.asList("normal", "0", "1", "2", "3", "4", "5", "6", "10", "20").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("anchor")) {
+                return Arrays.asList("normal", "0", "1", "2", "3", "4", "5", "6", "10", "20").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             }
         } else if (args.length == 3) {
@@ -847,4 +827,77 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
         return Collections.emptyList();
     }
+
+    private boolean handleCrystal(Player player, String[] args) {
+        if (!player.hasPermission("falcon.crystal")) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+
+        if (args.length < 2) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+
+        try {
+            String damageArg = args[1].toLowerCase();
+            double damage;
+
+            if (damageArg.equals("normal")) {
+                damage = 6.0; // Vanilla crystal damage
+            } else {
+                damage = Double.parseDouble(damageArg);
+            }
+
+            if (damage < 0) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+                return true;
+            }
+
+            plugin.getDamageManager().setCrystalDamage(damage);
+            player.sendMessage("§aCrystal damage set to §f" + damage);
+            return true;
+        } catch (NumberFormatException ignored) {
+            // No error messages as requested, just villager no sound
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+    }
+
+    private boolean handleAnchor(Player player, String[] args) {
+        if (!player.hasPermission("falcon.anchor")) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+
+        if (args.length < 2) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+
+        try {
+            String damageArg = args[1].toLowerCase();
+            double damage;
+
+            if (damageArg.equals("normal")) {
+                damage = 6.0; // Vanilla anchor damage
+            } else {
+                damage = Double.parseDouble(damageArg);
+            }
+
+            if (damage < 0) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+                return true;
+            }
+
+            plugin.getDamageManager().setAnchorDamage(damage);
+            player.sendMessage("§aAnchor damage set to §f" + damage);
+            return true;
+        } catch (NumberFormatException ignored) {
+            // No error messages as requested, just villager no sound
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+    }
 }
+

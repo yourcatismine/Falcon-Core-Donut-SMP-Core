@@ -14,8 +14,13 @@ import com.prismcore.survival.orders.store.VaultHook;
 import com.prismcore.survival.orders.store.OfflineNotificationManager;
 import com.prismcore.survival.orders.gui.OrdersJoinListener;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 
 public class OrdersModule {
+
+    public static NamespacedKey DELIVERER_KEY;
+    public static NamespacedKey RECIPIENT_KEY;
+    public static NamespacedKey REFUND_FROM_KEY;
 
     private final PrismSurvival plugin;
     private static OrdersModule instance;
@@ -40,6 +45,11 @@ public class OrdersModule {
 
     public void enable() {
         instance = this;
+
+        DELIVERER_KEY = new NamespacedKey(plugin, "deliverer-uuid");
+        RECIPIENT_KEY = new NamespacedKey(plugin, "recipient-name");
+        REFUND_FROM_KEY = new NamespacedKey(plugin, "refund-from");
+
         this.configManager = new ConfigManager(plugin);
         this.filterManager = new FilterManager(this);
         this.enchantmentsManager = new EnchantmentsManager(this);

@@ -408,10 +408,8 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             if (sub.equals("invite") || sub.equals("kick") || sub.equals("join")) {
-                return Bukkit.getOnlinePlayers().stream()
-                        .map(Player::getName)
-                        .filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                // Use async player name cache to prevent TPS drops
+                return plugin.getPlayerNameCache().getCompletions(args[1]);
             }
         }
         return completions;

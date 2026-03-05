@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ public class PlayerDataManager {
 
     private final PrismSurvival plugin;
     private final Map<UUID, PlayerData> playerDataMap = new ConcurrentHashMap<>();
+    private final Map<UUID, CompletableFuture<Void>> savingFutures = new ConcurrentHashMap<>();
     private final File dataFolderCrates;
 
     public PlayerDataManager(PrismSurvival plugin) {
@@ -33,14 +35,32 @@ public class PlayerDataManager {
     }
 
     public PlayerData get(UUID uuid) {
-        if (playerDataMap.containsKey(uuid)) {
-            return playerDataMap.get(uuid);
+        PlayerData data = playerDataMap.get(uuid);
+        if (data != null) {
+            // If it's in the cache, it might be marked for unloading.
+            // Reset the flag since the player is now active again.
+            data.setUnloading(false);
+            return data;
         }
 
-        // Load from file
-        PlayerData data = loadPlayer(uuid);
-        playerDataMap.put(uuid, data);
-        return data;
+        // Check if there's an active save operation for this player.
+        // If so, we MUST wait for it to finish before loading to avoid stale data.
+        CompletableFuture<Void> saveFuture = savingFutures.get(uuid);
+        if (saveFuture != null && !saveFuture.isDone()) {
+            try {
+                // Wait for the save to complete (with a reasonable timeout if possible, but
+                // join() is safer here)
+                saveFuture.join();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Error waiting for save future for " + uuid, e);
+            }
+        }
+
+        // Use computeIfAbsent to ensure thread-safety and prevent duplicate loads
+        return playerDataMap.computeIfAbsent(uuid, k -> {
+            // Load from file/database
+            return loadPlayer(k);
+        });
     }
 
     public PlayerData loadPlayer(UUID uuid) {
@@ -57,6 +77,7 @@ public class PlayerDataManager {
             data.setMoney(stats.money, "Database Load");
             data.setShards(stats.shards, "Database Load");
             data.setShopSpent(stats.shopSpent);
+            data.setIp(stats.ip);
         }
 
         // Load Shards Data (Migration/Fallback)
@@ -115,6 +136,9 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.disable_mob_spawns")) {
                 data.setDisableMobSpawns(cratesConfig.getBoolean("settings.disable_mob_spawns"));
             }
+            if (cratesConfig.contains("settings.check_history")) {
+                data.setCheckHistory(cratesConfig.getBoolean("settings.check_history"));
+            }
             if (cratesConfig.contains("settings.sound_notifications")) {
                 data.setSoundNotifications(cratesConfig.getBoolean("settings.sound_notifications"));
             }
@@ -154,6 +178,12 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.vanished")) {
                 data.setVanished(cratesConfig.getBoolean("settings.vanished"));
             }
+            if (cratesConfig.contains("settings.fast_crystals")) {
+                data.setFastCrystals(cratesConfig.getBoolean("settings.fast_crystals"));
+            }
+            if (cratesConfig.contains("settings.respawn_rtp")) {
+                data.setRespawnRTP(cratesConfig.getBoolean("settings.respawn_rtp"));
+            }
             // Load Mute Data
             if (cratesConfig.contains("mute.muted")) {
                 data.setMuted(cratesConfig.getBoolean("mute.muted"));
@@ -178,6 +208,20 @@ public class PlayerDataManager {
             }
             if (cratesConfig.contains("pending_kick_team")) {
                 data.setPendingKickTeamName(cratesConfig.getString("pending_kick_team"));
+            }
+
+            // Load ignored players list
+            if (cratesConfig.contains("ignored_players")) {
+                java.util.List<String> ignoredUuids = cratesConfig.getStringList("ignored_players");
+                java.util.Set<java.util.UUID> ignoredSet = new java.util.HashSet<>();
+                for (String uuidString : ignoredUuids) {
+                    try {
+                        ignoredSet.add(java.util.UUID.fromString(uuidString));
+                    } catch (IllegalArgumentException e) {
+                        // Invalid UUID, skip
+                    }
+                }
+                data.setIgnoredPlayers(ignoredSet);
             }
         }
 
@@ -292,6 +336,7 @@ public class PlayerDataManager {
         cratesConfig.set("settings.pay_alerts", data.isPayAlerts());
         cratesConfig.set("settings.quick_auction_buy", data.isQuickAuctionBuy());
         cratesConfig.set("settings.disable_mob_spawns", data.isDisableMobSpawns());
+        cratesConfig.set("settings.check_history", data.isCheckHistory());
         cratesConfig.set("settings.sound_notifications", data.isSoundNotifications());
         cratesConfig.set("settings.tpa_confirm_menus", data.isTpaConfirmMenus());
         cratesConfig.set("settings.duel_requests", data.isDuelRequests());
@@ -305,6 +350,8 @@ public class PlayerDataManager {
         cratesConfig.set("settings.auction_filter", data.getAuctionFilter());
         cratesConfig.set("settings.auction_category", data.getAuctionCategory());
         cratesConfig.set("settings.vanished", data.isVanished());
+        cratesConfig.set("settings.fast_crystals", data.isFastCrystals());
+        cratesConfig.set("settings.respawn_rtp", data.isRespawnRTP());
 
         // Save Mute Data
         cratesConfig.set("mute.muted", data.isMuted());
@@ -315,6 +362,13 @@ public class PlayerDataManager {
         cratesConfig.set("mute.date", data.getMuteDate());
         cratesConfig.set("combat_logged", data.isCombatLogged());
         cratesConfig.set("pending_kick_team", data.getPendingKickTeamName());
+
+        // Save ignored players list
+        java.util.List<String> ignoredUuids = new java.util.ArrayList<>();
+        for (UUID ignoredUuid : data.getIgnoredPlayers()) {
+            ignoredUuids.add(ignoredUuid.toString());
+        }
+        cratesConfig.set("ignored_players", ignoredUuids);
 
         try {
             cratesConfig.save(cratesFile);
@@ -347,9 +401,35 @@ public class PlayerDataManager {
     }
 
     public void unload(UUID uuid) {
-        PlayerData data = playerDataMap.remove(uuid);
+        PlayerData data = playerDataMap.get(uuid);
         if (data != null) {
-            plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayer(uuid, data));
+            // Mark as unloading so that final cleanup knows it's okay to remove
+            data.setUnloading(true);
+
+            // Save first, then remove from map ONLY after save is complete
+            // This prevents race conditions where a fast rejoin loads stale data
+            CompletableFuture<Void> saveFuture = CompletableFuture.runAsync(() -> {
+                savePlayer(uuid, data);
+            }, runnable -> plugin.getSchedulerAdapter().runTaskAsync(runnable));
+
+            // Track this save future
+            savingFutures.put(uuid, saveFuture);
+
+            saveFuture.whenComplete((v, throwable) -> {
+                try {
+                    // Remove the future once done
+                    savingFutures.remove(uuid, saveFuture);
+
+                    // Remove from map AFTER save is finished, but ONLY if still marked as
+                    // unloading.
+                    // If the player rejoined, get() would have set unloading to false.
+                    if (data.isUnloading()) {
+                        playerDataMap.remove(uuid, data);
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.SEVERE, "Error in unload cleanup for " + uuid, e);
+                }
+            });
         }
     }
 

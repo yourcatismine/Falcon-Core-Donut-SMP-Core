@@ -1,4 +1,4 @@
-auto-rtp-on-death: true
+auto-rtp-on-death: false
 worlds:
   overworld:
     world: "world"

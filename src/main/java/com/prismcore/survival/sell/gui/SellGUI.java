@@ -198,6 +198,7 @@ public class SellGUI
         double totalSold = 0.0;
         Map<Category, Double> categoryProgressToAdd = new HashMap<>();
         List<ItemStack> unsoldItems = new ArrayList<>();
+        Map<String, double[]> soldItemsToAdd = new HashMap<>();
 
         // Iterate through all slots
         // Items in category slots should be ignored/cancelled in click event, but here
@@ -255,6 +256,12 @@ public class SellGUI
                             // uncommon)
                             itemTotal += amount * item.getAmount();
 
+                            // Record in sell history
+                            String matName = content.getType().name();
+                            double[] stats = soldItemsToAdd.computeIfAbsent(matName, k -> new double[] { 0, 0 });
+                            stats[0] += content.getAmount() * item.getAmount();
+                            stats[1] += amount * item.getAmount();
+
                             // Remove item from shulker
                             contents[j] = null;
                             shulkerModified = true;
@@ -286,6 +293,12 @@ public class SellGUI
                 }
 
                 itemTotal += amount;
+
+                // Record in sell history
+                String matName = item.getType().name();
+                double[] stats = soldItemsToAdd.computeIfAbsent(matName, k -> new double[] { 0, 0 });
+                stats[0] += item.getAmount();
+                stats[1] += amount;
             }
 
             if (itemTotal > 0) {
@@ -305,6 +318,10 @@ public class SellGUI
         if (totalSold > 0) {
             this.plugin.getEconomy().deposit(player.getUniqueId(), totalSold);
 
+            if (!soldItemsToAdd.isEmpty()) {
+                this.plugin.getDatabaseManager().saveSellHistoryAsync(player.getUniqueId(), soldItemsToAdd);
+            }
+
             // Update sellMade stat and persist immediately — don't wait for quit
             PlayerData sellData = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             sellData.setSellMade(sellData.getSellMade() + totalSold);
@@ -321,7 +338,7 @@ public class SellGUI
                 MessageUtil.sendActionBar(player, actionBarMsg.replace("%amount%", formattedAmount));
             }
 
-            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
 
             // Update progress
             PlayerData data = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());

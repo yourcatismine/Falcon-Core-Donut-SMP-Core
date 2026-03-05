@@ -18,15 +18,13 @@ import java.util.UUID;
 public class EnderChestGUI {
 
     private final PrismSurvival plugin;
-    // Map to track active enderchest inventories by owner UUID for live-syncing
-    private static final Map<UUID, Inventory> activeInventories = new java.util.concurrent.ConcurrentHashMap<>();
 
     public EnderChestGUI(PrismSurvival plugin) {
         this.plugin = plugin;
     }
 
     public static Map<UUID, Inventory> getActiveInventories() {
-        return activeInventories;
+        return PrismSurvival.getInstance().getEnderChestManager().getActiveInventories();
     }
 
     /** Open own echest via /echest command — no block animation. */
@@ -47,7 +45,7 @@ public class EnderChestGUI {
      * owner).
      */
     public void open(Player viewer, UUID ownerUUID, String ownerName, @Nullable Block block) {
-        Inventory inv = activeInventories.get(ownerUUID);
+        Inventory inv = getActiveInventories().get(ownerUUID);
 
         if (inv != null) {
             // Update the block reference if we're opening it from a different block
@@ -63,6 +61,7 @@ public class EnderChestGUI {
         }
 
         // Load asynchronously to avoid blocking the main server thread
+        // This is primarily for admins viewing offline players or if preloading failed
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             ItemStack[] contents = plugin.getEnderChestManager().loadEnderChest(ownerUUID);
 
@@ -71,25 +70,12 @@ public class EnderChestGUI {
                 if (!viewer.isOnline())
                     return;
 
-                Inventory finalInv = activeInventories.get(ownerUUID);
-                if (finalInv == null) {
-                    String title = ChatColor.translateAlternateColorCodes('&', "&8" + ownerName + "'s ᴇɴᴅᴇʀ ᴄʜᴇsᴛ");
-                    if (viewer.getUniqueId().equals(ownerUUID)) {
-                        title = ChatColor.translateAlternateColorCodes('&', "&8ᴇɴᴅᴇʀ ᴄʜᴇsᴛ");
-                    }
+                Inventory finalInv = plugin.getEnderChestManager().getOrCreateInventory(ownerUUID, ownerName, block,
+                        contents);
 
-                    finalInv = Bukkit.createInventory(new EnderChestHolder(ownerUUID, ownerName, block), 54, title);
-                    for (int i = 0; i < 54; i++) {
-                        if (contents[i] != null) {
-                            finalInv.setItem(i, contents[i]);
-                        }
-                    }
-                    activeInventories.put(ownerUUID, finalInv);
-                } else {
-                    // Update the block reference if we're opening it from a different block
-                    if (finalInv.getHolder() instanceof EnderChestHolder) {
-                        ((EnderChestHolder) finalInv.getHolder()).setSourceBlock(block);
-                    }
+                // Update the block reference
+                if (finalInv.getHolder() instanceof EnderChestHolder) {
+                    ((EnderChestHolder) finalInv.getHolder()).setSourceBlock(block);
                 }
 
                 viewer.openInventory(finalInv);

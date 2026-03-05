@@ -177,6 +177,22 @@ public class HomeManager {
         renamingPlayers.remove(uuid);
     }
 
+    public void wipeHomes(UUID uuid) {
+        cache.remove(uuid);
+        renamingPlayers.remove(uuid);
+
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            String query = "DELETE FROM player_homes WHERE uuid = ?";
+            try (Connection conn = getConnection();
+                    PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to wipe homes for " + uuid, e);
+            }
+        });
+    }
+
     public record HomeEntry(Location location, String name) {
     }
 }

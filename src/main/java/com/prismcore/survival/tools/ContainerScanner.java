@@ -114,7 +114,7 @@ public class ContainerScanner {
 
                 // Play sound if location provided (player inventory)
                 if (soundLocation != null) {
-                    soundLocation.getWorld().playSound(soundLocation, org.bukkit.Sound.ENTITY_ITEM_BREAK, 1f, 1f);
+                    soundLocation.getWorld().playSound(soundLocation, org.bukkit.Sound.ENTITY_ITEM_BREAK, 1f, 2.0f);
                 }
                 continue;
             }
@@ -176,7 +176,7 @@ public class ContainerScanner {
 
     /**
      * Gets the config key for a tool (drill, axe, shovel, multitool, bucket,
-     * shardbooster).
+     * shardbooster, sellaxe).
      */
     private String getToolConfigKey(ItemStack item, ItemMeta meta) {
         if (meta.getPersistentDataContainer().has(ToolsManager.MULTI_KEY, PersistentDataType.BYTE)) {
@@ -184,6 +184,9 @@ public class ContainerScanner {
         }
         if (meta.getPersistentDataContainer().has(ToolsManager.BOOSTER_KEY, PersistentDataType.BYTE)) {
             return "shardbooster";
+        }
+        if (meta.getPersistentDataContainer().has(ToolsManager.SELL_AXE_KEY, PersistentDataType.BYTE)) {
+            return "sellaxe";
         }
 
         String matName = item.getType().name();

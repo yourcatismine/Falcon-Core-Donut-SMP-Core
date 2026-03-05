@@ -99,6 +99,15 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Check if target has ignored the sender
+        if (targetData != null && targetData.isIgnoring(p.getUniqueId())) {
+            String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(msg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
         // Check Sender's "TPA Confirm Menus" setting
         com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(p.getUniqueId());

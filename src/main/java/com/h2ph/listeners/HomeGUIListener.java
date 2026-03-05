@@ -94,35 +94,17 @@ public class HomeGUIListener implements Listener {
         int slot = event.getRawSlot();
         HomeManager manager = plugin.getHomeManager();
 
-        // ── Bottom-row dye slots (21-25) ─────────────────────────────────────────
-        if (slot >= HomeGUI.DYE_START && slot < HomeGUI.DYE_START + HomeGUI.HOME_COUNT) {
-            int homeNumber = slot - HomeGUI.DYE_START + 1;
-            Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
+        // ── Bed Clicks (slots 3-7 for homes 1-5, and 21-25 for homes 6-10) ────────
+        if ((slot >= HomeGUI.BED_START && slot < HomeGUI.BED_START + 5) ||
+            (slot >= HomeGUI.BED_START_2 && slot < HomeGUI.BED_START_2 + 5)) {
 
-            if (clickedMat == Material.PURPLE_DYE) {
-                // ── Open Delete Confirmation ─────────────────────────────────────
-                com.h2ph.gui.HomeDeleteConfirmGUI.open(player, plugin, homeNumber);
-
-            } else if (clickedMat == Material.GRAY_DYE) {
-                // ── Set home ─────────────────────────────────────────────────────
-                Location loc = player.getLocation().clone();
-                manager.setHome(player.getUniqueId(), homeNumber, loc);
-
-                // Chat message
-                player.sendMessage(HomeGUI.color("&7Home set"));
-
-                // Action bar message (no sound)
-                player.sendActionBar(
-                        LegacyComponentSerializer.legacyAmpersand().deserialize("&7Home set"));
-
-                refreshGUI(player);
+            int homeNumber;
+            if (slot >= HomeGUI.BED_START && slot < HomeGUI.BED_START + 5) {
+                homeNumber = slot - HomeGUI.BED_START + 1;
+            } else {
+                homeNumber = slot - HomeGUI.BED_START_2 + 6;
             }
-            return;
-        }
 
-        // ── Top-row bed slots (12-16) ─────────────────────────────────────────────
-        if (slot >= HomeGUI.BED_START && slot < HomeGUI.BED_START + HomeGUI.HOME_COUNT) {
-            int homeNumber = slot - HomeGUI.BED_START + 1;
             Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
 
             if (clickedMat == Material.PURPLE_BED) {
@@ -149,16 +131,24 @@ public class HomeGUIListener implements Listener {
                 String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
                 player.sendMessage(storeMsg);
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
             }
             // Gray beds are purely decorative – no action
             return;
         }
 
-        // ── Dye Clicks ──────────────────────────────────────────────────────────
-        if (slot >= HomeGUI.DYE_START && slot < HomeGUI.DYE_START + HomeGUI.HOME_COUNT) {
+        // ── Dye Clicks (slots 12-16 for homes 1-5, and 30-34 for homes 6-10) ──────
+        if ((slot >= HomeGUI.DYE_START && slot < HomeGUI.DYE_START + 5) ||
+            (slot >= HomeGUI.DYE_START_2 && slot < HomeGUI.DYE_START_2 + 5)) {
+
+            int homeNumber;
+            if (slot >= HomeGUI.DYE_START && slot < HomeGUI.DYE_START + 5) {
+                homeNumber = slot - HomeGUI.DYE_START + 1;
+            } else {
+                homeNumber = slot - HomeGUI.DYE_START_2 + 6;
+            }
+
             Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
-            int homeNumber = slot - HomeGUI.DYE_START + 1;
 
             if (clickedMat == Material.PURPLE_DYE) {
                 // ── Open Delete Confirmation ─────────────────────────────────────
@@ -182,7 +172,7 @@ public class HomeGUIListener implements Listener {
                 String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
                 player.sendMessage(storeMsg);
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
             }
             return;
         }

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +25,7 @@ import java.util.UUID;
 public class BountyCommand implements CommandExecutor, TabCompleter {
 
     private final PrismSurvival plugin;
-    private static final DecimalFormat DF = new DecimalFormat("#.##");
+    private static final DecimalFormat DF = new DecimalFormat("#.#");
 
     public BountyCommand(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -99,6 +100,17 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
+
+                // Check if target has ignored the sender
+                PlayerData targetData = plugin.getPlayerDataManager().get(target.getUniqueId());
+                if (targetData != null && targetData.isIgnoring(player.getUniqueId())) {
+                    String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
+                    player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            new net.md_5.bungee.api.chat.TextComponent(msg));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return true;
+                }
+
                 new com.h2ph.gui.BountyConfirmGUI(plugin).open(player, target.getUniqueId(), target.getName(), amount);
             } else {
                 plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -115,6 +127,19 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                         });
                         return;
                     }
+
+                    // Check if target has ignored the sender
+                    PlayerData targetData = plugin.getPlayerDataManager().get(offlinePlayer.getUniqueId());
+                    if (targetData != null && targetData.isIgnoring(player.getUniqueId())) {
+                        plugin.getSchedulerAdapter().runTask(() -> {
+                            String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
+                            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                                    new net.md_5.bungee.api.chat.TextComponent(msg));
+                            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                        });
+                        return;
+                    }
+
                     plugin.getSchedulerAdapter().runTask(() -> {
                         new com.h2ph.gui.BountyConfirmGUI(plugin).open(player, offlinePlayer.getUniqueId(),
                                 offlinePlayer.getName(), amount);
@@ -193,13 +218,8 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("add")) {
-            java.util.List<String> players = new java.util.ArrayList<>();
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
-                    players.add(p.getName());
-                }
-            }
-            return players;
+            // Use async player name cache to prevent TPS drops
+            return plugin.getPlayerNameCache().getCompletions(args[1]);
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("add")) {

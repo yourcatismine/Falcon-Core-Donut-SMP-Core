@@ -59,17 +59,20 @@ public class SignInput implements Listener {
         pendingSignOriginalBlockData.put(player.getUniqueId(), original);
         pendingCallbacks.put(player.getUniqueId(), onInput);
 
-        // Check block below for support
-        Location below = loc.clone().add(0, -1, 0);
-        if (!below.getBlock().getType().isSolid()) {
-            // Store original support block
-            BlockData originalSupport = below.getBlock().getBlockData();
-            pendingSupportOriginalBlockData.put(player.getUniqueId(), originalSupport);
-            pendingSupportLocations.put(player.getUniqueId(), below);
-
-            // Place temporary solid block (Bedrock is safest to avoid breaking)
-            below.getBlock().setType(Material.BEDROCK, false);
-        }
+        // No longer placing temporary support block (Bedrock) to avoid terrain
+        // modification
+        /*
+         * Location below = loc.clone().add(0, -1, 0);
+         * if (!below.getBlock().getType().isSolid()) {
+         * // Store original support block
+         * BlockData originalSupport = below.getBlock().getBlockData();
+         * pendingSupportOriginalBlockData.put(player.getUniqueId(), originalSupport);
+         * pendingSupportLocations.put(player.getUniqueId(), below);
+         * 
+         * // Place temporary solid block (Bedrock is safest to avoid breaking)
+         * below.getBlock().setType(Material.BEDROCK, false);
+         * }
+         */
 
         // Delay slightly to ensure client sync and avoid immediate physics updates
         // Use SchedulerAdapter via the plugin instance
@@ -198,13 +201,15 @@ public class SignInput implements Listener {
         }
 
         // Restore Support Block
-        if (pendingSupportLocations.containsKey(uuid)) {
-            Location loc = pendingSupportLocations.remove(uuid);
-            BlockData original = pendingSupportOriginalBlockData.remove(uuid);
-            if (loc != null && original != null) {
-                loc.getBlock().setBlockData(original);
-            }
-        }
+        /*
+         * if (pendingSupportLocations.containsKey(uuid)) {
+         * Location loc = pendingSupportLocations.remove(uuid);
+         * BlockData original = pendingSupportOriginalBlockData.remove(uuid);
+         * if (loc != null && original != null) {
+         * loc.getBlock().setBlockData(original);
+         * }
+         * }
+         */
 
         // Clean up callback if present (e.g. on quit)
         pendingCallbacks.remove(uuid);

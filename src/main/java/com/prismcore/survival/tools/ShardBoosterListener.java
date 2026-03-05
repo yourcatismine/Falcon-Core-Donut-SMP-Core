@@ -5,7 +5,6 @@ import com.prismcore.survival.manager.PlayerData;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,10 +21,8 @@ import org.bukkit.persistence.PersistentDataType;
 public class ShardBoosterListener implements Listener {
 
     private final PrismSurvival plugin;
-    private final ToolsManager manager;
 
-    public ShardBoosterListener(ToolsManager manager, PrismSurvival plugin) {
-        this.manager = manager;
+    public ShardBoosterListener(PrismSurvival plugin) {
         this.plugin = plugin;
     }
 
@@ -48,11 +45,19 @@ public class ShardBoosterListener implements Listener {
 
         Player player = event.getPlayer();
 
-        // Get booster duration from stored REMAINING_KEY (in seconds)
-        long durationSeconds = 86400L; // Default 24 hours
+        // Get booster duration (priority: REMAINING_KEY > EXPIRY_KEY > default 24h)
+        long durationSeconds = 86400L;
         if (meta.getPersistentDataContainer().has(ToolsManager.REMAINING_KEY, PersistentDataType.LONG)) {
             durationSeconds = meta.getPersistentDataContainer().get(ToolsManager.REMAINING_KEY,
                     PersistentDataType.LONG);
+        } else if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
+            long expiryTime = meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG);
+            durationSeconds = Math.max(0, (expiryTime - System.currentTimeMillis()) / 1000L);
+        }
+
+        if (durationSeconds <= 0) {
+            player.sendMessage(ChatColor.RED + "This booster has already expired!");
+            return;
         }
 
         // Calculate expiry timestamp
@@ -61,25 +66,23 @@ public class ShardBoosterListener implements Listener {
         // Activate booster for player
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         data.setShardBoosterExpiry(expiryMillis);
-        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
-        // Get config for messages and sounds
-        ConfigurationSection cfg = manager.getConfig().getConfigurationSection("shardbooster");
-
-        // Play activation sound
-        String soundName = cfg != null ? cfg.getString("activation-sound", "ENTITY_PLAYER_LEVELUP")
-                : "ENTITY_PLAYER_LEVELUP";
-        try {
-            Sound sound = Sound.valueOf(soundName.toUpperCase());
-            player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
-        } catch (IllegalArgumentException e) {
-            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        // Award 8 shards if the player has the passive permission or is in an AFK
+        // region
+        boolean inAfkRegion = plugin.getAfkManager().getRegionAt(player.getLocation()) != null;
+        if (player.hasPermission("prism.shards.passive") || inAfkRegion) {
+            data.addShards(8, "Shard Booster Reward");
         }
 
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
+
+        // Play activation sound
+        player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 2.0f);
+
         // Send activation message
-        String message = cfg != null
-                ? cfg.getString("activation-message", "&aYou have activated your &5Shard Booster&a for 24h.")
-                : "&aYou have activated your &5Shard Booster&a for 24h.";
-        player.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+        String msg = ChatColor.translateAlternateColorCodes('&', "&dShard booster activated.");
+        player.sendMessage(msg);
+        player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                net.md_5.bungee.api.chat.TextComponent.fromLegacyText(msg));
     }
 }

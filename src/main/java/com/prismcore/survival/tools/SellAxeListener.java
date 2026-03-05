@@ -168,10 +168,10 @@ public class SellAxeListener implements Listener {
             String soundName = manager.getConfig().getString("sellaxe.sound", "BLOCK_AMETHYST_BLOCK_HIT");
             try {
                 org.bukkit.Sound sound = org.bukkit.Sound.valueOf(soundName);
-                player.playSound(player.getLocation(), sound, 1f, 1f);
+                player.playSound(player.getLocation(), sound, 1f, 2.0f);
             } catch (IllegalArgumentException e) {
                 // Fallback if invalid sound
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 2.0f);
             }
 
             if (interactEvent != null) {

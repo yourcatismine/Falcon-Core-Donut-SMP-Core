@@ -137,48 +137,38 @@ public class GUIListener
             }
 
             if (slot >= 0 && slot < perPage) {
-                String term = p.hasMetadata("ah-filter")
-                        ? ((MetadataValue) p.getMetadata("ah-filter").get(0)).asString()
-                        : "";
-                if (term == null) {
-                    term = "";
+                // Get the clicked item to retrieve auction ID from PDC (prevents item shifting issues)
+                ItemStack clickedItem = event.getCurrentItem();
+                if (clickedItem == null || !clickedItem.hasItemMeta()) {
+                    return;
                 }
-                term = term.trim().toLowerCase();
-                String cat = p.hasMetadata("ah-cat") ? ((MetadataValue) p.getMetadata("ah-cat").get(0)).asString()
-                        : "All";
-                String sort = this.controller.getAuctionManager().getPlayerSort(p.getUniqueId());
-
-                // Cache logic
-                UUID uuid = p.getUniqueId();
-                long lastUpdate = this.controller.getAuctionManager().getLastUpdate();
-                List<AuctionItem> filtered;
-
-                if (filteredCache.containsKey(uuid) && cacheTimestamp.getOrDefault(uuid, 0L) == lastUpdate) {
-                    filtered = filteredCache.get(uuid);
-                } else {
-                    String finalTerm = term;
-                    List<String> catFilter = cat.equals("All") ? null
-                            : categoryCache.computeIfAbsent(cat,
-                                    k -> this.controller.getFilterConfig().getStringList(k));
-
-                    filtered = this.controller.getAuctionManager().getActiveItems().stream()
-                            .filter(ai -> {
-                                boolean ms = finalTerm.isEmpty() || ai.getSearchName().contains(finalTerm)
-                                        || ai.getSearchSeller().contains(finalTerm);
-                                boolean mc = catFilter == null
-                                        || catFilter.contains(ai.getItemStack().getType().name());
-                                return ms && mc;
-                            }).collect(Collectors.toList());
-
-                    GUIHandler.sortItems(filtered, sort);
-                    filteredCache.put(uuid, filtered);
-                    cacheTimestamp.put(uuid, lastUpdate);
+                
+                ItemMeta clickedMeta = clickedItem.getItemMeta();
+                org.bukkit.persistence.PersistentDataContainer pdc = clickedMeta.getPersistentDataContainer();
+                org.bukkit.NamespacedKey itemIdKey = new org.bukkit.NamespacedKey(this.controller.getPlugin(), "auction-item-id");
+                
+                if (!pdc.has(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING)) {
+                    return; // Not an auction item
                 }
-
-                int idx = (page - 1) * perPage + slot;
-                if (idx < filtered.size()) {
-                    p.playSound(p.getLocation(), def, 1.0f, 1.0f);
-                    AuctionItem ai2 = filtered.get(idx);
+                
+                String auctionItemId = pdc.get(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING);
+                
+                // Find the auction item by ID (safe from list shifts)
+                Optional<AuctionItem> optionalItem = this.controller.getAuctionManager().getActiveItems().stream()
+                        .filter(ai -> ai.getId().toString().equals(auctionItemId))
+                        .findFirst();
+                        
+                if (!optionalItem.isPresent()) {
+                    // Item no longer exists (sold/expired)
+                    p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available", "&cThis item is no longer available!")));
+                    p.playSound(p.getLocation(), no, 1.0f, 1.0f);
+                    // Refresh the GUI to show current state
+                    GUIHandler.openMainGUI(p, page, this.controller, perPage);
+                    return;
+                }
+                
+                p.playSound(p.getLocation(), def, 1.0f, 1.0f);
+                AuctionItem ai2 = optionalItem.get();
                     if (p.hasMetadata("ah-admin-view")) {
                         GUIHandler.openAdminPlayerDetailsGUI(p, ai2.getSeller(), this.controller);
                         return;
@@ -201,7 +191,6 @@ public class GUIListener
                             GUIHandler.openBuyConfirm(p, ai2, this.controller);
                         }
                     }
-                }
             }
             return;
         }
@@ -369,6 +358,7 @@ public class GUIListener
                         .replace("{priceFormatted}", Utils.formatNumber(ai4.getPrice()))
                         .replace("{seller}", sellerName)
                         .replace("{item}", itemName)));
+                p.closeInventory();
                 try {
                     Sound notifySound = Sound.valueOf(this.controller.getConfig().getString("sounds.sale-notify",
                             "ENTITY_EXPERIENCE_ORB_PICKUP"));
@@ -1277,8 +1267,6 @@ public class GUIListener
                     ai.getPrice(), p.getName(), itemName);
         }
 
-        // Refresh GUI for Quick Buy effect
-        int page = p.getMetadata("ah-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
-        GUIHandler.openMainGUI(p, page, this.controller, GUIHandler.ITEMS_PER_PAGE);
+        p.closeInventory();
     }
 }

@@ -28,7 +28,11 @@ public class SetSpawnCommand implements TabExecutor {
             return true;
         }
         if (args.length < 1) {
-            p.sendMessage(ChatColor.YELLOW + "Usage: /setspawn <name> OR /setspawn delete <name>");
+            p.sendMessage(ChatColor.YELLOW + "Usage:");
+            p.sendMessage(ChatColor.YELLOW + "  /setspawn <name> - Set a named spawn");
+            p.sendMessage(ChatColor.YELLOW + "  /setspawn world [worldname] - Set world-specific spawn");
+            p.sendMessage(ChatColor.YELLOW + "  /setspawn delete <name> - Delete a named spawn");
+            p.sendMessage(ChatColor.YELLOW + "  /setspawn deleteworld <worldname> - Delete world spawn");
             return true;
         }
 
@@ -46,6 +50,36 @@ public class SetSpawnCommand implements TabExecutor {
                 p.sendMessage(ChatColor.GREEN + "Deleted spawn '" + name + "'.");
             } else {
                 p.sendMessage(ChatColor.RED + "Spawn '" + name + "' not found or could not be deleted.");
+            }
+            return true;
+        }
+
+        // Check for deleteworld subcommand
+        if (args.length >= 2 && args[0].equalsIgnoreCase("deleteworld")) {
+            String worldName = args[1];
+            boolean deleted = spawnManager.deleteWorldSpawn(worldName);
+            if (deleted) {
+                p.sendMessage(ChatColor.GREEN + "Deleted world spawn for '" + worldName + "'.");
+            } else {
+                p.sendMessage(ChatColor.RED + "World spawn for '" + worldName + "' not found or could not be deleted.");
+            }
+            return true;
+        }
+
+        // Check for world subcommand
+        if (args[0].equalsIgnoreCase("world")) {
+            String worldName;
+            if (args.length >= 2) {
+                worldName = args[1];
+            } else {
+                worldName = p.getWorld().getName();
+            }
+            
+            boolean ok = spawnManager.setWorldSpawn(worldName, p.getLocation());
+            if (ok) {
+                p.sendMessage(ChatColor.GREEN + "Set world spawn for '" + worldName + "' at your current location.");
+            } else {
+                p.sendMessage(ChatColor.RED + "Failed to set world spawn. Check server logs.");
             }
             return true;
         }
@@ -70,21 +104,56 @@ public class SetSpawnCommand implements TabExecutor {
             java.util.List<String> res = new java.util.ArrayList<>();
             if ("delete".startsWith(cur))
                 res.add("delete");
+            if ("deleteworld".startsWith(cur))
+                res.add("deleteworld");
+            if ("world".startsWith(cur))
+                res.add("world");
             return res;
-        } else if (args.length == 2 && (args[0].equalsIgnoreCase("delete") || args[0].equalsIgnoreCase("del"))) {
-            String cur = args[1].toLowerCase();
-            java.util.List<String> names = new java.util.ArrayList<>();
-            try {
-                if (plugin.getSpawnManager() != null)
-                    names.addAll(plugin.getSpawnManager().listSpawns());
-            } catch (Throwable ignored) {
+        } else if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("delete") || args[0].equalsIgnoreCase("del")) {
+                // Tab complete for named spawns
+                String cur = args[1].toLowerCase();
+                java.util.List<String> names = new java.util.ArrayList<>();
+                try {
+                    if (plugin.getSpawnManager() != null)
+                        names.addAll(plugin.getSpawnManager().listSpawns());
+                } catch (Throwable ignored) {
+                }
+                java.util.List<String> res = new java.util.ArrayList<>();
+                for (String s : names) {
+                    if (s.toLowerCase().startsWith(cur))
+                        res.add(s);
+                }
+                return res;
+            } else if (args[0].equalsIgnoreCase("deleteworld")) {
+                // Tab complete for world spawns
+                String cur = args[1].toLowerCase();
+                java.util.List<String> worldNames = new java.util.ArrayList<>();
+                try {
+                    if (plugin.getSpawnManager() != null)
+                        worldNames.addAll(plugin.getSpawnManager().listWorldSpawns());
+                } catch (Throwable ignored) {
+                }
+                java.util.List<String> res = new java.util.ArrayList<>();
+                for (String s : worldNames) {
+                    if (s.toLowerCase().startsWith(cur))
+                        res.add(s);
+                }
+                return res;
+            } else if (args[0].equalsIgnoreCase("world")) {
+                // Tab complete for world names
+                String cur = args[1].toLowerCase();
+                java.util.List<String> worldNames = new java.util.ArrayList<>();
+                for (org.bukkit.World world : org.bukkit.Bukkit.getWorlds()) {
+                    worldNames.add(world.getName());
+                }
+                java.util.List<String> res = new java.util.ArrayList<>();
+                for (String s : worldNames) {
+                    if (s.toLowerCase().startsWith(cur))
+                        res.add(s);
+                }
+                return res;
             }
-            java.util.List<String> res = new java.util.ArrayList<>();
-            for (String s : names) {
-                if (s.toLowerCase().startsWith(cur))
-                    res.add(s);
-            }
-            return res;
         }
         return java.util.Collections.emptyList();
     }

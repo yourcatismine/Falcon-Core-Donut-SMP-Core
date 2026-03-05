@@ -42,7 +42,14 @@ public class PlayerConnectionListener implements Listener {
             plugin.getTeamManager().getTeam(data.getTeamId());
         }
 
+        // Preload enderchest
+        plugin.getEnderChestManager().preload(event.getUniqueId(), event.getName());
+
         // Log IP for alt-account tracking
+        if (data != null) {
+            data.setIp(event.getAddress().getHostAddress());
+        }
+
         if (plugin.getOffendPlugin() != null && plugin.getOffendPlugin().getDatabaseManager() != null) {
             String ip = event.getAddress().getHostAddress();
             plugin.getOffendPlugin().getDatabaseManager().logIP(event.getUniqueId(), ip);
@@ -54,9 +61,13 @@ public class PlayerConnectionListener implements Listener {
         // This will be instant as data was preloaded in AsyncPlayerPreLoginEvent
         PlayerData data = plugin.getPlayerDataManager().get(event.getPlayer().getUniqueId());
         data.setLastSeenUpdate(System.currentTimeMillis());
+        plugin.getDatabaseManager().updateStatusAsync(event.getPlayer().getUniqueId(), "Online");
 
         plugin.getActivityLogger().log(event.getPlayer().getUniqueId(), ActivityLogger.LogType.GENERAL,
                 "Joined the server");
+
+        // Cancel any stale teleport tasks
+        plugin.getTeleportManager().cancelActiveTask(event.getPlayer().getUniqueId());
 
         // Kick notification
         if (data.getPendingKickTeamName() != null) {
@@ -78,6 +89,16 @@ public class PlayerConnectionListener implements Listener {
                 .setLastSeenUpdate(System.currentTimeMillis());
         plugin.getActivityLogger().log(event.getPlayer().getUniqueId(), ActivityLogger.LogType.GENERAL,
                 "Left the server");
+        plugin.getDatabaseManager().updateStatusAsync(event.getPlayer().getUniqueId(), "Offline");
+        plugin.getDatabaseManager().saveLastLocationAsync(event.getPlayer().getUniqueId(),
+                event.getPlayer().getLocation());
+
+        // Cancel any active teleport tasks before unloading
+        plugin.getTeleportManager().cancelActiveTask(event.getPlayer().getUniqueId());
+
         plugin.getPlayerDataManager().unload(event.getPlayer().getUniqueId());
+
+        // Unload enderchest
+        plugin.getEnderChestManager().unload(event.getPlayer().getUniqueId());
     }
 }

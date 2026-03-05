@@ -139,6 +139,20 @@ public class SettingsCommand implements CommandExecutor {
         gui.setItem(12,
                 createItem(Material.PAPER, "&aѕᴄᴏʀᴇʙᴏᴀʀᴅ", "&fCurrently: " + scoreboardStatus, "&a&lON", "&4&lOFF"));
 
+        // Slot 13: End Crystal - Fast Crystals
+        boolean fastCrystals = data != null && data.isFastCrystals();
+        String fastCrystalStatus = fastCrystals ? "&a&lON" : "&4&lOFF";
+        gui.setItem(13,
+                createItem(Material.END_CRYSTAL, "&aꜰᴀѕᴛ ᴄʀʏѕᴛᴀʟ", "&fCurrently: " + fastCrystalStatus, "&a&lON",
+                        "&4&lOFF"));
+
+        // Slot 14: Chainmail Helmet - Respawn RTP
+        boolean respawnRTP = data != null && data.isRespawnRTP();
+        String respawnStatus = respawnRTP ? "&a&lON" : "&4&lOFF";
+        gui.setItem(14,
+                createItem(Material.CHAINMAIL_HELMET, "&aʀᴇѕᴘᴀᴡɴ ɢᴇᴀʀ", "&fCurrently: " + respawnStatus, "&a&lON",
+                        "&4&lOFF"));
+
         player.openInventory(gui);
     }
 

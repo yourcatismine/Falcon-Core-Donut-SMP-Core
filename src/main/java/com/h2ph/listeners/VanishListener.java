@@ -32,8 +32,19 @@ public class VanishListener implements Listener {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.equals(player))
                     continue;
+                    
+                // Validate observer is still online and valid
+                if (!online.isOnline() || !online.isValid()) {
+                    continue;
+                }
+                    
                 if (!online.hasPermission("prism.admin.vanish.see")) {
-                    online.hidePlayer(plugin, player);
+                    try {
+                        online.hidePlayer(plugin, player);
+                    } catch (Exception e) {
+                        // Silently handle packet encoding errors to prevent server crash
+                        plugin.getLogger().fine("Failed to hide joining player " + player.getName() + " from " + online.getName() + ": " + e.getMessage());
+                    }
                 }
             }
         }
@@ -41,12 +52,28 @@ public class VanishListener implements Listener {
         // 2. Hide already vanished players from the JOINING player
         // Delay slightly to ensure tab list is initialized
         plugin.getSchedulerAdapter().runTaskLater(() -> {
+            // Validate joining player is still online
+            if (!player.isOnline() || !player.isValid()) {
+                return;
+            }
+            
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.equals(player))
                     continue;
+                    
+                // Validate target player is still online and valid
+                if (!online.isOnline() || !online.isValid()) {
+                    continue;
+                }
+                    
                 if (vanishManager.isVanished(online.getUniqueId())) {
                     if (!player.hasPermission("prism.admin.vanish.see")) {
-                        player.hidePlayer(plugin, online);
+                        try {
+                            player.hidePlayer(plugin, online);
+                        } catch (Exception e) {
+                            // Silently handle packet encoding errors to prevent server crash
+                            plugin.getLogger().fine("Failed to hide vanished player " + online.getName() + " from joining player " + player.getName() + ": " + e.getMessage());
+                        }
                     }
                 }
             }
@@ -70,6 +97,28 @@ public class VanishListener implements Listener {
                             // For simplicity, let's just strip the @ if they type it
                             String newMessage = message.replaceAll("(?i)@" + vanishedPlayer.getName(),
                                     vanishedPlayer.getName());
+                            event.setMessage(newMessage);
+                        }
+                    }
+                }
+            }
+
+            // Check for ignored player mentions
+            com.prismcore.survival.manager.PlayerData senderData = plugin.getPlayerDataManager()
+                    .get(event.getPlayer().getUniqueId());
+            if (senderData != null) {
+                for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                    UUID mentionedPlayerUuid = onlinePlayer.getUniqueId();
+                    String mention = "@" + onlinePlayer.getName();
+                    
+                    if (message.toLowerCase().contains(mention.toLowerCase())) {
+                        // Check if the mentioned player has ignored the sender
+                        com.prismcore.survival.manager.PlayerData mentionedPlayerData = plugin.getPlayerDataManager()
+                                .get(mentionedPlayerUuid);
+                        if (mentionedPlayerData != null && mentionedPlayerData.isIgnoring(event.getPlayer().getUniqueId())) {
+                            // Suppress the mention by removing the @
+                            String newMessage = message.replaceAll("(?i)@" + onlinePlayer.getName(),
+                                    onlinePlayer.getName());
                             event.setMessage(newMessage);
                         }
                     }

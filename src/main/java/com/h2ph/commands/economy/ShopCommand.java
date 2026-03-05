@@ -194,9 +194,10 @@ public class ShopCommand implements CommandExecutor, Listener {
                         String keyType = items.getString(key + ".key_type");
                         String spawnerType = items.getString(key + ".spawner_type");
                         String command = items.getString(key + ".command");
+                        List<Integer> values = items.getIntegerList(key + ".values");
 
                         shardSlots.put(slot, new ShardPurchaseSession(mat, displayName, price, currency, fileName,
-                                keyType, spawnerType, command));
+                                keyType, spawnerType, command, values));
                     }
                 }
             }
@@ -326,8 +327,14 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
-        String rawName = formatName(session.baseItem).toUpperCase();
-        String fancyName = toSmallCaps(rawName);
+        String fancyName;
+        if (session.displayName != null && !session.displayName.isEmpty()) {
+            fancyName = color(session.displayName);
+        } else {
+            String rawName = formatName(session.baseItem).toUpperCase();
+            fancyName = toSmallCaps(rawName);
+        }
+
         String title = color("&8ʙᴜʏɪɴɢ " + fancyName);
         if (title.length() > 32)
             title = title.substring(0, 32);
@@ -345,9 +352,16 @@ public class ShopCommand implements CommandExecutor, Listener {
         String totalStr = String.format("%,.0f", total);
 
         List<String> lore = new ArrayList<>();
-        lore.add(color("&fBuy price: &a$" + totalStr));
+        if (session.currency.equals("SHARDS")) {
+            lore.add(color("&fBuy price: &5" + totalStr + "x &lShards"));
+        } else {
+            lore.add(color("&fBuy price: &a$" + totalStr));
+        }
 
         meta.setLore(lore);
+        if (session.displayName != null && !session.displayName.isEmpty()) {
+            meta.setDisplayName(color(session.displayName));
+        }
         displayItem.setItemMeta(meta);
         gui.setItem(13, displayItem);
 
@@ -470,6 +484,30 @@ public class ShopCommand implements CommandExecutor, Listener {
             // Check for shard shop item first
             ShardPurchaseSession shardSession = findShardSessionFromClick(player, title, slot);
             if (shardSession != null) {
+                // Check for inventory space (Shard shop items usually give 1 item)
+                ItemStack itemToTest = new ItemStack(shardSession.displayMaterial, 1);
+                if (getSpaceFor(player.getInventory(), itemToTest) <= 0) {
+                    sendInventoryFull(player);
+                    return;
+                }
+
+                // If it has values: defined, use the Buying Menu
+                if (shardSession.incrementValues != null && !shardSession.incrementValues.isEmpty()) {
+                    BuyingSession session = new BuyingSession(
+                            new ItemStack(shardSession.displayMaterial),
+                            shardSession.price,
+                            shardSession.currency,
+                            shardSession.categoryFile,
+                            shardSession.incrementValues,
+                            shardSession.command,
+                            shardSession.displayName,
+                            shardSession.keyType,
+                            shardSession.spawnerType);
+                    buyingSessions.put(player.getUniqueId(), session);
+                    openBuyingMenu(player, session);
+                    return;
+                }
+
                 shardPurchaseSessions.put(player.getUniqueId(), shardSession);
                 openShardConfirmation(player, shardSession);
                 return;
@@ -579,56 +617,90 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
-        Economy econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
+        Economy econ = null;
+        if (session.currency.equals("MONEY")) {
+            econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
+        }
+
         double totalCost = session.unitPrice * buyAmount;
 
-        if (!econ.has(player, totalCost)) {
-            player.sendMessage(ChatColor.RED + "You do not have enough money!");
-            playSound(player, Sound.ENTITY_VILLAGER_NO);
-            return;
+        if (session.currency.equals("MONEY")) {
+            if (econ == null || !econ.has(player, totalCost)) {
+                player.sendMessage(ChatColor.RED + "You do not have enough money!");
+                playSound(player, Sound.ENTITY_VILLAGER_NO);
+                return;
+            }
+            econ.withdrawPlayer(player, totalCost);
+        } else {
+            com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
+            if (pd == null || pd.getShards() < totalCost) {
+                player.sendMessage(ChatColor.RED + "You do not have enough shards!");
+                playSound(player, Sound.ENTITY_VILLAGER_NO);
+                return;
+            }
+            pd.removeShards(totalCost,
+                    "Shop: " + (session.displayName != null ? session.displayName : session.baseItem.getType().name()));
+            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
 
-        econ.withdrawPlayer(player, totalCost);
+        // Execute command if present
+        if (session.command != null && !session.command.isEmpty()) {
+            String cmd = session.command
+                    .replace("{gamertag}", player.getName())
+                    .replace("{amount}", String.valueOf(buyAmount))
+                    .replace("{quantity}", String.valueOf(buyAmount))
+                    .replace("{value}", String.valueOf(buyAmount));
+            plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
+        } else if (session.keyType != null) {
+            com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
+            String normalizedKey = plugin.normalizeKeyName(session.keyType);
+            for (int k = 0; k < buyAmount; k++)
+                pd.addKey(normalizedKey);
+            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
+        } else if (session.spawnerType != null) {
+            String cmd = "spawner give " + player.getName() + " " + session.spawnerType + " " + buyAmount;
+            plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
+        } else {
+            // Give items normally
+            ItemStack toGive = session.baseItem.clone();
+            toGive.setAmount(buyAmount);
 
-        ItemStack toGive = session.baseItem.clone();
-        toGive.setAmount(buyAmount);
-
-        // Apply potion effects if configured
-        if (session.potionEffects != null && !session.potionEffects.isEmpty()) {
-            if (toGive.getType() == Material.ARROW || toGive.getType() == Material.TIPPED_ARROW) {
-                // Convert to tipped arrow if it's a regular arrow
-                if (toGive.getType() == Material.ARROW) {
-                    toGive.setType(Material.TIPPED_ARROW);
-                }
-
-                org.bukkit.inventory.meta.PotionMeta potionMeta = (org.bukkit.inventory.meta.PotionMeta) toGive
-                        .getItemMeta();
-                if (potionMeta != null) {
-                    for (String effectName : session.potionEffects) {
-                        try {
-                            org.bukkit.potion.PotionEffectType effectType = org.bukkit.potion.PotionEffectType
-                                    .getByName(effectName);
-                            if (effectType != null) {
-                                // Duration in ticks (20 ticks = 1 second)
-                                int durationTicks = session.effectDuration * 20;
-                                // Level is 0-indexed in the PotionEffect constructor
-                                int amplifier = session.effectLevel - 1;
-                                org.bukkit.potion.PotionEffect effect = new org.bukkit.potion.PotionEffect(
-                                        effectType, durationTicks, amplifier, false, true, true);
-                                potionMeta.addCustomEffect(effect, true);
-                            }
-                        } catch (Exception e) {
-                            // Ignore invalid effect names
-                        }
+            // Apply potion effects if configured
+            if (session.potionEffects != null && !session.potionEffects.isEmpty()) {
+                if (toGive.getType() == Material.ARROW || toGive.getType() == Material.TIPPED_ARROW) {
+                    // Convert to tipped arrow if it's a regular arrow
+                    if (toGive.getType() == Material.ARROW) {
+                        toGive.setType(Material.TIPPED_ARROW);
                     }
-                    toGive.setItemMeta(potionMeta);
+
+                    org.bukkit.inventory.meta.PotionMeta potionMeta = (org.bukkit.inventory.meta.PotionMeta) toGive
+                            .getItemMeta();
+                    if (potionMeta != null) {
+                        for (String effectName : session.potionEffects) {
+                            try {
+                                org.bukkit.potion.PotionEffectType effectType = org.bukkit.potion.PotionEffectType
+                                        .getByName(effectName);
+                                if (effectType != null) {
+                                    // Duration in ticks (20 ticks = 1 second)
+                                    int durationTicks = session.effectDuration * 20;
+                                    // Level is 0-indexed in the PotionEffect constructor
+                                    int amplifier = session.effectLevel - 1;
+                                    org.bukkit.potion.PotionEffect effect = new org.bukkit.potion.PotionEffect(
+                                            effectType, durationTicks, amplifier, false, true, true);
+                                    potionMeta.addCustomEffect(effect, true);
+                                }
+                            } catch (Exception e) {
+                                // Ignore invalid effect names
+                            }
+                        }
+                        toGive.setItemMeta(potionMeta);
+                    }
                 }
             }
+            player.getInventory().addItem(toGive);
         }
 
-        player.getInventory().addItem(toGive);
-
-        playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
+        playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
 
         // Track spending
         com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
@@ -637,6 +709,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             // Save player data asynchronously to avoid server hangs
             plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
+
     }
 
     private void sendInventoryFull(Player player) {
@@ -718,6 +791,13 @@ public class ShopCommand implements CommandExecutor, Listener {
         }
     }
 
+    private void playSound(Player p, Sound s, float volume, float pitch) {
+        try {
+            p.playSound(p.getLocation(), s, volume, pitch);
+        } catch (Exception ignored) {
+        }
+    }
+
     private String formatName(ItemStack item) {
         return item.getType().name().toLowerCase().replace("_", " ");
     }
@@ -767,6 +847,13 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
+        // Final inventory space check
+        ItemStack itemToTest = new ItemStack(session.displayMaterial, 1);
+        if (getSpaceFor(player.getInventory(), itemToTest) <= 0) {
+            sendInventoryFull(player);
+            return;
+        }
+
         // Check currency and balance
         if (session.currency.equals("MONEY")) {
             // Money-based purchase
@@ -812,7 +899,11 @@ public class ShopCommand implements CommandExecutor, Listener {
         // Execute command if present, otherwise fall back to old logic
         if (session.command != null && !session.command.isEmpty()) {
             // Replace {gamertag} with actual player name
-            String cmd = session.command.replace("{gamertag}", player.getName());
+            String cmd = session.command
+                    .replace("{gamertag}", player.getName())
+                    .replace("{amount}", "1")
+                    .replace("{quantity}", "1")
+                    .replace("{value}", "1");
             // Dispatch command on global scheduler (required for console commands on Folia)
             plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
         } else {
@@ -844,10 +935,7 @@ public class ShopCommand implements CommandExecutor, Listener {
         }
 
         playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
-        String categoryFile = session.categoryFile;
         shardPurchaseSessions.remove(player.getUniqueId());
-        // Return to shard shop so they can buy more
-        openCategory(player, categoryFile);
     }
 
     private ShardPurchaseSession findShardSessionFromClick(Player player, String guiTitle, int clickedSlot) {
@@ -908,6 +996,13 @@ public class ShopCommand implements CommandExecutor, Listener {
         int effectDuration;
         int effectLevel;
 
+        // Fields for shard/command support
+        String currency = "MONEY";
+        String command;
+        String displayName;
+        String keyType;
+        String spawnerType;
+
         public BuyingSession(ItemStack baseItem, double unitPrice, String categoryFileName,
                 List<Integer> incrementValues, List<String> potionEffects, int effectDuration, int effectLevel) {
             this.baseItem = baseItem;
@@ -917,6 +1012,21 @@ public class ShopCommand implements CommandExecutor, Listener {
             this.potionEffects = potionEffects;
             this.effectDuration = effectDuration;
             this.effectLevel = effectLevel;
+            this.quantity = 1;
+        }
+
+        // Constructor for Shard/Command conversion
+        public BuyingSession(ItemStack baseItem, double unitPrice, String currency, String categoryFileName,
+                List<Integer> incrementValues, String command, String displayName, String keyType, String spawnerType) {
+            this.baseItem = baseItem;
+            this.unitPrice = unitPrice;
+            this.currency = (currency != null) ? currency.toUpperCase() : "MONEY";
+            this.categoryFileName = categoryFileName;
+            this.incrementValues = incrementValues;
+            this.command = command;
+            this.displayName = displayName;
+            this.keyType = keyType;
+            this.spawnerType = spawnerType;
             this.quantity = 1;
         }
     }
@@ -930,9 +1040,11 @@ public class ShopCommand implements CommandExecutor, Listener {
         String keyType;
         String spawnerType;
         String command;
+        List<Integer> incrementValues;
 
         public ShardPurchaseSession(Material displayMaterial, String displayName, double price, String currency,
-                String categoryFile, String keyType, String spawnerType, String command) {
+                String categoryFile, String keyType, String spawnerType, String command,
+                List<Integer> incrementValues) {
             this.displayMaterial = displayMaterial;
             this.displayName = displayName;
             this.price = price;
@@ -941,6 +1053,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             this.keyType = keyType;
             this.spawnerType = spawnerType;
             this.command = command;
+            this.incrementValues = incrementValues;
         }
     }
 }

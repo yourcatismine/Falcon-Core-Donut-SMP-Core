@@ -3,6 +3,7 @@ package com.h2ph;
 import com.prismcore.survival.manager.PlayerDataManager;
 import com.prismcore.survival.manager.DatabaseManager;
 import com.prismcore.survival.scheduler.SchedulerAdapter;
+import com.prismcore.survival.utils.PlayerNameCache;
 import com.h2ph.commands.economy.ShopCommand;
 import com.h2ph.commands.player.QuickGameMode;
 import org.bukkit.Bukkit;
@@ -14,6 +15,7 @@ public class PrismSurvival extends JavaPlugin {
     private PlayerDataManager playerDataManager;
     private DatabaseManager databaseManager;
     private SchedulerAdapter schedulerAdapter;
+    private PlayerNameCache playerNameCache;
     private ShopCommand shopCommand;
     private com.h2ph.commands.player.RulesCommand rulesCommand;
     private com.h2ph.commands.player.MediaCommand mediaCommand;
@@ -56,13 +58,16 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.managers.EnderChestManager enderChestManager;
     private com.h2ph.managers.HomeManager homeManager;
     private com.h2ph.managers.ScoreboardManager scoreboardManager;
+    private com.h2ph.managers.TabListManager tabListManager;
     private com.prismcore.survival.manager.VoidManager voidManager;
     private com.h2ph.managers.VanishManager vanishManager;
-    private com.h2ph.managers.RTPDeathManager rtpDeathManager;
-    private com.h2ph.gui.RTPDeathGUI rtpDeathGUI;
+    private com.h2ph.managers.DeathMessageManager deathMessageManager;
+    private com.h2ph.managers.RespawnGearManager respawnGearManager;
+    private com.h2ph.gui.RespawnGearGUI respawnGearGUI;
     private com.h2ph.teams.TeamManager teamManager;
     private com.h2ph.teams.TeamInviteManager teamInviteManager;
     private com.h2ph.managers.GamertagManager gamertagManager;
+    private com.h2ph.managers.DamageManager damageManager;
 
     private com.prismcore.survival.limiter.LimiterConfig limiterConfig;
     private com.prismcore.survival.limiter.LimiterManager limiterManager;
@@ -90,9 +95,6 @@ public class PrismSurvival extends JavaPlugin {
 
         // Register MessageHider
         new com.prismcore.survival.survival.MessageHider(this);
-
-        // Register ItemMerger (Aggressive Stacking)
-        getServer().getPluginManager().registerEvents(new com.prismcore.survival.survival.ItemMerger(this), this);
 
         // Register ChatFilter
         this.chatFilter = new com.prismcore.survival.survival.ChatFilter(this);
@@ -130,6 +132,7 @@ public class PrismSurvival extends JavaPlugin {
         this.playerDataManager = new PlayerDataManager(this);
         this.databaseManager = new DatabaseManager(this, getSurvivalConfig());
         this.schedulerAdapter = new SchedulerAdapter(this);
+        this.playerNameCache = new PlayerNameCache(this.schedulerAdapter);
         this.keyAllManager = new com.prismcore.survival.manager.KeyAllManager(this);
         this.carouselManager = new com.prismcore.survival.manager.CarouselManager(this);
         this.crateLocationRegistry = new com.prismcore.survival.manager.CrateLocationRegistry(this);
@@ -139,6 +142,9 @@ public class PrismSurvival extends JavaPlugin {
         this.teleportManager = new com.prismcore.survival.manager.TeleportManager(this);
         this.privateMessageManager = new com.h2ph.managers.PrivateMessageManager();
         this.bountyManager = new com.prismcore.survival.manager.BountyManager(this);
+        
+        // Initialize Death Message Manager
+        this.deathMessageManager = new com.h2ph.managers.DeathMessageManager(this);
 
         // Register Live Sign Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
@@ -146,11 +152,17 @@ public class PrismSurvival extends JavaPlugin {
         // Register Crate Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CrateListener(this), this);
 
+        // Register Death Message Listener (handles custom death messages with radius)
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.DeathMessageListener(this), this);
+
         // Register Player Connection Listener (For saving data)
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
 
         // Register Inventory Sync Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventorySyncListener(this), this);
+
+        // Register History Listener (for /checkhistory command)
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HistoryListener(this), this);
 
         // Setup Player Inventory Auto-Save Task (Every 10 minutes = 12000 ticks)
         getSchedulerAdapter().runTaskTimer(() -> {
@@ -182,6 +194,9 @@ public class PrismSurvival extends JavaPlugin {
 
         // Register Inventory Log Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventoryLogListener(this), this);
+
+        // Register Player Name Cache Listener
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
 
         // Initialize managers
         this.redstoneManager = new com.h2ph.managers.RedstoneManager(this);
@@ -252,6 +267,15 @@ public class PrismSurvival extends JavaPlugin {
         // Register Worth Command
         getCommand("worth").setExecutor(new com.h2ph.commands.economy.WorthCommand(this));
 
+        // Register Anvil Command
+        getCommand("anvil").setExecutor(new com.h2ph.commands.player.AnvilCommand());
+
+        // Register Crafting Table Command
+        getCommand("craftingtable").setExecutor(new com.h2ph.commands.player.CraftingTableCommand());
+
+        // Register Smithing Table Command
+        getCommand("smithingtable").setExecutor(new com.h2ph.commands.player.SmithingTableCommand());
+
         // Load economy config to check if enabled
         java.io.File ecoConfig = new java.io.File(getDataFolder(), "economy/config.yml");
         org.bukkit.configuration.file.FileConfiguration ecoConfigYaml = org.bukkit.configuration.file.YamlConfiguration
@@ -321,6 +345,9 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("checkmute").setExecutor(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
         getCommand("checkmute").setTabCompleter(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
 
+        getCommand("checkhistory").setExecutor(new com.h2ph.commands.admin.moderations.CheckHistoryCommand(this));
+        getCommand("whowashere").setExecutor(new com.h2ph.commands.admin.moderations.WhoWasHereCommand(this));
+
         // Initialize Duel Managers
         this.duelStatsManager = new com.h2ph.commands.admin.duels.DuelStatsManager(this);
         this.duelArenaManager = new com.h2ph.commands.admin.duels.DuelArenaManager(this, duelStatsManager);
@@ -349,9 +376,9 @@ public class PrismSurvival extends JavaPlugin {
         this.rtpQueueManager = new com.h2ph.rtp.RTPQueueManager(this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.RTPQueueListener(this), this);
 
-        // Initialize RTP Death Manager
-        this.rtpDeathManager = new com.h2ph.managers.RTPDeathManager(this);
-        this.rtpDeathGUI = new com.h2ph.gui.RTPDeathGUI(this);
+        // Initialize Respawn Gear Manager
+        this.respawnGearManager = new com.h2ph.managers.RespawnGearManager(this);
+        this.respawnGearGUI = new com.h2ph.gui.RespawnGearGUI(this);
 
         // Register Rules Command
         this.rulesCommand = new com.h2ph.commands.player.RulesCommand(this);
@@ -385,7 +412,8 @@ public class PrismSurvival extends JavaPlugin {
 
         // Register TpAuto
         getCommand("tpauto").setExecutor(new com.h2ph.commands.player.TpAutoCommand());
-        new com.h2ph.managers.TpAutoManager(this);
+        com.h2ph.managers.TpAutoManager tpAutoManager = new com.h2ph.managers.TpAutoManager(this);
+        getServer().getPluginManager().registerEvents(tpAutoManager, this);
 
         // Register TPA Commands
         com.h2ph.commands.player.TpaCommand tpaCmd = new com.h2ph.commands.player.TpaCommand();
@@ -395,6 +423,28 @@ public class PrismSurvival extends JavaPlugin {
         com.h2ph.commands.player.TpaHereCommand tpaHereCmd = new com.h2ph.commands.player.TpaHereCommand();
         getCommand("tpahere").setExecutor(tpaHereCmd);
         getCommand("tpahere").setTabCompleter(tpaHereCmd);
+
+        com.h2ph.commands.admin.TpCommand tpCmd = new com.h2ph.commands.admin.TpCommand();
+        getCommand("tp").setExecutor(tpCmd);
+        getCommand("tp").setTabCompleter(tpCmd);
+
+        com.h2ph.commands.player.OtpCommand otpCmd = new com.h2ph.commands.player.OtpCommand(this);
+        getCommand("otp").setExecutor(otpCmd);
+        getCommand("otp").setTabCompleter(otpCmd);
+
+        com.h2ph.commands.admin.moderations.CheckAltCommand checkAltCmd = new com.h2ph.commands.admin.moderations.CheckAltCommand(
+                this);
+        getCommand("checkalt").setExecutor(checkAltCmd);
+        getCommand("checkalt").setTabCompleter(checkAltCmd);
+
+        com.h2ph.commands.admin.moderations.CheckPlayersCommand checkPlayersCmd = new com.h2ph.commands.admin.moderations.CheckPlayersCommand(
+                this);
+        getCommand("checkplayers").setExecutor(checkPlayersCmd);
+        getCommand("checkplayers").setTabCompleter(checkPlayersCmd);
+
+        com.h2ph.commands.player.CheckTotemCommand checkTotemCmd = new com.h2ph.commands.player.CheckTotemCommand();
+        getCommand("checktotem").setExecutor(checkTotemCmd);
+        getCommand("checktotem").setTabCompleter(checkTotemCmd);
 
         com.h2ph.commands.player.TpAcceptCommand tpAcceptCmd = new com.h2ph.commands.player.TpAcceptCommand();
         getCommand("tpaccept").setExecutor(tpAcceptCmd);
@@ -435,6 +485,12 @@ public class PrismSurvival extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.WorthGUIListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SettingsGUIListener(), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.FastCrystalListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.FastAnchorListener(this), this);
+
+        // Initialize Damage Manager and register listener
+        this.damageManager = new com.h2ph.managers.DamageManager(this, databaseManager);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CrystalAnchorDamageListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.MobSpawnListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.TpaConfirmGUIListener(), this);
 
@@ -451,6 +507,9 @@ public class PrismSurvival extends JavaPlugin {
 
         // Register NightVision Command
         getCommand("nv").setExecutor(new com.h2ph.commands.player.NightVisionCommand(this));
+
+        // Register NightVision Listener
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.NightVisionListener(this), this);
 
         // Register Discord Command
         getCommand("discord").setExecutor(new com.h2ph.commands.player.DiscordCommand(this));
@@ -517,12 +576,26 @@ public class PrismSurvival extends JavaPlugin {
         // Register Home GUI Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HomeGUIListener(this), this);
 
+        // Register WhereAmI Command
+        com.h2ph.commands.player.WhereAmICommand whereAmICmd = new com.h2ph.commands.player.WhereAmICommand(this);
+        getCommand("whereami").setExecutor(whereAmICmd);
+        getCommand("whereami").setTabCompleter(whereAmICmd);
+
         // Register Home Chat Listener
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HomeChatListener(this), this);
 
         // Initialize Scoreboard Manager
         this.scoreboardManager = new com.h2ph.managers.ScoreboardManager(this);
         this.scoreboardManager.setup();
+
+        // Initialize TAB List Manager
+        this.tabListManager = new com.h2ph.managers.TabListManager(this);
+        this.tabListManager.setup();
+
+        // Register TAB Command
+        com.h2ph.commands.admin.TabCommand tabCommand = new com.h2ph.commands.admin.TabCommand(this);
+        getCommand("tab").setExecutor(tabCommand);
+        getCommand("tab").setTabCompleter(tabCommand);
 
         // Initialize Gamertag Manager
         this.gamertagManager = new com.h2ph.managers.GamertagManager(this);
@@ -583,7 +656,11 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("stats").setExecutor(new com.h2ph.commands.player.StatsCommand(this));
 
         // Register HideName Command
-        getCommand("hidename").setExecutor(new com.h2ph.commands.player.HideNameCommand(this));
+        getCommand("hide").setExecutor(new com.h2ph.commands.player.HideNameCommand(this));
+
+        // Register Ignore Commands
+        getCommand("ignore").setExecutor(new com.h2ph.commands.player.IgnoreCommand(this));
+        getCommand("unignore").setExecutor(new com.h2ph.commands.player.UnignoreCommand(this));
         // Register InvSee and EnderSee admin commands
         com.h2ph.commands.admin.moderations.InvSeeCommand invSeeCmd = new com.h2ph.commands.admin.moderations.InvSeeCommand(
                 this);
@@ -627,6 +704,12 @@ public class PrismSurvival extends JavaPlugin {
         // Print Startup Banner
         printStartupBanner(vaultEnabled);
 
+        // Initialize Player Name Cache (async to prevent TPS drops on TAB completion)
+        this.playerNameCache.initialize();
+        
+        // Register PlayerNameCache listener to keep recent players updated
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
+
         // Register Log4j Filter (Hide 429 Errors)
         try {
             org.apache.logging.log4j.core.Logger rootLogger = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager
@@ -648,13 +731,11 @@ public class PrismSurvival extends JavaPlugin {
 
         // Save all online ender chests
         if (this.enderChestManager != null) {
-            for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                // Close the inventory first if it's an ender chest GUI to ensure save
-                if (player.getOpenInventory().getTopInventory()
-                        .getHolder() instanceof com.h2ph.gui.EnderChestGUI.EnderChestHolder) {
-                    org.bukkit.inventory.ItemStack[] contents = player.getOpenInventory().getTopInventory()
-                            .getContents().clone();
-                    this.enderChestManager.saveEnderChest(player.getUniqueId(), contents);
+            // Save all cached inventories
+            for (java.util.UUID uuid : this.enderChestManager.getActiveInventories().keySet()) {
+                org.bukkit.inventory.Inventory inv = this.enderChestManager.getActiveInventories().get(uuid);
+                if (inv != null) {
+                    this.enderChestManager.saveEnderChest(uuid, inv.getContents());
                 }
             }
         }
@@ -691,6 +772,10 @@ public class PrismSurvival extends JavaPlugin {
             this.scoreboardManager.shutdown();
         }
 
+        if (this.tabListManager != null) {
+            this.tabListManager.shutdown();
+        }
+
         if (this.activityLogger != null) {
             this.activityLogger.shutdown();
         }
@@ -717,6 +802,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public SchedulerAdapter getSchedulerAdapter() {
         return schedulerAdapter;
+    }
+
+    public PlayerNameCache getPlayerNameCache() {
+        return playerNameCache;
     }
 
     public com.h2ph.afk.AFKManager getAfkManager() {
@@ -791,6 +880,10 @@ public class PrismSurvival extends JavaPlugin {
         return scoreboardManager;
     }
 
+    public com.h2ph.managers.TabListManager getTabListManager() {
+        return tabListManager;
+    }
+
     public com.prismcore.survival.manager.VoidManager getVoidManager() {
         return voidManager;
     }
@@ -799,12 +892,16 @@ public class PrismSurvival extends JavaPlugin {
         return vanishManager;
     }
 
-    public com.h2ph.managers.RTPDeathManager getRTPDeathManager() {
-        return rtpDeathManager;
+    public com.h2ph.managers.DeathMessageManager getDeathMessageManager() {
+        return deathMessageManager;
     }
 
-    public com.h2ph.gui.RTPDeathGUI getRTPDeathGUI() {
-        return rtpDeathGUI;
+    public com.h2ph.managers.RespawnGearManager getRespawnGearManager() {
+        return respawnGearManager;
+    }
+
+    public com.h2ph.gui.RespawnGearGUI getRespawnGearGUI() {
+        return respawnGearGUI;
     }
 
     public com.h2ph.teams.TeamManager getTeamManager() {
@@ -876,6 +973,8 @@ public class PrismSurvival extends JavaPlugin {
         saveResourceSafely("economy/shop/categories/redstone.yml");
         saveResourceSafely("economy/shop/categories/shard.yml");
         saveResourceSafely("survival/AFK/config.yml");
+        saveResourceSafely("survival/death/config.yml");
+        saveResourceSafely("survival/death/messages.yml");
         saveResourceSafely("economy/config.yml");
         saveResourceSafely("rtp/europe/config.yml");
         saveResourceSafely("rtp/europe/config.yml");
@@ -1134,6 +1233,10 @@ public class PrismSurvival extends JavaPlugin {
         return rtpGlobalConfig;
     }
 
+    public com.h2ph.managers.DamageManager getDamageManager() {
+        return damageManager;
+    }
+
     private void printStartupBanner(boolean vaultEnabled) {
         org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
         String version = getDescription().getVersion();
@@ -1161,8 +1264,10 @@ public class PrismSurvival extends JavaPlugin {
             console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                     "&b  [+] &fDatabase System: &a&lONLINE"));
         } else {
+            String error = databaseManager.getConnectionError();
             console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&b  [-] &fDatabase System: &c&lOFFLINE &7(Data cannot be fetched)"));
+                    "&b  [-] &fDatabase System: &c&lOFFLINE &7(" + (error != null ? error : "Data cannot be fetched")
+                            + ")"));
         }
 
         // Economy Status

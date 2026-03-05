@@ -94,21 +94,40 @@ public class OrderManager {
         OfflinePlayer recipientOp = Bukkit.getOfflinePlayer(o.owner);
         String recipientName = recipientOp.getName() != null ? recipientOp.getName() : "Unknown";
 
-        NamespacedKey delivererKey = new NamespacedKey(this.pl, "deliverer-uuid");
-        NamespacedKey recipientKey = new NamespacedKey(this.pl, "recipient-name");
-
         for (ItemStack it : accepted) {
             if (it == null || it.getType() == Material.AIR || it.getAmount() <= 0)
                 continue;
 
             ItemMeta meta = it.getItemMeta();
             if (meta != null) {
-                meta.getPersistentDataContainer().set(delivererKey, PersistentDataType.STRING, deliverer.toString());
-                meta.getPersistentDataContainer().set(recipientKey, PersistentDataType.STRING, recipientName);
+                meta.getPersistentDataContainer().set(OrdersModule.DELIVERER_KEY, PersistentDataType.STRING,
+                        deliverer.toString());
+                meta.getPersistentDataContainer().set(OrdersModule.RECIPIENT_KEY, PersistentDataType.STRING,
+                        recipientName);
                 it.setItemMeta(meta);
             }
 
-            o.storage.add(it);
+            // Try to merge with existing items in storage
+            boolean merged = false;
+            synchronized (o.storage) {
+                for (ItemStack stored : o.storage) {
+                    if (stored != null && stored.isSimilar(it)) {
+                        int canAdd = stored.getMaxStackSize() - stored.getAmount();
+                        if (canAdd > 0) {
+                            int toAdd = Math.min(canAdd, it.getAmount());
+                            stored.setAmount(stored.getAmount() + toAdd);
+                            it.setAmount(it.getAmount() - toAdd);
+                            if (it.getAmount() <= 0) {
+                                merged = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!merged && it.getAmount() > 0) {
+                    o.storage.add(it);
+                }
+            }
         }
 
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
@@ -310,6 +329,25 @@ public class OrderManager {
         }
         for (Order o : toRemove)
             deleteOrder(o);
+    }
+
+    public void wipeOrders(java.util.UUID uuid) {
+        // Cancel all existing orders in memory
+        java.util.List<Order> toRemove = new java.util.ArrayList<>();
+        for (Order o : orders.values()) {
+            if (o.getOwner().equals(uuid)) {
+                toRemove.add(o);
+            }
+        }
+
+        for (Order o : toRemove) {
+            orders.remove(o.getId());
+        }
+
+        // Delete from database asynchronously
+        ((com.h2ph.PrismSurvival) pl).getSchedulerAdapter().runTaskAsynchronously(() -> {
+            ((com.h2ph.PrismSurvival) pl).getDatabaseManager().wipeOrders(uuid);
+        });
     }
 
     public static String nice(org.bukkit.Material m) {

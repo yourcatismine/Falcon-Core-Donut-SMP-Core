@@ -1,6 +1,6 @@
-package com.h2ph.commands.admin.moderations; // Updated package
+package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival; // Added import
+import com.h2ph.PrismSurvival;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -16,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+// BukkitRunnable import removed
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -128,13 +129,8 @@ public class SusCommand implements CommandExecutor, Listener {
     private void handleLogMessage(String rawMessage) {
         String clean = ChatColor.stripColor(rawMessage).replaceAll("\\u001B\\[[;\\d]*m", "");
 
-        // Grim Anti Cheat
-        // Prefix: Grim »
-        if (clean.contains("Grim") && (clean.contains("»") || clean.contains(">>")) && clean.contains("failed")) {
-            parseLog(clean, "Grim");
-        }
         // Matrix
-        else if (clean.contains("Matrix") || clean.contains("[Matrix]")) {
+        if (clean.contains("Matrix") || clean.contains("[Matrix]")) {
             if (clean.contains("using") || clean.contains("tried") || clean.contains("failed") ||
                     clean.contains("combat") || clean.contains("abnormally") || clean.contains("tring") ||
                     clean.contains("kicked") || clean.contains("speed")) {
@@ -164,28 +160,7 @@ public class SusCommand implements CommandExecutor, Listener {
         data.lastFlagTime = System.currentTimeMillis();
 
         String check = "Check";
-        if (ac.equals("Grim")) {
-            // Format: Grim » Player failed Check (xVL) ...
-            // Or: Grim >> Player failed Check (xVL) ...
-            try {
-                int failedIndex = msg.indexOf("failed");
-                if (failedIndex != -1) {
-                    String afterFailed = msg.substring(failedIndex + 7).trim(); // "Check (xVL) ..."
-                    int parenIndex = afterFailed.indexOf("("); // Start of (xVL)
-                    if (parenIndex != -1) {
-                        check = afterFailed.substring(0, parenIndex).trim();
-                        // Optional: remove experimental symbol * if present at the end
-                        if (check.endsWith("*")) {
-                            check = check.substring(0, check.length() - 1);
-                        }
-                    } else {
-                        // Fallback if no VL part
-                        check = afterFailed.split(" ")[0];
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-        } else if (ac.equals("Vulcan") && msg.contains("failed")) {
+        if (ac.equals("Vulcan") && msg.contains("failed")) {
             int idx = msg.indexOf("failed");
             if (idx != -1 && idx + 7 < msg.length()) {
                 String sub = msg.substring(idx + 7);
@@ -221,7 +196,7 @@ public class SusCommand implements CommandExecutor, Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!sender.hasPermission("prism.admin.sus")) { // Updated permission
+        if (!sender.hasPermission("prism.admin.sus")) {
             sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("no permission"));
             return true;
         }
@@ -343,10 +318,9 @@ public class SusCommand implements CommandExecutor, Listener {
             if (meta != null && meta.getOwningPlayer() != null) {
                 Player target = meta.getOwningPlayer().getPlayer();
                 if (target != null && target.isOnline()) {
-                    admin.teleportAsync(target.getLocation());
+                    admin.teleport(target);
                     admin.sendMessage(
                             PREFIX + ChatColor.YELLOW + toSmallCaps("teleported to") + " " + target.getName());
-                    admin.closeInventory();
                 }
             }
         }

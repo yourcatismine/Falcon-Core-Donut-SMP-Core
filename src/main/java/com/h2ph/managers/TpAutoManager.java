@@ -2,18 +2,19 @@ package com.h2ph.managers;
 
 import com.h2ph.PrismSurvival;
 import com.prismcore.survival.manager.PlayerData;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
-public class TpAutoManager {
+public class TpAutoManager implements Listener {
 
     public TpAutoManager(PrismSurvival plugin) {
         // Run every 2 seconds (40 ticks) to keep the action bar visible
         plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
-            for (Player p : Bukkit.getOnlinePlayers()) {
+            for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
                 PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                 if (data != null && data.isTpAuto()) {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(
@@ -21,5 +22,17 @@ public class TpAutoManager {
                 }
             }
         }, 0L, 40L);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        org.bukkit.entity.Player p = event.getEntity();
+        PlayerData data = PrismSurvival.getInstance().getPlayerDataManager().get(p.getUniqueId());
+
+        if (data != null && data.isTpAuto()) {
+            data.setTpAuto(false);
+            p.sendMessage(
+                    ChatColor.translateAlternateColorCodes('&', "&cYour tpauto has been disabled because you died."));
+        }
     }
 }

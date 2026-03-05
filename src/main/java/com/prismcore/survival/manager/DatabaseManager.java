@@ -23,6 +23,7 @@ public class DatabaseManager {
     private final PrismSurvival plugin;
     private final FileConfiguration config;
     private HikariDataSource dataSource;
+    private String connectionError = null;
 
     public DatabaseManager(PrismSurvival plugin, FileConfiguration config) {
         this.plugin = plugin;
@@ -54,8 +55,9 @@ public class DatabaseManager {
 
             // Connection health/timeout settings
             hikariConfig.setConnectionTimeout(30000);
-            hikariConfig.setIdleTimeout(600000);
-            hikariConfig.setMaxLifetime(1800000);
+            hikariConfig.setIdleTimeout(300000); // 5 minutes
+            hikariConfig.setMaxLifetime(600000); // 10 minutes
+            hikariConfig.setKeepaliveTime(300000); // 5 minutes
             hikariConfig.setMinimumIdle(2);
             hikariConfig.setMaximumPoolSize(10);
 
@@ -63,6 +65,7 @@ public class DatabaseManager {
 
             createTables();
         } catch (Exception e) {
+            this.connectionError = e.getMessage();
             plugin.getLogger().log(Level.WARNING,
                     "Failed to initialize database with HikariCP. Some features will be unavailable.");
         }
@@ -189,6 +192,14 @@ public class DatabaseManager {
                     "tool_expiry BIGINT DEFAULT 0," +
                     "team VARCHAR(36) DEFAULT NULL," +
                     "name_hidden BOOLEAN DEFAULT FALSE," +
+                    "status VARCHAR(16) DEFAULT 'Offline'," +
+                    "last_world VARCHAR(64) DEFAULT NULL," +
+                    "last_x DOUBLE DEFAULT 0," +
+                    "last_y DOUBLE DEFAULT 0," +
+                    "last_z DOUBLE DEFAULT 0," +
+                    "last_yaw FLOAT DEFAULT 0," +
+                    "last_pitch FLOAT DEFAULT 0," +
+                    "ip VARCHAR(45) DEFAULT NULL," +
                     "last_updated BIGINT" +
                     ")";
             s.execute(statsTable);
@@ -209,7 +220,15 @@ public class DatabaseManager {
                     "bounty DOUBLE DEFAULT 0",
                     "tool_expiry BIGINT DEFAULT 0",
                     "team VARCHAR(36) DEFAULT NULL",
-                    "name_hidden BOOLEAN DEFAULT FALSE"
+                    "name_hidden BOOLEAN DEFAULT FALSE",
+                    "status VARCHAR(16) DEFAULT 'Offline'",
+                    "last_world VARCHAR(64) DEFAULT NULL",
+                    "last_x DOUBLE DEFAULT 0",
+                    "last_y DOUBLE DEFAULT 0",
+                    "last_z DOUBLE DEFAULT 0",
+                    "last_yaw FLOAT DEFAULT 0",
+                    "last_pitch FLOAT DEFAULT 0",
+                    "ip VARCHAR(45) DEFAULT NULL"
             };
 
             for (String columnDef : statsColumns) {
@@ -276,6 +295,31 @@ public class DatabaseManager {
                 }
             }
 
+            // Table for Server Configuration
+            String serverConfigTable = "CREATE TABLE IF NOT EXISTS server_config (" +
+                    "config_key VARCHAR(100) NOT NULL PRIMARY KEY," +
+                    "config_value VARCHAR(255) NOT NULL," +
+                    "last_updated BIGINT" +
+                    ")";
+            s.execute(serverConfigTable);
+
+            // Table for Block History
+            String blockHistoryTable = "CREATE TABLE IF NOT EXISTS block_history (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "world VARCHAR(64) NOT NULL," +
+                    "x INT NOT NULL," +
+                    "y INT NOT NULL," +
+                    "z INT NOT NULL," +
+                    "player_uuid VARCHAR(36) NOT NULL," +
+                    "player_name VARCHAR(16) NOT NULL," +
+                    "action VARCHAR(20) NOT NULL," +
+                    "block_type VARCHAR(50) NOT NULL," +
+                    "timestamp BIGINT NOT NULL," +
+                    "INDEX location_idx (world, x, y, z)," +
+                    "INDEX timestamp_idx (timestamp)" +
+                    ")";
+            s.execute(blockHistoryTable);
+
         } catch (SQLException e) {
             // Suppress stack trace when database is offline
         }
@@ -304,6 +348,10 @@ public class DatabaseManager {
         if (dataSource != null) {
             dataSource.close();
         }
+    }
+
+    public String getConnectionError() {
+        return connectionError;
     }
 
     public boolean isRedisEnabled() {
@@ -943,25 +991,27 @@ public class DatabaseManager {
     public void savePlayerStats(UUID uuid, PlayerData data) {
         if (!isConnected())
             return;
-        String query = "UPDATE player_stats SET money = ?, shards = ?, shop_spent = ?, last_updated = ? WHERE uuid = ?";
+        String query = "UPDATE player_stats SET money = ?, shards = ?, shop_spent = ?, ip = ?, last_updated = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setDouble(1, data.getMoney());
             ps.setDouble(2, data.getShards());
             ps.setDouble(3, data.getShopSpent());
-            ps.setLong(4, System.currentTimeMillis());
-            ps.setString(5, uuid.toString());
+            ps.setString(4, data.getIp());
+            ps.setLong(5, System.currentTimeMillis());
+            ps.setString(6, uuid.toString());
             int affected = ps.executeUpdate();
 
             // Fallback to INSERT if update failed (on duplicate key update is also possible
             // but more complex with this schema if not primary key)
             if (affected == 0) {
-                String insertQuery = "INSERT INTO player_stats (uuid, money, shards, shop_spent, last_updated) VALUES (?, ?, ?, ?, ?)";
+                String insertQuery = "INSERT INTO player_stats (uuid, money, shards, shop_spent, ip, last_updated) VALUES (?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ips = conn.prepareStatement(insertQuery)) {
                     ips.setString(1, uuid.toString());
                     ips.setDouble(2, data.getMoney());
                     ips.setDouble(3, data.getShards());
                     ips.setDouble(4, data.getShopSpent());
-                    ips.setLong(5, System.currentTimeMillis());
+                    ips.setString(5, data.getIp());
+                    ips.setLong(6, System.currentTimeMillis());
                     ips.executeUpdate();
                 }
             }
@@ -973,13 +1023,13 @@ public class DatabaseManager {
     public PlayerDataStats loadPlayerStats(UUID uuid) {
         if (!isConnected())
             return null;
-        String query = "SELECT money, shards, shop_spent FROM player_stats WHERE uuid = ?";
+        String query = "SELECT money, shards, shop_spent, ip FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new PlayerDataStats(rs.getDouble("money"), rs.getDouble("shards"),
-                            rs.getDouble("shop_spent"));
+                            rs.getDouble("shop_spent"), rs.getString("ip"));
                 }
             }
         } catch (SQLException e) {
@@ -992,11 +1042,13 @@ public class DatabaseManager {
         public double money;
         public double shards;
         public double shopSpent;
+        public String ip;
 
-        public PlayerDataStats(double money, double shards, double shopSpent) {
+        public PlayerDataStats(double money, double shards, double shopSpent, String ip) {
             this.money = money;
             this.shards = shards;
             this.shopSpent = shopSpent;
+            this.ip = ip;
         }
     }
 
@@ -1292,5 +1344,332 @@ public class DatabaseManager {
 
     public void deleteAuctionTransactionAsync(UUID playerUuid, long timestamp, double price) {
         CompletableFuture.runAsync(() -> deleteAuctionTransaction(playerUuid, timestamp, price));
+    }
+
+    public void updateStatusAsync(UUID uuid, String status) {
+        if (!isConnected())
+            return;
+        CompletableFuture.runAsync(() -> {
+            String query = "UPDATE player_stats SET status = ? WHERE uuid = ?";
+            try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, status);
+                ps.setString(2, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                // Silently fail
+            }
+        });
+    }
+
+    public void saveLastLocationAsync(UUID uuid, org.bukkit.Location loc) {
+        if (!isConnected() || loc == null || loc.getWorld() == null)
+            return;
+        CompletableFuture.runAsync(() -> {
+            String query = "UPDATE player_stats SET last_world = ?, last_x = ?, last_y = ?, last_z = ?, last_yaw = ?, last_pitch = ? WHERE uuid = ?";
+            try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, loc.getWorld().getName());
+                ps.setDouble(2, loc.getX());
+                ps.setDouble(3, loc.getY());
+                ps.setDouble(4, loc.getZ());
+                ps.setFloat(5, loc.getYaw());
+                ps.setFloat(6, loc.getPitch());
+                ps.setString(7, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                // Silently fail
+            }
+        });
+    }
+
+    public void getOfflinePlayersAsync(java.util.function.Consumer<java.util.List<String>> callback) {
+        if (!isConnected()) {
+            callback.accept(new ArrayList<>());
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> {
+            java.util.List<String> names = new ArrayList<>();
+            String query = "SELECT pn.cached_name FROM player_stats ps JOIN player_names pn ON ps.uuid = pn.uuid WHERE ps.status = 'Offline'";
+            try (Connection conn = getConnection();
+                    PreparedStatement ps = conn.prepareStatement(query);
+                    ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    names.add(rs.getString("cached_name"));
+                }
+            } catch (SQLException e) {
+                // Silently fail
+            }
+            return names;
+        }).thenAccept(callback);
+    }
+
+    public void getLastLocationAsync(UUID uuid, java.util.function.Consumer<org.bukkit.Location> callback) {
+        if (!isConnected()) {
+            callback.accept(null);
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> {
+            String query = "SELECT last_world, last_x, last_y, last_z, last_yaw, last_pitch FROM player_stats WHERE uuid = ?";
+            try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, uuid.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String worldName = rs.getString("last_world");
+                        if (worldName == null)
+                            return null;
+                        org.bukkit.World world = Bukkit.getWorld(worldName);
+                        if (world == null)
+                            return null;
+                        return new org.bukkit.Location(world, rs.getDouble("last_x"), rs.getDouble("last_y"),
+                                rs.getDouble("last_z"), rs.getFloat("last_yaw"), rs.getFloat("last_pitch"));
+                    }
+                }
+            } catch (SQLException e) {
+                // Silently fail
+            }
+            return null;
+        }).thenAccept(callback);
+    }
+
+    public static class AltInfo {
+        public final String name;
+        public final String status;
+
+        public AltInfo(String name, String status) {
+            this.name = name;
+            this.status = status;
+        }
+    }
+
+    public void getAltsByIpAsync(String ip, java.util.function.Consumer<List<AltInfo>> callback) {
+        if (!isConnected() || ip == null) {
+            callback.accept(new ArrayList<>());
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> {
+            List<AltInfo> alts = new ArrayList<>();
+            String query = "SELECT pn.cached_name, ps.status FROM player_stats ps " +
+                    "JOIN player_names pn ON ps.uuid = pn.uuid " +
+                    "WHERE ps.ip = ?";
+            try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, ip);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        alts.add(new AltInfo(rs.getString("cached_name"), rs.getString("status")));
+                    }
+                }
+            } catch (SQLException e) {
+                // Silently fail
+            }
+            return alts;
+        }).thenAccept(callback);
+    }
+
+    public void wipeAuctionTransactions(UUID playerUuid) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM auction_transactions WHERE player_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // Silently fail
+        }
+    }
+
+    public void wipeOrders(UUID playerUuid) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM prism_orders WHERE owner = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // Silently fail
+        }
+    }
+
+    public void wipeInventory(UUID uuid) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM player_inventories WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to wipe inventory for " + uuid, e);
+        }
+    }
+
+    public void wipePlayerStats(UUID uuid) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM player_stats WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to wipe player stats for " + uuid, e);
+        }
+    }
+
+    public void wipeAuctionPendingPayments(UUID uuid) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM auction_pending_payments WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to wipe auction pending payments for " + uuid, e);
+        }
+    }
+
+    // --- Server Configuration Methods ---
+
+    public void setServerConfig(String key, String value) {
+        if (!isConnected())
+            return;
+        String query = "REPLACE INTO server_config (config_key, config_value, last_updated) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, key);
+            ps.setString(2, value);
+            ps.setLong(3, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // Silently fail
+        }
+    }
+
+    public String getServerConfig(String key, String defaultValue) {
+        if (!isConnected())
+            return defaultValue;
+        String query = "SELECT config_value FROM server_config WHERE config_key = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, key);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("config_value");
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail
+        }
+        return defaultValue;
+    }
+
+    public double getServerConfigDouble(String key, double defaultValue) {
+        String value = getServerConfig(key, null);
+        if (value == null)
+            return defaultValue;
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    // --- Block History Methods ---
+
+    public void recordBlockAction(org.bukkit.Location location, String playerName, UUID playerUuid, String action, String blockType, long timestamp) {
+        if (!isConnected()) return;
+        
+        String query = "INSERT INTO block_history (world, x, y, z, player_uuid, player_name, action, block_type, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, location.getWorld().getName());
+            ps.setInt(2, location.getBlockX());
+            ps.setInt(3, location.getBlockY());
+            ps.setInt(4, location.getBlockZ());
+            ps.setString(5, playerUuid.toString());
+            ps.setString(6, playerName);
+            ps.setString(7, action);
+            ps.setString(8, blockType);
+            ps.setLong(9, timestamp);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // Silently fail
+        }
+    }
+
+    public List<com.h2ph.listeners.HistoryListener.BlockHistoryEntry> getBlockHistory(org.bukkit.Location location) {
+        List<com.h2ph.listeners.HistoryListener.BlockHistoryEntry> history = new ArrayList<>();
+        if (!isConnected()) return history;
+        
+        String query = "SELECT player_name, action, block_type, timestamp FROM block_history WHERE world = ? AND x = ? AND y = ? AND z = ? ORDER BY timestamp DESC LIMIT 10";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, location.getWorld().getName());
+            ps.setInt(2, location.getBlockX());
+            ps.setInt(3, location.getBlockY());
+            ps.setInt(4, location.getBlockZ());
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    history.add(new com.h2ph.listeners.HistoryListener.BlockHistoryEntry(
+                        rs.getString("player_name"),
+                        rs.getString("action"),
+                        rs.getString("block_type"),
+                        rs.getLong("timestamp")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail
+        }
+        return history;
+    }
+
+    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkHistory(String world, int chunkX, int chunkZ) {
+        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
+        if (!isConnected()) return history;
+        
+        // Calculate block coordinates for the chunk boundaries
+        int minX = chunkX * 16;
+        int maxX = minX + 15;
+        int minZ = chunkZ * 16;
+        int maxZ = minZ + 15;
+        
+        String query = "SELECT player_name, COUNT(*) as action_count, MAX(timestamp) as last_activity " +
+                       "FROM block_history " +
+                       "WHERE world = ? AND x >= ? AND x <= ? AND z >= ? AND z <= ? " +
+                       "GROUP BY player_name " +
+                       "ORDER BY action_count DESC, last_activity DESC";
+        
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, world);
+            ps.setInt(2, minX);
+            ps.setInt(3, maxX);
+            ps.setInt(4, minZ);
+            ps.setInt(5, maxZ);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String playerName = rs.getString("player_name");
+                    int actionCount = rs.getInt("action_count");
+                    long lastActivity = rs.getLong("last_activity");
+                    
+                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
+                        playerName, actionCount, lastActivity));
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail
+        }
+        
+        return history;
+    }
+
+    public void cleanupOldBlockHistory(long daysToKeep) {
+        if (!isConnected()) return;
+        
+        long cutoffTime = System.currentTimeMillis() - (daysToKeep * 24 * 60 * 60 * 1000);
+        String query = "DELETE FROM block_history WHERE timestamp < ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setLong(1, cutoffTime);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // Silently fail
+        }
+    }
+    public void setServerConfigDouble(String key, double value) {
+        setServerConfig(key, String.valueOf(value));
     }
 }

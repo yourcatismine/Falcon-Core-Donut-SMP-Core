@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -41,12 +42,75 @@ public class EnderChestManager {
     // Key: block location, Value: set of player UUIDs viewing it
     private final Map<Location, Set<UUID>> blockViewers = Collections.synchronizedMap(new HashMap<>());
 
+    // Map to track active enderchest inventories by owner UUID for live-syncing and
+    // caching
+    private final Map<UUID, org.bukkit.inventory.Inventory> activeInventories = new ConcurrentHashMap<>();
+
     public EnderChestManager(PrismSurvival plugin) {
         this.plugin = plugin;
     }
 
     private Connection getConnection() throws SQLException {
         return plugin.getPrismSell().getDatabaseManager().getConnection();
+    }
+
+    public Map<UUID, org.bukkit.inventory.Inventory> getActiveInventories() {
+        return activeInventories;
+    }
+
+    /**
+     * Preloads a player's enderchest data into the cache asynchronously.
+     */
+    public void preload(UUID uuid, String name) {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            if (activeInventories.containsKey(uuid))
+                return;
+
+            ItemStack[] contents = loadEnderChest(uuid);
+            plugin.getSchedulerAdapter().runTask(() -> {
+                getOrCreateInventory(uuid, name, null, contents);
+            });
+        });
+    }
+
+    /**
+     * Unloads and saves a player's enderchest data from the cache.
+     */
+    public void unload(UUID uuid) {
+        org.bukkit.inventory.Inventory inv = activeInventories.remove(uuid);
+        if (inv != null) {
+            ItemStack[] contents = inv.getContents().clone();
+            plugin.getSchedulerAdapter().runTaskAsync(() -> {
+                saveEnderChest(uuid, contents);
+            });
+        }
+    }
+
+    /**
+     * Gets an existing inventory from the cache or creates a new one.
+     */
+    public org.bukkit.inventory.Inventory getOrCreateInventory(UUID ownerUUID, String ownerName,
+            org.bukkit.block.Block sourceBlock, ItemStack[] initialContents) {
+        return activeInventories.computeIfAbsent(ownerUUID, uuid -> {
+            String title = org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8Ender Chest");
+            // If viewing own chest, use default title
+            // Note: We don't have the viewer here, but we can check if ownerName is a
+            // placeholder or just use the generic title if it matches a certain pattern
+            // For now, let's keep it simple. The GUI open method will handle the title if
+            // needed.
+
+            org.bukkit.inventory.Inventory inv = org.bukkit.Bukkit.createInventory(
+                    new com.h2ph.gui.EnderChestGUI.EnderChestHolder(ownerUUID, ownerName, sourceBlock), 54, title);
+
+            if (initialContents != null) {
+                for (int i = 0; i < 54; i++) {
+                    if (initialContents[i] != null) {
+                        inv.setItem(i, initialContents[i]);
+                    }
+                }
+            }
+            return inv;
+        });
     }
 
     // -----------------------------------------------------------------------
@@ -152,6 +216,20 @@ public class EnderChestManager {
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save ender chest for " + uuid, e);
         }
+    }
+
+    public void wipeEnderChest(UUID uuid) {
+        activeInventories.remove(uuid);
+        plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
+            String query = "DELETE FROM enderchest WHERE uuid = ?";
+            try (Connection conn = getConnection();
+                    PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to wipe ender chest for " + uuid, e);
+            }
+        });
     }
 
     // -----------------------------------------------------------------------

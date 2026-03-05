@@ -78,20 +78,22 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         // Check if player exists (online)
         if (target == null) {
-            // Check if they exist offline
-            if (Bukkit.getOfflinePlayer(targetName).hasPlayedBefore()) {
-                // User is offline
-                String offlineMsg = ChatColor.RED + "This user is not online.";
-                player.sendMessage(offlineMsg);
-                player.sendActionBar(Component.text("This user is not online.", NamedTextColor.RED));
+            final String finalTargetName = targetName;
+            com.h2ph.PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
+                org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(finalTargetName);
+                if (offlineTarget.hasPlayedBefore()) {
+                    // User is offline
+                    String offlineMsg = ChatColor.RED + "This user is not online.";
+                    player.sendMessage(offlineMsg);
+                    player.sendActionBar(Component.text("This user is not online.", NamedTextColor.RED));
+                } else {
+                    // User does not exist
+                    String noExistMsg = ChatColor.RED + "That user does not exist.";
+                    player.sendMessage(noExistMsg);
+                    player.sendActionBar(Component.text("That user does not exist.", NamedTextColor.RED));
+                }
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            } else {
-                // User does not exist
-                String noExistMsg = ChatColor.RED + "That user does not exist.";
-                player.sendMessage(noExistMsg);
-                player.sendActionBar(Component.text("That user does not exist.", NamedTextColor.RED));
-                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            }
+            });
             return true;
         }
 
@@ -102,6 +104,15 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             String errorMsg = ChatColor.RED + "User disabled private messages.";
             player.sendMessage(errorMsg);
             player.sendActionBar(Component.text("User disabled private messages.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        // Check if target has ignored the sender
+        if (data != null && data.isIgnoring(player.getUniqueId())) {
+            String errorMsg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
+            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(errorMsg));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }

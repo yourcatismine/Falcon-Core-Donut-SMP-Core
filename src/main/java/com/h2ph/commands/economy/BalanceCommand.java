@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -159,11 +160,8 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            String token = args[0].toLowerCase();
-            return Bukkit.getOnlinePlayers().stream()
-                    .map(Player::getName)
-                    .filter(s -> s.toLowerCase().startsWith(token))
-                    .collect(Collectors.toList());
+            // Use async player name cache to prevent TPS drops
+            return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         return Collections.emptyList();
     }

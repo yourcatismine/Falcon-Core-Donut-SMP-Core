@@ -139,8 +139,10 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             }
         }
         if (command.getName().equalsIgnoreCase("offend")) {
-            if (args.length == 1)
-                return null;
+            if (args.length == 1) {
+                // Use async player name cache to prevent TPS drops
+                return plugin.getPlayerNameCache().getCompletions(args[0]);
+            }
             if (args.length == 2) {
                 List<String> reasons = new ArrayList<>();
                 if (getOffendConfig().getConfigurationSection("reasons") != null) {
@@ -580,78 +582,20 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
     }
 
     private void wipePlayerData(OfflinePlayer target) {
-        try {
-            // 1. Wipe Economy (Money)
-            try {
-                net.milkbowl.vault.economy.Economy econ = plugin.getServer().getServicesManager()
-                        .getRegistration(net.milkbowl.vault.economy.Economy.class).getProvider();
-                if (econ != null && econ.hasAccount(target)) {
-                    econ.withdrawPlayer(target, econ.getBalance(target));
-                }
-            } catch (Throwable ignored) {
-            }
+        UUID uuid = target.getUniqueId();
+        String name = target.getName();
 
-            // 2. Wipe Shards & Custom PlayerData
-            try {
-                com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
-                if (pd != null) {
-                    pd.setShards(0, "Wipe");
-                    pd.setShopSpent(0);
-                    pd.getAllKeys().clear(); // Wipe all keys
-                    plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
-                }
-            } catch (Throwable ignored) {
-            }
-
-            // 3. Wipe Auctions
-            /*
-             * try {
-             * // AuctionManager is currently missing from the project
-             * // com.emporium.survival.manager.AuctionManager am =
-             * plugin.getAuctionManager();
-             * // if (am != null) {
-             * // // Remove from global list
-             * // List<com.emporium.survival.manager.AuctionItem> toRemove = new
-             * ArrayList<>();
-             * // for (com.emporium.survival.manager.AuctionItem item : am.getAllAuctions())
-             * {
-             * // if (item.getOwnerUUID().equals(target.getUniqueId())) {
-             * // toRemove.add(item);
-             * // }
-             * // }
-             * // for (com.emporium.survival.manager.AuctionItem item : toRemove) {
-             * // am.removeAuction(item);
-             * // }
-             * 
-             * // File playerAuctionFile = new File(plugin.getDataFolder(),
-             * // "resources/economy/auction/players/" + target.getUniqueId() +
-             * "-auction.db");
-             * // if (playerAuctionFile.exists()) {
-             * // playerAuctionFile.delete();
-             * // }
-             * // }
-             * } catch (Throwable ignored) {
-             * }
-             */
-
-            // 4. Wipe Sell History (SellHistoryCommand)
-            try {
-                File sellFile = new File(plugin.getDataFolder(),
-                        "economy/sell/history/" + target.getUniqueId() + "-history.db");
-                if (sellFile.exists()) {
-                    sellFile.delete();
-                }
-            } catch (Throwable ignored) {
-            }
-
-            // 5. Wipe Vanilla Data (Inventory, EnderChest, Stats)
+        // 1. SYNC PART: Bukkit API calls for online players must be on the main thread.
+        // Also clear online caches first to prevent stale data being saved during
+        // database wipe.
+        plugin.getSchedulerAdapter().runTask(() -> {
             if (target.isOnline()) {
                 Player p = (Player) target;
                 p.getInventory().clear();
                 p.getEnderChest().clear();
                 p.setExp(0);
                 p.setLevel(0);
-                p.setHealth(0);
+                p.setHealth(20.0);
 
                 // Reset General Stats
                 try {
@@ -662,7 +606,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 } catch (Throwable ignored) {
                 }
 
-                // Reset Block Stats (Placed/Broken)
+                // Reset Block Stats
                 for (org.bukkit.Material m : org.bukkit.Material.values()) {
                     try {
                         if (m.isBlock()) {
@@ -680,16 +624,111 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     } catch (Throwable ignored) {
                     }
                 }
-            } else {
-                // Delete player.dat file for offline players (wipes inv, echest, stats,
-                // location)
-                File worldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
-                File playerData = new File(worldFolder, "playerdata/" + target.getUniqueId() + ".dat");
-                if (playerData.exists())
-                    playerData.delete();
             }
-        } catch (Exception ignored) {
-        }
+        });
+
+        // 2. ASYNC PART: Deep Database and File Wipes
+        // We ensure this runs asynchronously to protect server TPS.
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                // A. UNLOAD FROM CACHES FIRST
+                // This prevents any pending save operations from restoring old data over our
+                // wipe.
+
+                // Reset Shard Booster in main Data if loaded
+                com.prismcore.survival.manager.PlayerData mainPd = plugin.getPlayerDataManager().get(uuid);
+                if (mainPd != null) {
+                    mainPd.setShardBoosterExpiry(0);
+                }
+                plugin.getPlayerDataManager().unload(uuid);
+
+                // Reset Sell Multipliers/Progress in sell Data if loaded
+                if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
+                    com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell().getPlayerDataManager()
+                            .getPlayerData(uuid);
+                    if (sellPd != null) {
+                        for (com.prismcore.survival.sell.category.Category cat : com.prismcore.survival.sell.category.Category
+                                .values()) {
+                            sellPd.setMultiplier(cat, 1.0);
+                            sellPd.setProgress(cat, 0.0);
+                        }
+                    }
+                    plugin.getPrismSell().getPlayerDataManager().unloadPlayer(uuid);
+                }
+
+                // B. MAIN DATABASE DELETIONS
+                DatabaseManager mainDb = plugin.getDatabaseManager();
+                if (mainDb != null && mainDb.isConnected()) {
+                    mainDb.wipeInventory(uuid);
+                    mainDb.wipePlayerStats(uuid);
+                    mainDb.wipeAuctionTransactions(uuid);
+                    mainDb.wipeAuctionPendingPayments(uuid);
+                    mainDb.wipeOrders(uuid);
+                }
+
+                // C. SELL MODULE DATABASE DELETIONS (Deep Wipe)
+                if (plugin.getPrismSell() != null && plugin.getPrismSell().getDatabaseManager() != null) {
+                    plugin.getPrismSell().getDatabaseManager().wipeAllPlayerData(uuid);
+                }
+
+                // D. OTHER COMPONENT WIPES
+                // Wipe Enderchest Cache & DB (Internal async handling)
+                if (plugin.getEnderChestManager() != null) {
+                    plugin.getEnderChestManager().wipeEnderChest(uuid);
+                }
+
+                // Wipe Economy (Vault)
+                try {
+                    net.milkbowl.vault.economy.Economy econ = plugin.getServer().getServicesManager()
+                            .getRegistration(net.milkbowl.vault.economy.Economy.class).getProvider();
+                    if (econ != null && econ.hasAccount(target)) {
+                        econ.withdrawPlayer(target, econ.getBalance(target));
+                    }
+                } catch (Throwable ignored) {
+                }
+
+                // Wipe Auctions items
+                if (plugin.getAuctionController() != null && name != null) {
+                    plugin.getAuctionController().getAuctionManager().removeAllItems(name);
+                }
+
+                // Wipe Orders (Already called via mainDb.wipeOrders, but module call for
+                // completeness)
+                if (plugin.getOrdersModule() != null && plugin.getOrdersModule().orders() != null) {
+                    plugin.getOrdersModule().orders().wipeOrders(uuid);
+                }
+
+                // E. FILE DELETIONS (Legacy/Fallback)
+                try {
+                    // Sell History File
+                    File sellFile = new File(plugin.getDataFolder(), "economy/sell/history/" + uuid + "-history.db");
+                    if (sellFile.exists())
+                        sellFile.delete();
+
+                    // Modern Crates/Settings File
+                    File cratesFile = new File(plugin.getDataFolder(), "crates/data/" + uuid + ".db");
+                    if (cratesFile.exists())
+                        cratesFile.delete();
+
+                    // Minecraft playerdata/stats for offline players
+                    if (!target.isOnline()) {
+                        File worldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
+                        File playerData = new File(worldFolder, "playerdata/" + uuid + ".dat");
+                        if (playerData.exists())
+                            playerData.delete();
+
+                        File statsFile = new File(worldFolder, "stats/" + uuid + ".json");
+                        if (statsFile.exists())
+                            statsFile.delete();
+                    }
+
+                } catch (Throwable ignored) {
+                }
+
+            } catch (Exception e) {
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error performing deep wipe for " + uuid, e);
+            }
+        });
     }
 
     public OfflinePlayer resolveOfflinePlayer(String name) {

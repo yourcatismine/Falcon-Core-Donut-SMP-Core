@@ -1,6 +1,7 @@
 chat-filter:
   cooldown-ms: 2000
   block-repeats: true
+  max-length: 256
   bad-words:
     - "hitler"
     - "nazi"

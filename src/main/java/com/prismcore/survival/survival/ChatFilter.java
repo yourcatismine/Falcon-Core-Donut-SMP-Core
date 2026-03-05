@@ -91,6 +91,14 @@ public class ChatFilter implements Listener {
         String message = event.getMessage();
 
         if (!hasBypass) {
+            // --- CHAT LENGTH CHECK ---
+            int maxLength = config.getInt("chat-filter.max-length", 256);
+            if (message.length() > maxLength) {
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "Your message is too long! Maximum length is " + maxLength + " characters. Your message was " + message.length() + " characters.");
+                return;
+            }
+
             // --- ANTI-SPAM ---
             long cooldownTime = config.getLong("chat-filter.cooldown-ms", 2000);
             if (chatCooldowns.containsKey(uuid)) {
@@ -152,6 +160,20 @@ public class ChatFilter implements Listener {
 
             PlayerData recipientData = plugin.getPlayerDataManager().get(recipient.getUniqueId());
             if (recipientData != null && recipientData.isHideChat()) {
+                iterator.remove();
+            }
+        }
+
+        // --- IGNORE FILTER ---
+        // Remove recipients who have ignored the sender
+        iterator = event.getRecipients().iterator();
+        while (iterator.hasNext()) {
+            Player recipient = iterator.next();
+            if (recipient.getUniqueId().equals(uuid))
+                continue; // Sender always sees their own chat
+
+            PlayerData recipientData = plugin.getPlayerDataManager().get(recipient.getUniqueId());
+            if (recipientData != null && recipientData.isIgnoring(uuid)) {
                 iterator.remove();
             }
         }

@@ -101,6 +101,11 @@ public class ReloadCommand implements CommandExecutor {
                 plugin.getScoreboardManager().loadConfig();
             }
 
+            // TAB List Manager
+            if (plugin.getTabListManager() != null) {
+                plugin.getTabListManager().reloadTabList();
+            }
+
             // Limiter Config
             if (plugin.getLimiterConfig() != null) {
                 plugin.getLimiterConfig().loadConfig();
@@ -139,6 +144,11 @@ public class ReloadCommand implements CommandExecutor {
             // Media Command
             if (plugin.getMediaCommand() != null) {
                 plugin.getMediaCommand().loadConfig();
+            }
+
+            // Death Message Manager
+            if (plugin.getDeathMessageManager() != null) {
+                plugin.getDeathMessageManager().reload();
             }
 
             // AntiXray - Removed

@@ -1,8 +1,6 @@
 package com.prismcore.survival.shards;
 
 import com.h2ph.PrismSurvival;
-import com.h2ph.afk.AFKManager;
-import com.h2ph.afk.AFKRegion;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -19,7 +17,6 @@ import java.io.File;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 
 import org.bukkit.scheduler.BukkitTask;
 
@@ -41,10 +38,7 @@ public class ShardsManager implements Listener {
     private int killRewardCooldown; // Seconds
 
     // Messages & Sounds
-    private String passiveChatMessage;
-    private String passiveActionbarMessage;
     private String activeActionbarMessage;
-    private String passiveSound;
 
     // Cooldown Map: Killer UUID -> Victim UUID -> Expiry Time (Millis)
     private final Map<UUID, Map<UUID, Long>> killCooldowns = new HashMap<>();
@@ -77,11 +71,8 @@ public class ShardsManager implements Listener {
 
         // passiveChatMessage = config.getString("messages.passive.chat", "&7You have
         // received &5{shard} shards.");
-        passiveActionbarMessage = config.getString("messages.passive.actionbar",
-                "&7You have received &5{shard} shards.");
         activeActionbarMessage = config.getString("messages.active.actionbar",
                 "&5+{shards} shards&7 for killing &f{PLAYER}");
-        passiveSound = config.getString("sounds.passive", "BLOCK_AMETHYST_BLOCK_CHIME");
     }
 
     public void reloadConfig() {
@@ -109,14 +100,10 @@ public class ShardsManager implements Listener {
             return;
         }
 
-        // Check AFK
-        AFKManager afkManager = plugin.getAfkManager();
-        if (afkManager != null) {
-            AFKRegion region = afkManager.getRegionAt(player.getLocation());
-            if (region != null) {
-                // In AFK region -> PAUSED
-                return;
-            }
+        // Pause passive timer if player is in an AFK region (they earn shards from
+        // AFKManager instead)
+        if (plugin.getAfkManager().getRegionAt(player.getLocation()) != null) {
+            return;
         }
 
         // Not AFK -> Increment
@@ -133,35 +120,21 @@ public class ShardsManager implements Listener {
     }
 
     private void givePassiveReward(Player player) {
-        plugin.getPlayerDataManager().get(player.getUniqueId()).addShards(rewardAmount, "Passive Reward");
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        int amount;
 
-        // Messages & Sound
-        String amountStr = String.valueOf(rewardAmount);
-
-        // Chat
-        if (passiveChatMessage != null && !passiveChatMessage.isEmpty()) {
-            player.sendMessage(
-                    ChatColor.translateAlternateColorCodes('&', passiveChatMessage.replace("{shard}", amountStr)));
+        // Use separate amounts instead of multiplication
+        if (data.hasActiveShardBooster()) {
+            amount = 8; // Fixed amount with booster
+        } else {
+            amount = 2; // Fixed base amount for passive (changed from rewardAmount)
         }
 
-        // Actions based on settings
-        if (plugin.getPlayerDataManager().get(player.getUniqueId()).isShardsNotifier()) {
-            // Actionbar
-            if (passiveActionbarMessage != null && !passiveActionbarMessage.isEmpty()) {
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor
-                        .translateAlternateColorCodes('&', passiveActionbarMessage.replace("{shard}", amountStr))));
-            }
-        }
+        data.addShards(amount, "Passive Reward");
 
-        // Sound
-        if (passiveSound != null && !passiveSound.isEmpty()) {
-            try {
-                Sound sound = Sound.valueOf(passiveSound.toUpperCase());
-                player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid sound in shards config: " + passiveSound);
-            }
-        }
+        // Unified actionbar notification
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&d+" + amount + " prism")));
     }
 
     @EventHandler

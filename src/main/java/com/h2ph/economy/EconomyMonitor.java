@@ -27,37 +27,32 @@ public class EconomyMonitor {
     }
 
     private void startPolling() {
-        // Poll every 5 seconds (100 ticks) to ensure total money is accurate
-        // This handles cases where transactions bypass the wrapper (e.g. /eco commands)
-        plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
-            updateTotalMoney();
-        }, 100, 100);
+        // Poll every 10 seconds (200 ticks) for online players only
+        plugin.getSchedulerAdapter().runTaskTimerAsync(this::updateOnlineTotalMoney, 200, 200);
     }
 
-    private void updateTotalMoney() {
-        double currentTotal = 0.0;
+    private void updateOnlineTotalMoney() {
+        double onlineTotal = 0.0;
         try {
             if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
                 org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin
                         .getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
                 if (rsp != null) {
                     net.milkbowl.vault.economy.Economy eco = rsp.getProvider();
-                    // Some economies might block on getOfflinePlayers, so we must be async (which
-                    // we are)
-                    for (OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                        // Check if account exists to avoid creating files for non-eco players
+                    for (org.bukkit.entity.Player p : plugin.getServer().getOnlinePlayers()) {
                         if (eco.hasAccount(p)) {
-                            currentTotal += eco.getBalance(p);
+                            onlineTotal += eco.getBalance(p);
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            // Silently fail or log debug if needed
+            // Silently fail
         }
 
-        // Update the atomic reference
-        totalMoney.set(currentTotal);
+        // we don't overwrite totalMoney completely here, we just use this to keep
+        // online balances fresh
+        // totalMoney is more of a running total updated by onTransaction
         initialized = true;
     }
 

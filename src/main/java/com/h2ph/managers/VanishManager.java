@@ -38,14 +38,29 @@ public class VanishManager {
      * Hides a player from all other players
      */
     public void hidePlayer(Player player) {
+        // Validate player is still online and valid
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+        
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.equals(player))
                 continue;
 
+            // Validate observer is still online and valid
+            if (!online.isOnline() || !online.isValid()) {
+                continue;
+            }
+
             // Staff/OP might still want to see vanished players
             // For now, let's hide from everyone except themselves
             if (!online.hasPermission("prism.admin.vanish.see")) {
-                online.hidePlayer(plugin, player);
+                try {
+                    online.hidePlayer(plugin, player);
+                } catch (Exception e) {
+                    // Silently handle packet encoding errors to prevent server crash
+                    plugin.getLogger().fine("Failed to hide player " + player.getName() + " from " + online.getName() + ": " + e.getMessage());
+                }
             }
         }
     }
@@ -54,8 +69,23 @@ public class VanishManager {
      * Shows a player to all other players
      */
     public void showPlayer(Player player) {
+        // Validate player is still online and valid
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+        
         for (Player online : Bukkit.getOnlinePlayers()) {
-            online.showPlayer(plugin, player);
+            // Validate observer is still online and valid
+            if (!online.isOnline() || !online.isValid()) {
+                continue;
+            }
+            
+            try {
+                online.showPlayer(plugin, player);
+            } catch (Exception e) {
+                // Silently handle packet encoding errors to prevent server crash
+                plugin.getLogger().fine("Failed to show player " + player.getName() + " to " + online.getName() + ": " + e.getMessage());
+            }
         }
     }
 

@@ -87,7 +87,7 @@ public class ToolsManager {
         plugin.getServer().getPluginManager().registerEvents(new MultitoolBlockBreakListener(this), plugin);
         plugin.getServer().getPluginManager().registerEvents(new DrillInventoryListener(this), plugin);
         plugin.getServer().getPluginManager().registerEvents(new BucketUseListener(this), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new ShardBoosterListener(this, plugin), plugin);
+        plugin.getServer().getPluginManager().registerEvents(new ShardBoosterListener(plugin), plugin);
         plugin.getServer().getPluginManager().registerEvents(new SellAxeListener(this), plugin);
     }
 

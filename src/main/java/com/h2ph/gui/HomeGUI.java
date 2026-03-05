@@ -15,18 +15,22 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Arrays;
 import java.util.List;
 
-// Permission required for home slots 3, 4, 5
-// prismcore.home.3 / .4 / .5 — slots without permission show a locked RED_BED / RED_DYE
+// Permission required for home slots 3-10
+// prismcore.home.3 / .4 / ... / .10 — or prismcore.home.all for all homes
+// slots without permission show a locked RED_BED / RED_DYE
 
 public class HomeGUI {
 
     // ── How many personal home slots ──
-    public static final int HOME_COUNT = 5;
+    public static final int HOME_COUNT = 10;
 
-    // Top row: beds start at slot 12
-    public static final int BED_START = 12;
-    // Bottom row: dyes start at slot 21
-    public static final int DYE_START = 21;
+    // Homes 1-5: beds at slots 3-7, dyes at slots 12-16
+    public static final int BED_START = 3;
+    public static final int DYE_START = 12;
+
+    // Homes 6-10: beds at slots 21-25, dyes at slots 30-34
+    public static final int BED_START_2 = 21;
+    public static final int DYE_START_2 = 30;
 
     // ─────────────────────────────────────────────
     // Inventory holder (used to identify this GUI)
@@ -84,15 +88,25 @@ public class HomeGUI {
             }
         }
 
-        // ── Slots 12-16 (beds) and 21-25 (dyes)
+        // ── Slots 3-7, 12-16 (homes 1-5) and 21-25, 30-34 (homes 6-10)
         // ─────────────────────────────────────────────────────────────────────
         for (int i = 0; i < HOME_COUNT; i++) {
             int homeNumber = i + 1;
-            int bedSlot = BED_START + i;
-            int dyeSlot = DYE_START + i;
 
-            // Slots 3-5 require permission prismcore.home.N
-            if (homeNumber >= 3 && !player.hasPermission("prismcore.home." + homeNumber)) {
+            // Calculate slot based on home group
+            int bedSlot, dyeSlot;
+            if (i < 5) {
+                // Homes 1-5
+                bedSlot = BED_START + i;
+                dyeSlot = DYE_START + i;
+            } else {
+                // Homes 6-10
+                bedSlot = BED_START_2 + (i - 5);
+                dyeSlot = DYE_START_2 + (i - 5);
+            }
+
+            // Slots 3-10 require permission prismcore.home.N or prismcore.home.all
+            if (homeNumber >= 3 && !player.hasPermission("prismcore.home." + homeNumber) && !player.hasPermission("prismcore.home.all")) {
                 // ── Locked slot ──────────────────────────────────────────────────
                 List<String> lockedLore = List.of(
                         color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes"));

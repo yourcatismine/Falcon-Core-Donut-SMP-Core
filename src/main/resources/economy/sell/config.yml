@@ -26,8 +26,6 @@ settings:
   multiplier-increment: 0.1
 
   max-multiplier: 3.0
-  
-
 
 messages:
   sold-total: '#00f900+$%amount%'

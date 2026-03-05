@@ -4,7 +4,7 @@ import java.text.DecimalFormat;
 
 public class NumberUtils {
 
-    private static final DecimalFormat DF = new DecimalFormat("#.##");
+    private static final DecimalFormat DF = new DecimalFormat("#.#");
 
     public static String format(double number) {
         if (number >= 1_000_000_000_000.0) {
@@ -22,6 +22,8 @@ public class NumberUtils {
 
     private static String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
+        // Use Math.floor to match the behavior of BalanceCommand and avoid rounding discrepancies
+        scaled = Math.floor(scaled * 10) / 10.0;
         return DF.format(scaled) + suffix;
     }
 

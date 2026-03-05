@@ -339,6 +339,50 @@ public class SettingsGUIListener implements Listener {
                     }
                 }
 
+                // Slot 13: Fast Crystals
+                if (slot == 13) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isFastCrystals();
+                        data.setFastCrystals(newState);
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
+                // Slot 14: Respawn Gear
+                if (slot == 14) {
+                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    if (data != null) {
+                        boolean newState = !data.isRespawnRTP();
+                        data.setRespawnRTP(newState);
+                        plugin.getPlayerDataManager().savePlayerAsync(p.getUniqueId());
+
+                        // Update Item
+                        String status = newState ? "&a&lON" : "&4&lOFF";
+                        org.bukkit.inventory.meta.ItemMeta meta = current.getItemMeta();
+                        java.util.List<String> lore = meta.getLore();
+                        if (lore != null && !lore.isEmpty()) {
+                            lore.set(0, org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                                    "&fCurrently: " + status));
+                            meta.setLore(lore);
+                            current.setItemMeta(meta);
+                        }
+                    }
+                }
+
                 // Allow bottom inventory events (dragging items in player inventory)
                 // BUT prevent shift-clicking into the GUI
             } else {

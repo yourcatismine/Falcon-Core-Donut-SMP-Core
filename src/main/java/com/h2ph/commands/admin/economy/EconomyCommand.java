@@ -67,10 +67,11 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
 
     private String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
-        if (scaled == (long) scaled) {
-            return String.format("%.0f%s", scaled, suffix);
-        }
-        return String.format("%.2f%s", scaled, suffix);
+        // Use Math.floor to match the behavior of BalanceCommand and avoid rounding discrepancies
+        scaled = Math.floor(scaled * 10) / 10.0;
+        // Use DecimalFormat for consistency with other classes
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#.#");
+        return df.format(scaled) + suffix;
     }
 
     private boolean isAdminAction(String arg) {
@@ -235,10 +236,8 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2) {
-            return Bukkit.getOnlinePlayers().stream()
-                    .map(Player::getName)
-                    .filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase()))
-                    .collect(Collectors.toList());
+            // Use async player name cache to prevent TPS drops
+            return plugin.getPlayerNameCache().getCompletions(args[1]);
         }
 
         if (args.length == 3) {

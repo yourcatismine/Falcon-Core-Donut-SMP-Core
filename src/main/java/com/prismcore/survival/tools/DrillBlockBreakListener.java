@@ -85,7 +85,7 @@ public class DrillBlockBreakListener implements Listener {
             } catch (IllegalArgumentException ex) {
                 playSound = Sound.BLOCK_STONE_BREAK;
             }
-            p.playSound(p.getLocation(), playSound, 1.0f, 1.0f);
+            p.playSound(p.getLocation(), playSound, 1.0f, 2.0f);
         }
         Block origin = evt.getBlock();
         Set<String> disabled = Set.copyOf(cfg.getStringList("disabled-blocks"));

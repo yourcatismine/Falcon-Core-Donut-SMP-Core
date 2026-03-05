@@ -189,4 +189,18 @@ public final class Utils {
         }
         return sb.toString();
     }
+
+    public static org.bukkit.inventory.ItemStack stripOrderMetadata(org.bukkit.inventory.ItemStack item) {
+        if (item == null || item.getType() == org.bukkit.Material.AIR)
+            return item;
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
+            pdc.remove(OrdersModule.DELIVERER_KEY);
+            pdc.remove(OrdersModule.RECIPIENT_KEY);
+            pdc.remove(OrdersModule.REFUND_FROM_KEY);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
 }

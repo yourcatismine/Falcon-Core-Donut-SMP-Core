@@ -20,22 +20,39 @@ public class InventoryLogManager {
 
     private final PrismSurvival plugin;
     private final Map<UUID, String> lastKnownStates = new HashMap<>();
+    private final Map<UUID, Long> lastLoggedTime = new HashMap<>();
     private final Gson gson = new Gson();
+    private static final long COOLDOWN_MS = 2000L; // 2 seconds
 
     public InventoryLogManager(PrismSurvival plugin) {
         this.plugin = plugin;
     }
 
     public void checkAndLog(Player player) {
+        checkAndLog(player, false);
+    }
+
+    public void checkAndLog(Player player, boolean ignoreCooldown) {
         if (player == null)
             return;
 
+        long now = System.currentTimeMillis();
+        UUID uuid = player.getUniqueId();
+
+        if (!ignoreCooldown) {
+            long last = lastLoggedTime.getOrDefault(uuid, 0L);
+            if (now - last < COOLDOWN_MS) {
+                return;
+            }
+        }
+
         String currentState = serializeInventory(player);
-        String lastState = lastKnownStates.get(player.getUniqueId());
+        String lastState = lastKnownStates.get(uuid);
 
         if (lastState == null || !lastState.equals(currentState)) {
-            lastKnownStates.put(player.getUniqueId(), currentState);
-            plugin.getActivityLogger().log(player.getUniqueId(), ActivityLogger.LogType.INVENTORY, currentState);
+            lastKnownStates.put(uuid, currentState);
+            lastLoggedTime.put(uuid, now);
+            plugin.getActivityLogger().log(uuid, ActivityLogger.LogType.INVENTORY, currentState);
         }
     }
 

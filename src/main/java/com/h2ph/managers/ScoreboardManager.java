@@ -41,6 +41,9 @@ public class ScoreboardManager implements Listener {
     private final Map<UUID, String> lastSentTitle = new HashMap<>();
     private final Map<UUID, Component[]> lastSentComponents = new HashMap<>();
     private String cachedRegion = null;
+    private int switcherInterval = 20;
+    private long lastSwitcherUpdate = 0;
+    private int currentSwitcherIndex = 0;
 
     public ScoreboardManager(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -58,6 +61,9 @@ public class ScoreboardManager implements Listener {
         // Cache region
         java.util.List<String> regionList = plugin.getSurvivalConfig().getStringList("region");
         cachedRegion = regionList.isEmpty() ? "EU" : regionList.get(0);
+
+        // Load switcher interval (in ticks)
+        switcherInterval = config.getInt("INTERVAL", 20);
     }
 
     public void setup() {
@@ -82,6 +88,11 @@ public class ScoreboardManager implements Listener {
     public void reloadScoreboard(Player player) {
         if (!config.getBoolean("SCOREBOARD.ENABLED", true))
             return;
+
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && !data.isShowScoreboard()) {
+            return;
+        }
 
         User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
         if (user == null)
@@ -127,6 +138,7 @@ public class ScoreboardManager implements Listener {
         lineCountMap.remove(player.getUniqueId());
 
         initScoreboard(player);
+        startTask(player);
     }
 
     @EventHandler
@@ -257,6 +269,16 @@ public class ScoreboardManager implements Listener {
         User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
         if (user == null)
             return;
+
+        // Update switcher if interval has passed
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastSwitcherUpdate >= switcherInterval * 50) { // 50ms per tick
+            List<String> switchers = config.getStringList("SCOREBOARD.SWITCHER");
+            if (!switchers.isEmpty()) {
+                currentSwitcherIndex = (currentSwitcherIndex + 1) % switchers.size();
+                lastSwitcherUpdate = currentTime;
+            }
+        }
 
         List<String> titles = config.getStringList("SCOREBOARD.TITLE");
         if (!titles.isEmpty()) {
@@ -501,6 +523,20 @@ public class ScoreboardManager implements Listener {
 
         if (text.contains("{region_ping}")) {
             text = text.replace("{region_ping}", String.valueOf(player.getPing()));
+        }
+
+        if (text.contains("{gamertag}")) {
+            text = text.replace("{gamertag}", player.getName());
+        }
+
+        if (text.contains("{switcher}")) {
+            List<String> switchers = config.getStringList("SCOREBOARD.SWITCHER");
+            if (!switchers.isEmpty()) {
+                String switcherText = switchers.get(currentSwitcherIndex);
+                text = text.replace("{switcher}", switcherText);
+            } else {
+                text = text.replace("{switcher}", "");
+            }
         }
 
         // Team placeholder

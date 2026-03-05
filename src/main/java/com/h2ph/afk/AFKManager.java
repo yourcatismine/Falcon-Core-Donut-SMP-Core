@@ -275,10 +275,16 @@ public class AFKManager {
             // Time up, give reward
             // Check for active shard booster
             com.prismcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(uuid);
-            int multiplier = playerData.hasActiveShardBooster() ? 4 : 1;
+            int multiplier = playerData.hasActiveShardBooster() ? 2 : 1;
             String source = multiplier > 1 ? "AFK Reward (Booster)" : "AFK Reward";
-            playerData.addShards(rewardAmount * multiplier, source);
-            // Optional: Sound/Message for reward?
+            int amountGained = rewardAmount * multiplier;
+            playerData.addShards(amountGained, source);
+
+            // Unified actionbar notification
+            player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(
+                            ChatColor.translateAlternateColorCodes('&', "&d+" + amountGained)));
+
             // Reset countdown
             resetPlayerCountdown(uuid);
         } else {

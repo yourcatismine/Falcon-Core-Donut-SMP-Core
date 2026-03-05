@@ -31,7 +31,9 @@ public class SpawnListener implements Listener {
                 return;
             }
 
-            Location spawn = plugin.getSpawnManager().getGlobalSpawn();
+            // Use world-specific spawn logic
+            String worldName = player.getWorld().getName();
+            Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
             if (spawn != null) {
                 event.setRespawnLocation(spawn);
             }
@@ -46,6 +48,19 @@ public class SpawnListener implements Listener {
         Player player = event.getPlayer();
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
 
+        // Handle new players (first time joining)
+        if (!player.hasPlayedBefore()) {
+            plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
+                String worldName = player.getWorld().getName();
+                Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
+                if (spawn != null) {
+                    player.teleportAsync(spawn);
+                }
+            }, 5L); // Wait a bit longer for new players to load properly
+            return;
+        }
+
+        // Handle combat logged players
         if (data != null && data.isCombatLogged()) {
             plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
                 boolean hasBed = false;
@@ -63,9 +78,9 @@ public class SpawnListener implements Listener {
                     return;
                 }
 
-                Location spawn = plugin.getSpawnManager().getGlobalSpawn();
+                Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(player.getWorld().getName());
                 if (spawn != null) {
-                    player.teleport(spawn);
+                    player.teleportAsync(spawn);
                     if (data.isCombatLogged()) {
                         data.setCombatLogged(false);
                         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());

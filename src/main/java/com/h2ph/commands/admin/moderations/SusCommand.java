@@ -318,9 +318,15 @@ public class SusCommand implements CommandExecutor, Listener {
             if (meta != null && meta.getOwningPlayer() != null) {
                 Player target = meta.getOwningPlayer().getPlayer();
                 if (target != null && target.isOnline()) {
-                    admin.teleport(target);
-                    admin.sendMessage(
-                            PREFIX + ChatColor.YELLOW + toSmallCaps("teleported to") + " " + target.getName());
+                    admin.teleportAsync(target.getLocation()).thenAccept(result -> {
+                        if (result) {
+                            admin.sendMessage(
+                                    PREFIX + ChatColor.YELLOW + toSmallCaps("teleported to") + " " + target.getName());
+                        } else {
+                            admin.sendMessage(
+                                    PREFIX + ChatColor.RED + "Failed to teleport to " + target.getName());
+                        }
+                    });
                 }
             }
         }

@@ -320,6 +320,24 @@ public class DatabaseManager {
                     ")";
             s.execute(blockHistoryTable);
 
+            // Table for Player Chunk Visits (for movement tracking)
+            String chunkVisitsTable = "CREATE TABLE IF NOT EXISTS player_chunk_visits (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "world VARCHAR(64) NOT NULL," +
+                    "chunk_x INT NOT NULL," +
+                    "chunk_z INT NOT NULL," +
+                    "player_uuid VARCHAR(36) NOT NULL," +
+                    "player_name VARCHAR(16) NOT NULL," +
+                    "visit_count INT DEFAULT 1," +
+                    "first_visit BIGINT NOT NULL," +
+                    "last_visit BIGINT NOT NULL," +
+                    "UNIQUE KEY unique_player_chunk (world, chunk_x, chunk_z, player_uuid)," +
+                    "INDEX chunk_idx (world, chunk_x, chunk_z)," +
+                    "INDEX player_idx (player_uuid)," +
+                    "INDEX timestamp_idx (last_visit)" +
+                    ")";
+            s.execute(chunkVisitsTable);
+
         } catch (SQLException e) {
             // Suppress stack trace when database is offline
         }
@@ -1248,6 +1266,54 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * ANTI-DUPE: Fetch a single order by ID from database for validation
+     * @param orderId The UUID of the order to fetch
+     * @return Order object or null if not found
+     */
+    public com.prismcore.survival.orders.data.Order getOrderById(UUID orderId) {
+        if (!isConnected())
+            return null;
+        String query = "SELECT * FROM prism_orders WHERE id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, orderId.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    try {
+                        UUID id = UUID.fromString(rs.getString("id"));
+                        UUID owner = UUID.fromString(rs.getString("owner"));
+                        String itemKey = rs.getString("item_key");
+                        int requested = rs.getInt("requested");
+                        int delivered = rs.getInt("delivered");
+                        double priceEach = rs.getDouble("price_each");
+                        double paid = rs.getDouble("paid");
+                        boolean canceled = rs.getBoolean("canceled");
+                        boolean completed = rs.getBoolean("completed");
+                        long creationTime = rs.getLong("creation_time");
+                        String storageBase64 = rs.getString("storage");
+
+                        com.prismcore.survival.orders.data.Order order = new com.prismcore.survival.orders.data.Order(
+                                id, owner, com.prismcore.survival.orders.data.ItemKey.deserialize(itemKey), requested,
+                                delivered, priceEach, paid, canceled, completed,
+                                creationTime);
+
+                        if (storageBase64 != null && !storageBase64.isEmpty()) {
+                            order.setStorage(com.prismcore.survival.utils.ItemSerializationManager
+                                    .itemStackListFromBase64(storageBase64));
+                        }
+                        return order;
+                    } catch (Exception e) {
+                        // Silently fail parse error
+                        return null;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail loading
+        }
+        return null;
+    }
+
     public void deleteOrder(UUID orderId) {
         if (!isConnected())
             return;
@@ -1648,6 +1714,204 @@ public class DatabaseManager {
                     
                     history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
                         playerName, actionCount, lastActivity));
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail
+        }
+        
+        return history;
+    }
+
+    /**
+     * Get chunk history for a 5x5 area centered on the specified chunk
+     * @param world The world name
+     * @param centerChunkX The center chunk X coordinate
+     * @param centerChunkZ The center chunk Z coordinate
+     * @return List of ChunkHistoryEntry objects representing player activity in the area
+     */
+    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkAreaHistory(String world, int centerChunkX, int centerChunkZ) {
+        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
+        if (!isConnected()) return history;
+        
+        // Calculate 5x5 chunk area (2 chunks in each direction from center)
+        int radius = 2;
+        int minChunkX = centerChunkX - radius;
+        int maxChunkX = centerChunkX + radius;
+        int minChunkZ = centerChunkZ - radius;
+        int maxChunkZ = centerChunkZ + radius;
+        
+        // Convert to block coordinates
+        int minX = minChunkX * 16;
+        int maxX = (maxChunkX * 16) + 15;
+        int minZ = minChunkZ * 16;
+        int maxZ = (maxChunkZ * 16) + 15;
+        
+        String query = "SELECT player_name, COUNT(*) as action_count, MAX(timestamp) as last_activity " +
+                       "FROM block_history " +
+                       "WHERE world = ? AND x >= ? AND x <= ? AND z >= ? AND z <= ? " +
+                       "GROUP BY player_name " +
+                       "ORDER BY action_count DESC, last_activity DESC";
+        
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, world);
+            ps.setInt(2, minX);
+            ps.setInt(3, maxX);
+            ps.setInt(4, minZ);
+            ps.setInt(5, maxZ);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String playerName = rs.getString("player_name");
+                    int actionCount = rs.getInt("action_count");
+                    long lastActivity = rs.getLong("last_activity");
+                    
+                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
+                        playerName, actionCount, lastActivity));
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail
+        }
+        
+        return history;
+    }
+
+    /**
+     * Ensure the player_chunk_visits table exists (creates if doesn't exist)
+     */
+    private void ensureChunkVisitsTableExists() {
+        if (!isConnected()) return;
+        
+        String createTable = "CREATE TABLE IF NOT EXISTS player_chunk_visits (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "world VARCHAR(64) NOT NULL," +
+                "chunk_x INT NOT NULL," +
+                "chunk_z INT NOT NULL," +
+                "player_uuid VARCHAR(36) NOT NULL," +
+                "player_name VARCHAR(16) NOT NULL," +
+                "visit_count INT DEFAULT 1," +
+                "first_visit BIGINT NOT NULL," +
+                "last_visit BIGINT NOT NULL," +
+                "UNIQUE KEY unique_player_chunk (world, chunk_x, chunk_z, player_uuid)," +
+                "INDEX chunk_idx (world, chunk_x, chunk_z)," +
+                "INDEX player_idx (player_uuid)," +
+                "INDEX timestamp_idx (last_visit)" +
+                ")";
+        
+        try (Connection conn = getConnection(); Statement s = conn.createStatement()) {
+            s.execute(createTable);
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Failed to create player_chunk_visits table: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Record a player's visit to a chunk (for movement tracking)
+     */
+    public void recordChunkVisit(String world, int chunkX, int chunkZ, UUID playerUuid, String playerName) {
+        if (!isConnected()) return;
+        
+        // Ensure table exists before attempting to use it
+        ensureChunkVisitsTableExists();
+        
+        String query = "INSERT INTO player_chunk_visits (world, chunk_x, chunk_z, player_uuid, player_name, first_visit, last_visit) " +
+                       "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+                       "ON DUPLICATE KEY UPDATE " +
+                       "visit_count = visit_count + 1, " +
+                       "last_visit = VALUES(last_visit), " +
+                       "player_name = VALUES(player_name)";
+        
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            long now = System.currentTimeMillis();
+            ps.setString(1, world);
+            ps.setInt(2, chunkX);
+            ps.setInt(3, chunkZ);
+            ps.setString(4, playerUuid.toString());
+            ps.setString(5, playerName);
+            ps.setLong(6, now);
+            ps.setLong(7, now);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // Silently fail to avoid spamming logs
+        }
+    }
+
+    /**
+     * Get chunk visit history for a single chunk
+     */
+    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkVisitHistory(String world, int chunkX, int chunkZ) {
+        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
+        if (!isConnected()) return history;
+        
+        // Ensure table exists before attempting to query it
+        ensureChunkVisitsTableExists();
+        
+        String query = "SELECT player_name, visit_count, last_visit " +
+                       "FROM player_chunk_visits " +
+                       "WHERE world = ? AND chunk_x = ? AND chunk_z = ? " +
+                       "ORDER BY visit_count DESC, last_visit DESC";
+        
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, world);
+            ps.setInt(2, chunkX);
+            ps.setInt(3, chunkZ);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String playerName = rs.getString("player_name");
+                    int visitCount = rs.getInt("visit_count");
+                    long lastVisit = rs.getLong("last_visit");
+                    
+                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
+                        playerName, visitCount, lastVisit));
+                }
+            }
+        } catch (SQLException e) {
+            // Silently fail
+        }
+        
+        return history;
+    }
+
+    /**
+     * Get chunk visit history for a 5x5 area centered on the specified chunk
+     */
+    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkAreaVisitHistory(String world, int centerChunkX, int centerChunkZ) {
+        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
+        if (!isConnected()) return history;
+        
+        // Ensure table exists before attempting to query it
+        ensureChunkVisitsTableExists();
+        
+        // Calculate 5x5 chunk area (2 chunks in each direction from center)
+        int radius = 2;
+        int minChunkX = centerChunkX - radius;
+        int maxChunkX = centerChunkX + radius;
+        int minChunkZ = centerChunkZ - radius;
+        int maxChunkZ = centerChunkZ + radius;
+        
+        String query = "SELECT player_name, SUM(visit_count) as total_visits, MAX(last_visit) as last_activity " +
+                       "FROM player_chunk_visits " +
+                       "WHERE world = ? AND chunk_x >= ? AND chunk_x <= ? AND chunk_z >= ? AND chunk_z <= ? " +
+                       "GROUP BY player_name " +
+                       "ORDER BY total_visits DESC, last_activity DESC";
+        
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, world);
+            ps.setInt(2, minChunkX);
+            ps.setInt(3, maxChunkX);
+            ps.setInt(4, minChunkZ);
+            ps.setInt(5, maxChunkZ);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String playerName = rs.getString("player_name");
+                    int totalVisits = rs.getInt("total_visits");
+                    long lastActivity = rs.getLong("last_activity");
+                    
+                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
+                        playerName, totalVisits, lastActivity));
                 }
             }
         } catch (SQLException e) {

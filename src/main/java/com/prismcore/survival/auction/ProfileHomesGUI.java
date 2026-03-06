@@ -18,8 +18,9 @@ import java.util.List;
 
 public class ProfileHomesGUI {
 
-    public static final int HOME_COUNT = 5;
+    public static final int HOME_COUNT = 10;
     public static final int BED_START = 11; // Center position in row 2
+    public static final int BED_START_2 = 20; // Second row for homes 6-10
 
     public static class ProfileHomesHolder implements InventoryHolder {
         private final OfflinePlayer targetPlayer;
@@ -56,6 +57,16 @@ public class ProfileHomesGUI {
             inv.setItem(i, placeholder);
         }
         
+        // Slot 1: Back button
+        ItemStack backButton = new ItemStack(Material.BARRIER);
+        ItemMeta backMeta = backButton.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(Utils.formatColors("&c« ʙᴀᴄᴋ"));
+            backMeta.setLore(List.of(Utils.formatColors("&fClick to go back")));
+            backButton.setItemMeta(backMeta);
+        }
+        inv.setItem(1, backButton);
+        
         // Load target's homes
         java.util.UUID targetUUID = targetPlayer.getUniqueId();
         java.util.Map<Integer, HomeManager.HomeEntry> homes = homeManager.getHomes(targetUUID);
@@ -63,7 +74,16 @@ public class ProfileHomesGUI {
         // Display beds for each home slot
         for (int i = 0; i < HOME_COUNT; i++) {
             int homeNumber = i + 1;
-            int bedSlot = BED_START + i;
+            
+            // Calculate slot based on home group
+            int bedSlot;
+            if (i < 5) {
+                // Homes 1-5
+                bedSlot = BED_START + i;
+            } else {
+                // Homes 6-10
+                bedSlot = BED_START_2 + (i - 5);
+            }
             
             if (homes.containsKey(homeNumber)) {
                 // Home is set

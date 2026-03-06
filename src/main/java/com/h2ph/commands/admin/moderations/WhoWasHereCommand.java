@@ -43,22 +43,24 @@ public class WhoWasHereCommand implements CommandExecutor {
 
         // Async Processing
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
-            List<ChunkHistoryEntry> history = plugin.getDatabaseManager().getChunkHistory(world, chunkX, chunkZ);
+            List<ChunkHistoryEntry> history = plugin.getDatabaseManager().getChunkAreaVisitHistory(world, chunkX, chunkZ);
 
             plugin.getSchedulerAdapter().runTask(() -> {
                 if (history.isEmpty()) {
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
-                    player.sendMessage(ChatColor.RED + " Chunk History: " + ChatColor.WHITE + "No Activity Found");
+                    player.sendMessage(ChatColor.RED + " Area History: " + ChatColor.WHITE + "No Visitors Found");
                     player.sendMessage("");
-                    player.sendMessage(ChatColor.RED + " Chunk: " + ChatColor.WHITE + chunkX + ", " + chunkZ);
+                    player.sendMessage(ChatColor.RED + " Center Chunk: " + ChatColor.WHITE + chunkX + ", " + chunkZ);
+                    player.sendMessage(ChatColor.RED + " Area Size: " + ChatColor.WHITE + "5x5 chunks (80x80 blocks)");
                     player.sendMessage(ChatColor.RED + " World: " + ChatColor.WHITE + world);
-                    player.sendMessage(ChatColor.RED + " Status: " + ChatColor.WHITE + "Unexplored or No Block Activity");
+                    player.sendMessage(ChatColor.RED + " Status: " + ChatColor.WHITE + "No players have walked here recently");
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
                 } else {
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm");
 
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
-                    player.sendMessage(ChatColor.RED + " Who Was Here: " + ChatColor.WHITE + "Chunk " + chunkX + ", " + chunkZ);
+                    player.sendMessage(ChatColor.RED + " Who Was Here: " + ChatColor.WHITE + "5x5 Area around (" + chunkX + ", " + chunkZ + ")");
+                    player.sendMessage(ChatColor.GRAY + " Covers chunks (" + (chunkX-2) + "," + (chunkZ-2) + ") to (" + (chunkX+2) + "," + (chunkZ+2) + ")");
                     player.sendMessage("");
 
                     // Display top players who were here (up to 10)
@@ -70,14 +72,15 @@ public class WhoWasHereCommand implements CommandExecutor {
                         String timestamp = sdf.format(new Date(entry.lastActivity));
                         
                         player.sendMessage(ChatColor.RED + " " + rank + ". " + ChatColor.WHITE + entry.playerName + 
-                                          ChatColor.GRAY + " (" + entry.actionCount + " actions)");
-                        player.sendMessage(ChatColor.GRAY + "    Last seen: " + timestamp);
+                                          ChatColor.GRAY + " (" + entry.actionCount + " visits)");
+                        player.sendMessage(ChatColor.GRAY + "    Last walked here: " + timestamp);
                         
                         rank++;
                     }
 
                     player.sendMessage("");
                     player.sendMessage(ChatColor.RED + " Total Players: " + ChatColor.WHITE + history.size());
+                    player.sendMessage(ChatColor.RED + " Area Size: " + ChatColor.WHITE + "5x5 chunks (80x80 blocks)");
                     player.sendMessage(ChatColor.RED + " World: " + ChatColor.WHITE + world);
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
                 }

@@ -239,9 +239,16 @@ public class ProfileGUIListener implements Listener {
             return;
         }
 
-        // Slots 11-15: Home beds (click to teleport)
-        if (slot >= ProfileHomesGUI.BED_START && slot < ProfileHomesGUI.BED_START + ProfileHomesGUI.HOME_COUNT) {
-            int homeNumber = slot - ProfileHomesGUI.BED_START + 1;
+        // Slots 11-15 and 20-24: Home beds (click to teleport)
+        if ((slot >= ProfileHomesGUI.BED_START && slot < ProfileHomesGUI.BED_START + 5) ||
+            (slot >= ProfileHomesGUI.BED_START_2 && slot < ProfileHomesGUI.BED_START_2 + 5)) {
+            
+            int homeNumber;
+            if (slot >= ProfileHomesGUI.BED_START && slot < ProfileHomesGUI.BED_START + 5) {
+                homeNumber = slot - ProfileHomesGUI.BED_START + 1;
+            } else {
+                homeNumber = slot - ProfileHomesGUI.BED_START_2 + 6;
+            }
             Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
 
             if (clickedMat == Material.PURPLE_BED) {

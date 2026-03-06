@@ -16,8 +16,10 @@ public class SchedulerAdapter {
      * Run a task on the main thread (global region for Folia)
      */
     public void runTask(Runnable task) {
-        if (!plugin.isEnabled()) {
-            task.run();
+        if (plugin == null || !plugin.isEnabled() || task == null) {
+            if (task != null) {
+                task.run();
+            }
             return;
         }
         try {
@@ -33,8 +35,10 @@ public class SchedulerAdapter {
      * Run a task async
      */
     public void runTaskAsync(Runnable task) {
-        if (!plugin.isEnabled()) {
-            task.run();
+        if (plugin == null || !plugin.isEnabled() || task == null) {
+            if (task != null) {
+                task.run();
+            }
             return;
         }
         try {
@@ -54,6 +58,9 @@ public class SchedulerAdapter {
      * Run a task later on the main thread
      */
     public BukkitTask runTaskLater(Runnable task, long delayTicks) {
+        if (plugin == null || !plugin.isEnabled() || task == null) {
+            return null;
+        }
         try {
             // Try Folia's global region scheduler first
             Object scheduledTask = Bukkit.getGlobalRegionScheduler().runDelayed(plugin, st -> task.run(),
@@ -69,6 +76,9 @@ public class SchedulerAdapter {
      * Run a task later async
      */
     public void runTaskLaterAsync(Runnable task, long delayTicks) {
+        if (plugin == null || !plugin.isEnabled() || task == null) {
+            return;
+        }
         try {
             // Try Folia's async scheduler first
             Bukkit.getAsyncScheduler().runDelayed(plugin, st -> task.run(), delayTicks * 50,
@@ -86,6 +96,9 @@ public class SchedulerAdapter {
      * Run a repeating task on the main thread
      */
     public BukkitTask runTaskTimer(Runnable task, long delayTicks, long periodTicks) {
+        if (plugin == null || !plugin.isEnabled() || task == null) {
+            return null;
+        }
         try {
             // Try Folia's global region scheduler first
             // Note: runAtFixedRate handles repeating tasks
@@ -104,6 +117,9 @@ public class SchedulerAdapter {
      * Run a repeating task async
      */
     public BukkitTask runTaskTimerAsync(Runnable task, long delayTicks, long periodTicks) {
+        if (plugin == null || !plugin.isEnabled() || task == null) {
+            return null;
+        }
         try {
             // Try Folia's async scheduler first
             // Async scheduler uses milliseconds (50ms = 1 tick)

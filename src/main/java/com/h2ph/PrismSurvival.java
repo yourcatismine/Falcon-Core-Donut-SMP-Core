@@ -164,6 +164,9 @@ public class PrismSurvival extends JavaPlugin {
         // Register History Listener (for /checkhistory command)
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HistoryListener(this), this);
 
+        // Register Chunk Tracking Listener (for /whowashere command movement tracking)
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.ChunkTrackingListener(this), this);
+
         // Setup Player Inventory Auto-Save Task (Every 10 minutes = 12000 ticks)
         getSchedulerAdapter().runTaskTimer(() -> {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {

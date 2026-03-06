@@ -104,13 +104,18 @@ public class PlayerNameCache {
                 // Get offline players (this is the expensive operation we're moving off main thread)
                 OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
                 
-                for (OfflinePlayer player : offlinePlayers) {
-                    if (!player.isOnline() && player.getName() != null) {
-                        newCache.add(player.getName());
-                        
-                        // Limit cache size to prevent memory issues
-                        if (newCache.size() >= maxCacheSize) {
-                            break;
+                if (offlinePlayers != null) {
+                    for (OfflinePlayer player : offlinePlayers) {
+                        if (player != null && !player.isOnline()) {
+                            String name = player.getName();
+                            if (name != null && !name.trim().isEmpty()) {
+                                newCache.add(name);
+                                
+                                // Limit cache size to prevent memory issues
+                                if (newCache.size() >= maxCacheSize) {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

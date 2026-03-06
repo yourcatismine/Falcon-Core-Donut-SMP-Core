@@ -44,6 +44,27 @@ public class OrderManager {
     public Collection<Order> all() {
         return this.orders.values();
     }
+    
+    /**
+     * ANTI-DUPE: Get fresh order data from database by ID
+     * @param orderId The order ID to fetch
+     * @return Fresh order from database or null if not found
+     */
+    public Order getOrder(UUID orderId) {
+        // First check cache for efficiency
+        for (Order cached : this.orders.values()) {
+            if (cached.id.equals(orderId)) {
+                // Return a fresh copy from database to avoid cache corruption
+                Order freshOrder = PrismSurvival.getInstance().getDatabaseManager().getOrderById(orderId);
+                // Update the cache with fresh data to keep it synchronized
+                if (freshOrder != null) {
+                    this.orders.put(orderId, freshOrder);
+                }
+                return freshOrder;
+            }
+        }
+        return null;
+    }
 
     public Order create(UUID owner, Material chosenMaterial, int amount, double priceEach) {
         return this.create(owner, ItemKey.of(chosenMaterial), amount, priceEach);
@@ -91,6 +112,26 @@ public class OrderManager {
         if (acceptedAmount <= 0) {
             return;
         }
+        
+        // ANTI-DUPE: Synchronized block to prevent concurrent delivery processing
+        synchronized (this) {
+            // ANTI-DUPE: Final database state check before applying delivery
+            Order freshOrder = this.getOrder(o.id);
+            if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
+                throw new IllegalStateException("Order " + o.id + " is no longer active or has been completed");
+            }
+            
+            // ANTI-DUPE: Check if this delivery would exceed the remaining amount
+            if (freshOrder.delivered + acceptedAmount > freshOrder.requested) {
+                throw new IllegalStateException("Delivery amount exceeds remaining order quantity");
+            }
+            
+            // Update the order reference to use fresh state
+            o.delivered = freshOrder.delivered;
+            o.completed = freshOrder.completed;
+            o.canceled = freshOrder.canceled;
+        }
+        
         OfflinePlayer recipientOp = Bukkit.getOfflinePlayer(o.owner);
         String recipientName = recipientOp.getName() != null ? recipientOp.getName() : "Unknown";
 

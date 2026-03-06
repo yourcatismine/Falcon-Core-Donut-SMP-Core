@@ -37,6 +37,10 @@ import org.bukkit.plugin.Plugin;
 public class ConfirmDeliveryMenu
         implements InventoryHolder,
         MenuOwner {
+    
+    // Anti-dupe: Track processing state per order to prevent packet manipulation
+    private static final java.util.Set<java.util.UUID> processingOrders = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    
     private final OrdersModule module;
     private final Player p;
     private final Order order;
@@ -178,62 +182,95 @@ public class ConfirmDeliveryMenu
                     () -> new DeliverItemsMenu(this.module, this.p, this.order).open(), 1L);
             return;
         }
-        if (slot == 15)
-
-        {
-            this.finalized = true; // Mark finalized to avoid double-refund on close
-
-            // RACECONDITION FIX: Check if order is still valid!
-            if (this.order.canceled || this.order.completed) {
+        if (slot == 15) {
+            // ANTI-DUPE: Prevent concurrent processing of the same order
+            if (!processingOrders.add(this.order.id)) {
                 this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
-                this.p.sendMessage(Utils.formatColors("&cThis order is no longer active!"));
-
-                // Return items on error
-                for (ItemStack shulker : this.originalShulkers) {
-                    this.giveBackOrDrop(shulker);
-                }
-                for (ItemStack directItem : this.acceptedDirect) {
-                    this.giveBackOrDrop(directItem);
-                }
-
-                this.p.closeInventory();
+                this.p.sendMessage(Utils.formatColors("&cDelivery already in progress! Please wait."));
                 return;
             }
+            
+            try {
+                this.finalized = true; // Mark finalized to avoid double-refund on close
 
-            this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+                // ANTI-DUPE: Fresh database validation - CRITICAL for packet manipulation protection
+                Order freshOrder = this.module.orders().getOrder(this.order.id);
+                if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
+                    this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                    this.p.sendMessage(Utils.formatColors("&cThis order is no longer active!"));
 
-            // Combine all accepted items for delivery
-            List<ItemStack> allAccepted = new ArrayList<>();
-            allAccepted.addAll(this.acceptedDirect);
-            allAccepted.addAll(this.acceptedFromShulkers);
+                    // Return items on error
+                    for (ItemStack shulker : this.originalShulkers) {
+                        this.giveBackOrDrop(shulker);
+                    }
+                    for (ItemStack directItem : this.acceptedDirect) {
+                        this.giveBackOrDrop(directItem);
+                    }
 
-            this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount, this.p.getUniqueId());
+                    this.p.closeInventory();
+                    return;
+                }
 
-            // Return the processed shulker boxes (with items removed) to the player
-            for (ItemStack processedShulker : this.processedShulkers) {
-                this.giveBackOrDrop(processedShulker);
-            }
+                this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
 
-            // Log Metrics
-            long startTime = this.p.hasMetadata("prismorder.deliveryStartTime")
-                    ? this.p.getMetadata("prismorder.deliveryStartTime").get(0).asLong()
-                    : System.currentTimeMillis();
-            double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Clicked Confirm and delivered " + acceptedAmount + " items in " + String.format("%.1f", seconds)
-                            + "s");
-            this.p.removeMetadata("prismorder.deliveryStartTime", this.module.getPlugin());
+                // Combine all accepted items for delivery
+                List<ItemStack> allAccepted = new ArrayList<>();
+                allAccepted.addAll(this.acceptedDirect);
+                allAccepted.addAll(this.acceptedFromShulkers);
 
-            // Sanity check re-fetch order state or rely on reference?
-            // applyDelivery updates state.
+                // ANTI-DUPE: Try to apply delivery with proper exception handling
+                try {
+                    this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount, this.p.getUniqueId());
+                } catch (IllegalStateException ex) {
+                    // Order was completed/canceled by another action or packet manipulation detected
+                    this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                    this.p.sendMessage(Utils.formatColors("&cDelivery failed: " + ex.getMessage()));
+                    
+                    // Return all items since delivery failed
+                    for (ItemStack shulker : this.originalShulkers) {
+                        this.giveBackOrDrop(shulker);
+                    }
+                    for (ItemStack directItem : this.acceptedDirect) {
+                        this.giveBackOrDrop(directItem);
+                    }
+                    
+                    this.p.closeInventory();
+                    return;
+                }
 
-            if (this.order.remainingAmount() > 0) {
-                TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                        () -> new DeliverItemsMenu(this.module, this.p, this.order).open(), 1L);
-            } else {
-                TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                        () -> new OrdersMainMenu(this.module, this.p).open(), 1L);
+                // Return the processed shulker boxes (with items removed) to the player
+                for (ItemStack processedShulker : this.processedShulkers) {
+                    this.giveBackOrDrop(processedShulker);
+                }
+
+                // Log Metrics
+                long startTime = this.p.hasMetadata("prismorder.deliveryStartTime")
+                        ? this.p.getMetadata("prismorder.deliveryStartTime").get(0).asLong()
+                        : System.currentTimeMillis();
+                double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
+                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
+                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
+                        "Clicked Confirm and delivered " + acceptedAmount + " items in " + String.format("%.1f", seconds)
+                                + "s");
+                this.p.removeMetadata("prismorder.deliveryStartTime", this.module.getPlugin());
+
+                // ANTI-DUPE: Final validation after delivery - ensure order state is current
+                Order finalOrder = this.module.orders().getOrder(this.order.id);
+                if (finalOrder != null) {
+                    this.order.delivered = finalOrder.delivered;
+                    this.order.completed = finalOrder.completed;
+                }
+
+                if (this.order.remainingAmount() > 0) {
+                    TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
+                            () -> new DeliverItemsMenu(this.module, this.p, this.order).open(), 1L);
+                } else {
+                    TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
+                            () -> new OrdersMainMenu(this.module, this.p).open(), 1L);
+                }
+            } finally {
+                // ANTI-DUPE: Always remove from processing set to allow legitimate future clicks
+                processingOrders.remove(this.order.id);
             }
         }
     }

@@ -34,14 +34,19 @@ public class EconomyMonitor {
     private void updateOnlineTotalMoney() {
         double onlineTotal = 0.0;
         try {
-            if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+            if (plugin != null && plugin.isEnabled() && plugin.getServer() != null && 
+                plugin.getServer().getPluginManager() != null && 
+                plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+                
                 org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin
                         .getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
                 if (rsp != null) {
                     net.milkbowl.vault.economy.Economy eco = rsp.getProvider();
-                    for (org.bukkit.entity.Player p : plugin.getServer().getOnlinePlayers()) {
-                        if (eco.hasAccount(p)) {
-                            onlineTotal += eco.getBalance(p);
+                    if (eco != null) {
+                        for (org.bukkit.entity.Player p : plugin.getServer().getOnlinePlayers()) {
+                            if (p != null && eco.hasAccount(p)) {
+                                onlineTotal += eco.getBalance(p);
+                            }
                         }
                     }
                 }

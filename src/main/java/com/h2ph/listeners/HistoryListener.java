@@ -80,17 +80,18 @@ public class HistoryListener implements Listener {
                 itemType.toString().contains("_SEEDS") || itemType == Material.BONE_MEAL ||
                 itemType.toString().endsWith("_SPAWN_EGG")) {
                 // We'll record this after the event in a delayed task
+                // Capture block data while world is still valid
+                final Location location = block.getLocation().clone();
+                final String blockType = block.getType().toString();
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
-                    recordBlockAction(player, block, "Replaced");
+                    recordBlockAction(player, location, blockType, "Replaced");
                 }, 1L);
             }
         }
     }
 
-    private void recordBlockAction(Player player, Block block, String action) {
-        // Get all block data on main thread before going async to avoid Folia issues
-        final Location location = block.getLocation().clone();
-        final String blockType = block.getType().toString();
+    private void recordBlockAction(Player player, Location location, String blockType, String action) {
+        // Get player data on main thread before going async to avoid Folia issues  
         final String playerName = player.getName();
         final UUID playerUUID = player.getUniqueId();
         final long timestamp = System.currentTimeMillis();
@@ -107,6 +108,15 @@ public class HistoryListener implements Listener {
             );
         });
     }
+
+    // Overloaded method to maintain compatibility with direct calls
+    private void recordBlockAction(Player player, Block block, String action) {
+        // Get all block data on main thread before going async to avoid Folia issues
+        final Location location = block.getLocation().clone();
+        final String blockType = block.getType().toString();
+        
+        recordBlockAction(player, location, blockType, action);
+    }
     
     private void showBlockHistory(Player player, Block block) {
         // Get block data on main thread before going async  
@@ -121,7 +131,6 @@ public class HistoryListener implements Listener {
                     // No history found - block is vanilla/natural
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm");
                     String timestamp = sdf.format(new Date());
-                    String locationStr = String.format("%d, %d, %d", location.getBlockX(), location.getBlockY(), location.getBlockZ());
                     
                     player.sendMessage(
                         ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
@@ -129,7 +138,6 @@ public class HistoryListener implements Listener {
                     player.sendMessage("");
                     player.sendMessage(ChatColor.RED + " Action: " + ChatColor.WHITE + "Natural/Generated");
                     player.sendMessage(ChatColor.RED + " Block: " + ChatColor.WHITE + currentBlockType);
-                    player.sendMessage(ChatColor.RED + " Location: " + ChatColor.WHITE + locationStr);
                     player.sendMessage(ChatColor.RED + " World: " + ChatColor.WHITE + location.getWorld().getName());
                     player.sendMessage(ChatColor.RED + " Date: " + ChatColor.WHITE + "Unknown");
                     player.sendMessage(
@@ -139,7 +147,6 @@ public class HistoryListener implements Listener {
                     BlockHistoryEntry entry = history.get(0);
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm");
                     String timestamp = sdf.format(new Date(entry.timestamp));
-                    String locationStr = String.format("%d, %d, %d", location.getBlockX(), location.getBlockY(), location.getBlockZ());
                     
                     player.sendMessage(
                         ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
@@ -147,7 +154,6 @@ public class HistoryListener implements Listener {
                     player.sendMessage("");
                     player.sendMessage(ChatColor.RED + " Action: " + ChatColor.WHITE + entry.action);
                     player.sendMessage(ChatColor.RED + " Block: " + ChatColor.WHITE + entry.blockType);
-                    player.sendMessage(ChatColor.RED + " Location: " + ChatColor.WHITE + locationStr);
                     player.sendMessage(ChatColor.RED + " World: " + ChatColor.WHITE + location.getWorld().getName());
                     player.sendMessage(ChatColor.RED + " Date: " + ChatColor.WHITE + timestamp);
                     player.sendMessage(

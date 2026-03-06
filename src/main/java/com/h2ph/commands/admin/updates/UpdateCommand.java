@@ -29,7 +29,6 @@ public class UpdateCommand implements CommandExecutor {
             return true;
         }
 
-        // Load configurable values
         String bookTitle = "ѕᴇʀᴠᴇʀ ᴜᴘᴅᴀᴛᴇ";
         String bookAuthorCfg = "%player%";
         java.util.Map<String, String> msgs = new java.util.HashMap<>();
@@ -52,13 +51,9 @@ public class UpdateCommand implements CommandExecutor {
             writable.setItemMeta(meta);
         }
 
-        // Mark the player as the intended update writer, then open the book GUI without
-        // modifying their inventory
         plugin.markPlayerAsUpdateWriter(p.getUniqueId());
         p.sendMessage(net.md_5.bungee.api.ChatColor.translateAlternateColorCodes('&', msgs.get("opened")));
         plugin.getLogger().info("Player marked as update writer: " + p.getName());
-        // Schedule opening the book on the main thread. Try reflective openBook first;
-        // if not available, temporarily give the writable book in hand.
         plugin.getSchedulerAdapter().runAtLocation(p.getLocation(), () -> {
             boolean opened = false;
             try {
@@ -69,13 +64,9 @@ public class UpdateCommand implements CommandExecutor {
                         opened = true;
                     }
                 } catch (NoSuchMethodException nsme) {
-                    // method not present, will fallback
                 } catch (Throwable invokeEx) {
-                    // invocation failed, try fallback
                 }
                 if (!opened) {
-                    // fallback: put writable into hand, saving previous item as metadata so we can
-                    // restore it
                     int slot = p.getInventory().getHeldItemSlot();
                     ItemStack prev = p.getInventory().getItem(slot);
                     p.setMetadata("update_prev_hand", new org.bukkit.metadata.FixedMetadataValue(plugin, prev));
@@ -96,8 +87,6 @@ public class UpdateCommand implements CommandExecutor {
             }
         });
 
-        // Safety: unmark after 2 minutes if they never sign to avoid accidental queuing
-        // later
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             if (plugin.isPlayerMarkedAsUpdateWriter(p.getUniqueId())) {
                 plugin.unmarkPlayerAsUpdateWriter(p.getUniqueId());

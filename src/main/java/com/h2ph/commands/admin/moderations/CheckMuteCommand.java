@@ -44,8 +44,6 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
 
         String targetName = args[0];
 
-        // Handle lookup in a separate task to avoid lag (even though file IO is
-        // involved)
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             Player targetOnline = Bukkit.getPlayer(targetName);
             UUID targetUUID;
@@ -64,7 +62,6 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
                 displayName = offlinePlayer.getName() != null ? offlinePlayer.getName() : targetName;
             }
 
-            // Load from DB first (most reliable for details)
             com.prismcore.survival.manager.DatabaseManager.MuteInfo muteInfo = plugin.getDatabaseManager()
                     .getMuteInfo(targetUUID);
             PlayerData data = plugin.getPlayerDataManager().loadPlayer(targetUUID);
@@ -88,7 +85,6 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
                     muteDate = muteInfo.date;
                     muteExpiry = muteInfo.expire;
                 } else if (isMuted) {
-                    // Fallback to PlayerData if DB entry missing but flag is set
                     reason = data.getMuteReason() != null ? data.getMuteReason() : "None";
                     muteId = data.getMuteId() != null ? "#" + data.getMuteId() : "N/A";
                     mutedBy = data.getMutedBy() != null ? data.getMutedBy() : "N/A";
@@ -130,8 +126,6 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
             @NotNull String[] args) {
         if (args.length == 1) {
             List<String> mutedPlayers = plugin.getDatabaseManager().getMutedPlayerNames();
-            // Fallback to online players if DB check is somehow slow/empty (merging for
-            // best UX)
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!mutedPlayers.contains(player.getName())) {
                     PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());

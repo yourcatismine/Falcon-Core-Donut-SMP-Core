@@ -24,20 +24,17 @@ public class SpawnListener implements Listener {
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
 
         if (data != null && data.isCombatLogged()) {
-            // Respect bed or anchor spawn points
             if (event.isBedSpawn() || player.getBedSpawnLocation() != null) {
                 data.setCombatLogged(false);
                 plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
                 return;
             }
 
-            // Use world-specific spawn logic
             String worldName = player.getWorld().getName();
             Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
             if (spawn != null) {
                 event.setRespawnLocation(spawn);
             }
-            // Reset the flag after respawning
             data.setCombatLogged(false);
             plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
@@ -48,7 +45,6 @@ public class SpawnListener implements Listener {
         Player player = event.getPlayer();
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
 
-        // Handle new players (first time joining)
         if (!player.hasPlayedBefore()) {
             plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
                 String worldName = player.getWorld().getName();
@@ -56,16 +52,14 @@ public class SpawnListener implements Listener {
                 if (spawn != null) {
                     player.teleportAsync(spawn);
                 }
-            }, 5L); // Wait a bit longer for new players to load properly
+            }, 5L);
             return;
         }
 
-        // Handle combat logged players
         if (data != null && data.isCombatLogged()) {
             plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
                 boolean hasBed = false;
                 try {
-                    // This can trigger a sync chunk load in Folia, so we wrap it
                     hasBed = player.getBedSpawnLocation() != null;
                 } catch (Throwable e) {
                     plugin.getLogger().warning("Could not check bed spawn for joining player " + player.getName()

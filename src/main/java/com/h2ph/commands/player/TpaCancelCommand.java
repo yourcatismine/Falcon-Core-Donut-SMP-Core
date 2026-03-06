@@ -32,8 +32,7 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
                 request = TpaRequestManager.getInstance().getRequest(target.getUniqueId(), p.getUniqueId());
             } else {
                 String msg = ChatColor.translateAlternateColorCodes('&',
-                        "&cThat player is not online or does not exist."); // Keeping simple for now or match Accept?
-                // Match accept style:
+                        "&cThat player is not online or does not exist.");
                 org.bukkit.OfflinePlayer offlineTarget = org.bukkit.Bukkit.getOfflinePlayer(args[0]);
                 if (offlineTarget.hasPlayedBefore()) {
                     msg = ChatColor.translateAlternateColorCodes('&', "&cThat player is not online.");
@@ -58,7 +57,6 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Cancel the request
         TpaRequestManager.getInstance().removeRequest(request.getTarget(), p.getUniqueId());
 
         String feedback;
@@ -70,7 +68,6 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
 
         p.sendMessage(feedback);
         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(feedback));
-        // No sound on success as requested
 
         return true;
     }

@@ -55,8 +55,6 @@ public class PrismSell {
         }
         config = YamlConfiguration.loadConfiguration(configFile);
 
-        // Look for defaults in the jar
-        // We assume resources are in "economy/sell/" folder in jar
         java.io.InputStream defConfigStream = plugin.getResource("economy/sell/config.yml");
         if (defConfigStream != null) {
             config.setDefaults(YamlConfiguration.loadConfiguration(
@@ -125,7 +123,6 @@ public class PrismSell {
 
         plugin.getCommand("sell").setExecutor(new SellCommand(this));
 
-        // Register prismsell command (renamed from donutsell)
         PrismSellCommand adminCmd = new PrismSellCommand(this);
         plugin.getCommand("prismsell").setExecutor(adminCmd);
 
@@ -148,7 +145,6 @@ public class PrismSell {
     }
 
     private boolean setupEconomy() {
-        // Load economy config to check if Vault (PrismEconomy) is enabled
         File ecoConfig = new File(plugin.getDataFolder(), "economy/config.yml");
         boolean prismEcoEnabled = true;
 
@@ -162,7 +158,6 @@ public class PrismSell {
             plugin.getLogger().info("PrismSell using Prism Direct Economy.");
             return true;
         } else {
-            // Check for Vault
             if (plugin.getServer().getPluginManager().getPlugin("Vault") == null) {
                 return false;
             }

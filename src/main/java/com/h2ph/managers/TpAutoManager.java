@@ -12,7 +12,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 public class TpAutoManager implements Listener {
 
     public TpAutoManager(PrismSurvival plugin) {
-        // Run every 2 seconds (40 ticks) to keep the action bar visible
         plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
             for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
                 PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());

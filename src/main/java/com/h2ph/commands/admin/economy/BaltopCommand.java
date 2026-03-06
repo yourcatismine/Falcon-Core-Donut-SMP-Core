@@ -34,10 +34,9 @@ public class BaltopCommand implements CommandExecutor, Listener {
     private final Map<UUID, Integer> playerPages = new HashMap<>();
     private final Map<UUID, String> playerSearches = new HashMap<>();
 
-    // Cache leaderboard data to avoid repeated loads
     private List<PlayerDataManager.LeaderboardEntry> cachedEntries = null;
     private long lastCacheTime = 0;
-    private static final long CACHE_DURATION = 30000; // 30 seconds
+    private static final long CACHE_DURATION = 30000;
 
     public BaltopCommand(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -55,10 +54,8 @@ public class BaltopCommand implements CommandExecutor, Listener {
         Player player = (Player) sender;
         playerSearches.remove(player.getUniqueId());
 
-        // Open loading GUI immediately
         openLoadingGUI(player);
 
-        // Load data async and update GUI
         loadDataAsync(player, 1);
         return true;
     }
@@ -67,7 +64,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
         String title = ChatColor.translateAlternateColorCodes('&', "&8ᴍᴏѕᴛ ᴍᴏɴᴇʏ (loading...)");
         Inventory gui = Bukkit.createInventory(null, 54, title);
 
-        // Add loading indicator
         ItemStack loading = new ItemStack(Material.CLOCK);
         ItemMeta meta = loading.getItemMeta();
         if (meta != null) {
@@ -81,18 +77,15 @@ public class BaltopCommand implements CommandExecutor, Listener {
 
     private void loadDataAsync(Player player, int page) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
-            // Check cache first
             List<PlayerDataManager.LeaderboardEntry> allEntries;
             if (cachedEntries != null && (System.currentTimeMillis() - lastCacheTime < CACHE_DURATION)) {
                 allEntries = cachedEntries;
             } else {
-                // Load from storage (this is the expensive part)
-                allEntries = plugin.getPlayerDataManager().getTopMoney(10000); // Limit to 10000 players
+                allEntries = plugin.getPlayerDataManager().getTopMoney(10000);
                 cachedEntries = allEntries;
                 lastCacheTime = System.currentTimeMillis();
             }
 
-            // Apply search filter
             String searchQuery = playerSearches.get(player.getUniqueId());
             List<PlayerDataManager.LeaderboardEntry> displayEntries;
             if (searchQuery != null && !searchQuery.isEmpty()) {
@@ -103,7 +96,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
                 displayEntries = allEntries;
             }
 
-            // Build GUI items async (everything except opening inventory)
             int itemsPerPage = 45;
             int totalPlayers = displayEntries.size();
             int totalPages = (int) Math.ceil((double) totalPlayers / itemsPerPage);
@@ -115,21 +107,18 @@ public class BaltopCommand implements CommandExecutor, Listener {
             int startIndex = (finalPage - 1) * itemsPerPage;
             int endIndex = Math.min(startIndex + itemsPerPage, totalPlayers);
 
-            // Pre-build all items
             List<ItemStack> items = new ArrayList<>();
             for (int i = startIndex; i < endIndex; i++) {
                 PlayerDataManager.LeaderboardEntry entry = displayEntries.get(i);
                 items.add(createHeadItem(entry, allEntries.indexOf(entry) + 1));
             }
 
-            // Find self entry
             PlayerDataManager.LeaderboardEntry selfEntry = allEntries.stream()
                     .filter(e -> e.uuid.equals(player.getUniqueId()))
                     .findFirst()
                     .orElse(null);
             int selfRank = selfEntry != null ? allEntries.indexOf(selfEntry) + 1 : -1;
 
-            // Switch to main thread to open inventory
             int finalTotalPages = totalPages;
             plugin.getSchedulerAdapter().runTask(() -> {
                 if (!player.isOnline())
@@ -140,13 +129,11 @@ public class BaltopCommand implements CommandExecutor, Listener {
                 String title = ChatColor.translateAlternateColorCodes('&', "&8ᴍᴏѕᴛ ᴍᴏɴᴇʏ (page " + finalPage + ")");
                 Inventory gui = Bukkit.createInventory(null, 54, title);
 
-                // Add heads
                 int slot = 0;
                 for (ItemStack item : items) {
                     gui.setItem(slot++, item);
                 }
 
-                // Navigation
                 if (finalPage > 1) {
                     gui.setItem(45, createKeyItem(Material.ARROW, "&aPrevious Page", "&7Click to switch page"));
                 }
@@ -154,7 +141,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
                     gui.setItem(53, createKeyItem(Material.ARROW, "&aNext Page", "&7Click to switch page"));
                 }
 
-                // Self head
                 ItemStack selfHead = new ItemStack(Material.PLAYER_HEAD);
                 SkullMeta selfMeta = (SkullMeta) selfHead.getItemMeta();
                 if (selfMeta != null) {
@@ -169,7 +155,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
                         balance = selfEntry.value;
                         rankDisplay = "&a (#" + selfRank + ")";
                     } else {
-                        // Not in top list, fetch directly
                         balance = 0.0;
                         if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
                             org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin
@@ -179,7 +164,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
                                 balance = rsp.getProvider().getBalance(player);
                             }
                         } else {
-                            // Fallback to internal
                             balance = plugin.getPlayerDataManager().get(player.getUniqueId()).getMoney();
                         }
                         rankDisplay = "&7 (Not in top " + allEntries.size() + ")";
@@ -193,10 +177,8 @@ public class BaltopCommand implements CommandExecutor, Listener {
                 }
                 gui.setItem(48, selfHead);
 
-                // Refresh button
                 gui.setItem(49, createKeyItem(Material.EMERALD, "&aᴍᴏѕᴛ ᴍᴏɴᴇʏ", "&fClick to refresh"));
 
-                // Search button
                 gui.setItem(50, createKeyItem(Material.OAK_SIGN, "&aѕᴇᴀʀᴄʜ", "&fClick to search for players"));
 
                 player.openInventory(gui);
@@ -210,7 +192,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
 
         if (meta != null) {
             try {
-                // Use UUID to get the offline player and properly load skin texture
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.uuid);
                 meta.setOwningPlayer(offlinePlayer);
 
@@ -222,7 +203,6 @@ public class BaltopCommand implements CommandExecutor, Listener {
                 meta.setLore(lore);
                 head.setItemMeta(meta);
             } catch (Exception e) {
-                // Safety catch to prevent one bad head from breaking the entire GUI
                 plugin.getLogger().warning(
                         "Failed to create head item for " + entry.name + " (" + entry.uuid + "): " + e.getMessage());
             }
@@ -272,7 +252,7 @@ public class BaltopCommand implements CommandExecutor, Listener {
             playSound(player, Sound.UI_BUTTON_CLICK);
         } else if (event.getSlot() == 49 && item.getType() == Material.EMERALD) {
             playerSearches.remove(player.getUniqueId());
-            cachedEntries = null; // Force refresh
+            cachedEntries = null;
             loadDataAsync(player, 1);
             playSound(player, Sound.UI_BUTTON_CLICK);
         } else if (event.getSlot() == 50 && item.getType() == Material.OAK_SIGN) {

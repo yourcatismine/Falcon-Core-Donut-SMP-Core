@@ -39,7 +39,6 @@ public class FastCrystalListener implements Listener {
         if (clickedBlock == null)
             return;
 
-        // Fast Crystals can only be placed on the top face of obsidian
         if (event.getBlockFace() != org.bukkit.block.BlockFace.UP)
             return;
 
@@ -50,10 +49,8 @@ public class FastCrystalListener implements Listener {
         if (data == null || !data.isFastCrystals())
             return;
 
-        // Cancel vanilla placement event to bypass vanilla delays
         event.setCancelled(true);
 
-        // Check if a crystal already exists at this location (No Stacking)
         org.bukkit.Location spawnLoc = clickedBlock.getLocation().add(0.5, 1.0, 0.5);
         boolean exists = spawnLoc.getWorld().getNearbyEntities(spawnLoc, 0.5, 0.5, 0.5).stream()
                 .anyMatch(e -> e.getType() == EntityType.END_CRYSTAL);
@@ -61,13 +58,11 @@ public class FastCrystalListener implements Listener {
         if (exists)
             return;
 
-        // Consume the crystal manually if not in creative
         if (player.getGameMode() != GameMode.CREATIVE) {
             item.setAmount(item.getAmount() - 1);
-            player.getInventory().setItemInMainHand(item); // Update hand visually
+            player.getInventory().setItemInMainHand(item);
         }
 
-        // Spawn perfectly centered crystal without the vanilla bedrock pedestal
         EnderCrystal crystal = (EnderCrystal) spawnLoc.getWorld().spawnEntity(spawnLoc, EntityType.END_CRYSTAL);
         crystal.setShowingBottom(false);
     }
@@ -88,17 +83,9 @@ public class FastCrystalListener implements Listener {
         if (data == null || !data.isFastCrystals())
             return;
 
-        // The core of the "reduced I-Frames" mechanic for stackable crystals.
-        // We set the player's max no-damage ticks to 0 temporarily.
-        // This causes the CURRENT damage event to apply, and when vanilla tries to set
-        // noDamageTicks=20, it tops out at 0.
-        // This allows compounding/simultaneous explosions to ALL deal damage in the
-        // same tick!
         player.setMaximumNoDamageTicks(0);
         player.setNoDamageTicks(0);
 
-        // Schedule restoring their I-frames next tick so normal combat isn't
-        // permanently broken
         plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
             if (player.isOnline()) {
                 player.setMaximumNoDamageTicks(20);

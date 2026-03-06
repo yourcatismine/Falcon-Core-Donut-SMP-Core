@@ -78,14 +78,12 @@ public class PricesManager {
     }
 
     private ItemKey parseItemKey(String key) {
-        // Try strict material first
         try {
             Material mat = Material.valueOf(key);
             return ItemKey.of(mat);
         } catch (IllegalArgumentException ignored) {
         }
 
-        // Try complex formats
         String[] parts = key.split(":");
         if (parts.length > 0) {
             Material mat = Material.matchMaterial(parts[0]);
@@ -95,7 +93,6 @@ public class PricesManager {
 
             if (mat == Material.ENCHANTED_BOOK) {
                 if (parts.length == 3) {
-                    // Format: ENCHANTED_BOOK:ENCHANT:LEVEL
                     String enchantName = parts[1];
                     int level;
                     try {
@@ -110,7 +107,6 @@ public class PricesManager {
                     }
                 }
             } else if (ItemKey.isPotionLike(mat)) {
-                // Format: POTION:TYPE or POTION:TYPE:2
                 if (parts.length >= 2) {
                     String typeName = parts[1];
                     boolean strong = parts.length >= 3 && parts[2].equals("2");
@@ -131,7 +127,6 @@ public class PricesManager {
     private Enchantment getEnchantment(String name) {
         Enchantment ench = Enchantment.getByName(name.toUpperCase());
         if (ench == null) {
-            // Try iterating values if name mismatch
             for (Enchantment e : Enchantment.values()) {
                 if (e.getKey().getKey().equalsIgnoreCase(name) || e.getName().equalsIgnoreCase(name)) {
                     return e;
@@ -142,7 +137,6 @@ public class PricesManager {
     }
 
     private org.bukkit.potion.PotionType getPotionType(String name, boolean strong) {
-        // Map common config names to PotionType names
         String mappedName = name.toUpperCase();
         switch (mappedName) {
             case "SWIFTNESS":
@@ -162,12 +156,10 @@ public class PricesManager {
                 break;
         }
 
-        // Try to find exact match or Strong variant
         String targetName = strong ? "STRONG_" + mappedName : mappedName;
         try {
             return org.bukkit.potion.PotionType.valueOf(targetName);
         } catch (IllegalArgumentException e) {
-            // Fallback: Check if it's already a valid PotionType without mapping
             try {
                 String fallbackName = strong ? "STRONG_" + name.toUpperCase() : name.toUpperCase();
                 return org.bukkit.potion.PotionType.valueOf(fallbackName);
@@ -182,14 +174,11 @@ public class PricesManager {
             return 0.0;
         }
 
-        // 1. Try exact match from stack (most precise)
         ItemKey key = ItemKey.fromStack(item);
         if (this.prices.containsKey(key)) {
             return this.prices.get(key);
         }
 
-        // 2. Iterate keys to find best match (e.g. book with multiple enchants matching
-        // one config)
         double maxPrice = 0.0;
         for (Map.Entry<ItemKey, Double> entry : this.prices.entrySet()) {
             if (entry.getKey().matches(item)) {
@@ -211,10 +200,9 @@ public class PricesManager {
             return this.itemCategories.get(key);
         }
 
-        // Fallback search
         for (Map.Entry<ItemKey, Category> entry : this.itemCategories.entrySet()) {
             if (entry.getKey().matches(item)) {
-                return entry.getValue(); // Return first match? Or should we pick based on price?
+                return entry.getValue();
             }
         }
         return null;

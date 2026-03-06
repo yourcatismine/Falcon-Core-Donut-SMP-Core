@@ -41,7 +41,6 @@ public class AHCommand implements CommandExecutor, org.bukkit.command.TabComplet
                 player.removeMetadata("ah-admin-view", plugin);
             }
 
-            // Reset persistent data in PlayerData via AuctionManager
             this.controller.getAuctionManager().setPlayerFilter(player.getUniqueId(), "");
             this.controller.getAuctionManager().setPlayerCategory(player.getUniqueId(), "All");
             this.controller.getAuctionManager().setPlayerSort(player.getUniqueId(), "Highest Price");

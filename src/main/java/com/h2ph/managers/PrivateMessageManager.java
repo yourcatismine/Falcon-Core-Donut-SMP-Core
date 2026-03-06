@@ -14,7 +14,6 @@ public class PrivateMessageManager {
     public void setReplyTarget(UUID recipient, UUID sender) {
         lastMessenger.put(recipient, sender);
 
-        // Track conversation for both sides
         conversations.computeIfAbsent(recipient, k -> new HashSet<>()).add(sender);
         conversations.computeIfAbsent(sender, k -> new HashSet<>()).add(recipient);
     }

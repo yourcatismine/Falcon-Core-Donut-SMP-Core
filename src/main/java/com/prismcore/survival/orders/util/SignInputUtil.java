@@ -160,7 +160,6 @@ public final class SignInputUtil {
                 }
                 usedSide = true;
             } catch (Throwable sideClass) {
-                // empty catch block
             }
             if (!usedSide) {
                 for (int i = 0; i < 4; ++i) {
@@ -168,7 +167,6 @@ public final class SignInputUtil {
                         sign.setLine(i, plain[i]);
                         continue;
                     } catch (Throwable throwable) {
-                        // empty catch block
                     }
                 }
             }
@@ -176,20 +174,17 @@ public final class SignInputUtil {
                 Method editable = sign.getClass().getMethod("setEditable", Boolean.TYPE);
                 editable.invoke((Object) sign, true);
             } catch (Throwable editable) {
-                // empty catch block
             }
             try {
                 Method allowed = sign.getClass().getMethod("setAllowedEditorUniqueId", UUID.class);
                 allowed.invoke((Object) sign, uuid);
             } catch (Throwable throwable) {
-                // empty catch block
             }
             sign.update(true, false);
             Scheduler.runEntity((Plugin) plugin, player, () -> {
                 try {
                     player.sendBlockChange(signLoc, sign.getBlockData());
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
             });
             SignInputUtil.startHideFromOthers(plugin, player, signLoc, old);
@@ -235,7 +230,6 @@ public final class SignInputUtil {
                     try {
                         player.sendBlockChange(restore, old);
                     } catch (Throwable throwable) {
-                        // empty catch block
                     }
                 });
                 SignInputUtil.sendOriginalToOthers(plugin, player, restore, old);
@@ -267,7 +261,6 @@ public final class SignInputUtil {
                     try {
                         player.sendBlockChange(restore, old);
                     } catch (Throwable throwable) {
-                        // empty catch block
                     }
                 });
                 SignInputUtil.sendOriginalToOthers(plugin, player, restore, old);
@@ -297,10 +290,6 @@ public final class SignInputUtil {
             int z = bz + off[1];
             Location cand = new Location(base.getWorld(), (double) x, (double) y, (double) z);
             Block b = cand.getBlock();
-            // Relaxed check: Allow placement in air/water, don't require solid ground
-            // below.
-            // This allows flying players and swimming players to use the sign.
-            // We interact with the specific block via packets mostly anyway.
             if (!SignInputUtil.isReplaceable(b.getType()) || cand.distanceSquared(base) > 9.0)
                 continue;
             return new Placement(b.getLocation(), b.getBlockData());
@@ -340,7 +329,6 @@ public final class SignInputUtil {
                 try {
                     other.sendBlockChange(loc, originalData);
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
             });
         }
@@ -403,7 +391,6 @@ public final class SignInputUtil {
                     runMethod.invoke(sched, plugin, c, null);
                     return;
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
             }
             Bukkit.getScheduler().runTask(plugin, run);
@@ -423,7 +410,6 @@ public final class SignInputUtil {
                     mRun.invoke(region, plugin, loc, c);
                     return;
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
             }
             Bukkit.getScheduler().runTask(plugin, run);
@@ -444,7 +430,6 @@ public final class SignInputUtil {
                     mRunDelayed.invoke(region, plugin, loc, c, delayTicks);
                     return;
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
             }
             Bukkit.getScheduler().runTaskLater(plugin, run, delayTicks);
@@ -464,7 +449,6 @@ public final class SignInputUtil {
                     Consumer<Object> c = ignored -> run.run();
                     mRunDelayed.invoke(global, plugin, c, delayTicks);
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
                 return;
             }
@@ -504,7 +488,6 @@ public final class SignInputUtil {
                 try {
                     bt.cancel();
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
                 return;
             }
@@ -512,7 +495,6 @@ public final class SignInputUtil {
                 Method cancel = task.getClass().getMethod("cancel", new Class[0]);
                 cancel.invoke(task, new Object[0]);
             } catch (Throwable throwable) {
-                // empty catch block
             }
         }
     }

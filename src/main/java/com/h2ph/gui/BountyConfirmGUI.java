@@ -27,10 +27,8 @@ public class BountyConfirmGUI {
         String title = color("&8ᴄᴏɴꜰɪʀᴍ ʙᴏᴜɴᴛʏ");
         Inventory inv = Bukkit.createInventory(new BountyConfirmHolder(targetId, targetName, amount), 27, title);
 
-        // Slot 11: Cancel
         inv.setItem(11, createItem(Material.RED_STAINED_GLASS_PANE, "&4ᴄᴀɴᴄᴇʟ", "&fClick to cancel"));
 
-        // Slot 13: Target Head
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         if (meta != null) {
@@ -40,7 +38,6 @@ public class BountyConfirmGUI {
         }
         inv.setItem(13, head);
 
-        // Slot 15: Confirm
         inv.setItem(15, createItem(Material.GREEN_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ", "&fClick to confirm this bounty"));
 
         player.openInventory(inv);

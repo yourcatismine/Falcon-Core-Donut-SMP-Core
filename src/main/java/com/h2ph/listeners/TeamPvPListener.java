@@ -50,9 +50,7 @@ public class TeamPvPListener implements Listener {
         Team vTeam = plugin.getTeamManager().getPlayerTeam(v.getUniqueId());
         Team dTeam = plugin.getTeamManager().getPlayerTeam(d.getUniqueId());
 
-        // Check if both are in the same team
         if (vTeam != null && dTeam != null && vTeam.getId().equals(dTeam.getId())) {
-            // If PvP is disabled for the team, cancel the damage
             if (!vTeam.isPvpEnabled()) {
                 e.setCancelled(true);
             }

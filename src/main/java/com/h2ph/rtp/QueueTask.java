@@ -17,22 +17,17 @@ public class QueueTask implements Runnable {
         this.player = player;
         this.region = region;
 
-        // Play enter sound: Cave 3 (Pitch 0.3 approx)
         player.playSound(player.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.3f);
 
-        // Join global queue
         plugin.getRTPQueueManager().joinQueue(region.name, player.getUniqueId());
     }
 
     public void start() {
-        // Use scheduler adapter to support Folia, scheduling on the Entity (Player) to
-        // ensure proper thread context
         this.task = plugin.getSchedulerAdapter().runEntityTaskTimer(player, this, 0L, 20L);
     }
 
     @Override
     public void run() {
-        // Validate player and region
         if (!player.isOnline()) {
             cleanup(false);
             cancel();
@@ -41,7 +36,7 @@ public class QueueTask implements Runnable {
 
         RTPQueueManager.RTPQueueRegion currentRegion = plugin.getRTPQueueManager().getQueueAt(player.getLocation());
         if (currentRegion == null || !currentRegion.name.equals(region.name)) {
-            cleanup(true); // User left voluntarily
+            cleanup(true);
             cancel();
             return;
         }
@@ -55,11 +50,9 @@ public class QueueTask implements Runnable {
     }
 
     public void cleanup(boolean leftQueue) {
-        // Leave global queue
         plugin.getRTPQueueManager().leaveQueue(region.name, player.getUniqueId());
 
         if (leftQueue && player.isOnline()) {
-            // Play leave sound: Cave 7 (Pitch 0.7 approx)
             player.playSound(player.getLocation(), Sound.AMBIENT_CAVE, 1f, 0.7f);
         }
     }

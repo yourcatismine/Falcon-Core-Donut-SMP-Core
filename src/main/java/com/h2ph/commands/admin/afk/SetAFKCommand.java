@@ -71,8 +71,7 @@ public class SetAFKCommand implements CommandExecutor, TabCompleter {
             try {
                 Player worldEditPlayer = BukkitAdapter.adapt(bukkitPlayer);
                 LocalSession session = WorldEdit.getInstance().getSessionManager().get(worldEditPlayer);
-                Region region = session.getSelection(worldEditPlayer.getWorld()); // Allows IncompleteRegionException
-                                                                                  // check
+                Region region = session.getSelection(worldEditPlayer.getWorld());
 
                 if (region == null) {
                     sender.sendMessage(ChatColor.RED + "Please make a selection with WorldEdit first.");

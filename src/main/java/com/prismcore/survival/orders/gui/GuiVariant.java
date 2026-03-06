@@ -54,11 +54,9 @@ public final class GuiVariant {
                 try {
                     upm.setBasePotionType(vpm.getBasePotionType());
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
                 ui.setItemMeta((ItemMeta) upm);
             } catch (Throwable vpm) {
-                // empty catch block
             }
         }
         if (uiMeta instanceof EnchantmentStorageMeta && vMeta instanceof EnchantmentStorageMeta) {

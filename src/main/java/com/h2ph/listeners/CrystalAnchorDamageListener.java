@@ -24,11 +24,9 @@ public class CrystalAnchorDamageListener implements Listener {
 
         EntityDamageEvent.DamageCause cause = event.getCause();
 
-        // Handle RESPAWN_ANCHOR damage
         if (cause == EntityDamageEvent.DamageCause.BLOCK_EXPLOSION) {
             double customDamage = plugin.getDamageManager().getAnchorDamage();
 
-            // If damage is 0, play villager no sound (silent)
             if (customDamage == 0) {
                 event.setCancelled(true);
                 Player player = (Player) event.getEntity();
@@ -36,15 +34,12 @@ public class CrystalAnchorDamageListener implements Listener {
                 return;
             }
 
-            // Apply custom damage
             event.setDamage(customDamage);
         }
 
-        // Handle ENTITY_EXPLOSION (from crystals)
         if (cause == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION) {
             double customDamage = plugin.getDamageManager().getCrystalDamage();
 
-            // If damage is 0, play villager no sound (silent)
             if (customDamage == 0) {
                 event.setCancelled(true);
                 Player player = (Player) event.getEntity();
@@ -52,7 +47,6 @@ public class CrystalAnchorDamageListener implements Listener {
                 return;
             }
 
-            // Apply custom damage
             event.setDamage(customDamage);
         }
     }

@@ -44,15 +44,12 @@ public class PlayerListHandler implements HttpHandler {
 
         List<Map<String, Object>> playerList = new ArrayList<>();
 
-        // Fetch all candidates (could be optimized with a database if many players)
         List<OfflinePlayer> allPlayers = new ArrayList<>(Arrays.asList(plugin.getServer().getOfflinePlayers()));
-        // Add online players to ensure they are included and prioritized if needed
         for (Player p : plugin.getServer().getOnlinePlayers()) {
             if (!allPlayers.contains(p))
                 allPlayers.add(p);
         }
 
-        // Apply filters
         List<OfflinePlayer> filtered = allPlayers.stream()
                 .filter(p -> {
                     if (search != null && !search.isEmpty()) {
@@ -70,7 +67,6 @@ public class PlayerListHandler implements HttpHandler {
                 })
                 .collect(Collectors.toList());
 
-        // Sort (Basic implementation for username/money/shards)
         String[] sortParts = sort.split(":");
         String sortField = sortParts[0];
         boolean desc = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("desc");
@@ -136,7 +132,6 @@ public class PlayerListHandler implements HttpHandler {
         long playtimeSeconds = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / 20;
         map.put("playtime", formatPlaytime(playtimeSeconds));
 
-        // IP and Alts count for list view
         String ip = "unknown";
         int altsCount = 0;
         List<String> alts = new ArrayList<>();
@@ -144,7 +139,7 @@ public class PlayerListHandler implements HttpHandler {
             ip = plugin.getOffendPlugin().getDatabaseManager().getLastIP(p.getUniqueId());
             if (ip != null) {
                 alts = plugin.getOffendPlugin().getDatabaseManager().getAlts(p.getUniqueId(), ip);
-                alts.remove(p.getName()); // Remove current player from alts list
+                alts.remove(p.getName());
                 altsCount = alts.size();
             } else {
                 ip = "unknown";
@@ -216,7 +211,6 @@ public class PlayerListHandler implements HttpHandler {
     }
 
     private boolean isAuthorized(HttpExchange t) {
-        // Simple auth check similar to ApiServer
         String apiKey = plugin.getApiServer().getApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("changeme"))
             return true;

@@ -48,7 +48,6 @@ public class EnderChestGUI {
         Inventory inv = getActiveInventories().get(ownerUUID);
 
         if (inv != null) {
-            // Update the block reference if we're opening it from a different block
             if (inv.getHolder() instanceof EnderChestHolder) {
                 ((EnderChestHolder) inv.getHolder()).setSourceBlock(block);
             }
@@ -60,12 +59,9 @@ public class EnderChestGUI {
             return;
         }
 
-        // Load asynchronously to avoid blocking the main server thread
-        // This is primarily for admins viewing offline players or if preloading failed
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             ItemStack[] contents = plugin.getEnderChestManager().loadEnderChest(ownerUUID);
 
-            // Open inventory synchronously on the player's thread
             plugin.getSchedulerAdapter().runEntityTask(viewer, () -> {
                 if (!viewer.isOnline())
                     return;
@@ -73,7 +69,6 @@ public class EnderChestGUI {
                 Inventory finalInv = plugin.getEnderChestManager().getOrCreateInventory(ownerUUID, ownerName, block,
                         contents);
 
-                // Update the block reference
                 if (finalInv.getHolder() instanceof EnderChestHolder) {
                     ((EnderChestHolder) finalInv.getHolder()).setSourceBlock(block);
                 }
@@ -81,7 +76,6 @@ public class EnderChestGUI {
                 viewer.openInventory(finalInv);
                 viewer.playSound(viewer.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
 
-                // Trigger lid open animation if opened from a block
                 if (block != null) {
                     plugin.getEnderChestManager().registerViewer(block, viewer);
                 }

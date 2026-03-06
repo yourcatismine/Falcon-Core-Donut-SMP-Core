@@ -32,7 +32,6 @@ public class AuctionController {
         this.transactionManager = new TransactionManager(this);
         boolean useVault = this.config.getBoolean("settings.use-vault", true);
         EconomyHandler.setup(plugin, useVault);
-        // Logging is handled inside EconomyHandler setup now
         this.setupStorageFile();
         this.auctionManager.loadFromConfig();
         this.transactionManager.loadFromConfig();
@@ -139,7 +138,7 @@ public class AuctionController {
     public void startAutoSaveTask() {
         plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
             this.saveAllData();
-        }, 12000L, 12000L); // Default 10 minutes (12000 ticks)
+        }, 12000L, 12000L);
     }
 
     private final java.util.Map<java.util.UUID, org.bukkit.scheduler.BukkitTask> activeTasks = new java.util.concurrent.ConcurrentHashMap<>();
@@ -162,7 +161,6 @@ public class AuctionController {
             org.bukkit.inventory.Inventory top = view.getTopInventory();
             org.bukkit.inventory.InventoryHolder holder = top.getHolder();
 
-            // Should match holders where we expect live updates
             if (!(holder instanceof GUIHandler.MainHolder
                     || holder instanceof GUIHandler.YourItemsHolder
                     || holder instanceof GUIHandler.TransactionsHolder
@@ -180,13 +178,11 @@ public class AuctionController {
 
                 boolean changed = false;
 
-                // Live Update: Auction Timer (Time left)
                 if (pdc.has(auctionKey, org.bukkit.persistence.PersistentDataType.LONG)) {
                     long expireTime = pdc.get(auctionKey, org.bukkit.persistence.PersistentDataType.LONG);
                     long remaining = expireTime - System.currentTimeMillis();
 
                     if (remaining <= 0) {
-                        // If it's the main GUI or Admin Details, hide the item when it expires
                         if (holder instanceof GUIHandler.MainHolder
                                 || holder instanceof GUIHandler.AdminPlayerDetailsHolder) {
                             top.setItem(i, null);
@@ -197,7 +193,7 @@ public class AuctionController {
                     String timeStr = remaining <= 0 ? "&#ff4444Expired"
                             : FormatUtils.formatTime((int) (remaining / 1000));
                     if (meta.hasLore()) {
-                        java.util.List<String> lore = new java.util.ArrayList<>(meta.getLore()); // Make mutable copy
+                        java.util.List<String> lore = new java.util.ArrayList<>(meta.getLore());
                         for (int j = 0; j < lore.size(); ++j) {
                             String line = lore.get(j);
                             String plainLine = org.bukkit.ChatColor.stripColor(line);
@@ -206,35 +202,30 @@ public class AuctionController {
                                         .formatColors("&fTime left: " + (remaining <= 0 ? "" : "&#34ee80") + timeStr);
                                 lore.set(j, newLine);
                                 changed = true;
-                                break; // Only update first match
+                                break;
                             }
                         }
                         if (changed) {
-                            meta.setLore(lore); // Apply updated lore back to meta
+                            meta.setLore(lore);
                         }
                     }
                 }
 
-                // Live Update: Self Destruction (Prism Tools) - AFTER auction timer
                 if (pdc.has(com.prismcore.survival.tools.ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG)) {
                     long toolExpiry = pdc.get(com.prismcore.survival.tools.ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG);
                     long toolRemain = (toolExpiry - System.currentTimeMillis()) / 1000L;
                     String toolTimeStr = toolRemain <= 0 ? "Expired" : com.prismcore.survival.tools.Utils.formatDuration(toolRemain);
                     
                     if (meta.hasLore()) {
-                        java.util.List<String> lore = new java.util.ArrayList<>(meta.getLore()); // Make mutable copy
+                        java.util.List<String> lore = new java.util.ArrayList<>(meta.getLore());
                         boolean toolChanged = false;
                         for (int j = 0; j < lore.size(); ++j) {
                             String line = lore.get(j);
                             String plainLine = org.bukkit.ChatColor.stripColor(line);
                             
-                            // Simple approach: look for any line with duration pattern that's NOT auction timer
                             if (!plainLine.contains("Time left:")) {
-                                // Match duration patterns: "1d 2h 3m 4s" or any variation
                                 if (plainLine.matches(".*\\d+d \\d+h \\d+m \\d+s.*")) {
-                                    // This is likely a tool self-destruct line
                                     
-                                    // Preserve original color formatting by only replacing the duration part
                                     java.util.regex.Pattern durationPattern = java.util.regex.Pattern.compile("\\d+d \\d+h \\d+m \\d+s");
                                     java.util.regex.Matcher matcher = durationPattern.matcher(plainLine);
                                     
@@ -242,15 +233,13 @@ public class AuctionController {
                                         String oldDuration = matcher.group();
                                         String newDuration = toolRemain <= 0 ? "Expired" : toolTimeStr;
                                         
-                                        // Replace in the original colored line to preserve formatting
                                         String updatedLine = line.replace(oldDuration, newDuration);
                                         
                                         lore.set(j, updatedLine);
                                         toolChanged = true;
-                                        break; // Only update first match
+                                        break;
                                     }
                                 } else if (plainLine.contains("Expired") && toolRemain > 0) {
-                                    // Tool was expired but now has time - replace Expired with new time
                                     String updatedLine = line.replaceAll("(?i)expired", toolTimeStr);
                                     lore.set(j, updatedLine);
                                     toolChanged = true;
@@ -259,7 +248,7 @@ public class AuctionController {
                             }
                         }
                         if (toolChanged) {
-                            meta.setLore(lore); // Apply updated lore back to meta
+                            meta.setLore(lore);
                             changed = true;
                         }
                     }
@@ -271,7 +260,6 @@ public class AuctionController {
                         java.util.List<String> lore = meta.getLore();
                         for (int j = 0; j < lore.size(); ++j) {
                             String check = lore.get(j);
-                            // Check for standard "Sold:" logic
                             if (check.contains("Sold:")) {
                                 String newLine = Utils.formatColors("&fSold: &7" + timeAgo + " ago");
                                 if (!check.equals(newLine)) {
@@ -279,7 +267,6 @@ public class AuctionController {
                                     changed = true;
                                 }
                             }
-                            // Check for Admin "ago" logic (line ends with " ago")
                             else if (check.endsWith(" ago")) {
                                 String newLine = Utils.formatColors("&a" + timeAgo + " ago");
                                 if (!check.equals(newLine)) {
@@ -293,7 +280,7 @@ public class AuctionController {
 
                 if (changed) {
                     item.setItemMeta(meta);
-                    top.setItem(i, item); // Force update inventory slot
+                    top.setItem(i, item);
                 }
             }
         }, 20L, 20L);

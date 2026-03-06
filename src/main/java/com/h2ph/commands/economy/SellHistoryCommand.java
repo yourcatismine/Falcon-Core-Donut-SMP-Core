@@ -27,9 +27,8 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
 
     private final PrismSurvival plugin;
     private final String GUI_PREFIX = ChatColor.translateAlternateColorCodes('&', "&8ѕᴇʟʟ ʜɪѕᴛᴏʀʏ");
-    private final int PAGE_SIZE = 45; // top 5 rows
+    private final int PAGE_SIZE = 45;
 
-    // per-player sort mode: true = by name, false = by amount (desc)
     private final Map<UUID, Boolean> sortByName = new HashMap<>();
 
     public SellHistoryCommand(PrismSurvival plugin) {
@@ -170,10 +169,9 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
         if (slot < 0)
             return;
 
-        // Handle History View
         int page = 1;
         try {
-            int a = title.indexOf("(page "); // legacy check, but let's just use current title format
+            int a = title.indexOf("(page ");
             if (a >= 0) {
                 String sub = title.substring(a + 6).trim();
                 if (sub.endsWith(")"))
@@ -183,7 +181,6 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
         } catch (Throwable ignored) {
         }
 
-        // If player clicked inside item area
         if (slot >= 0 && slot < PAGE_SIZE) {
             ItemStack item = event.getCurrentItem();
             if (item != null && item.getType() != Material.AIR) {
@@ -192,7 +189,6 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
             return;
         }
 
-        // prev
         if (slot == 45) {
             ItemStack item = event.getCurrentItem();
             if (item != null && item.getType() == Material.ARROW) {
@@ -201,7 +197,6 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
             }
             return;
         }
-        // next
         if (slot == 53) {
             ItemStack item = event.getCurrentItem();
             if (item != null && item.getType() == Material.ARROW) {
@@ -210,7 +205,6 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
             }
             return;
         }
-        // sort toggle
         if (slot == 49) {
             UUID uid = p.getUniqueId();
             boolean nextSort = !sortByName.getOrDefault(uid, false);
@@ -227,7 +221,6 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        // no-op (keeps GUI behaviour simple)
     }
 
     private String capitalize(String s) {

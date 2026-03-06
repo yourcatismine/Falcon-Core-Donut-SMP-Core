@@ -61,7 +61,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
     public void open() {
         PlayerStateManager.View st = this.module.state().main(this.p.getUniqueId());
 
-        // Ensure defaults
         if (st.sort == null)
             st.sort = SortType.MOST_PAID;
         if (st.filter == null || st.filter.isBlank())
@@ -69,34 +68,26 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         if (st.page < 0)
             st.page = 0;
 
-        // Title
         String title = Utils.formatColors("&8ᴏʀᴅᴇʀѕ (Page " + (st.page + 1) + ")");
         this.inv = Bukkit.createInventory(this, 54, title);
 
         List<Order> list = getFilteredOrders(st);
 
-        // Pagination
         int perPage = 45;
         int maxPage = Math.max(0, (list.size() - 1) / perPage);
         if (st.page > maxPage) {
             st.page = maxPage;
         }
 
-        // Navigation Slots
-        // 45: Back, 53: Next
-        // 47: Sort, 48: Filter, 49: Refresh, 50: Search, 51: Your Orders
 
-        // Back Button
         if (st.page > 0) {
             this.inv.setItem(45, makeItem(Material.ARROW, "&5ʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
-        // Next Button
         if (st.page < maxPage) {
             this.inv.setItem(53, makeItem(Material.ARROW, "&5ɴᴇхᴛ", List.of("&fClick to go to the next page")));
         }
 
-        // Sort Button
         List<String> sortLore = new ArrayList<>();
         sortLore.add(isSort(st.sort, SortType.MOST_PAID) + "Most Paid");
         sortLore.add(isSort(st.sort, SortType.MOST_DELIVERED) + "Most Delivered");
@@ -104,7 +95,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         sortLore.add(isSort(st.sort, SortType.MOST_MONEY_PER_ITEM) + "Most Money Per Item");
         this.inv.setItem(47, makeItem(Material.CAULDRON, "&5ѕᴏʀᴛ", sortLore));
 
-        // Filter Button
         List<String> filterLore = new ArrayList<>();
         List<String> cats = new ArrayList<>();
 
@@ -114,16 +104,12 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         }
         this.inv.setItem(48, makeItem(Material.HOPPER, "&5ꜰɪʟᴛᴇʀ", filterLore));
 
-        // Refresh
         this.inv.setItem(49, makeItem(Material.MAP, "&5ᴏʀᴅᴇʀѕ", List.of("&fClick to refresh")));
 
-        // Search
         this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&5ѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
 
-        // Your Orders
         this.inv.setItem(51, makeItem(Material.CHEST, "&5ʏᴏᴜʀ ᴏʀᴅᴇʀѕ", List.of("&fClick to view your orders")));
 
-        // Populate Items
         int from = st.page * perPage;
         int to = Math.min(from + perPage, list.size());
 
@@ -143,7 +129,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
                 .filter(o -> System.currentTimeMillis() < o.creationTime + (7L * 24 * 60 * 60 * 1000))
                 .collect(Collectors.toList());
 
-        // Search Filter
         if (st.search != null && !st.search.isBlank()) {
             String s = st.search.toLowerCase(Locale.ENGLISH);
             list.removeIf(o -> {
@@ -153,14 +138,12 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             });
         }
 
-        // Category Filter
         Set<Material> allow;
         if (!"All".equalsIgnoreCase(st.filter) && (allow = this.module.filters().resolve(st.filter)) != null
                 && !allow.isEmpty()) {
             list.removeIf(o -> !allow.contains(o.key.material));
         }
 
-        // Sorting
         switch (st.sort) {
             case MOST_PAID -> list.sort(Comparator.comparingDouble(o -> -o.totalPrice()));
             case MOST_DELIVERED -> list.sort(Comparator.comparingInt(o -> -o.delivered));
@@ -183,19 +166,10 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         if (ownerName == null)
             ownerName = "Loading...";
 
-        long expiryTime = o.creationTime + (7L * 24 * 60 * 60 * 1000); // 7 days from creation
+        long expiryTime = o.creationTime + (7L * 24 * 60 * 60 * 1000);
         long remaining = Math.max(0, expiryTime - System.currentTimeMillis());
         String countdown = Utils.formatDuration(remaining);
 
-        // &a%PLAYER_NAME%
-        // &f%ITEM_NAME%
-        // &a$%PRICES%&f each
-        // SPACE
-        // &6%DELIVERED_AMOUNT%/&a%DELIVERED_MAX_AMOUNT%&7 Delivered
-        // &6$%PAID_AMOUNT%/&a$%MAX_PAID_AMOUNT%&7 Paid
-        // SPACE
-        // &fClick to deliver &a%PLAYER_NAME%&f %ITEM_NAME%
-        // &7%EXPIRATION_COUNTDOWN% Untill Order expires
 
         List<String> lore = new ArrayList<>();
         lore.add(Utils.formatColors("&f" + o.key.displayName()));
@@ -222,7 +196,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             meta.addItemFlags(ItemFlag.values());
             item.setItemMeta(meta);
         }
-        // Merge with any icon data if needed (custom model data etc) from ItemKey
         return GuiVariant.merge(item, o.key.buildIcon());
     }
 
@@ -244,14 +217,12 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
             if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR) {
                 return;
             }
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -261,7 +232,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         int slot = e.getSlot();
         PlayerStateManager.View st = this.module.state().main(this.p.getUniqueId());
 
-        // Previous Page (45)
         if (slot == 45) {
             if (st.page > 0) {
                 int oldPage = st.page + 1;
@@ -275,7 +245,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Next Page (53)
         if (slot == 53) {
             int oldPage = st.page + 1;
             st.page++;
@@ -287,7 +256,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Sort (47)
         if (slot == 47) {
             st.sort = nextSort(st.sort);
             com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
@@ -300,7 +268,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Filter (48)
         if (slot == 48) {
             ArrayList<String> cats = new ArrayList<>();
 
@@ -317,7 +284,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Refresh (49)
         if (slot == 49) {
             st.search = null;
             st.page = 0;
@@ -325,17 +291,15 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
                     com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
                     "Refreshed Orders List");
 
-            playSound(Sound.UI_TOAST_IN, 1.0f, 1.0f); // Requested sound
+            playSound(Sound.UI_TOAST_IN, 1.0f, 1.0f);
             open();
             return;
         }
 
-        // Search (50)
         if (slot == 50) {
             playSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             this.p.closeInventory();
             ConfigurationSection sec = this.module.cfg().cfg().getConfigurationSection("search-sign");
-            // Note: passing plugin instance now as required by previous fixes
             SignInputUtil.openFromConfig(this.module.getPlugin(), this.p, sec, input -> {
                 String trimmed = input == null ? "" : input.trim();
                 PlayerStateManager.View st2 = this.module.state().main(this.p.getUniqueId());
@@ -353,7 +317,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Your Orders (51)
         if (slot == 51) {
             com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
                     com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
@@ -363,7 +326,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Items logic (0-44)
         if (slot >= 0 && slot <= 44) {
             List<Order> list = getFilteredOrders(st);
 

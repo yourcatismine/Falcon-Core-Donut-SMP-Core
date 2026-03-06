@@ -23,56 +23,47 @@ public class DeathMessageListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (!deathManager.isEnabled()) {
-            return; // Death messages disabled, use vanilla behavior
+            return;
         }
 
         Player victim = event.getEntity();
         Player killer = victim.getKiller();
         String killerEntity = null;
 
-        // Get the damage cause and killer entity info
         EntityDamageEvent.DamageCause cause = EntityDamageEvent.DamageCause.CUSTOM;
         EntityDamageEvent lastDamage = victim.getLastDamageCause();
         if (lastDamage != null) {
             cause = lastDamage.getCause();
             
-            // If no player killer but there's an entity attacker, get the entity name
             if (killer == null && lastDamage instanceof org.bukkit.event.entity.EntityDamageByEntityEvent) {
                 org.bukkit.event.entity.EntityDamageByEntityEvent entityDamage = 
                     (org.bukkit.event.entity.EntityDamageByEntityEvent) lastDamage;
                 org.bukkit.entity.Entity damager = entityDamage.getDamager();
                 
                 if (damager != null) {
-                    // Get a more readable name for the entity
                     killerEntity = getEntityDisplayName(damager);
                 }
             }
         }
 
-        // Hide vanilla death message
         event.setDeathMessage(null);
 
-        // Get custom death message
         String customMessage = deathManager.getDeathMessage(victim, cause, killer, killerEntity);
         
         if (customMessage == null || customMessage.isEmpty()) {
-            return; // No custom message found, hide death message completely
+            return;
         }
 
-        // Send death message to appropriate players based on radius settings
         if (deathManager.isRadiusEnabled()) {
-            // Send to players within chunk radius
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 if (deathManager.shouldReceiveMessage(onlinePlayer, victim)) {
                     onlinePlayer.sendMessage(customMessage);
                 }
             }
         } else {
-            // Send to all online players
             Bukkit.broadcastMessage(customMessage);
         }
 
-        // Log death message to console (remove color codes for clean console output)
         String cleanMessage = customMessage.replaceAll("§[0-9a-fk-or]", "");
         plugin.getLogger().info("Death: " + cleanMessage);
     }
@@ -85,7 +76,6 @@ public class DeathMessageListener implements Listener {
             return ((Player) entity).getName();
         }
         
-        // Handle named entities
         if (entity instanceof org.bukkit.entity.LivingEntity) {
             org.bukkit.entity.LivingEntity living = (org.bukkit.entity.LivingEntity) entity;
             if (living.getCustomName() != null) {
@@ -93,7 +83,6 @@ public class DeathMessageListener implements Listener {
             }
         }
         
-        // Handle projectiles shot by entities
         if (entity instanceof org.bukkit.entity.Projectile) {
             org.bukkit.entity.Projectile projectile = (org.bukkit.entity.Projectile) entity;
             if (projectile.getShooter() instanceof org.bukkit.entity.LivingEntity) {
@@ -114,7 +103,6 @@ public class DeathMessageListener implements Listener {
      */
     private String getEntityType(org.bukkit.entity.Entity entity) {
         String type = entity.getType().name();
-        // Convert IRON_GOLEM to "Iron Golem"
         return java.util.Arrays.stream(type.split("_"))
             .map(word -> word.charAt(0) + word.substring(1).toLowerCase())
             .collect(java.util.stream.Collectors.joining(" "));

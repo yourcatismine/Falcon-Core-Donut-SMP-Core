@@ -56,7 +56,7 @@ public class CollectItemsMenu
     private int currentPage = 0;
     private boolean internalPageSwitch = false;
     private long lastClickTime = 0;
-    private static final long CLICK_COOLDOWN_MS = 200; // 200ms cooldown between clicks
+    private static final long CLICK_COOLDOWN_MS = 200;
 
     public CollectItemsMenu(OrdersModule module, Player p, Order order) {
         this(module, p, order, 0);
@@ -97,7 +97,6 @@ public class CollectItemsMenu
             this.module.cfg().message(this.p, "&cNo items to collect.");
             this.p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     new TextComponent(Utils.formatColors("&cNo items to collect.")));
-            // return to edit menu if it was empty from the start
             new EditOrderMenu(this.module, this.p, this.order).open();
             return;
         }
@@ -175,7 +174,6 @@ public class CollectItemsMenu
                     return;
                 }
 
-                // Prevent spam clicking
                 long now = System.currentTimeMillis();
                 if (now - lastClickTime < CLICK_COOLDOWN_MS) {
                     return;
@@ -203,7 +201,6 @@ public class CollectItemsMenu
                     return;
                 }
                 if (slot == drop) {
-                    // Check if world is locked for dropping loot
                     if (this.module.cfg().isWorldLocked(this.p.getWorld().getName())) {
                         this.module.cfg().message(this.p, "&cYou cannot drop loot in this world!");
                         this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
@@ -211,7 +208,6 @@ public class CollectItemsMenu
                         return;
                     }
 
-                    // Inline drop logic
                     int per = this.perPage();
                     int from = this.currentPage * per;
                     int to = Math.min(this.order.storage.size(), from + per);
@@ -243,7 +239,6 @@ public class CollectItemsMenu
                 return;
             }
 
-            // Item area in top inventory
             if (slot < (rows - 1) * 9) {
                 org.bukkit.event.inventory.InventoryAction action = e.getAction();
                 boolean isTaking = action == org.bukkit.event.inventory.InventoryAction.PICKUP_ALL
@@ -257,8 +252,7 @@ public class CollectItemsMenu
                     return;
                 }
 
-                // Handle secure collection
-                e.setCancelled(true); // We handle the transfer manually to ensure atoms
+                e.setCancelled(true);
                 int per = this.perPage();
                 int index = (this.currentPage * per) + slot;
 
@@ -273,8 +267,6 @@ public class CollectItemsMenu
                         ItemStack toAdd = Utils.stripOrderMetadata(item.clone());
                         int initialAmount = toAdd.getAmount();
 
-                        // If it's a shift click, try to add to inventory.
-                        // If it's a normal pickup, try to set to cursor.
                         if (action == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                             HashMap<Integer, ItemStack> leftovers = this.p.getInventory().addItem(toAdd);
                             int rem = leftovers.isEmpty() ? 0 : leftovers.get(0).getAmount();
@@ -293,10 +285,8 @@ public class CollectItemsMenu
                                 this.module.cfg().message(this.p, "&cInventory full!");
                             }
                         } else {
-                            // Pickup to cursor
                             ItemStack cursor = e.getView().getCursor();
                             if (cursor == null || cursor.getType() == Material.AIR) {
-                                // Full pickup or half pickup?
                                 int toTake = initialAmount;
                                 if (action == org.bukkit.event.inventory.InventoryAction.PICKUP_HALF) {
                                     toTake = (int) Math.ceil(initialAmount / 2.0);
@@ -318,11 +308,8 @@ public class CollectItemsMenu
                                 this.internalPageSwitch = true;
                                 this.open();
                             } else {
-                                // Strip metadata from cursor before comparison to ensure they match natural
-                                // items
                                 ItemStack cursorStripped = Utils.stripOrderMetadata(cursor.clone());
                                 if (cursorStripped.isSimilar(toAdd)) {
-                                    // Merge with cursor?
                                     int canTake = cursor.getMaxStackSize() - cursor.getAmount();
                                     if (canTake > 0) {
                                         int toTake = Math.min(canTake, initialAmount);
@@ -350,16 +337,14 @@ public class CollectItemsMenu
 
         if (clickedPlayer) {
             if (e.isShiftClick()) {
-                e.setCancelled(true); // Don't allow shift clicking into the GUI
+                e.setCancelled(true);
             }
-            // Allow normal interaction within player's inventory
             return;
         }
     }
 
     @Override
     public void onDrag(InventoryDragEvent e) {
-        // Block dragging that touches the top inventory slots
         for (int slot : e.getRawSlots()) {
             if (slot < e.getView().getTopInventory().getSize()) {
                 e.setCancelled(true);

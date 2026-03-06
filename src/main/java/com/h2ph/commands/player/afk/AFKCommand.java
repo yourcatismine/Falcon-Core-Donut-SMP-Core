@@ -29,7 +29,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
     private final PrismSurvival plugin;
     private final String GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&7ᴀꜰᴋ ᴀʀᴇᴀѕ");
 
-    // Map to track active teleport tasks: UUID -> BukkitTask
     private final Map<UUID, BukkitTask> activeTeleports = new HashMap<>();
 
     public AFKCommand(PrismSurvival plugin) {
@@ -48,7 +47,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
         Player player = (Player) sender;
 
         if (args.length > 0) {
-            // Admin commands
             if (args[0].equalsIgnoreCase("setspawn")) {
                 if (!player.hasPermission("prismcore.admin.afk")) {
                     player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
@@ -76,21 +74,15 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
                 deleteAfkSpawn(player, args[1]);
                 return true;
             }
-            // Logic for /afk <number>
             else {
                 try {
                     int slot = Integer.parseInt(args[0]);
-                    int index = slot - 1; // 1-based to 0-based
+                    int index = slot - 1;
 
                     List<java.io.File> mapFiles = getMapFiles();
                     if (index >= 0 && index < mapFiles.size()) {
                         String worldName = mapFiles.get(index).getName().replace(".yml", "");
 
-                        // Optional: Check full logic here if we want to restrict teleporting to full
-                        // servers via command
-                        // User said "For fast", usually implies skipping GUI check, but logic should
-                        // probably consistency check.
-                        // I'll add the check for consistency.
                         org.bukkit.World world = Bukkit.getWorld(worldName);
                         int playerCount = (world != null) ? world.getPlayers().size() : 0;
                         int maxPlayers = Bukkit.getMaxPlayers();
@@ -106,9 +98,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
                         return true;
                     }
                 } catch (NumberFormatException ignored) {
-                    // Not a number, maybe a map name?
-                    // User didn't strictly ask for /afk <mapname> shortcut, but /afk <number>.
-                    // Fallthrough to open GUI.
                 }
             }
         }
@@ -125,7 +114,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
             java.io.File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
             if (files != null) {
                 fileList.addAll(Arrays.asList(files));
-                // Sort by name to ensure consistent ordering for IDs
                 Collections.sort(fileList, Comparator.comparing(java.io.File::getName));
             }
         }
@@ -218,7 +206,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
             index++;
         }
 
-        // Random AFK Button at Slot 49
         ItemStack randomItem = new ItemStack(Material.AMETHYST_BLOCK);
         ItemMeta randomMeta = randomItem.getItemMeta();
         if (randomMeta != null) {
@@ -249,7 +236,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
                 if (item == null || item.getType() == Material.AIR)
                     return;
 
-                // Play sound for valid clicks in GUI
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_OFF, 1f, 1f);
 
                 ItemMeta meta = item.getItemMeta();
@@ -316,7 +302,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
     }
 
     private void startTeleportTask(Player player, String worldName) {
-        // Check if already teleporting
         if (activeTeleports.containsKey(player.getUniqueId())) {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
@@ -374,17 +359,14 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
 
-        // Tab completion for /afk <number> (available to everyone)
         if (args.length == 1) {
             List<String> completions = new ArrayList<>();
 
-            // Add map numbers 1..N
             List<java.io.File> files = getMapFiles();
             for (int i = 1; i <= files.size(); i++) {
                 completions.add(String.valueOf(i));
             }
 
-            // Add admin commands if permission matches
             if (sender.hasPermission("prismcore.admin.afk")) {
                 completions.add("setspawn");
                 completions.add("remove");
@@ -393,7 +375,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
             return filterCompletions(completions, args[0]);
         }
 
-        // Admin-only subcommands beyond arg 0
         if (!sender.hasPermission("prismcore.admin.afk")) {
             return Collections.emptyList();
         }

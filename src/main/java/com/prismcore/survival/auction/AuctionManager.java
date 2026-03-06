@@ -62,7 +62,6 @@ public class AuctionManager {
     }
 
     public void clearPendingSales(UUID seller) {
-        // No longer using in-memory pendingSales
     }
 
     public void updatePrice(UUID auctionId, double newPrice) {
@@ -91,14 +90,12 @@ public class AuctionManager {
     public void loadFromConfig() {
         this.items.clear();
 
-        // Load from Database
         List<AuctionItem> dbItems = PrismSurvival.getInstance().getDatabaseManager().loadAllAuctionItems();
         for (AuctionItem ai : dbItems) {
             pauseAmethystTimer(ai.getItemStack());
             this.items.add(ai);
         }
 
-        // Migration from YML
         FileConfiguration cfg = this.controller.getStorageConfig();
         if (cfg != null && cfg.contains("auctions")) {
             PrismSurvival.getInstance().getLogger().info("Migrating active auction listings from YML to Database...");
@@ -110,12 +107,12 @@ public class AuctionManager {
                     try {
                         id = UUID.fromString(key);
                     } catch (IllegalArgumentException e) {
-                        id = UUID.randomUUID(); // Fallback for legacy integer keys
+                        id = UUID.randomUUID();
                     }
                     String sellerName = cfg.getString(path + ".seller");
                     ItemStack item = cfg.getItemStack(path + ".item");
                     if (item == null) {
-                        item = cfg.getItemStack(path + ".itemStack"); // Handle potential key variation
+                        item = cfg.getItemStack(path + ".itemStack");
                     }
                     double price = cfg.getDouble(path + ".price");
                     long listedAt = cfg.getLong(path + ".listedAt", System.currentTimeMillis());
@@ -140,7 +137,6 @@ public class AuctionManager {
             cfg.set("auctions", null);
         }
 
-        // Migration for Pending Sales from YML to DB
         if (cfg != null && cfg.contains("pending-sales")) {
             PrismSurvival.getInstance().getLogger().info("Migrating offline auction sales from YML to Database...");
             org.bukkit.configuration.ConfigurationSection psSec = cfg.getConfigurationSection("pending-sales");
@@ -166,9 +162,6 @@ public class AuctionManager {
             this.controller.saveStorageFile();
         }
 
-        // Cleanup: If the file is now effectively empty (or only had
-        // auctions/pending-sales that are now in memory), delete it.
-        // For now, we delete it if 'auctions' was present, as requested.
         if (cfg != null && cfg.contains("auctions") || (cfg != null && !cfg.getKeys(true).isEmpty()
                 && cfg.getKeys(false).stream().allMatch(k -> k.equals("auctions") || k.equals("pending-sales")))) {
             File storageFile = new File(this.controller.getPlugin().getDataFolder(), "economy/auction/storage.yml");
@@ -189,10 +182,8 @@ public class AuctionManager {
         if (cfg == null)
             return;
 
-        cfg.set("auctions", null); // No longer saving auctions to YML
+        cfg.set("auctions", null);
 
-        // Pendings sales are now handled exclusively by the database (AuctionManager +
-        // DatabaseManager)
         cfg.set("pending-sales", null);
         this.controller.saveStorageFile();
     }
@@ -295,7 +286,6 @@ public class AuctionManager {
                 meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG,
                         newExpiry);
                 
-                // Update lore to reflect the new countdown
                 updateToolLore(item, meta, newExpiry);
             }
         }

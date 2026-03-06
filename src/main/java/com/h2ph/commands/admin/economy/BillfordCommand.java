@@ -40,11 +40,9 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
     private final File tradeFile;
     private FileConfiguration tradeConfig;
 
-    // Cache: Map<Slot, ItemStack> for inputs
     private Map<Integer, ItemStack> currentInputs = new HashMap<>();
     private ItemStack currentOutput;
 
-    // Valid Input Slots (Large Chest Area)
     private final List<Integer> VALID_INPUT_SLOTS = Arrays.asList(10, 11, 12, 19, 20, 21, 28, 29, 30);
     private final int OUTPUT_SLOT = 25;
     private final int SAVE_SLOT = 53;
@@ -69,7 +67,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
     private void loadTrade() {
         currentInputs.clear();
 
-        // Load Input Items (Slot -> Item)
         if (tradeConfig.contains("inputs")) {
             for (String key : tradeConfig.getConfigurationSection("inputs").getKeys(false)) {
                 try {
@@ -82,11 +79,9 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
                 }
             }
         } else {
-            // Default: 64 Iron in Slot 10
             currentInputs.put(10, new ItemStack(Material.IRON_INGOT, 64));
         }
 
-        // Load Output Item
         if (tradeConfig.contains("output")) {
             currentOutput = tradeConfig.getItemStack("output");
         } else {
@@ -96,11 +91,9 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
 
     private void saveTrade(Map<Integer, ItemStack> inputs, ItemStack output) {
         try {
-            // Clear old inputs
             tradeConfig.set("inputs", null);
-            tradeConfig.set("input", null); // Clear legacy single input if exists
+            tradeConfig.set("input", null);
 
-            // Save new inputs with their slots
             for (Map.Entry<Integer, ItemStack> entry : inputs.entrySet()) {
                 tradeConfig.set("inputs." + entry.getKey(), entry.getValue());
             }
@@ -136,22 +129,18 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         return true;
     }
 
-    // --- PLAYER GUI ---
     private void openPlayerGUI(Player player) {
         Inventory gui = Bukkit.createInventory(null, 54, GUI_TITLE_PLAYER);
         fillBackground(gui);
 
-        // Place Input Items in exact slots
         for (Map.Entry<Integer, ItemStack> entry : currentInputs.entrySet()) {
             gui.setItem(entry.getKey(), entry.getValue().clone());
         }
 
-        // Place Output Item
         if (currentOutput != null) {
             gui.setItem(OUTPUT_SLOT, currentOutput.clone());
         }
 
-        // Hopper (Trade Button)
         ItemStack hopper = new ItemStack(Material.HOPPER);
         ItemMeta hMeta = hopper.getItemMeta();
         hMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&8ᴛʀᴀᴅᴇ"));
@@ -163,14 +152,12 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         hopper.setItemMeta(hMeta);
         gui.setItem(23, hopper);
 
-        // Info Book
         ItemStack book = new ItemStack(Material.BOOK);
         ItemMeta bMeta = book.getItemMeta();
         bMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aʙɪʟʟꜰᴏʀᴅ᾽ѕ ᴛʀᴀᴅᴇ"));
 
         List<String> bLore = new ArrayList<>();
 
-        // List all required inputs
         for (ItemStack input : currentInputs.values()) {
             bLore.add(ChatColor.GRAY + "" + input.getAmount() + "x " + ChatColor.WHITE + formatName(input));
         }
@@ -188,17 +175,14 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         player.openInventory(gui);
     }
 
-    // --- ADMIN GUI ---
     private void openAdminGUI(Player player) {
         Inventory gui = Bukkit.createInventory(null, 54, GUI_TITLE_ADMIN);
         fillBackground(gui);
 
-        // Clear zones
         for (int i : VALID_INPUT_SLOTS)
             gui.setItem(i, null);
         gui.setItem(OUTPUT_SLOT, null);
 
-        // Place Current Items (Exact Positions)
         for (Map.Entry<Integer, ItemStack> entry : currentInputs.entrySet()) {
             gui.setItem(entry.getKey(), entry.getValue().clone());
         }
@@ -206,7 +190,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
             gui.setItem(OUTPUT_SLOT, currentOutput.clone());
         }
 
-        // Save Button
         ItemStack save = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta sMeta = save.getItemMeta();
         sMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aѕᴀᴠᴇ ᴛʀᴀᴅᴇ"));
@@ -227,7 +210,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
             gui.setItem(i, filler);
         }
 
-        // Clear slots we use for items so they aren't glass
         for (int slot : VALID_INPUT_SLOTS)
             gui.setItem(slot, null);
         gui.setItem(OUTPUT_SLOT, null);
@@ -243,7 +225,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         ItemStack clicked = event.getCurrentItem();
         int slot = event.getSlot();
 
-        // --- PLAYER MODE ---
         if (title.equals(GUI_TITLE_PLAYER)) {
             event.setCancelled(true);
 
@@ -257,19 +238,16 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
             }
         }
 
-        // --- ADMIN MODE ---
         else if (title.equals(GUI_TITLE_ADMIN)) {
             boolean isTopInv = (event.getClickedInventory() == event.getView().getTopInventory());
 
             if (isTopInv) {
-                // Save Button
                 if (slot == SAVE_SLOT) {
                     event.setCancelled(true);
                     handleAdminSave(player, event.getInventory());
                     return;
                 }
 
-                // Allow Dragging in Input/Output Slots
                 if (VALID_INPUT_SLOTS.contains(slot) || slot == OUTPUT_SLOT) {
                     return;
                 }
@@ -283,7 +261,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         Map<Integer, ItemStack> foundInputs = new HashMap<>();
         ItemStack foundOutput = inv.getItem(OUTPUT_SLOT);
 
-        // Scan all valid slots and save exact positions
         boolean hasInput = false;
         for (int slot : VALID_INPUT_SLOTS) {
             ItemStack item = inv.getItem(slot);
@@ -307,7 +284,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
     }
 
     private void performTrade(Player player) {
-        // 1. Simulate transaction to check affordability
         if (!canAfford(player, currentInputs.values())) {
             String failMsg = ChatColor.RED + "You do not have all the required contents.";
             player.sendMessage(failMsg);
@@ -316,10 +292,8 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
             return;
         }
 
-        // 2. Remove Items
         removeItems(player, currentInputs.values());
 
-        // 3. Give Reward
         ItemStack reward = currentOutput.clone();
         if (player.getInventory().firstEmpty() == -1) {
             player.getWorld().dropItem(player.getLocation(), reward);
@@ -337,7 +311,6 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
 
     private boolean canAfford(Player player, java.util.Collection<ItemStack> requirements) {
         ItemStack[] contents = player.getInventory().getContents();
-        // Clone to simulate
         ItemStack[] sim = new ItemStack[contents.length];
         for (int i = 0; i < contents.length; i++) {
             if (contents[i] != null) {

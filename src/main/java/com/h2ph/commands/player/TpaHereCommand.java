@@ -40,7 +40,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
         String targetName = args[0];
         Player target = Bukkit.getPlayer(targetName);
 
-        // Cooldown check
         if (com.h2ph.managers.TpaRequestManager.getInstance().isOnCooldown(p.getUniqueId())) {
             String cooldownMsg = ChatColor.translateAlternateColorCodes('&', "&cPlease wait before requesting again.");
             p.sendMessage(cooldownMsg);
@@ -53,7 +52,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
         if (target == null || !p.canSee(target)) {
             String msg;
             if (target != null) {
-                // Online but hidden -> "Not online" to the sender
                 msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
             } else {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
@@ -76,7 +74,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target is in combat
         if (com.h2ph.listeners.CombatListener.getInstance() != null &&
                 com.h2ph.listeners.CombatListener.getInstance().isInCombat(target)) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis player is currently on combat.");
@@ -87,7 +84,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has disabled TPA Here requests
         com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && !targetData.isTpaHereRequests()) {
@@ -99,7 +95,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has ignored the sender
         if (targetData != null && targetData.isIgnoring(p.getUniqueId())) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -108,11 +103,9 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check Sender's "TPA Confirm Menus" setting
         com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(p.getUniqueId());
         if (senderData != null && !senderData.isTpaConfirmMenus()) {
-            // Send immediately
             com.h2ph.managers.TpaRequestManager.getInstance().sendRequest(p, target,
                     com.h2ph.managers.TpaRequestManager.RequestType.TPA_HERE);
             return true;
@@ -123,10 +116,8 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
     }
 
     private void openTpaHereGUI(Player p, Player target) {
-        // Use same title as TPA Command logic as requested
         Inventory gui = Bukkit.createInventory(null, 27, TpaCommand.GUI_TITLE);
 
-        // Slot 10: Cancel
         ItemStack cancel = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta cancelMeta = cancel.getItemMeta();
         if (cancelMeta != null) {
@@ -138,7 +129,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(10, cancel);
 
-        // Slot 12: Location (World)
         Material worldMat = Material.GRASS_BLOCK;
         String locationName = "Overworld";
         switch (target.getWorld().getEnvironment()) {
@@ -164,7 +154,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(12, locItem);
 
-        // Slot 13: Player Head
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta headMeta = (SkullMeta) head.getItemMeta();
         if (headMeta != null) {
@@ -178,7 +167,6 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(13, head);
 
-        // Slot 14: Region
         ItemStack regionItem = new ItemStack(Material.FEATHER);
         ItemMeta regionMeta = regionItem.getItemMeta();
         if (regionMeta != null) {
@@ -202,14 +190,12 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(14, regionItem);
 
-        // Slot 16: Confirm request (TPA HERE specific lore)
         ItemStack confirm = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta confirmMeta = confirm.getItemMeta();
         if (confirmMeta != null) {
             confirmMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aᴄᴏɴꜰɪʀᴍ"));
             List<String> lore = new ArrayList<>();
             String smallCapsName = SmallCapsUtil.toSmallCaps(target.getName());
-            // "&fClick to teleport %PLAYER_NAME% to you"
             lore.add(ChatColor.translateAlternateColorCodes('&', "&fClick to teleport " + smallCapsName + " to you"));
             confirmMeta.setLore(lore);
             confirm.setItemMeta(confirmMeta);

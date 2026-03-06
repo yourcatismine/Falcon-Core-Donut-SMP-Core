@@ -32,14 +32,12 @@ public class LuckPermsUtils {
             if (user != null) {
                 String primary = user.getPrimaryGroup();
 
-                // Prioritize checking if the LuckPerms primary group is a high-ranking group
                 for (String group : GROUP_HIERARCHY) {
                     if (primary.equalsIgnoreCase(group)) {
                         return group;
                     }
                 }
 
-                // If primary group isn't a top rank, search all nodes for inheritance
                 for (String group : GROUP_HIERARCHY) {
                     if (user.getNodes().stream().anyMatch(node -> {
                         String key = node.getKey().toLowerCase();
@@ -52,7 +50,6 @@ public class LuckPermsUtils {
                 return primary;
             }
         } catch (Exception e) {
-            // Log for debugging
         }
         return "default";
     }
@@ -78,7 +75,6 @@ public class LuckPermsUtils {
                 return prefix != null ? prefix : "";
             }
         } catch (Exception e) {
-            // Silent error
         }
         return "";
     }

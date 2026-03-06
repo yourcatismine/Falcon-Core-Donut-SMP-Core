@@ -48,27 +48,17 @@ public class SettingsCommand implements CommandExecutor {
 
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         boolean hideChat = data != null && data.isHideChat();
-        String hideChatStatus = hideChat ? "&a&lON" : "&4&lOFF"; // Prompt said: Currently: %STATUS% - current ON. If
-                                                                 // logic is "ON" = Hidden.
+        String hideChatStatus = hideChat ? "&a&lON" : "&4&lOFF";
 
         boolean privateMessages = data != null && data.isPrivateMessages();
         String pmStatus = privateMessages ? "&a&lON" : "&4&lOFF";
 
-        // Slot 0: Oak Sign - Hide Chat
         gui.setItem(0,
                 createItem(Material.OAK_SIGN, "&aʜɪᴅᴇ ᴄʜᴀᴛ", "&fCurrently: " + hideChatStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 1: Birch Sign - Private Messages
         gui.setItem(1,
                 createItem(Material.BIRCH_SIGN, "&aᴘʀɪᴠᴀᴛᴇ ᴍᴇѕѕᴀɢᴇѕ", "&fCurrently: " + pmStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 3: Cherry Sign (Using OAK_SIGN as placeholder if Cherry not available in
-        // version, but presuming 1.20+)
-        // Assuming modern version based on request context, but using generic sign if
-        // cherry not found or just use OAK/BIRCH for now if unsure.
-        // Request said "Blossom Sign" which likely refers to Cherry.
-        // We will use CHERRY_SIGN if available, else OAK_SIGN.
-        // Wait, "Blossom Sign" -> Cherry Sign.
         Material cherrySign = Material.getMaterial("CHERRY_SIGN");
         if (cherrySign == null)
             cherrySign = Material.OAK_SIGN;
@@ -78,75 +68,63 @@ public class SettingsCommand implements CommandExecutor {
 
         gui.setItem(2, createItem(cherrySign, "&aᴘᴀʏ ᴀʟᴇʀᴛѕ", "&fCurrently: " + payStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 9: Amethyst Shard - Quick Auction Buy
         gui.setItem(3, createAuctionItem(player, data));
 
-        // Slot 10: Zombie Head - Disable Mob Spawns
         boolean disableMobSpawns = data != null && data.isDisableMobSpawns();
         String mobStatus = disableMobSpawns ? "&a&lON" : "&4&lOFF";
         gui.setItem(4,
                 createHeadItem("MHF_Zombie", "&aᴅɪѕᴀʙʟᴇ ᴍᴏʙ ѕᴘᴀᴡɴѕ", "&fCurrently: " + mobStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 11: Music Disc Cat - Sound Notifications
         boolean soundNotifications = data != null && data.isSoundNotifications();
         String soundStatus = soundNotifications ? "&a&lON" : "&4&lOFF";
         gui.setItem(5,
                 createItem(Material.MUSIC_DISC_CAT, "&aѕᴏᴜɴᴅ ɴᴏᴛɪꜰɪᴄᴀᴛɪᴏɴѕ", "&fCurrently: " + soundStatus, "&a&lON",
                         "&4&lOFF"));
 
-        // Slot 12: Feather - TPA Confirm Menus
         boolean tpaConfirmMenus = data != null && data.isTpaConfirmMenus();
         String tpaStatus = tpaConfirmMenus ? "&a&lON" : "&4&lOFF";
         gui.setItem(6,
                 createItem(Material.FEATHER, "&aᴛᴘᴀ ᴄᴏɴꜰɪʀᴍ ᴍᴇɴᴜѕ", "&fCurrently: " + tpaStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 13: Diamond Sword - Duel Requests
         boolean duelRequests = data != null && data.isDuelRequests();
         String duelStatus = duelRequests ? "&a&lON" : "&4&lOFF";
         gui.setItem(7,
                 createItem(Material.DIAMOND_SWORD, "&aᴅᴜᴇʟ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: " + duelStatus, "&a&lON",
                         "&4&lOFF"));
 
-        // Slot 14: Ender Pearl - TPA Requests
         boolean tpaRequests = data != null && data.isTpaRequests();
         String tpaReqStatus = tpaRequests ? "&a&lON" : "&4&lOFF";
         gui.setItem(8, createItem(Material.ENDER_PEARL, "&aᴛᴘᴀ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: " + tpaReqStatus, "&a&lON",
                 "&4&lOFF"));
 
-        // Slot 15: Eye of Ender - TPA Here Requests
         boolean tpaHereRequests = data != null && data.isTpaHereRequests();
         String tpaHereStatus = tpaHereRequests ? "&a&lON" : "&4&lOFF";
         gui.setItem(9,
                 createItem(Material.ENDER_EYE, "&aᴛᴘᴀ ʜᴇʀᴇ ʀᴇǫᴜᴇѕᴛѕ", "&fCurrently: " + tpaHereStatus, "&a&lON",
                         "&4&lOFF"));
 
-        // Slot 10: Emerald - Payments
         boolean payments = data != null && data.isPayments();
         String paymentsStatus = payments ? "&a&lON" : "&4&lOFF";
         gui.setItem(10,
                 createItem(Material.EMERALD, "&aᴘᴀʏᴍᴇɴᴛѕ", "&fCurrently: " + paymentsStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 11: Prismarine Shard - Shards Notifier
         boolean shardsNotifier = data != null && data.isShardsNotifier();
         String shardsNotifierStatus = shardsNotifier ? "&a&lON" : "&4&lOFF";
         gui.setItem(11,
                 createItem(Material.PRISMARINE_SHARD, "&aѕʜᴀʀᴅѕ ɴᴏᴛɪꜰɪᴇʀ", "&fCurrently: " + shardsNotifierStatus,
                         "&a&lON", "&4&lOFF"));
 
-        // Slot 12: Paper - Scoreboard
         boolean showScoreboard = data != null && data.isShowScoreboard();
         String scoreboardStatus = showScoreboard ? "&a&lON" : "&4&lOFF";
         gui.setItem(12,
                 createItem(Material.PAPER, "&aѕᴄᴏʀᴇʙᴏᴀʀᴅ", "&fCurrently: " + scoreboardStatus, "&a&lON", "&4&lOFF"));
 
-        // Slot 13: End Crystal - Fast Crystals
         boolean fastCrystals = data != null && data.isFastCrystals();
         String fastCrystalStatus = fastCrystals ? "&a&lON" : "&4&lOFF";
         gui.setItem(13,
                 createItem(Material.END_CRYSTAL, "&aꜰᴀѕᴛ ᴄʀʏѕᴛᴀʟ", "&fCurrently: " + fastCrystalStatus, "&a&lON",
                         "&4&lOFF"));
 
-        // Slot 14: Chainmail Helmet - Respawn RTP
         boolean respawnRTP = data != null && data.isRespawnRTP();
         String respawnStatus = respawnRTP ? "&a&lON" : "&4&lOFF";
         gui.setItem(14,
@@ -162,7 +140,6 @@ public class SettingsCommand implements CommandExecutor {
         if (meta != null) {
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
             List<String> lore = new ArrayList<>();
-            // Replace placeholder in status line if needed, but here it's static for now
             lore.add(ChatColor.translateAlternateColorCodes('&', statusLine.replace("%STATUS%", "ON")));
             meta.setLore(lore);
             item.setItemMeta(meta);
@@ -174,9 +151,7 @@ public class SettingsCommand implements CommandExecutor {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) item.getItemMeta();
         if (meta != null) {
-            meta.setOwner(owner); // Note: setOwner is deprecated/blocking in newer versions, but acceptable for
-                                  // MVP/legacy fallback. Better to use profiles but this is standard for simple
-                                  // plugins.
+            meta.setOwner(owner);
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
             List<String> lore = new ArrayList<>();
             lore.add(ChatColor.translateAlternateColorCodes('&', statusLine.replace("%STATUS%", "OFF")));
@@ -193,7 +168,6 @@ public class SettingsCommand implements CommandExecutor {
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aǫᴜɪᴄᴋ ᴀᴜᴄᴛɪᴏɴ ʙᴜʏ"));
             List<String> lore = new ArrayList<>();
 
-            // Check permission
             boolean hasPerm = player.hasPermission("prismsmp.quick.auction");
             String status;
             if (hasPerm) {
@@ -204,7 +178,7 @@ public class SettingsCommand implements CommandExecutor {
             }
 
             lore.add(ChatColor.translateAlternateColorCodes('&', "&fCurrently: " + status));
-            lore.add(""); // SPACE
+            lore.add("");
             if (!hasPerm) {
                 lore.add(ChatColor.translateAlternateColorCodes('&', "&5ᴘʀɪѕᴍᴘʟᴜѕ &7- &7ᴀᴄᴄᴇѕѕ ᴏɴʟʏ"));
                 lore.add(ChatColor.translateAlternateColorCodes('&', "&4ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ"));

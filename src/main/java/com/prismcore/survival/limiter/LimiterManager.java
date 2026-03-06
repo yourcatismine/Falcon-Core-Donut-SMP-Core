@@ -17,7 +17,6 @@ public class LimiterManager {
     private final LimiterConfig config;
     private BukkitTask asyncTimerTask;
 
-    // Track loaded chunks (WorldName -> Set of Chunk Keys)
     private final Map<String, Set<Long>> loadedChunks = new ConcurrentHashMap<>();
 
     public LimiterManager(PrismSurvival plugin, LimiterConfig config) {
@@ -30,21 +29,17 @@ public class LimiterManager {
             asyncTimerTask.cancel();
         }
 
-        // Run an async task periodcally to schedule the chunk checks on the region
-        // scheduler
         asyncTimerTask = plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
             for (World world : Bukkit.getWorlds()) {
                 Set<Long> chunks = loadedChunks.get(world.getName());
                 if (chunks == null || chunks.isEmpty())
                     continue;
 
-                // Group chunks into 8x8 regions (RegionX = chunkX >> 3, RegionZ = chunkZ >> 3)
                 Map<Long, List<Long>> regionToChunks = new HashMap<>();
 
                 for (Long chunkKey : chunks) {
                     int x = (int) (long) chunkKey;
-                    int z = (int) ((long) chunkKey >> 4); // this was a bug waiting to happen, chunkKey >> 32 but let's
-                                                          // fix the bitshifting throughout
+                    int z = (int) ((long) chunkKey >> 4);
                     int realZ = (int) (chunkKey >> 32);
 
                     int regionX = x >> 3;
@@ -54,14 +49,12 @@ public class LimiterManager {
                     regionToChunks.computeIfAbsent(regionKey, k -> new ArrayList<>()).add(chunkKey);
                 }
 
-                // Schedule a task for each region to check its chunks collectively
                 for (Map.Entry<Long, List<Long>> entry : regionToChunks.entrySet()) {
                     long rKey = entry.getKey();
                     int rx = (int) (long) rKey;
                     int rz = (int) (rKey >> 32);
                     List<Long> regionChunks = entry.getValue();
 
-                    // The center of the region is roughly (rx * 8 + 4) * 16
                     int blockX = (rx * 8 + 4) * 16;
                     int blockZ = (rz * 8 + 4) * 16;
 
@@ -129,7 +122,7 @@ public class LimiterManager {
             Chunk chunk = world.getChunkAt(chunkX, chunkZ);
             for (Entity entity : chunk.getEntities()) {
                 if (entity instanceof Player)
-                    continue; // Never limit players
+                    continue;
 
                 if (entity instanceof Item) {
                     Item item = (Item) entity;
@@ -144,7 +137,7 @@ public class LimiterManager {
 
                 if (isProtected(entity)) {
                     if (!config.isCleanProtectedIfOverLimit()) {
-                        continue; // Skip completely if we aren't cleaning protected entities
+                        continue;
                     }
                 }
 
@@ -152,10 +145,8 @@ public class LimiterManager {
             }
         }
 
-        // Process Items region-wide
         processItems(items, chunks.size());
 
-        // Process Entities
         for (Map.Entry<EntityType, List<Entity>> entry : entityGroups.entrySet()) {
             EntityType type = entry.getKey();
             List<Entity> typeEntities = entry.getValue();
@@ -166,21 +157,18 @@ public class LimiterManager {
             if (typeEntities.size() > limit) {
                 int toRemove = typeEntities.size() - limit;
 
-                // Sort entities so we remove the less important ones first (e.g. non-protected,
-                // younger)
                 typeEntities.sort((e1, e2) -> {
                     boolean p1 = isProtected(e1);
                     boolean p2 = isProtected(e2);
                     if (p1 && !p2)
-                        return 1; // e1 is protected, e2 is not. e1 should be kept (higher index)
+                        return 1;
                     if (!p1 && p2)
-                        return -1; // e2 is protected, keep e2
-                    return Integer.compare(e1.getTicksLived(), e2.getTicksLived()); // remove newer entities first
+                        return -1;
+                    return Integer.compare(e1.getTicksLived(), e2.getTicksLived());
                 });
 
                 for (int i = 0; i < toRemove; i++) {
                     Entity e = typeEntities.get(i);
-                    // Double check if we should remove protected entities
                     if (isProtected(e) && !config.isCleanProtectedIfOverLimit()) {
                         continue;
                     }
@@ -199,20 +187,15 @@ public class LimiterManager {
     private void processItems(List<Item> items, int numChunks) {
         int currentItemCount = 0;
 
-        // Sort items by age (ticks lived) ascending, so we remove the oldest items
-        // first
-        items.sort(Comparator.comparingInt(Entity::getTicksLived).reversed()); // reversed so oldest are at the
-                                                                               // beginning
+        items.sort(Comparator.comparingInt(Entity::getTicksLived).reversed());
 
         int baseLimit = config.getDefaultItemLimit();
         int limit = (int) (baseLimit * config.getRegionItemMultiplier() * numChunks);
 
         if (config.isCountItemStackAmount()) {
-            // Count total items in stacks
             for (Item item : items) {
                 int amount = item.getItemStack().getAmount();
                 if (currentItemCount + amount > limit) {
-                    // We passed the limit, we need to remove this or reduce its stack
                     int overage = (currentItemCount + amount) - limit;
                     if (overage >= amount) {
                         if (config.isDebugRemovals()) {
@@ -239,7 +222,6 @@ public class LimiterManager {
                 }
             }
         } else {
-            // Count item entities
             if (items.size() > limit) {
                 int toRemove = items.size() - limit;
                 for (int i = 0; i < toRemove; i++) {
@@ -262,11 +244,9 @@ public class LimiterManager {
         if (entity instanceof LivingEntity) {
             LivingEntity le = (LivingEntity) entity;
             if (config.isProtectEquippedEntities() && le.getEquipment() != null) {
-                // If they picked up any armor or held item
                 if (le.getEquipment().getArmorContents().length > 0) {
                     for (ItemStack item : le.getEquipment().getArmorContents()) {
                         if (item != null && item.getType() != org.bukkit.Material.AIR) {
-                            // simplistic check, ideally we check if drop chance is 1.0f (picked up)
                             return true;
                         }
                     }

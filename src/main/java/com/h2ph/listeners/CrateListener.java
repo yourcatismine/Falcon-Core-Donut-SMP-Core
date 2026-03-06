@@ -47,13 +47,11 @@ public class CrateListener implements Listener {
         if (data.has(crateKey, PersistentDataType.STRING)) {
             String crateId = data.get(crateKey, PersistentDataType.STRING);
 
-            // Transfer to Tile Entity
             if (event.getBlockPlaced().getState() instanceof TileState) {
                 TileState state = (TileState) event.getBlockPlaced().getState();
                 state.getPersistentDataContainer().set(crateKey, PersistentDataType.STRING, crateId);
                 state.update();
 
-                // Register location
                 plugin.getCrateLocationRegistry().addLocation(crateId, event.getBlockPlaced().getLocation());
 
                 event.getPlayer().sendMessage(ChatColor.GREEN + "Crate placed successfully!");
@@ -66,7 +64,6 @@ public class CrateListener implements Listener {
         if (event.getBlock().getState() instanceof TileState) {
             TileState state = (TileState) event.getBlock().getState();
             if (state.getPersistentDataContainer().has(crateKey, PersistentDataType.STRING)) {
-                // It's a crate, remove from registry
                 plugin.getCrateLocationRegistry().removeLocation(event.getBlock().getLocation());
             }
         }
@@ -94,7 +91,6 @@ public class CrateListener implements Listener {
             event.setCancelled(true);
             String crateName = data.get(crateKey, PersistentDataType.STRING);
 
-            // Set metadata for the active crate interacting session
             event.getPlayer().setMetadata("prism_active_crate",
                     new org.bukkit.metadata.FixedMetadataValue(plugin, crateName));
 
@@ -110,7 +106,7 @@ public class CrateListener implements Listener {
         }
 
         FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
-        String type = config.getString("type", "NORMAL"); // Default to Normal
+        String type = config.getString("type", "NORMAL");
 
         if (type.equalsIgnoreCase("CAROUSEL")) {
             plugin.getCarouselManager().openCarouselGUI(player, crateName);
@@ -120,7 +116,6 @@ public class CrateListener implements Listener {
         Inventory gui = org.bukkit.Bukkit.createInventory(null, 27,
                 ChatColor.translateAlternateColorCodes('&', "&8ᴄʜᴏᴏѕᴇ 1 ɪᴛᴇᴍ"));
 
-        // Populate GUI from config
         if (config.contains("contents")) {
             ConfigurationSection contents = config.getConfigurationSection("contents");
             for (String key : contents.getKeys(false)) {
@@ -129,7 +124,6 @@ public class CrateListener implements Listener {
                     ItemStack item = config.getItemStack("contents." + key);
                     gui.setItem(slot, item);
                 } catch (NumberFormatException e) {
-                    // Ignore
                 }
             }
         }
@@ -142,7 +136,6 @@ public class CrateListener implements Listener {
         String title = event.getView().getTitle();
         Player player = (Player) event.getWhoClicked();
 
-        // 1. Crate Selection GUI (Normal)
         if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʜᴏᴏѕᴇ 1 ɪᴛᴇᴍ"))) {
             if (event.getClickedInventory() == null)
                 return;
@@ -160,13 +153,10 @@ public class CrateListener implements Listener {
                 return;
 
             int slot = event.getSlot();
-            // Check if slot is within 10-16 (Inclusive) and has an item
             if (slot >= 10 && slot <= 16) {
-                // Check for key BEFORE opening confirm GUI
                 if (player.hasMetadata("prism_active_crate")) {
                     String crateName = player.getMetadata("prism_active_crate").get(0).asString();
                     if (!playerHasKey(player, crateName)) {
-                        // No Key Logic: No Message, Villager No Sound, Do NOT proceed
                         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         return;
                     }
@@ -176,7 +166,6 @@ public class CrateListener implements Listener {
             }
         }
 
-        // 2. Carousel GUI
         else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ"))) {
             if (event.getClickedInventory() == null)
                 return;
@@ -189,7 +178,6 @@ public class CrateListener implements Listener {
             }
             event.setCancelled(true);
 
-            // Allow clicking start button
             int slot = event.getSlot();
             if (slot == 22) {
                 if (player.hasMetadata("prism_active_crate")) {
@@ -199,7 +187,6 @@ public class CrateListener implements Listener {
             }
         }
 
-        // 3. Confirmation GUI
         else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄᴏɴꜰɪʀᴍ"))) {
             if (event.getClickedInventory() == null)
                 return;
@@ -214,18 +201,17 @@ public class CrateListener implements Listener {
 
             int slot = event.getSlot();
 
-            if (slot == 11) { // Cancel
-                // Go back to Crate GUI
+            if (slot == 11) {
                 if (player.hasMetadata("prism_active_crate")) {
                     String crateName = player.getMetadata("prism_active_crate").get(0).asString();
                     openCrateGUI(player, crateName);
                 } else {
                     player.closeInventory();
                 }
-            } else if (slot == 15) { // Confirm
+            } else if (slot == 15) {
                 if (player.hasMetadata("prism_active_crate")) {
                     String crateName = player.getMetadata("prism_active_crate").get(0).asString();
-                    ItemStack reward = event.getInventory().getItem(13); // The item in slot 13
+                    ItemStack reward = event.getInventory().getItem(13);
                     if (reward != null) {
                         tryClaimReward(player, crateName, reward);
                     }
@@ -235,9 +221,7 @@ public class CrateListener implements Listener {
             }
         }
 
-        // 4. Edit GUI Restriction
         else if (title.startsWith(ChatColor.translateAlternateColorCodes('&', "&eEditing: "))) {
-            // Only check clicks in the top inventory (The Crate GUI)
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 int slot = event.getSlot();
 
@@ -259,7 +243,6 @@ public class CrateListener implements Listener {
         }
     }
 
-    // Helper to check key without deducting
     private boolean playerHasKey(Player player, String crateName) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists())
@@ -269,7 +252,6 @@ public class CrateListener implements Listener {
         String keyName = config.getString("key");
 
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
-        // PlayerData
         return data != null && data.getKeyCount(keyName) > 0;
     }
 
@@ -277,19 +259,15 @@ public class CrateListener implements Listener {
         Inventory confirmGui = org.bukkit.Bukkit.createInventory(null, 27,
                 ChatColor.translateAlternateColorCodes('&', "&8ᴄᴏɴꜰɪʀᴍ"));
 
-        // Slot 11: Cancel (Red Glass)
         ItemStack cancel = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         org.bukkit.inventory.meta.ItemMeta cancelMeta = cancel.getItemMeta();
         cancelMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&4ᴄᴀɴᴄᴇʟ"));
         cancel.setItemMeta(cancelMeta);
         confirmGui.setItem(11, cancel);
 
-        // Slot 13: The Item
         confirmGui.setItem(13, item.clone());
 
-        // Slot 15: Confirm (Green Glass)
-        ItemStack confirm = new ItemStack(Material.LIME_STAINED_GLASS_PANE); // LIME is usually better for 'Green' in
-                                                                             // GUI
+        ItemStack confirm = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         org.bukkit.inventory.meta.ItemMeta confirmMeta = confirm.getItemMeta();
         confirmMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aᴄᴏɴꜰɪʀᴍ"));
         confirm.setItemMeta(confirmMeta);
@@ -310,16 +288,13 @@ public class CrateListener implements Listener {
         String keyName = config.getString("key");
 
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
-        // PlayerData
         if (data == null)
             return;
 
         int keyCount = data.getKeyCount(keyName);
         if (keyCount > 0) {
 
-            // Check Inventory Full
             if (player.getInventory().firstEmpty() == -1) {
-                // Inventory Full Logic
                 String msg = ChatColor.translateAlternateColorCodes('&', "&cYour inventory is full.");
                 player.sendMessage(msg);
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -329,7 +304,6 @@ public class CrateListener implements Listener {
                 return;
             }
 
-            // Success
             data.removeKey(keyName);
             ItemStack toGive = reward.clone();
             com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
@@ -339,15 +313,12 @@ public class CrateListener implements Listener {
             }
             player.getInventory().addItem(toGive);
 
-            // Log activity
             plugin.getActivityLogger().log(player.getUniqueId(),
                     com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
                     "Claimed " + reward.getType() + " x" + reward.getAmount() + " from " + crateName + " crate");
 
-            // No message, No sound
             player.closeInventory();
         } else {
-            // Should not happen if pre-checked, but safe fallback
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             player.closeInventory();
         }
@@ -357,21 +328,15 @@ public class CrateListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         String title = event.getView().getTitle();
 
-        // Editing Save Logic
         if (title.startsWith(ChatColor.translateAlternateColorCodes('&', "&eEditing: "))) {
             String crateName = ChatColor.stripColor(title).replace("Editing: ", "");
             saveCrateContents(crateName, event.getInventory());
             event.getPlayer().sendMessage(ChatColor.GREEN + "Crate contents saved for " + crateName + "!");
         }
-        // Carousel Close Logic
         else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ"))) {
             plugin.getCarouselManager().handleClose((Player) event.getPlayer());
         }
 
-        // Note: We don't clear metadata here because switching GUIs (Crate -> Confirm)
-        // triggers close.
-        // The metadata can persist on the player object harmlessly or be overwritten
-        // next time.
     }
 
     @EventHandler
@@ -413,12 +378,11 @@ public class CrateListener implements Listener {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
 
-        config.set("contents", null); // Clear old contents
+        config.set("contents", null);
 
         String type = config.getString("type", "NORMAL");
 
         for (int i = 0; i < inv.getSize(); i++) {
-            // Skip reserved slots ONLY for CAROUSEL
             if (type.equalsIgnoreCase("CAROUSEL") && (i == 4 || i == 22))
                 continue;
 

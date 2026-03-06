@@ -107,7 +107,6 @@ public class DrillBlockBreakListener implements Listener {
         HashSet<Block> toBreak = new HashSet<Block>();
 
         if (face == BlockFace.UP || face == BlockFace.DOWN) {
-            // Plane is X/Z (y is depth)
             for (int x = -r; x <= r; x++) {
                 for (int z = -r; z <= r; z++) {
                     for (int y = -depth; y <= depth; y++) {
@@ -116,7 +115,6 @@ public class DrillBlockBreakListener implements Listener {
                 }
             }
         } else if (face == BlockFace.NORTH || face == BlockFace.SOUTH) {
-            // Plane is X/Y (z is depth)
             for (int x = -r; x <= r; x++) {
                 for (int y = -r; y <= r; y++) {
                     for (int z = -depth; z <= depth; z++) {
@@ -125,7 +123,6 @@ public class DrillBlockBreakListener implements Listener {
                 }
             }
         } else if (face == BlockFace.EAST || face == BlockFace.WEST) {
-            // Plane is Z/Y (x is depth)
             for (int z = -r; z <= r; z++) {
                 for (int y = -r; y <= r; y++) {
                     for (int x = -depth; x <= depth; x++) {
@@ -134,11 +131,9 @@ public class DrillBlockBreakListener implements Listener {
                 }
             }
         } else {
-            // Fallback for self/diagonal? Just break origin.
             toBreak.add(origin);
         }
 
-        // Remove air blocks from set
         toBreak.removeIf(b -> b.getType() == Material.AIR);
         toBreak.remove(origin);
         for (Block b : toBreak) {

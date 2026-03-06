@@ -68,7 +68,6 @@ public class PlayerDetailHandler implements HttpHandler {
         long playtimeSeconds = op.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20;
         data.put("playtime", formatPlaytime(playtimeSeconds));
 
-        // IP and Alts
         String ip = "unknown";
         List<String> alts = new ArrayList<>();
         if (plugin.getOffendPlugin() != null && plugin.getOffendPlugin().getDatabaseManager() != null) {
@@ -87,9 +86,6 @@ public class PlayerDetailHandler implements HttpHandler {
         data.put("avatarUrl", "https://crafatar.com/avatars/" + op.getUniqueId() + "?size=64");
         long lastSeen = pd.getLastSeenUpdate();
         if (lastSeen <= 0) {
-            // Fallback for players before this change
-            // Suppressing because the server environment marks it as deprecated
-            // but it's the only native way to get history.
             lastSeen = op.getLastPlayed();
         }
         data.put("lastSeen", lastSeen);
@@ -104,21 +100,18 @@ public class PlayerDetailHandler implements HttpHandler {
             data.put("location", locMap);
         }
 
-        // Stats
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("playTimeSeconds", playtimeSeconds);
         stats.put("kills", op.getStatistic(Statistic.PLAYER_KILLS));
         stats.put("deaths", op.getStatistic(Statistic.DEATHS));
         data.put("stats", stats);
 
-        // Economy
         Map<String, Object> economy = new LinkedHashMap<>();
         economy.put("balance", pd.getMoney());
         economy.put("shards", pd.getShards());
 
         List<Map<String, Object>> vaults = new ArrayList<>();
 
-        // Discover all Vault Economies
         Collection<RegisteredServiceProvider<Economy>> rsps = plugin.getServer().getServicesManager()
                 .getRegistrations(Economy.class);
         for (RegisteredServiceProvider<Economy> rsp : rsps) {
@@ -127,7 +120,6 @@ public class PlayerDetailHandler implements HttpHandler {
                 continue;
 
             Map<String, Object> vaultMap = new LinkedHashMap<>();
-            // Use the plugin name as ID/Name if available
             String ecoName = eco.getName();
             vaultMap.put("id", "vault_" + ecoName.toLowerCase().replace(" ", "_"));
             vaultMap.put("name", ecoName);
@@ -140,7 +132,6 @@ public class PlayerDetailHandler implements HttpHandler {
         economy.put("vaults", vaults);
         data.put("economy", economy);
 
-        // Hazards
         data.put("hazardCount", plugin.getHazardManager().getHazardCount(uuid));
         data.put("hazards", plugin.getHazardManager().getHazards(uuid));
 

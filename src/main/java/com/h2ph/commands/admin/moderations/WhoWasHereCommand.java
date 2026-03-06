@@ -35,13 +35,11 @@ public class WhoWasHereCommand implements CommandExecutor {
             return true;
         }
 
-        // Get the player's current chunk
         Chunk chunk = player.getLocation().getChunk();
         String world = player.getWorld().getName();
         int chunkX = chunk.getX();
         int chunkZ = chunk.getZ();
 
-        // Async Processing
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             List<ChunkHistoryEntry> history = plugin.getDatabaseManager().getChunkAreaVisitHistory(world, chunkX, chunkZ);
 
@@ -63,7 +61,6 @@ public class WhoWasHereCommand implements CommandExecutor {
                     player.sendMessage(ChatColor.GRAY + " Covers chunks (" + (chunkX-2) + "," + (chunkZ-2) + ") to (" + (chunkX+2) + "," + (chunkZ+2) + ")");
                     player.sendMessage("");
 
-                    // Display top players who were here (up to 10)
                     int rank = 1;
                     int maxDisplay = Math.min(history.size(), 10);
                     

@@ -24,20 +24,17 @@ public class SpawnManager {
      * Legacy method for compatibility - no-op since we use database storage
      */
     public void reloadConfig() {
-        // No-op: Using database storage instead of config files
     }
 
     public boolean saveSpawn(String name, Location loc) {
         String serialized = serializeLocation(loc);
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-                // Create table if it doesn't exist
                 try (PreparedStatement createTable = conn.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS named_spawns (name VARCHAR(255) PRIMARY KEY, spawn TEXT)")) {
                     createTable.executeUpdate();
                 }
                 
-                // Insert or update the named spawn location
                 try (PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO named_spawns (name, spawn) VALUES (?, ?) ON DUPLICATE KEY UPDATE spawn = ?")) {
                     ps.setString(1, name.toLowerCase());
@@ -66,7 +63,6 @@ public class SpawnManager {
 
     public Location getSpawn(String name) {
         try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-            // Create table if it doesn't exist
             try (PreparedStatement createTable = conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS named_spawns (name VARCHAR(255) PRIMARY KEY, spawn TEXT)")) {
                 createTable.executeUpdate();
@@ -96,7 +92,6 @@ public class SpawnManager {
      */
     public Location getWorldSpawn(String worldName) {
         try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-            // Create table if it doesn't exist
             try (PreparedStatement createTable = conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS world_spawns (world_name VARCHAR(255) PRIMARY KEY, spawn TEXT)")) {
                 createTable.executeUpdate();
@@ -129,13 +124,11 @@ public class SpawnManager {
         String serialized = serializeLocation(location);
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-                // Create table if it doesn't exist
                 try (PreparedStatement createTable = conn.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS world_spawns (world_name VARCHAR(255) PRIMARY KEY, spawn TEXT)")) {
                     createTable.executeUpdate();
                 }
                 
-                // Insert or update the world spawn location
                 try (PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO world_spawns (world_name, spawn) VALUES (?, ?) ON DUPLICATE KEY UPDATE spawn = ?")) {
                     ps.setString(1, worldName);
@@ -174,19 +167,16 @@ public class SpawnManager {
      * @return The best available spawn location
      */
     public Location getBestSpawnForWorld(String worldName) {
-        // 1. Try world-specific spawn first
         Location worldSpawn = getWorldSpawn(worldName);
         if (worldSpawn != null) {
             return worldSpawn;
         }
 
-        // 2. Try global spawn
         Location globalSpawn = getGlobalSpawn();
         if (globalSpawn != null) {
             return globalSpawn;
         }
 
-        // 3. Fallback to world's default spawn point
         org.bukkit.World world = plugin.getServer().getWorld(worldName);
         if (world != null) {
             return world.getSpawnLocation();
@@ -202,7 +192,6 @@ public class SpawnManager {
     public List<String> listWorldSpawns() {
         List<String> worldNames = new ArrayList<>();
         try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-            // Create table if it doesn't exist
             try (PreparedStatement createTable = conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS world_spawns (world_name VARCHAR(255) PRIMARY KEY, spawn TEXT)")) {
                 createTable.executeUpdate();
@@ -224,7 +213,6 @@ public class SpawnManager {
     public List<String> listSpawns() {
         List<String> spawnNames = new ArrayList<>();
         try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-            // Create table if it doesn't exist
             try (PreparedStatement createTable = conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS named_spawns (name VARCHAR(255) PRIMARY KEY, spawn TEXT)")) {
                 createTable.executeUpdate();
@@ -248,7 +236,6 @@ public class SpawnManager {
             return globalSpawnCache;
 
         try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-            // Create table if it doesn't exist
             try (PreparedStatement createTable = conn.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS server (id INT PRIMARY KEY, spawn TEXT)")) {
                 createTable.executeUpdate();
@@ -276,13 +263,11 @@ public class SpawnManager {
         String serialized = serializeLocation(loc);
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
-                // Create table if it doesn't exist
                 try (PreparedStatement createTable = conn.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS server (id INT PRIMARY KEY, spawn TEXT)")) {
                     createTable.executeUpdate();
                 }
                 
-                // Insert or update the spawn location
                 try (PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO server (id, spawn) VALUES (1, ?) ON DUPLICATE KEY UPDATE spawn = ?")) {
                     ps.setString(1, serialized);

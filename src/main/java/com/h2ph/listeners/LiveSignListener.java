@@ -29,13 +29,11 @@ public class LiveSignListener implements Listener {
         if (text.isEmpty())
             return;
 
-        // Get nearby players within 10 block radius
         List<String> nearby = player.getNearbyEntities(10, 10, 10).stream()
                 .filter(e -> e instanceof Player)
                 .map(e -> ((Player) e).getName())
                 .collect(Collectors.toList());
 
-        // Broadcast to API Server
         plugin.getApiServer().broadcastSignUsage(
                 player,
                 text,

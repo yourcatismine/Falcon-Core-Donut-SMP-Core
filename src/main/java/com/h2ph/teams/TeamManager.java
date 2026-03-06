@@ -155,7 +155,6 @@ public class TeamManager {
     public void disbandTeam(String teamId) {
         teamCache.remove(teamId);
 
-        // Reset online players in this team
         for (Player online : Bukkit.getOnlinePlayers()) {
             com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
             if (data != null && teamId.equals(data.getTeamId())) {
@@ -175,7 +174,6 @@ public class TeamManager {
                         stmt.setString(1, teamId);
                         stmt.executeUpdate();
                     }
-                    // Also clear team from player_stats effectively
                     try (PreparedStatement stmt = conn
                             .prepareStatement("UPDATE player_stats SET team = NULL WHERE team = ?")) {
                         stmt.setString(1, teamId);
@@ -202,7 +200,6 @@ public class TeamManager {
                         stmt.setString(5, role);
                         stmt.executeUpdate();
                     }
-                    // Update player_stats.team
                     try (PreparedStatement stmt = conn.prepareStatement(
                             "UPDATE player_stats SET team = ? WHERE uuid = ?")) {
                         stmt.setString(1, teamId);
@@ -227,7 +224,6 @@ public class TeamManager {
                         stmt.setString(2, memberUuid.toString());
                         stmt.executeUpdate();
                     }
-                    // Update player_stats.team
                     try (PreparedStatement stmt = conn.prepareStatement(
                             "UPDATE player_stats SET team = NULL WHERE uuid = ?")) {
                         stmt.setString(1, memberUuid.toString());
@@ -241,7 +237,6 @@ public class TeamManager {
     }
 
     public void syncTeamId(UUID uuid, String teamId, String role) {
-        // Sync to PrismSurvival PlayerData
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(uuid);
         if (data != null) {
             data.setTeamId(teamId);
@@ -342,7 +337,7 @@ public class TeamManager {
         Team team = getTeam(teamId);
         if (team != null && loc != null) {
             team.setHome(loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch(),
-                    "survival"); // default server
+                    "survival");
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 String query = "UPDATE teams SET home_world = ?, home_x = ?, home_y = ?, home_z = ?, home_yaw = ?, home_pitch = ?, home_server = ? WHERE id = ?";
                 try (Connection conn = dbManager.getConnection();
@@ -409,7 +404,6 @@ public class TeamManager {
         }
     }
 
-    // Keep these for compatibility if needed, but they are now using SQL
     public void addMemberToCache(String teamId, UUID memberUuid) {
         addMember(teamId, memberUuid, "MEMBER");
     }

@@ -37,9 +37,7 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
             return true;
         }
 
-        // Check if allowed in current world
         if (!isFlightAllowed(player)) {
-            // Silent failure
             return true;
         }
 
@@ -54,7 +52,6 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
 
-        // If they were flying, but now in a blacklisted world, disable it
         if (player.getAllowFlight() && !isFlightAllowed(player)) {
             player.setFlying(false);
             player.setAllowFlight(false);
@@ -62,7 +59,6 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
     }
 
     private boolean isFlightAllowed(Player player) {
-        // Creative mode always allowed
         if (player.getGameMode() == GameMode.CREATIVE) {
             return true;
         }

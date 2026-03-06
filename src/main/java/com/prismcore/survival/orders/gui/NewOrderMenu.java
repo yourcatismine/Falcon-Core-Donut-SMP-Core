@@ -74,15 +74,12 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             }
         }
 
-        // 3 rows = 27 slots
         this.inv = Bukkit.createInventory(this, 27, Utils.formatColors("&8ᴏʀᴅᴇʀѕ -> ɴᴇᴡ ᴏʀᴅᴇʀ"));
 
-        // Slot 10: Cancel
         this.inv.setItem(10,
 
                 makeItem(Material.RED_STAINED_GLASS_PANE, "&4ᴄᴀɴᴄᴇʟ", List.of("&fClick to return")));
 
-        // Slot 12: Item
         String itemName = (this.selected == null) ? "None" : this.selected.displayName();
         Material displayMat = (this.selected == null) ? Material.STONE : this.selected.material;
 
@@ -103,15 +100,12 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
         }
         this.inv.setItem(12, itemIcon);
 
-        // Slot 13: Amount
         this.inv.setItem(13, makeItem(Material.CHEST, "&aᴀᴍᴏᴜɴᴛ",
                 List.of("&fClick to type number of items", "&7(" + this.amount + ")")));
 
-        // Slot 14: Price
         this.inv.setItem(14, makeItem(Material.EMERALD, "&aᴘʀɪᴄᴇ",
                 List.of("&fClick to type the price per item", "&7(" + Utils.abbr(this.price) + ")")));
 
-        // Slot 16: Confirm
         double total = this.amount * this.price;
         this.inv.setItem(16, makeItem(Material.LIME_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ",
                 List.of("&fClick to confirm order", "&7(Total: $" + Utils.abbr(total) + ")")));
@@ -142,11 +136,9 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -155,7 +147,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
 
         int slot = e.getSlot();
 
-        // Slot 10: Cancel
         if (slot == 10) {
             this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -163,7 +154,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Slot 12: Choose Item
         if (slot == 12) {
             com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
                     com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
@@ -172,18 +162,8 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             this.module.state().resetItems(this.p.getUniqueId());
             new SelectItemMenu(this.module, this.p, (item) -> {
-                // Check if item is enchantable
                 if (item != null && this.module.ench().hasOptionsFor(item.material)) {
-                    // Auto-open enchantment menu
                     ItemStack base = item.buildIcon();
-                    // We need to pass the state (amount/price) potentially, but EnchantSelectMenu
-                    // doesn't take it.
-                    // However, EnchantSelectMenu saves to "prismorder.tmpChosenStack" on confirm,
-                    // which NewOrderMenu reads.
-                    // So we just open EnchantSelectMenu with the base item.
-                    // But wait, if we have amount/price set, we should preserve them?
-                    // NewOrderMenu preserves them via "prismorder.tmpAmount" etc.
-                    // Let's set them here just in case.
                     this.p.setMetadata("prismorder.tmpAmount",
                             new FixedMetadataValue(this.module.getPlugin(), this.amount));
                     this.p.setMetadata("prismorder.tmpPrice",
@@ -197,7 +177,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Slot 13: Amount
         if (slot == 13) {
             this.p.closeInventory();
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -225,7 +204,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Slot 14: Price
         if (slot == 14) {
             this.p.closeInventory();
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -252,11 +230,9 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Slot 16: Confirm
         if (slot == 16) {
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
 
-            // Validate
             if (this.selected == null) {
                 this.p.sendMessage(Utils.formatColors("&cPlease select an item first."));
                 return;
@@ -282,10 +258,8 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                 return;
             }
 
-            // Create Order
             this.module.orders().create(this.p.getUniqueId(), this.selected, this.amount, this.price);
 
-            // Log Metrics
             long startTime = this.p.hasMetadata("prismorder.startTime")
                     ? this.p.getMetadata("prismorder.startTime").get(0).asLong()
                     : System.currentTimeMillis();

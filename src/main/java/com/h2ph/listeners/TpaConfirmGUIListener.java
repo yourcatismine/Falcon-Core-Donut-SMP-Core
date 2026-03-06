@@ -23,7 +23,7 @@ public class TpaConfirmGUIListener implements Listener {
                 return;
 
             if (e.getClickedInventory().equals(e.getView().getTopInventory())) {
-                e.setCancelled(true); // Prevent taking items
+                e.setCancelled(true);
 
                 if (!(e.getWhoClicked() instanceof Player))
                     return;
@@ -35,11 +35,11 @@ public class TpaConfirmGUIListener implements Listener {
 
                 int slot = e.getSlot();
 
-                if (slot == 3) { // Accept (Lime Stained Glass Pane)
+                if (slot == 3) {
                     p.closeInventory();
                     p.performCommand("tpaccept");
                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
-                } else if (slot == 5) { // Deny (Red Stained Glass Pane)
+                } else if (slot == 5) {
                     p.closeInventory();
                     p.performCommand("tpadeny");
                     p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);

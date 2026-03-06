@@ -50,7 +50,6 @@ public class BountyGUI {
 
         List<Map.Entry<UUID, BountyManager.BountyEntry>> sortedList = new ArrayList<>(bountiesMap.entrySet());
 
-        // Filter by search
         if (searchQuery != null && !searchQuery.isEmpty()) {
             String finalSearch = searchQuery.toLowerCase();
             sortedList = sortedList.stream()
@@ -61,7 +60,6 @@ public class BountyGUI {
                     .collect(Collectors.toList());
         }
 
-        // Sort
         if (sortType == SortType.AMOUNT) {
             sortedList.sort((e1, e2) -> Double.compare(e2.getValue().getAmount(), e1.getValue().getAmount()));
         } else {
@@ -95,7 +93,6 @@ public class BountyGUI {
             inv.setItem(slot++, head);
         }
 
-        // Navigation
         if (page > 0) {
             inv.setItem(45, createItem(Material.ARROW, "&aʙᴀᴄᴋ", "&fClick to go to the previous page"));
         }
@@ -103,8 +100,6 @@ public class BountyGUI {
             inv.setItem(53, createItem(Material.ARROW, "&aɴᴇхᴛ", "&fClick to go to the next page"));
         }
 
-        // Action Buttons
-        // Slot 48: Sort
         List<String> sortLore = new ArrayList<>();
         if (sortType == SortType.AMOUNT) {
             sortLore.add(color("&fClick to sort (Recently Set)"));
@@ -113,7 +108,6 @@ public class BountyGUI {
         }
         inv.setItem(48, createItem(Material.HOPPER, "&dѕᴏʀᴛ", sortLore));
 
-        // Slot 49: Info / Refresh
         List<String> infoLore = new ArrayList<>();
         infoLore.add(color("&fClick to refresh"));
         infoLore.add("");
@@ -121,7 +115,6 @@ public class BountyGUI {
         infoLore.add(color("&7&o/bounty add (player) (amount)"));
         inv.setItem(49, createItem(Material.SKELETON_SKULL, "&dʙᴏᴜɴᴛɪᴇѕ", infoLore));
 
-        // Slot 50: Search
         inv.setItem(50, createItem(Material.OAK_SIGN, "&dѕᴇᴀʀᴄʜ", "&fClick to search"));
 
         player.openInventory(inv);
@@ -172,7 +165,6 @@ public class BountyGUI {
     private String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
         scaled = Math.floor(scaled * 10) / 10.0;
-        // Check if it's a whole number after scaling to avoid .0
         if (scaled == (long) scaled) {
             return String.valueOf((long) scaled) + suffix;
         }

@@ -65,7 +65,6 @@ public class BanListener implements Listener {
 
         String layout = plugin.getOffendConfig().getString("messages.ban_layout");
 
-        // Fallback default if config is missing
         if (layout == null) {
             layout = "&cYou are banned from this server!\n\n" +
                     "&fBanned on: &f%banned_on%\n" +

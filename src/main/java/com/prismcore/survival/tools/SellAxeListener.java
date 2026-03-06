@@ -43,14 +43,12 @@ public class SellAxeListener implements Listener {
         if (block == null || handItem == null || handItem.getType() == Material.AIR)
             return false;
 
-        // Check if item is Sell Axe
         if (!handItem.hasItemMeta())
             return false;
         if (!handItem.getItemMeta().getPersistentDataContainer().has(ToolsManager.SELL_AXE_KEY,
                 PersistentDataType.BYTE))
             return false;
 
-        // Check if block is a Chest
         if (block.getType() != Material.CHEST && block.getType() != Material.TRAPPED_CHEST)
             return false;
 
@@ -59,8 +57,6 @@ public class SellAxeListener implements Listener {
 
         Container container = (Container) block.getState();
 
-        // Removed manual canAccess check.
-        // We rely on @EventHandler(ignoreCancelled = true) to respect protections.
 
         double totalValue = 0;
         int itemsSold = 0;
@@ -74,7 +70,6 @@ public class SellAxeListener implements Listener {
             if (is == null || is.getType() == Material.AIR)
                 continue;
 
-            // Check for Shulker Box
             if (is.getType().name().endsWith("SHULKER_BOX")) {
                 if (is.getItemMeta() instanceof org.bukkit.inventory.meta.BlockStateMeta) {
                     org.bukkit.inventory.meta.BlockStateMeta bsm = (org.bukkit.inventory.meta.BlockStateMeta) is
@@ -133,14 +128,13 @@ public class SellAxeListener implements Listener {
 
                 totalValue += amount;
                 itemsSold += is.getAmount();
-                container.getInventory().setItem(i, null); // Remove item
+                container.getInventory().setItem(i, null);
             }
         }
 
         if (totalValue > 0) {
             PrismSurvival.getInstance().getPrismSell().getEconomy().deposit(player.getUniqueId(), totalValue);
 
-            // Update stats and progress
             data.setSellMade(data.getSellMade() + totalValue);
             for (java.util.Map.Entry<com.prismcore.survival.sell.category.Category, Double> entry : categoryProgressToAdd
                     .entrySet()) {
@@ -170,16 +164,14 @@ public class SellAxeListener implements Listener {
                 org.bukkit.Sound sound = org.bukkit.Sound.valueOf(soundName);
                 player.playSound(player.getLocation(), sound, 1f, 2.0f);
             } catch (IllegalArgumentException e) {
-                // Fallback if invalid sound
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 2.0f);
             }
 
             if (interactEvent != null) {
-                interactEvent.setCancelled(true); // Don't open the chest
+                interactEvent.setCancelled(true);
             }
             return true;
         } else {
-            // Handle empty/no-value sell
             org.bukkit.configuration.file.FileConfiguration sellConfig = PrismSurvival.getInstance().getPrismSell()
                     .getConfig();
             String msg = sellConfig.getString("messages.nothing-to-sell", "&cYou have nothing to sell");
@@ -188,7 +180,7 @@ public class SellAxeListener implements Listener {
             }
 
             if (interactEvent != null) {
-                interactEvent.setCancelled(true); // Don't open the chest
+                interactEvent.setCancelled(true);
             }
             return true;
         }
@@ -204,7 +196,6 @@ public class SellAxeListener implements Listener {
             double currentMultiplier = data.getMultiplier(category);
             int currentLevel = this.getCurrentLevel(currentMultiplier);
 
-            // Check if max level reached
             if (currentLevel >= levelPrices.size()) {
                 return;
             }
@@ -215,7 +206,6 @@ public class SellAxeListener implements Listener {
             if (progress >= required) {
                 double newMultiplier = currentMultiplier + multiplierIncrement;
                 data.setMultiplier(category, newMultiplier);
-                // Optional: add level up message or sound here if desired
             } else {
                 break;
             }

@@ -32,7 +32,7 @@ public class RTPQueueListener implements Listener {
             return;
         if (from.getBlockX() == to.getBlockX() && from.getBlockY() == to.getBlockY()
                 && from.getBlockZ() == to.getBlockZ()) {
-            return; // Ignore small movements
+            return;
         }
 
         Player player = event.getPlayer();
@@ -42,25 +42,15 @@ public class RTPQueueListener implements Listener {
         QueueTask currentTask = activeTasks.get(player.getUniqueId());
 
         if (regionTo != null) {
-            // Player entered or is in a queue region
             if (currentTask == null) {
-                // Determine parameters based on region name or config?
-                // For now passing default or derived from region name mapping if needed.
-                // Assuming "europe" region maps to "europe" worldType normal.
 
                 QueueTask newTask = new QueueTask(plugin, player, regionTo);
                 newTask.start();
                 activeTasks.put(player.getUniqueId(), newTask);
             } else {
-                // Already in queue, perform checks in task or here?
-                // Task handles "leaving" check, but here we can optimize.
             }
         } else {
-            // Player is NOT in a queue region
             if (currentTask != null) {
-                // Check if they just left
-                // Task will handle it on next tick usually, but we can force cancel for
-                // responsiveness
                 currentTask.cleanup(true);
                 currentTask.cancel();
                 activeTasks.remove(player.getUniqueId());

@@ -171,7 +171,7 @@ public class CombatListener implements Listener {
 
         if (damager instanceof Projectile projectile) {
             if (projectile instanceof EnderPearl)
-                return null; // ignore teleportation damage
+                return null;
 
             ProjectileSource source = projectile.getShooter();
             if (source instanceof Player)
@@ -242,7 +242,6 @@ public class CombatListener implements Listener {
         UUID uuid = p.getUniqueId();
         remaining.put(uuid, seconds);
 
-        // If a task already exists, just refresh remaining seconds
         if (tasks.containsKey(uuid)) {
             return;
         }
@@ -265,7 +264,6 @@ public class CombatListener implements Listener {
                     return;
                 }
 
-                // Show actionbar countdown
                 String msg = ChatColor.translateAlternateColorCodes('&', "&dCombat:&f " + timeLeft + "s");
                 try {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
@@ -307,18 +305,15 @@ public class CombatListener implements Listener {
         if (!remaining.containsKey(uuid))
             return;
 
-        // Bypass permission
         if (p.hasPermission("prism.combat.bypass") || p.hasPermission("prism.bypass.combat"))
             return;
 
-        // Check configured combat-blocked commands
         List<String> blocked = plugin.getSurvivalConfig().getStringList("combat");
         if (blocked == null || blocked.isEmpty())
             return;
 
         String msg = e.getMessage();
         String root = msg.split(" ")[0].replaceFirst("/", "").toLowerCase();
-        // Strip namespace (plugin:command)
         if (root.contains(":")) {
             root = root.substring(root.indexOf(":") + 1);
         }
@@ -326,7 +321,6 @@ public class CombatListener implements Listener {
         final String commandRoot = root;
 
         if (blocked.stream().anyMatch(c -> c.equalsIgnoreCase(commandRoot))) {
-            // Cancel command and show actionbar message
             e.setCancelled(true);
             String bar = ChatColor.translateAlternateColorCodes('&', "&cYou are currently on combat.");
             try {
@@ -343,12 +337,10 @@ public class CombatListener implements Listener {
         if (!remaining.containsKey(uuid))
             return;
 
-        // Player left while in combat -> kill
         try {
             PlayerData data = plugin.getPlayerDataManager().get(uuid);
             if (data != null) {
                 data.setCombatLogged(true);
-                // Save immediately to ensure persistence
                 plugin.getPlayerDataManager().savePlayerAsync(uuid);
             }
         } catch (Throwable ignored) {
@@ -373,7 +365,6 @@ public class CombatListener implements Listener {
         Player p = e.getEntity();
         UUID uuid = p.getUniqueId();
 
-        // If the player dies, ensure combat tag is removed
         if (remaining.containsKey(uuid)) {
             cancelTask(uuid);
         }

@@ -64,7 +64,6 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
             targetUUID = target.getUniqueId();
             finalTargetName = target.getName();
         } else {
-            // Offline player support
             targetUUID = Bukkit.getOfflinePlayer(targetName).getUniqueId();
             finalTargetName = targetName;
         }
@@ -86,11 +85,9 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
 
         plugin.getPlayerDataManager().savePlayerAsync(targetUUID);
 
-        // Save to MySQL
         plugin.getDatabaseManager().addMute(targetUUID, finalTargetName, muteId, reason, data.getMuteDate(), expiry,
                 sender.getName());
 
-        // Admin Message
         String adminMsg = ChatColor.translateAlternateColorCodes('&',
                 "&7You muted &d" + finalTargetName + "&7 for &f" + durationStr + "&7 Reason:&c " + reason);
         sender.sendMessage(adminMsg);
@@ -98,7 +95,6 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
             ((Player) sender).spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(adminMsg));
         }
 
-        // Target Message
         if (target != null && target.isOnline()) {
             String targetMsg = ChatColor.translateAlternateColorCodes('&',
                     "&7You have been muted for &f" + durationStr + "&7 Reason:&c " + reason);
@@ -142,7 +138,6 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         if (args.length == 2) {

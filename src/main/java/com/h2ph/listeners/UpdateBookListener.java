@@ -25,8 +25,6 @@ public class UpdateBookListener implements Listener {
     @EventHandler
     public void onPlayerEditBook(PlayerEditBookEvent e) {
         Player p = e.getPlayer();
-        // Only process the edit if this player was marked as the update writer via
-        // /update
         if (!plugin.isPlayerMarkedAsUpdateWriter(p.getUniqueId()))
             return;
         try {
@@ -37,7 +35,6 @@ public class UpdateBookListener implements Listener {
                     plugin.setActiveUpdate(pages);
                     String queuedMsg = "&aUpdate queued: it will be shown to the next player who joins.";
                     p.sendMessage(net.md_5.bungee.api.ChatColor.translateAlternateColorCodes('&', queuedMsg));
-                    // Play saved sound to the player who saved the update
                     try {
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.0f);
                     } catch (Throwable ignored) {
@@ -46,14 +43,11 @@ public class UpdateBookListener implements Listener {
             }
         } catch (Throwable ignored) {
         }
-        // clear the mark regardless so accidental subsequent edits are ignored
         try {
             plugin.unmarkPlayerAsUpdateWriter(p.getUniqueId());
         } catch (Throwable ignored) {
         }
 
-        // Schedule restoration/clearing one tick later to allow the server to update
-        // inventories
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             try {
                 boolean hadGivenBook = p.hasMetadata("update_given_book");
@@ -88,8 +82,6 @@ public class UpdateBookListener implements Listener {
                     } catch (Throwable ignored) {
                     }
                 } else if (hadGivenBook) {
-                    // No previous slot stored, but we flagged that we gave a book: clear the held
-                    // slot
                     try {
                         p.getInventory().setItem(p.getInventory().getHeldItemSlot(), null);
                         p.updateInventory();
@@ -117,26 +109,18 @@ public class UpdateBookListener implements Listener {
         long playerSeen = plugin.getPlayerDataManager().get(p.getUniqueId()).getLastSeenUpdate();
 
         if (playerSeen >= currentVersion) {
-            return; // Already seen
+            return;
         }
 
-        // Mark as seen immediately so they don't get spam if they rejoin,
-        // regardless of whether they actually successfully opened the book (imperfect
-        // but safe).
         plugin.getPlayerDataManager().get(p.getUniqueId()).setLastSeenUpdate(currentVersion);
 
         java.util.List<String> finalPages = plugin.getActiveUpdatePages();
         if (finalPages == null || finalPages.isEmpty())
             return;
 
-        // Attempt to open the book, but some auth plugins (eg. NLogin) prevent
-        // immediate UI actions.
-        // Retry a few times (once per second) and fall back to placing the book in
-        // inventory.
-        // Recursive task for retries
         new Runnable() {
             private int tries = 0;
-            private final int maxTries = 15; // ~15 seconds
+            private final int maxTries = 15;
 
             @Override
             public void run() {
@@ -161,19 +145,16 @@ public class UpdateBookListener implements Listener {
 
                     try {
                         p.openBook(book);
-                        // opened successfully; play join sound and cancel retries
                         try {
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_SNARE, 1.0f, 1.0f);
                         } catch (Throwable t) {
                         }
                         return;
                     } catch (Throwable openEx) {
-                        // not opened yet (likely blocked by auth); retry
                     }
 
                     tries++;
                     if (tries >= maxTries) {
-                        // give fallback inventory book
                         int free = p.getInventory().firstEmpty();
                         if (free >= 0)
                             p.getInventory().setItem(free, book);
@@ -186,7 +167,6 @@ public class UpdateBookListener implements Listener {
                         return;
                     }
 
-                    // Re-schedule
                     plugin.getSchedulerAdapter().runTaskLater(this, 20L);
 
                 } catch (Throwable ignored) {
@@ -197,10 +177,8 @@ public class UpdateBookListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
-        // If player quits and still has stored previous hand metadata, clear it
         Player p = e.getPlayer();
         try {
-            // ensure marking cleared
             plugin.unmarkPlayerAsUpdateWriter(p.getUniqueId());
         } catch (Throwable ignored) {
         }

@@ -30,7 +30,6 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            // Show player's own location
             String dimensionName = getDimensionName(player.getWorld().getName());
             String message = "&7You are currenlty on &d" + dimensionName;
             String formattedMessage = LegacyComponentSerializer.legacyAmpersand().deserialize(message).toString();
@@ -42,29 +41,24 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
         Player targetPlayer = Bukkit.getPlayer(targetName);
 
         if (targetPlayer == null) {
-            // Run player lookup async to prevent TPS drop
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
                 
                 if (!offlinePlayer.hasPlayedBefore() && !offlinePlayer.isOnline()) {
-                    // Player does not exist - schedule message back to entity thread
                     plugin.getSchedulerAdapter().runEntityTask(player, () -> {
                         player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize("&cThat player does not exist."));
                         try {
                             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         } catch (Exception e) {
-                            // Fallback
                             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_HURT, 1f, 1f);
                         }
                     });
                 } else {
-                    // Player exists but is not online - schedule message back to entity thread
                     plugin.getSchedulerAdapter().runEntityTask(player, () -> {
                         player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize("&cPlayer is not online."));
                         try {
                             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         } catch (Exception e) {
-                            // Fallback
                             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_HURT, 1f, 1f);
                         }
                     });
@@ -73,7 +67,6 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Player is online - show their location
         String dimensionName = getDimensionName(targetPlayer.getWorld().getName());
         String message = "&d" + targetPlayer.getName() + "&7 is currenlty on &d" + dimensionName;
         player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
@@ -90,7 +83,6 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<>();
         String current = args[0].toLowerCase();
 
-        // Add all online players
         for (Player player : Bukkit.getOnlinePlayers()) {
             String name = player.getName();
             if (name.toLowerCase().startsWith(current)) {
@@ -115,7 +107,6 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
             return "The End";
         }
 
-        // Default to Overworld for any other world
         return "Overworld";
     }
 }

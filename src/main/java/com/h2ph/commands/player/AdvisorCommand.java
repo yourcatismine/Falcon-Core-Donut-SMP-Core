@@ -33,7 +33,6 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
 
         if (args.length > 0 && args[0].equalsIgnoreCase("admin")) {
-            // Admin mode: Write advisor book
             if (!player.hasPermission("prism.admin.advisor")) {
                 player.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
                 return true;
@@ -43,7 +42,6 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Default mode: Read advisor book
         openAdvisorBook(player);
         return true;
     }
@@ -60,12 +58,8 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
             book.setItemMeta(meta);
         }
 
-        // Give book and mark player
         plugin.markPlayerAsAdvisorWriter(player.getUniqueId());
 
-        // Try to open directly, fallback to inventory
-        // (Simplified logic compared to UpdateCommand for brevity, assuming standard
-        // behavior)
         int slot = player.getInventory().firstEmpty();
         if (slot != -1) {
             player.getInventory().setItem(slot, book);

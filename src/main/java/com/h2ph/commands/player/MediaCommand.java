@@ -93,12 +93,6 @@ public class MediaCommand implements CommandExecutor, Listener {
             }
         }
 
-        // Fill empty slots with black stained glass pane if not specified (optional
-        // polish, user said "same GUI" as rules/billford so maybe they want this)
-        // Checks BillfordCommand: uses fillBackground. RulesCommand: does NOT. User
-        // said "same GUI Small Chest" and "Same config at survival\rules\media.yml".
-        // RulesCommand is the better reference here since it's in the same folder.
-        // RulesCommand does NOT fill background. I will stick to RulesCommand logic.
 
         player.openInventory(gui);
     }

@@ -53,7 +53,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             }
 
             plugin.getServer().getPluginManager().registerEvents(new BanListener(this), plugin);
-            // plugin.getLogger().info("Offend module loaded successfully!");
 
         } catch (Exception e) {
             plugin.getLogger().severe("Error enabling Offend module: " + e.getMessage());
@@ -84,8 +83,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
         } catch (Exception e) {
             plugin.getLogger().severe("CRITICAL: Failed to load offend/config.yml! It appears to be invalid YAML.");
             plugin.getLogger().severe("Error: " + e.getMessage());
-            // Do NOT regenerate immediately to preserve the broken file for inspection
-            // or provide a backup and generic fallback
             File backup = new File(offendDir, "config_broken_" + System.currentTimeMillis() + ".yml");
             if (configFile.renameTo(backup)) {
                 plugin.getLogger()
@@ -96,19 +93,15 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Validation: Check if it has the "reasons" section which is unique to
-        // offend/config.yml
         if (!offendConfig.contains("reasons")) {
             plugin.getLogger().warning("Offend config appears invalid (missing 'reasons'). Regenerating...");
-            plugin.getLogger().info("Current Keys: " + offendConfig.getKeys(false)); // Debug logging
+            plugin.getLogger().info("Current Keys: " + offendConfig.getKeys(false));
 
-            // Backup bad config
             File backup = new File(offendDir, "config_bad_" + System.currentTimeMillis() + ".yml");
             if (configFile.renameTo(backup)) {
                 plugin.getLogger().info("Backed up invalid config to " + backup.getName());
             }
 
-            // Force regenerate
             try {
                 plugin.saveResource("survival/moderations/offend/config.yml", true);
                 offendConfig = YamlConfiguration.loadConfiguration(configFile);
@@ -131,16 +124,12 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("unban") || command.getName().equalsIgnoreCase("checkban")) {
             if (args.length == 1) {
-                // Async fetch to prevent lag on tab complete? Ideally yes, but list is usually
-                // small.
-                // For now, keeping main thread is okay unless you have 10k banned players.
                 List<String> bannedPlayers = dbManager.getBannedPlayerNames();
                 return StringUtil.copyPartialMatches(args[0], bannedPlayers, new ArrayList<>());
             }
         }
         if (command.getName().equalsIgnoreCase("offend")) {
             if (args.length == 1) {
-                // Use async player name cache to prevent TPS drops
                 return plugin.getPlayerNameCache().getCompletions(args[0]);
             }
             if (args.length == 2) {
@@ -156,7 +145,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // === CHECKBAN ===
         if (command.getName().equalsIgnoreCase("checkban")) {
             if (!sender.hasPermission("prism.admin.checkban")) {
                 sender.sendMessage(ChatColor.RED + "No permission.");
@@ -169,29 +157,21 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
 
             String input = args[0];
 
-            // ASYNC Processing
             plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
                 DatabaseManager.BanInfo info = null;
 
-                // 1. Try online player first (Fast)
                 Player online = Bukkit.getPlayer(input);
                 if (online != null) {
                     info = dbManager.getBanInfo(online.getUniqueId());
                 } else {
-                    // 2. Try Local DB by Name (Fast, no API call)
                     info = dbManager.getBanInfoByName(input);
                 }
 
-                // 3. Try Local DB by ID
                 if (info == null) {
                     String cleanId = input.replace("#", "");
                     info = dbManager.getBanInfoById(cleanId);
                 }
 
-                // Note: We deliberately DO NOT call Bukkit.getOfflinePlayer(input) here.
-                // If they aren't online and aren't in our ban DB, they aren't banned.
-                // Calling getOfflinePlayer causes the "Couldn't find profile" error for invalid
-                // names.
 
                 DatabaseManager.BanInfo finalInfo = info;
                 plugin.getSchedulerAdapter().runTask(() -> {
@@ -224,7 +204,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // === UNBAN ===
         else if (command.getName().equalsIgnoreCase("unban")) {
             if (!sender.hasPermission("prism.admin.unban")) {
                 sender.sendMessage(ChatColor.RED + "No permission.");
@@ -239,15 +218,12 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
                 DatabaseManager.BanInfo info = dbManager.getBanInfoByName(targetName);
                 if (info != null) {
-                    // Safe unban by name (verified in DB)
                     dbManager.removeBan(info.playerName);
 
-                    // Reset offense count for the specific reason
                     if (info.uuid != null && info.reasonKey != null) {
                         dbManager.resetOffenseCount(info.uuid, info.reasonKey);
                     }
 
-                    // Broadcast Unban Event
                     if (plugin.getApiServer() != null) {
                         plugin.getApiServer().broadcastUnban(info.playerName, sender.getName());
                     }
@@ -256,8 +232,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                             .sendMessage(
                                     ChatColor.GREEN + "Successfully unbanned " + ChatColor.YELLOW + info.playerName));
                 } else {
-                    // Player not found in active bans by name.
-                    // Fallback: Check if user provided a valid UUID directly?
                     try {
                         UUID u = UUID.fromString(targetName);
                         DatabaseManager.BanInfo uuidInfo = dbManager.getBanInfo(u);
@@ -268,7 +242,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                                 dbManager.resetOffenseCount(u.toString(), uuidInfo.reasonKey);
                             }
 
-                            // Broadcast Unban Event (UUID)
                             if (plugin.getApiServer() != null) {
                                 plugin.getApiServer().broadcastUnban(
                                         uuidInfo.playerName != null ? uuidInfo.playerName : u.toString(),
@@ -283,7 +256,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     } catch (IllegalArgumentException ignored) {
                     }
 
-                    // Report failure without attempting API lookup
                     plugin.getSchedulerAdapter().runTask(
                             () -> sender.sendMessage(ChatColor.RED + "No active ban found for '" + targetName + "'."));
                 }
@@ -291,7 +263,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // === OFFEND (BAN) ===
         else if (command.getName().equalsIgnoreCase("offend")) {
             if (!sender.hasPermission("prism.admin.offend")) {
                 sender.sendMessage(ChatColor.RED + "No permission.");
@@ -304,16 +275,13 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
 
             String targetName = args[0];
 
-            // Smart Argument Parsing
             String overrideDuration = null;
             String reasonKey;
 
-            // Check if last argument is a duration
             String lastArg = args[args.length - 1];
-            if (lastArg.matches("(?i)^\\d+[ymdhs]$")) { // Regex for duration (e.g. 1y, 10m, 5d, 2h, 30s)
+            if (lastArg.matches("(?i)^\\d+[ymdhs]$")) {
                 overrideDuration = lastArg;
 
-                // Reason is everything between player and duration
                 if (args.length > 2) {
                     StringBuilder sb = new StringBuilder();
                     for (int i = 1; i < args.length - 1; i++) {
@@ -321,11 +289,9 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     }
                     reasonKey = sb.toString().trim();
                 } else {
-                    // /offend player duration (No reason provided -> "Banned")
                     reasonKey = "Banned";
                 }
             } else {
-                // No duration provided, everything after player is reason
                 StringBuilder sb = new StringBuilder();
                 for (int i = 1; i < args.length; i++) {
                     sb.append(args[i]).append(" ");
@@ -333,30 +299,19 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 reasonKey = sb.toString().trim();
             }
 
-            // Use defaults if reason is empty
             if (reasonKey.isEmpty())
                 reasonKey = "Banned";
 
-            // If reasonKey matches a config key, verification is done inside processOffend
-            // (or we check existence to warn?)
-            // The prompt says "Allow custom reasons". So checks for "not found" are
-            // removed/modified.
-            // We still want to use config if it exists for extra settings (delete_data
-            // etc).
-            // So we pass the input reasonKey to processOffend.
 
             final String finalReasonKey = reasonKey;
             final String finalOverrideDuration = overrideDuration;
 
-            // Try online player first (fast, sync, no lookup lag)
             Player onlineTarget = Bukkit.getPlayer(targetName);
             if (onlineTarget != null) {
-                // For online players, getName() is always correct/current
                 processOffend(sender, onlineTarget, onlineTarget.getName(), finalReasonKey, finalOverrideDuration);
                 return true;
             }
 
-            // Async lookup for offline player
             sender.sendMessage(ChatColor.GRAY + "Looking up player '" + targetName + "'...");
             plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
                 try {
@@ -372,7 +327,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                         sender.sendMessage(
                                 ChatColor.YELLOW + "Warning: " + targetName + " has never played on this server.");
                     }
-                    // Pass targetName from args to preserve casing user typed
                     processOffend(sender, target, targetName, finalReasonKey, finalOverrideDuration);
                 } catch (Throwable t) {
                     sender.sendMessage(ChatColor.RED + "Error resolving player: " + t.getMessage());
@@ -386,13 +340,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
 
     private void processOffend(CommandSender sender, OfflinePlayer target, String displayTargetName, String reasonKey,
             String overrideDuration) {
-        // Enforce Async for DB operations (this method should be called from async or
-        // wrapped in async if not)
-        // Since we call this from both sync(online) and async(offline), we need to
-        // ensure thread safety
-        // But `Bukkit.getPlayer` returns Player which is safe, but DB ops must be
-        // async.
-        // Let's ensure this runs on async thread.
 
         if (Bukkit.isPrimaryThread()) {
             plugin.getSchedulerAdapter().runTaskAsynchronously(
@@ -410,35 +357,25 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
     public DatabaseManager.BanInfo banPlayer(CommandSender sender, OfflinePlayer target, String displayTargetName,
             String reasonKey, String overrideDuration) {
         UUID targetUUID = target.getUniqueId();
-        // Use the display name passed in (either legitimate online name, or manual
-        // offline override)
         String targetName = displayTargetName != null ? displayTargetName
                 : (target.getName() != null ? target.getName() : "Unknown");
 
-        // 1. Read & Calculate (Background Thread)
-        // Note: For custom reasons, they are tracked by their literal string (preserved
-        // casing from args).
         int currentCount = dbManager.getOffenseCount(targetUUID, reasonKey);
         int newCount = currentCount + 1;
 
-        // 2. Write New Count (Background Thread)
         dbManager.setOffenseCount(targetUUID, reasonKey, newCount);
 
-        // 3. Logic config
         String path = "reasons." + reasonKey;
-        // Check if this is a config-defined reason
         boolean isConfigReason = getOffendConfig().contains(path);
 
         String rawDuration = null;
-        String displayReason = reasonKey; // Default to the input
+        String displayReason = reasonKey;
         boolean wipeData = false;
 
         if (isConfigReason) {
-            // Config-defined logic
             displayReason = getOffendConfig().getString(path + ".display_reason", reasonKey);
             wipeData = getOffendConfig().getBoolean(path + ".delete_data", false);
 
-            // Calculate tiered duration if override not provided
             if (overrideDuration == null) {
                 rawDuration = getOffendConfig().getString(path + ".offenses." + newCount);
                 if (rawDuration == null) {
@@ -458,38 +395,30 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 }
             }
         } else {
-            // Custom reason defaults
-            // Could check a default section in config for generic bans?
-            // For now, default to 30d if no override.
         }
 
-        // Apply override if present
         if (overrideDuration != null) {
             rawDuration = overrideDuration;
         }
 
-        // Final fallback
         if (rawDuration == null)
             rawDuration = "30d";
 
         long expiresAt = parseDuration(rawDuration);
         String banId = String.valueOf(new Random().nextInt(900) + 100);
 
-        // 4. Write Ban to DB (Background Thread - The heaviest part)
         dbManager.addBan(targetUUID, targetName, banId, reasonKey, displayReason, newCount,
                 System.currentTimeMillis(), expiresAt, sender.getName());
 
-        // Broadcast to Live Feed (API)
         if (plugin.getApiServer() != null) {
             String durationStr = (rawDuration != null) ? rawDuration : "Default";
             plugin.getApiServer().broadcastBan(targetName, displayReason, durationStr, sender.getName(), banId);
         }
 
-        // 5. Switch back to Main Thread for Kick & Effects
-        String finalRawDuration = rawDuration; // For lambda
+        String finalRawDuration = rawDuration;
         String finalDisplayReason = displayReason;
         boolean finalWipeData = wipeData;
-        long finalExpiresAt = expiresAt; // Capture for lambda
+        long finalExpiresAt = expiresAt;
 
         plugin.getSchedulerAdapter().runTask(() -> {
             if (finalWipeData)
@@ -507,11 +436,9 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
 
             String msg2;
             if (finalExpiresAt == -1) {
-                // Permanent Ban Message
                 msg2 = getOffendConfig().getString("messages.admin_line_2_perm",
                         "&cPermanently banned %player% with reason: %reason%");
             } else {
-                // Temporary Ban Message
                 msg2 = getOffendConfig().getString("messages.admin_line_2",
                         "&cTemporarily banned %player% for %duration% with reason: %reason%");
             }
@@ -519,14 +446,12 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             sender.sendMessage(
                     ChatColor.translateAlternateColorCodes('&', msg1.replace("%count%", String.valueOf(newCount))));
 
-            // Allow %duration% in perm message just in case, though usually not needed
             sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg2
                     .replace("%player%", targetName)
                     .replace("%duration%", readableDuration)
                     .replace("%reason%", finalDisplayReason)));
         });
 
-        // Return Info
         DatabaseManager.BanInfo info = new DatabaseManager.BanInfo();
         info.uuid = targetUUID.toString();
         info.playerName = targetName;
@@ -556,12 +481,9 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             else if (str.toLowerCase().endsWith("s"))
                 cal.add(Calendar.SECOND, Integer.parseInt(str.substring(0, str.length() - 1)));
             else
-                return -1; // Unknown format, treat as perm or error? Let's default to perm to be safe or
-                           // maybe 30d?
-                           // For safety, let's assume if it fails parsing it returns -1 (perm).
+                return -1;
         } catch (NumberFormatException e) {
             return -1;
-            // For safety, let's assume if it fails parsing it returns -1 (perm).
         }
         return cal.getTimeInMillis();
     }
@@ -569,9 +491,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
     private String formatDuration(String raw) {
         if (raw == null)
             return "Unknown";
-        // Use Regex to replace only when preceded by digits
-        // (?i) flag for case-insensitive match
-        // $1 references the number captured in group 1
         String formatted = raw;
         formatted = formatted.replaceAll("(?i)(\\d+)d", "$1 Day(s)");
         formatted = formatted.replaceAll("(?i)(\\d+)m", "$1 Minute(s)");
@@ -585,9 +504,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
         UUID uuid = target.getUniqueId();
         String name = target.getName();
 
-        // 1. SYNC PART: Bukkit API calls for online players must be on the main thread.
-        // Also clear online caches first to prevent stale data being saved during
-        // database wipe.
         plugin.getSchedulerAdapter().runTask(() -> {
             if (target.isOnline()) {
                 Player p = (Player) target;
@@ -597,7 +513,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 p.setLevel(0);
                 p.setHealth(20.0);
 
-                // Reset General Stats
                 try {
                     p.setStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE, 0);
                     p.setStatistic(org.bukkit.Statistic.PLAYER_KILLS, 0);
@@ -606,7 +521,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 } catch (Throwable ignored) {
                 }
 
-                // Reset Block Stats
                 for (org.bukkit.Material m : org.bukkit.Material.values()) {
                     try {
                         if (m.isBlock()) {
@@ -627,22 +541,15 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
             }
         });
 
-        // 2. ASYNC PART: Deep Database and File Wipes
-        // We ensure this runs asynchronously to protect server TPS.
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
-                // A. UNLOAD FROM CACHES FIRST
-                // This prevents any pending save operations from restoring old data over our
-                // wipe.
 
-                // Reset Shard Booster in main Data if loaded
                 com.prismcore.survival.manager.PlayerData mainPd = plugin.getPlayerDataManager().get(uuid);
                 if (mainPd != null) {
                     mainPd.setShardBoosterExpiry(0);
                 }
                 plugin.getPlayerDataManager().unload(uuid);
 
-                // Reset Sell Multipliers/Progress in sell Data if loaded
                 if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
                     com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell().getPlayerDataManager()
                             .getPlayerData(uuid);
@@ -656,7 +563,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     plugin.getPrismSell().getPlayerDataManager().unloadPlayer(uuid);
                 }
 
-                // B. MAIN DATABASE DELETIONS
                 DatabaseManager mainDb = plugin.getDatabaseManager();
                 if (mainDb != null && mainDb.isConnected()) {
                     mainDb.wipeInventory(uuid);
@@ -666,18 +572,14 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     mainDb.wipeOrders(uuid);
                 }
 
-                // C. SELL MODULE DATABASE DELETIONS (Deep Wipe)
                 if (plugin.getPrismSell() != null && plugin.getPrismSell().getDatabaseManager() != null) {
                     plugin.getPrismSell().getDatabaseManager().wipeAllPlayerData(uuid);
                 }
 
-                // D. OTHER COMPONENT WIPES
-                // Wipe Enderchest Cache & DB (Internal async handling)
                 if (plugin.getEnderChestManager() != null) {
                     plugin.getEnderChestManager().wipeEnderChest(uuid);
                 }
 
-                // Wipe Economy (Vault)
                 try {
                     net.milkbowl.vault.economy.Economy econ = plugin.getServer().getServicesManager()
                             .getRegistration(net.milkbowl.vault.economy.Economy.class).getProvider();
@@ -687,30 +589,23 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 } catch (Throwable ignored) {
                 }
 
-                // Wipe Auctions items
                 if (plugin.getAuctionController() != null && name != null) {
                     plugin.getAuctionController().getAuctionManager().removeAllItems(name);
                 }
 
-                // Wipe Orders (Already called via mainDb.wipeOrders, but module call for
-                // completeness)
                 if (plugin.getOrdersModule() != null && plugin.getOrdersModule().orders() != null) {
                     plugin.getOrdersModule().orders().wipeOrders(uuid);
                 }
 
-                // E. FILE DELETIONS (Legacy/Fallback)
                 try {
-                    // Sell History File
                     File sellFile = new File(plugin.getDataFolder(), "economy/sell/history/" + uuid + "-history.db");
                     if (sellFile.exists())
                         sellFile.delete();
 
-                    // Modern Crates/Settings File
                     File cratesFile = new File(plugin.getDataFolder(), "crates/data/" + uuid + ".db");
                     if (cratesFile.exists())
                         cratesFile.delete();
 
-                    // Minecraft playerdata/stats for offline players
                     if (!target.isOnline()) {
                         File worldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
                         File playerData = new File(worldFolder, "playerdata/" + uuid + ".dat");
@@ -732,10 +627,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
     }
 
     public OfflinePlayer resolveOfflinePlayer(String name) {
-        // Skip checking online players here as it's unsafe async and we already checked
-        // sync
 
-        // Try to fetch UUID from Mojang to avoid console spam for invalid names
         UUID uuid = fetchUUID(name);
         if (uuid != null) {
             return Bukkit.getOfflinePlayer(uuid);
@@ -759,19 +651,14 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     response.append(line);
                 in.close();
 
-                // Use simple parsing to work across versions (JsonParser construction vs
-                // static)
-                // Assuming newer Gson in 1.21
                 JsonObject json = JsonParser.parseString(response.toString()).getAsJsonObject();
                 String id = json.get("id").getAsString();
-                // Add dashes to UUID string: 8-4-4-4-12
                 String uuidStr = id.replaceFirst(
                         "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
                         "$1-$2-$3-$4-$5");
                 return UUID.fromString(uuidStr);
             }
         } catch (Throwable ignored) {
-            // Ignore errors (connection, parsing), return null implies not found
         }
         return null;
     }

@@ -31,7 +31,6 @@ public class PlayerStatsListener implements Listener {
     public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
         if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
             if (plugin.getPlayerDataManager() != null) {
-                // Preload stats from DB asynchronously
                 plugin.getPlayerDataManager().getPlayerData(event.getUniqueId());
             }
         }
@@ -108,7 +107,6 @@ public class PlayerStatsListener implements Listener {
                 PlayerData data = plugin.getPlayerDataManager().getPlayerData(uuid);
                 if (data != null) {
                     data.setPlaytime(data.getPlaytime() + sessionSeconds);
-                    // Save and unload data
                     plugin.getPlayerDataManager().unloadPlayer(uuid);
                 }
             }

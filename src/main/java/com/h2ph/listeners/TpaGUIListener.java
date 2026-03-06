@@ -20,15 +20,12 @@ public class TpaGUIListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
         if (e.getView().getTitle().equals(TpaCommand.GUI_TITLE)) {
-            // Cancel events in top inventory (GUI)
             if (e.getClickedInventory() == null)
                 return;
 
             if (e.getClickedInventory() == e.getView().getTopInventory()) {
                 e.setCancelled(true);
             } else {
-                // Allow bottom inventory events (dragging items in player inventory)
-                // BUT prevent shift-clicking into the GUI
                 if (e.isShiftClick()) {
                     e.setCancelled(true);
                 }
@@ -41,19 +38,17 @@ public class TpaGUIListener implements Listener {
             ItemStack current = e.getCurrentItem();
 
             if (current == null || current.getType() == Material.AIR) {
-                // No sound for empty slots
                 return;
             }
 
-            // Play Tripwire sound on click
             p.playSound(p.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
 
             int slot = e.getSlot();
 
-            if (slot == 10) { // Cancel
+            if (slot == 10) {
                 p.closeInventory();
                 p.sendMessage(ChatColor.RED + "Teleport request cancelled.");
-            } else if (slot == 16) { // Confirm
+            } else if (slot == 16) {
                 ItemStack head = e.getView().getTopInventory().getItem(13);
                 if (head != null && head.hasItemMeta()) {
                     org.bukkit.inventory.meta.SkullMeta sm = (org.bukkit.inventory.meta.SkullMeta) head.getItemMeta();
@@ -61,7 +56,6 @@ public class TpaGUIListener implements Listener {
                         org.bukkit.OfflinePlayer target = sm.getOwningPlayer();
                         if (target.isOnline()) {
                             Player targetPlayer = target.getPlayer();
-                            // Check if it is TPA or TPA HERE based on current item lore
                             boolean isTpaHere = false;
                             if (current != null && current.hasItemMeta() && current.getItemMeta().hasLore()) {
                                 for (String line : current.getItemMeta().getLore()) {
@@ -74,14 +68,12 @@ public class TpaGUIListener implements Listener {
 
                             p.closeInventory();
 
-                            // Store Request
                             com.h2ph.managers.TpaRequestManager.RequestType type = isTpaHere
                                     ? com.h2ph.managers.TpaRequestManager.RequestType.TPA_HERE
                                     : com.h2ph.managers.TpaRequestManager.RequestType.TPA;
 
                             com.h2ph.managers.TpaRequestManager.getInstance().sendRequest(p, targetPlayer, type);
 
-                            // TODO: Integrate with TpaManager logic to actually store the request
                         } else {
                             p.closeInventory();
                             p.sendMessage(ChatColor.RED + "That player is no longer online.");

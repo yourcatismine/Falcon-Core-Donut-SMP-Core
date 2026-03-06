@@ -73,7 +73,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Pay check
             net.milkbowl.vault.economy.Economy econ = plugin.getEconomy();
             if (econ != null) {
                 if (!econ.has(player, amount)) {
@@ -82,7 +81,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
             } else {
-                // Fallback to internal if Vault not found (though it should be)
                 PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
                 if (data == null)
                     data = plugin.getPlayerDataManager().loadPlayer(player.getUniqueId());
@@ -101,7 +99,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
 
-                // Check if target has ignored the sender
                 PlayerData targetData = plugin.getPlayerDataManager().get(target.getUniqueId());
                 if (targetData != null && targetData.isIgnoring(player.getUniqueId())) {
                     String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
@@ -128,7 +125,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                         return;
                     }
 
-                    // Check if target has ignored the sender
                     PlayerData targetData = plugin.getPlayerDataManager().get(offlinePlayer.getUniqueId());
                     if (targetData != null && targetData.isIgnoring(player.getUniqueId())) {
                         plugin.getSchedulerAdapter().runTask(() -> {
@@ -218,7 +214,6 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("add")) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[1]);
         }
 

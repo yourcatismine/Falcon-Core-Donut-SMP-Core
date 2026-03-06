@@ -18,40 +18,26 @@ public class DuelGameListener implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
 
-        // Check if winner in looting phase died (e.g. killed themselves)
         if (arenaManager.isLooting(victim)) {
             arenaManager.stopLooting(victim);
             return;
         }
 
         if (arenaManager.isInDuel(victim)) {
-            // CRITICAL: Cache spectator location IMMEDIATELY before respawnImmediately
-            // fires
             arenaManager.cacheSpectatorLocation(victim);
 
-            // It's a duel death!
 
-            // 1. Handle Drops & Messages
-            // User requested winner to loot, so we keep drops enabled (default).
-            // Maybe silence death message? User didn't specify, but cleaner without.
-            // Let's keep it visible for now or set to null if preferred.
-            // Often duel plugins hide it or make it custom. For now, default behavior.
 
-            // 2. Determine Winner
             Player killer = victim.getKiller();
             Player opponent = arenaManager.getOpponent(victim);
 
-            // Fallback if killer is null (e.g. died to environmentally damage)
             Player winner = (killer != null) ? killer : opponent;
 
-            // Ensure the winner is actually the opponent (in case of interference, though
-            // likely duel is isolated)
             if (winner == null || !winner.getUniqueId().equals(opponent.getUniqueId())) {
                 winner = opponent;
             }
 
             if (winner != null) {
-                // 3. Trigger End Duel
                 DuelArenaManager.WinReason reason = arenaManager.isForfeit(victim)
                         ? DuelArenaManager.WinReason.FORFEIT
                         : DuelArenaManager.WinReason.NORMAL;
@@ -65,7 +51,6 @@ public class DuelGameListener implements Listener {
     public void onPlayerRespawn(org.bukkit.event.player.PlayerRespawnEvent event) {
         Player player = event.getPlayer();
 
-        // Check if they need to go to Hub (late respawn)
         if (arenaManager.shouldRespawnAtHub(player)) {
             org.bukkit.Location spawn = arenaManager.getPlugin().getSpawnManager().getSpawn("spawn");
             if (spawn != null) {
@@ -76,13 +61,10 @@ public class DuelGameListener implements Listener {
 
         org.bukkit.Location spectateLoc = arenaManager.getSpectatorLocation(player);
         if (spectateLoc != null) {
-            // They are actively spectating a lost duel!
             event.setRespawnLocation(spectateLoc);
 
-            // Set GameMode immediately to ensure they spawn as Spectator
             player.setGameMode(org.bukkit.GameMode.SPECTATOR);
 
-            // Schedule as fallback for server resets
             arenaManager.getPlugin().getSchedulerAdapter().runEntityTaskLater(player, () -> {
                 player.setGameMode(org.bukkit.GameMode.SPECTATOR);
             }, 1L);
@@ -93,25 +75,17 @@ public class DuelGameListener implements Listener {
     public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
         Player leaver = event.getPlayer();
         if (arenaManager.isInDuel(leaver)) {
-            // Combat Logged!
-            // Mark as forfeit so the winner sees "Opponent Left"
             arenaManager.markForfeit(leaver);
 
-            // Kill the player so they drop items for the winner
             leaver.setHealth(0);
 
-            // We do NOT manualy call endDuel here anymore, because setHealth(0)
-            // will trigger PlayerDeathEvent, which calls endDuel.
         }
     }
 
     @EventHandler
     public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        // Check if they joined back inside an arena (e.g. crashed, or quit while
-        // spectating/dueling)
         if (arenaManager.isLocationInArena(player.getLocation())) {
-            // Delay reset by 1 tick - Folia requires chunk loader to be fully initialized
             arenaManager.getPlugin().getSchedulerAdapter().runEntityTaskLater(player, () -> {
                 if (player.isOnline()) {
                     arenaManager.resetPlayer(player);
@@ -123,13 +97,10 @@ public class DuelGameListener implements Listener {
     @EventHandler(priority = org.bukkit.event.EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(org.bukkit.event.block.BlockBreakEvent event) {
         Player player = event.getPlayer();
-        // Track for both dueling AND looting players
         if (arenaManager.isInDuel(player) || arenaManager.isLooting(player)) {
             String arenaName = arenaManager.getArenaName(player);
             if (arenaName != null && arenaManager.isLocationInArena(event.getBlock().getLocation())) {
-                // Record state BEFORE break
                 arenaManager.recordBlockChange(arenaName, event.getBlock().getState());
-                // Prevent block drops in arena
                 event.setDropItems(false);
             }
         }
@@ -138,11 +109,9 @@ public class DuelGameListener implements Listener {
     @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(org.bukkit.event.block.BlockPlaceEvent event) {
         Player player = event.getPlayer();
-        // Track for both dueling AND looting players
         if (arenaManager.isInDuel(player) || arenaManager.isLooting(player)) {
             String arenaName = arenaManager.getArenaName(player);
             if (arenaName != null && arenaManager.isLocationInArena(event.getBlock().getLocation())) {
-                // Record what was there BEFORE placement (usually Air)
                 arenaManager.recordBlockChange(arenaName, event.getBlockReplacedState());
             }
         }
@@ -153,18 +122,13 @@ public class DuelGameListener implements Listener {
         if (event.blockList().isEmpty())
             return;
 
-        // Optimization: Check one block first to find arena? Or check logic?
-        // Explosions can cross boundaries, but usually localized.
-        // We'll check the source location or the first block.
         String arenaName = arenaManager.getArenaAt(event.getLocation());
 
-        // If source is not in arena (e.g. edge case), check first block?
         if (arenaName == null && !event.blockList().isEmpty()) {
             arenaName = arenaManager.getArenaAt(event.blockList().get(0).getLocation());
         }
 
         if (arenaName != null) {
-            // Prevent block drops from explosion in arena
             event.setYield(0f);
             for (org.bukkit.block.Block block : event.blockList()) {
                 arenaManager.recordBlockChange(arenaName, block.getState());
@@ -179,7 +143,6 @@ public class DuelGameListener implements Listener {
         String arenaName = arenaManager.getArenaAt(event.getBlock().getLocation());
 
         if (arenaName != null) {
-            // Prevent block drops from explosion in arena
             event.setYield(0f);
             for (org.bukkit.block.Block block : event.blockList()) {
                 arenaManager.recordBlockChange(arenaName, block.getState());
@@ -189,20 +152,16 @@ public class DuelGameListener implements Listener {
 
     @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockSpread(org.bukkit.event.block.BlockSpreadEvent event) {
-        // Track fire spread in arenas
         String arenaName = arenaManager.getArenaAt(event.getBlock().getLocation());
         if (arenaName != null) {
-            // Record the original state before fire spreads to it
             arenaManager.recordBlockChange(arenaName, event.getBlock().getState());
         }
     }
 
     @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBurn(org.bukkit.event.block.BlockBurnEvent event) {
-        // Track blocks being burned in arenas
         String arenaName = arenaManager.getArenaAt(event.getBlock().getLocation());
         if (arenaName != null) {
-            // Record the block state before it burns away
             arenaManager.recordBlockChange(arenaName, event.getBlock().getState());
         }
     }
@@ -211,7 +170,6 @@ public class DuelGameListener implements Listener {
     public void onPlayerTeleport(org.bukkit.event.player.PlayerTeleportEvent event) {
         Player player = event.getPlayer();
         if (arenaManager.isLooting(player)) {
-            // Cancel looting/restore text if they leave via TP (Command, Plugin, etc)
             if (event.getCause() != org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL &&
                     event.getCause() != org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT) {
                 arenaManager.stopLooting(player);
@@ -224,12 +182,10 @@ public class DuelGameListener implements Listener {
         Player player = event.getPlayer();
         String msg = event.getMessage().toLowerCase();
 
-        // Always allow /duel leave
         if (msg.startsWith("/duel leave")) {
             return;
         }
 
-        // Check banned-commands (blocked during BOTH duel and looting)
         if (arenaManager.isInDuel(player) || arenaManager.isLooting(player)) {
             if (arenaManager.isCommandBanned(event.getMessage())) {
                 event.setCancelled(true);
@@ -246,7 +202,6 @@ public class DuelGameListener implements Listener {
             }
         }
 
-        // Check ignored-commands (blocked only during active duel, not looting)
         if (arenaManager.isInDuel(player)) {
             if (arenaManager.isCommandIgnored(event.getMessage())) {
                 event.setCancelled(true);

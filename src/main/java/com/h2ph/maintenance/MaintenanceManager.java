@@ -21,7 +21,6 @@ public class MaintenanceManager {
         this.plugin = plugin;
         this.dataFile = new File(plugin.getDataFolder(), "maintenance/data.yml");
 
-        // Ensure config.yml is saved on startup
         saveDefaultConfig();
 
         loadState();

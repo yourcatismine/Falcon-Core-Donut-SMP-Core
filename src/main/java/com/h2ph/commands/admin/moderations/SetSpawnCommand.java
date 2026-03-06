@@ -42,7 +42,6 @@ public class SetSpawnCommand implements TabExecutor {
             return true;
         }
 
-        // Check for delete subcommand
         if (args.length >= 2 && (args[0].equalsIgnoreCase("delete") || args[0].equalsIgnoreCase("del"))) {
             String name = args[1];
             boolean deleted = spawnManager.deleteSpawn(name);
@@ -54,7 +53,6 @@ public class SetSpawnCommand implements TabExecutor {
             return true;
         }
 
-        // Check for deleteworld subcommand
         if (args.length >= 2 && args[0].equalsIgnoreCase("deleteworld")) {
             String worldName = args[1];
             boolean deleted = spawnManager.deleteWorldSpawn(worldName);
@@ -66,7 +64,6 @@ public class SetSpawnCommand implements TabExecutor {
             return true;
         }
 
-        // Check for world subcommand
         if (args[0].equalsIgnoreCase("world")) {
             String worldName;
             if (args.length >= 2) {
@@ -88,7 +85,6 @@ public class SetSpawnCommand implements TabExecutor {
         boolean ok = spawnManager.saveSpawn(name, p.getLocation());
         if (ok) {
             p.sendMessage(ChatColor.GREEN + "Saved spawn '" + name + "'.");
-            // If the name is "spawn" or "default", sync it to the global database spawn
             if (name.equalsIgnoreCase("spawn") || name.equalsIgnoreCase("default")) {
                 spawnManager.setGlobalSpawn(p.getLocation());
             }
@@ -111,7 +107,6 @@ public class SetSpawnCommand implements TabExecutor {
             return res;
         } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("delete") || args[0].equalsIgnoreCase("del")) {
-                // Tab complete for named spawns
                 String cur = args[1].toLowerCase();
                 java.util.List<String> names = new java.util.ArrayList<>();
                 try {
@@ -126,7 +121,6 @@ public class SetSpawnCommand implements TabExecutor {
                 }
                 return res;
             } else if (args[0].equalsIgnoreCase("deleteworld")) {
-                // Tab complete for world spawns
                 String cur = args[1].toLowerCase();
                 java.util.List<String> worldNames = new java.util.ArrayList<>();
                 try {
@@ -141,7 +135,6 @@ public class SetSpawnCommand implements TabExecutor {
                 }
                 return res;
             } else if (args[0].equalsIgnoreCase("world")) {
-                // Tab complete for world names
                 String cur = args[1].toLowerCase();
                 java.util.List<String> worldNames = new java.util.ArrayList<>();
                 for (org.bukkit.World world : org.bukkit.Bukkit.getWorlds()) {

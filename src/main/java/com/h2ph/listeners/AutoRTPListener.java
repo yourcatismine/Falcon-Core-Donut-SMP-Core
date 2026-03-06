@@ -20,22 +20,18 @@ public class AutoRTPListener implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
 
-        // Ignore players who have a bed spawnpoint (only skip if they actually spawned at bed)
         if (event.isBedSpawn()) {
             return;
         }
 
-        // Folia compatibility: teleport to spawn and give respawn gear
         plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
             if (player.isOnline()) {
-                // Use world-specific spawn logic instead of always using global spawn
                 String worldName = player.getWorld().getName();
                 org.bukkit.Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
                 if (spawn != null) {
                     player.teleportAsync(spawn);
                 }
 
-                // Give respawn gear (auto armor) - only if player has the setting enabled
                 com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
                 if (data != null && data.isRespawnRTP()) {
                     for (ItemStack item : plugin.getRespawnGearManager().getItems()) {

@@ -41,7 +41,6 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
         String target = args[0];
         Integer index = null;
 
-        // 1. Try to parse as number
         try {
             int num = Integer.parseInt(target);
             if (num >= 1 && num <= HomeGUI.HOME_COUNT) {
@@ -54,7 +53,6 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
             index = manager.getHomeIndexByName(player.getUniqueId(), target);
         }
 
-        // 3. Permission check for slots 3-10
         if (index != null && index >= 3 && !player.hasPermission("prismcore.home." + index) && !player.hasPermission("prismcore.home.all")) {
             String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
             player.sendMessage(storeMsg);
@@ -67,7 +65,6 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // ── Teleport with countdown ─────────────────────────────────────────────
         Location dest = manager.getHomeLocation(player.getUniqueId(), index);
         if (dest != null) {
             String successMsg = "&7You were teleported to your home.";

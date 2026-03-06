@@ -75,7 +75,6 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
 
         List<TeamManager.TeamMemberData> members = plugin.getTeamManager().getMemberDataList(team.getId());
 
-        // Filter by search query
         if (searchQuery != null && !searchQuery.isEmpty()) {
             String query = searchQuery.toLowerCase();
             members.removeIf(m -> !m.name.toLowerCase().contains(query));
@@ -84,7 +83,6 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
         UUID ownerUuid = team.getOwnerUuid();
         SortMode sortMode = playerSortMode.getOrDefault(player.getUniqueId(), SortMode.JOIN_DATE);
 
-        // Sort members
         switch (sortMode) {
             case JOIN_DATE:
                 members.sort(Comparator.comparingLong(m -> m.joinedAt));
@@ -100,8 +98,6 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                 break;
         }
 
-        // Always put owner first in UI regardless of sort (per requirement: slot 0 is
-        // owner)
         TeamManager.TeamMemberData ownerData = null;
         for (TeamManager.TeamMemberData m : members) {
             if (m.uuid.equals(ownerUuid)) {
@@ -134,18 +130,15 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
             inventory.setItem(slot++, head);
         }
 
-        // Fill remaining up to 44 with Invite glass
         ItemStack inviteItem = createItem(Material.GRAY_STAINED_GLASS_PANE, "&aɪɴᴠɪᴛᴇ",
                 "&fClick to invite a new player");
         while (slot < 45) {
             inventory.setItem(slot++, inviteItem);
         }
 
-        // Bottom Row
         String searchName = searchQuery == null ? "&dѕᴇᴀʀᴄʜ" : "&dѕᴇᴀʀᴄʜ: &f" + searchQuery;
         inventory.setItem(45, createItem(Material.OAK_SIGN, searchName, "&fClick to search"));
 
-        // Sort Item
         List<String> sortLore = new ArrayList<>();
         for (SortMode mode : SortMode.values()) {
             if (mode == sortMode) {
@@ -215,24 +208,20 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
         if (e.getClickedInventory() == null)
             return;
 
-        // If clicking in player inventory, allow it and don't play GUI sounds
         if (e.getClickedInventory().getHolder() != this)
             return;
 
-        // Inside GUI - cancel all actions
         e.setCancelled(true);
 
         ItemStack clicked = e.getCurrentItem();
         if (clicked == null || clicked.getType() == Material.AIR)
             return;
 
-        // Play tripwire sound for GUI items by default
         org.bukkit.Sound clickSound = org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON;
 
         UUID uuid = player.getUniqueId();
         int slot = e.getRawSlot();
 
-        // Override sounds for specific buttons before action
         if (slot == 48 || slot == 50) {
             clickSound = org.bukkit.Sound.ITEM_BOOK_PAGE_TURN;
         } else if (slot == 49) {
@@ -242,25 +231,25 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
         player.playSound(player.getLocation(), clickSound, 1.0f, 1.0f);
 
         switch (slot) {
-            case 46: // Sort
+            case 46:
                 SortMode current = playerSortMode.getOrDefault(uuid, SortMode.JOIN_DATE);
                 playerSortMode.put(uuid, current.next());
                 update();
                 break;
-            case 48: // Back
+            case 48:
                 if (page > 1) {
                     page--;
-                    open(); // Update doesn't change title for page number
+                    open();
                 }
                 break;
-            case 49: // Refresh
+            case 49:
                 update();
                 break;
-            case 50: // Next
+            case 50:
                 page++;
-                open(); // Update doesn't change title for page number
+                open();
                 break;
-            case 52: // Team Home
+            case 52:
                 if (!team.hasHome()) {
                     String msg = Utils.formatColors("&cYour team does not have a home.");
                     player.sendMessage(msg);
@@ -278,13 +267,10 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                 com.h2ph.managers.HomeManager homeManager = plugin.getHomeManager();
                 int homeToSet = -1;
 
-                // Find first available slot (1-5)
                 for (int i = 1; i <= 5; i++) {
-                    // Check permissions for 3, 4, 5
                     if (i >= 3 && !player.hasPermission("prismcore.home." + i)) {
                         continue;
                     }
-                    // Check if slot is empty
                     if (!homeManager.hasHome(uuid, i)) {
                         homeToSet = i;
                         break;
@@ -303,7 +289,7 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                 }
                 break;
-            case 53: // PVP
+            case 53:
                 if (!player.getUniqueId().equals(team.getOwnerUuid())) {
                     player.sendMessage(Utils.formatColors("&cOnly the team owner can toggle PvP."));
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
@@ -312,7 +298,7 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                 plugin.getTeamManager().setPvpEnabled(team.getId(), !team.isPvpEnabled());
                 update();
                 break;
-            case 45: // Search
+            case 45:
                 player.closeInventory();
                 plugin.getSignInput().getSearchInput(player, input -> {
                     if (input.isEmpty()) {
@@ -337,7 +323,6 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
 
     @Override
     public void onDrag(InventoryDragEvent e) {
-        // Cancel only if any slots in the top inventory are involved
         for (int slot : e.getRawSlots()) {
             if (slot < e.getView().getTopInventory().getSize()) {
                 e.setCancelled(true);

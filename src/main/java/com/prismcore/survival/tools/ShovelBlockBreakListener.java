@@ -68,10 +68,7 @@ public class ShovelBlockBreakListener implements Listener {
         }
         evt.setDropItems(false);
         int r = cfg.getInt("radius.x", 1);
-        int depth = cfg.getInt("radius.z", 0); // Shovels usually don't dig deep by default?
-        // But let's check previous code. It looped dz from -rz to rz.
-        // If config says rz=1, it digs 3 deep. If 0, 1 deep.
-        // I'll stick to 'rz' as depth.
+        int depth = cfg.getInt("radius.z", 0);
         depth = cfg.getInt("radius.z", 0);
 
         BlockFace face = Utils.getBlockFace(player);

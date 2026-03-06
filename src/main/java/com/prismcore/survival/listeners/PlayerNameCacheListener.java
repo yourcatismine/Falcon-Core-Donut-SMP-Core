@@ -20,13 +20,11 @@ public class PlayerNameCacheListener implements Listener {
     
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        // Add to recent players when they join
         playerNameCache.addRecentPlayer(event.getPlayer().getName());
     }
     
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        // Add to recent players when they quit (so they show up in offline completions)
         playerNameCache.addRecentPlayer(event.getPlayer().getName());
     }
 }

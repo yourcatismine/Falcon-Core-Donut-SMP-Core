@@ -58,11 +58,9 @@ public class ScoreboardManager implements Listener {
         }
         config = YamlConfiguration.loadConfiguration(configFile);
 
-        // Cache region
         java.util.List<String> regionList = plugin.getSurvivalConfig().getStringList("region");
         cachedRegion = regionList.isEmpty() ? "EU" : regionList.get(0);
 
-        // Load switcher interval (in ticks)
         switcherInterval = config.getInt("INTERVAL", 20);
     }
 
@@ -270,9 +268,8 @@ public class ScoreboardManager implements Listener {
         if (user == null)
             return;
 
-        // Update switcher if interval has passed
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastSwitcherUpdate >= switcherInterval * 50) { // 50ms per tick
+        if (currentTime - lastSwitcherUpdate >= switcherInterval * 50) {
             List<String> switchers = config.getStringList("SCOREBOARD.SWITCHER");
             if (!switchers.isEmpty()) {
                 currentSwitcherIndex = (currentSwitcherIndex + 1) % switchers.size();
@@ -312,8 +309,6 @@ public class ScoreboardManager implements Listener {
 
         List<String> lastLines = lastSentLines.get(player.getUniqueId());
 
-        // Compare parsed lines to ensure dynamic placeholders (balance, ping) trigger
-        // updates
         if (lastLines != null && parsedLines.equals(lastLines)) {
             return;
         }
@@ -330,7 +325,6 @@ public class ScoreboardManager implements Listener {
         lineCountMap.put(player.getUniqueId(), currentLineCount);
         lastSentLines.put(player.getUniqueId(), new ArrayList<>(parsedLines));
 
-        // Differential update: only send scores/teams for lines that changed
         sendScoresDifferential(player, user, parsedLines, lastLines);
     }
 
@@ -342,7 +336,6 @@ public class ScoreboardManager implements Listener {
         for (int i = 0; i < lineCount; i++) {
             String text = parsedLines.get(i);
 
-            // Skip if the line hasn't changed
             if (lastLines != null && i < lastLines.size() && text.equals(lastLines.get(i))
                     && lastComponents[i] != null) {
                 score--;
@@ -386,7 +379,6 @@ public class ScoreboardManager implements Listener {
 
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null) {
-            // Find Playtime index to place Team line under it
             int playtimeIndex = -1;
             for (int i = 0; i < lines.size(); i++) {
                 if (lines.get(i).contains("Playtime")) {
@@ -395,12 +387,10 @@ public class ScoreboardManager implements Listener {
                 }
             }
 
-            // Team Line
             String teamFormat = config.getString("SCOREBOARD.TEAMS");
             if (teamFormat != null && !teamFormat.isEmpty() && data.getTeamId() != null) {
                 if (playtimeIndex != -1) {
                     lines.add(playtimeIndex + 1, teamFormat);
-                    // Update playtimeIndex for booster if needed
                     playtimeIndex++;
                 } else {
                     if (lines.size() > 2) {
@@ -411,7 +401,6 @@ public class ScoreboardManager implements Listener {
                 }
             }
 
-            // Shard Booster
             String boosterFormat = config.getString("SCOREBOARD.SHARD-BOOSTER");
             if (boosterFormat != null && !boosterFormat.isEmpty() && data.hasActiveShardBooster()) {
                 if (playtimeIndex != -1) {
@@ -539,7 +528,6 @@ public class ScoreboardManager implements Listener {
             }
         }
 
-        // Team placeholder
         if (text.contains("%team_name%")) {
             com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null && data.getTeamId() != null) {
@@ -568,7 +556,6 @@ public class ScoreboardManager implements Listener {
         if (text == null || text.isEmpty())
             return "";
 
-        // Fast path: skip regex if no hex indicator is present
         if (!text.contains("&#")) {
             return ChatColor.translateAlternateColorCodes('&', text);
         }

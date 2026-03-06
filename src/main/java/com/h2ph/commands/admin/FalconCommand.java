@@ -152,7 +152,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
                 player.setFlySpeed(speed);
             } catch (Exception ignored) {
-                // No error messages as requested
             }
             return true;
         }
@@ -223,7 +222,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             } else if (toolType.equals("sellaxe")) {
                 manager.giveSellAxe(target, overrideTimer);
-                // Message handled in manager
                 return true;
             } else {
                 player.sendMessage(
@@ -327,8 +325,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 int radius = plugin.getLimiterConfig().getChunkCheckRadius();
                 org.bukkit.Location loc = player.getLocation();
 
-                // Folia requires chunk operations to safely happen on the region thread, NOT
-                // async.
                 plugin.getSchedulerAdapter().runAtLocation(loc, () -> {
                     org.bukkit.Chunk center = loc.getChunk();
                     org.bukkit.World world = loc.getWorld();
@@ -354,8 +350,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                         }
                     }
 
-                    // On Folia, we're now on the region thread, which is perfectly safe to send
-                    // messages from.
                     player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                             "&c&m---------------------------------"));
                     player.sendMessage(org.bukkit.ChatColor.RED + " Limiter Stats: " + org.bukkit.ChatColor.WHITE
@@ -411,11 +405,11 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(ChatColor.RED + "Usage: /falcon crate create <name> <key> [type] [container]");
                 return true;
             }
-            String type = "NORMAL"; // Default
+            String type = "NORMAL";
             if (args.length >= 5) {
                 type = args[4];
             }
-            String container = "CHEST"; // Default
+            String container = "CHEST";
             if (args.length >= 6) {
                 container = args[5];
             }
@@ -439,7 +433,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             }
             return handleCrateDelete(player, args[2]);
         } else if (sub.equals("effects")) {
-            // /falcon crate effects <add|remove|set> <crate> <effect|all>
             if (args.length < 5) {
                 player.sendMessage(
                         ChatColor.RED + "Usage: /falcon crate effects <add|remove|set> <crate> <effect|all>");
@@ -453,7 +446,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCrateCreate(Player player, String crateName, String keyName, String typeStr,
             String containerStr) {
-        // Validate Key
         if (!plugin.getKeyAllManager().isValidKey(keyName)) {
             player.sendMessage(ChatColor.RED + "Invalid key: " + keyName);
             player.sendMessage(
@@ -476,7 +468,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Create Config File
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (crateFile.exists()) {
             player.sendMessage(ChatColor.RED + "A crate with that name already exists!");
@@ -484,7 +475,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
 
         try {
-            // Ensure directory exists
             crateFile.getParentFile().mkdirs();
 
             FileConfiguration crateConfig = new YamlConfiguration();
@@ -549,7 +539,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             lore.add(ChatColor.GRAY + "Place this to create the crate.");
             meta.setLore(lore);
 
-            // Add PDC tag
             org.bukkit.persistence.PersistentDataContainer data = meta.getPersistentDataContainer();
             org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(plugin, "crate_id");
             data.set(key, org.bukkit.persistence.PersistentDataType.STRING, crateName);
@@ -568,16 +557,13 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Open editing GUI
         Inventory inv = org.bukkit.Bukkit.createInventory(player, 27,
                 ChatColor.translateAlternateColorCodes('&', "&eEditing: " + crateName));
 
-        // Load items from config
         FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
         String type = config.getString("type", "NORMAL");
 
         if (type.equalsIgnoreCase("CAROUSEL")) {
-            // Pre-fill Reserved Slots
             ItemStack reserved = new ItemStack(Material.RED_STAINED_GLASS_PANE);
             ItemMeta meta = reserved.getItemMeta();
             meta.setDisplayName(ChatColor.RED + "Reserved Slot");
@@ -595,7 +581,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                     ItemStack item = config.getItemStack("contents." + key);
                     inv.setItem(slot, item);
                 } catch (NumberFormatException e) {
-                    // Ignore invalid keys
                 }
             }
         }
@@ -648,7 +633,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
         try {
             config.save(crateFile);
-            // Refresh cache
             if (plugin.getCrateEffectsManager() != null) {
                 plugin.getCrateEffectsManager().clearCache(crateName);
             }
@@ -676,7 +660,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                         .collect(Collectors.toList());
             }
             if (args[0].equalsIgnoreCase("auction") || args[0].equalsIgnoreCase("order")) {
-                // Use async player name cache to prevent TPS drops
                 return plugin.getPlayerNameCache().getCompletions(args[1]);
             } else if (args[0].equalsIgnoreCase("rtpqueue")) {
                 return Arrays.asList("create", "delete").stream()
@@ -737,7 +720,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 }
                 if (args[1].equalsIgnoreCase("edit") || args[1].equalsIgnoreCase("get")
                         || args[1].equalsIgnoreCase("delete")) {
-                    // Suggest crate names
                     File cratesDir = new File(plugin.getDataFolder(), "crates/crate");
                     if (cratesDir.exists() && cratesDir.isDirectory()) {
                         List<String> crates = new ArrayList<>();
@@ -752,7 +734,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                     }
                 }
                 if (args[1].equalsIgnoreCase("create")) {
-                    // Suggest crate names for the name slot, though usually it's unique
                     File cratesDir = new File(plugin.getDataFolder(), "crates/crate");
                     if (cratesDir.exists() && cratesDir.isDirectory()) {
                         List<String> crates = new ArrayList<>();
@@ -771,7 +752,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return Arrays.asList("1d", "12h", "30m", "1w");
         } else if (args.length == 4 && args[0].equalsIgnoreCase("crate")) {
             if (args[1].equalsIgnoreCase("effects")) {
-                // Suggest Crate Names
                 File cratesDir = new File(plugin.getDataFolder(), "crates/crate");
                 if (cratesDir.exists() && cratesDir.isDirectory()) {
                     List<String> crates = new ArrayList<>();
@@ -786,7 +766,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 }
             }
             if (args[1].equalsIgnoreCase("create")) {
-                // Suggest keys at args[3]
                 return new ArrayList<>(plugin.getKeyAllManager().getValidKeys()).stream()
                         .filter(s -> s.toLowerCase().startsWith(args[3].toLowerCase()))
                         .collect(Collectors.toList());
@@ -844,7 +823,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             double damage;
 
             if (damageArg.equals("normal")) {
-                damage = 6.0; // Vanilla crystal damage
+                damage = 6.0;
             } else {
                 damage = Double.parseDouble(damageArg);
             }
@@ -858,7 +837,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§aCrystal damage set to §f" + damage);
             return true;
         } catch (NumberFormatException ignored) {
-            // No error messages as requested, just villager no sound
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
             return true;
         }
@@ -880,7 +858,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             double damage;
 
             if (damageArg.equals("normal")) {
-                damage = 6.0; // Vanilla anchor damage
+                damage = 6.0;
             } else {
                 damage = Double.parseDouble(damageArg);
             }
@@ -894,7 +872,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§aAnchor damage set to §f" + damage);
             return true;
         } catch (NumberFormatException ignored) {
-            // No error messages as requested, just villager no sound
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
             return true;
         }

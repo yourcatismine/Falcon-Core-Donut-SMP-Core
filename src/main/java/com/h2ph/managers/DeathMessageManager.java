@@ -21,7 +21,6 @@ public class DeathMessageManager {
     private boolean radiusEnabled;
     private int chunkRadius;
 
-    // Cache for death cause mappings
     private final Map<EntityDamageEvent.DamageCause, String> causeMapping = new HashMap<>();
 
     public DeathMessageManager(PrismSurvival plugin) {
@@ -34,7 +33,6 @@ public class DeathMessageManager {
      * Load death configuration files
      */
     private void loadConfigurations() {
-        // Load config.yml
         File configFile = new File(plugin.getDataFolder(), "survival/death/config.yml");
         if (!configFile.exists()) {
             plugin.getLogger().warning("Death config.yml not found!");
@@ -42,7 +40,6 @@ public class DeathMessageManager {
         }
         this.config = YamlConfiguration.loadConfiguration(configFile);
 
-        // Load messages.yml
         File messagesFile = new File(plugin.getDataFolder(), "survival/death/messages.yml");
         if (!messagesFile.exists()) {
             plugin.getLogger().warning("Death messages.yml not found!");
@@ -50,7 +47,6 @@ public class DeathMessageManager {
         }
         this.messages = YamlConfiguration.loadConfiguration(messagesFile);
 
-        // Load settings
         this.radiusEnabled = config.getBoolean("SETTINGS.RADIUS", true);
         this.chunkRadius = config.getInt("SETTINGS.CHUNKS", 5);
     }
@@ -85,7 +81,7 @@ public class DeathMessageManager {
      */
     public String getDeathMessage(Player victim, EntityDamageEvent.DamageCause cause, Player killer, String killerEntity) {
         if (!messages.getBoolean("MESSAGES.ENABLED", true)) {
-            return null; // Messages disabled, use vanilla
+            return null;
         }
 
         String messageKey = causeMapping.getOrDefault(cause, "DEFAULT");
@@ -94,25 +90,19 @@ public class DeathMessageManager {
         String message;
         String selectedPath = "";
         
-        // Check if the message has PVP variant
         if (killer != null && messages.contains(messagePath + ".PVP")) {
-            // Player vs Player kill - use PVP variant
             message = messages.getString(messagePath + ".PVP");
             selectedPath = messagePath + ".PVP";
         } else if (killerEntity != null && messages.contains(messagePath + ".NORMAL")) {
-            // Player vs Entity kill - use NORMAL variant
             message = messages.getString(messagePath + ".NORMAL");
             selectedPath = messagePath + ".NORMAL";
         } else if (messages.contains(messagePath + ".NORMAL")) {
-            // Environmental death - use NORMAL variant
             message = messages.getString(messagePath + ".NORMAL");
             selectedPath = messagePath + ".NORMAL";
         } else if (messages.contains(messagePath)) {
-            // Fallback to base message
             message = messages.getString(messagePath);
             selectedPath = messagePath;
         } else {
-            // Fallback to default message
             message = messages.getString("MESSAGES.DEFAULT", "{player} died");
             selectedPath = "MESSAGES.DEFAULT";
         }
@@ -122,26 +112,20 @@ public class DeathMessageManager {
             selectedPath = "MESSAGES.DEFAULT (fallback)";
         }
 
-        // Replace placeholders
         message = message.replace("{player}", victim.getName());
         if (killer != null) {
-            // Player vs Player kill
             message = message.replace("{killer}", killer.getName());
         } else if (killerEntity != null) {
-            // Player vs Entity kill
             message = message.replace("{killer}", killerEntity);
         } else {
-            // Unknown cause or environmental death
             message = message.replace("{killer}", "Unknown");
         }
 
-        // Add prefix if configured
         String prefix = messages.getString("MESSAGES.PREFIX", "");
         if (!prefix.isEmpty()) {
             message = prefix + message;
         }
 
-        // Apply color codes
         message = org.bukkit.ChatColor.translateAlternateColorCodes('&', message);
 
         return message;
@@ -159,18 +143,16 @@ public class DeathMessageManager {
      */
     public boolean shouldReceiveMessage(Player receiver, Player victim) {
         if (!radiusEnabled) {
-            return true; // No radius restriction, send to all
+            return true;
         }
 
         Location victimLoc = victim.getLocation();
         Location receiverLoc = receiver.getLocation();
 
-        // Must be in same world
         if (!victimLoc.getWorld().equals(receiverLoc.getWorld())) {
             return false;
         }
 
-        // Check chunk radius using coordinates to avoid async chunk loading in Folia
         int victimChunkX = victimLoc.getBlockX() >> 4;
         int victimChunkZ = victimLoc.getBlockZ() >> 4;
         int receiverChunkX = receiverLoc.getBlockX() >> 4;
@@ -199,7 +181,6 @@ public class DeathMessageManager {
         return messages != null && messages.getBoolean("MESSAGES.ENABLED", true);
     }
 
-    // Getters
     public boolean isRadiusEnabled() {
         return radiusEnabled;
     }

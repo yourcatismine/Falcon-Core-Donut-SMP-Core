@@ -58,12 +58,10 @@ public class ContainerScanner {
      *                      containers)
      */
     public void scanInventory(Inventory inventory, org.bukkit.Location soundLocation, org.bukkit.entity.Player player) {
-        // ANTI-DUPE: Skip all inventory modifications when player is holding an item
-        // on their cursor. This is the only guard needed to prevent duplication.
         if (player != null) {
             ItemStack cursorItem = player.getItemOnCursor();
             if (cursorItem != null && cursorItem.getType() != org.bukkit.Material.AIR) {
-                return; // Skip entire scan - player is moving items
+                return;
             }
         }
 
@@ -78,28 +76,23 @@ public class ContainerScanner {
 
             ItemMeta meta = item.getItemMeta();
 
-            // Check if this is an amethyst tool
             if (!isAmethystTool(meta)) {
                 continue;
             }
 
-            // Check if auction paused
             if (meta.getPersistentDataContainer().has(ToolsManager.AUCTION_PAUSED_KEY, PersistentDataType.BYTE)) {
-                continue; // Skip auction items
+                continue;
             }
 
-            // Get tool configuration key
             String configKey = getToolConfigKey(item, meta);
             if (configKey == null) {
                 continue;
             }
 
-            // Check if countdown is enabled for this tool type
             if (!toolsManager.getConfig().getBoolean(configKey + ".use-countdown", true)) {
                 continue;
             }
 
-            // Get expiration timestamp
             Long expiryTime = getExpirationTimestamp(meta);
             if (expiryTime == null) {
                 continue;
@@ -107,27 +100,22 @@ public class ContainerScanner {
 
             long currentTime = System.currentTimeMillis();
 
-            // Check if expired - ALWAYS remove expired items
             if (expiryTime <= currentTime) {
-                contents[i] = null; // Remove item
+                contents[i] = null;
                 modified = true;
 
-                // Play sound if location provided (player inventory)
                 if (soundLocation != null) {
                     soundLocation.getWorld().playSound(soundLocation, org.bukkit.Sound.ENTITY_ITEM_BREAK, 1f, 2.0f);
                 }
                 continue;
             }
 
-            // Update lore with remaining time (safe for both player and container
-            // inventories since we already returned early if player has cursor item or GUI
-            // open)
             long lastUpdate = meta.getPersistentDataContainer().getOrDefault(ToolsManager.LAST_UPDATE_KEY,
                     PersistentDataType.LONG, 0L);
             long updateIntervalMs = toolsManager.getConfig().getLong(configKey + ".update-interval", 30L) * 1000L;
 
             if (currentTime - lastUpdate < updateIntervalMs) {
-                continue; // Skip lore update - too soon
+                continue;
             }
 
             long remainingSeconds = (expiryTime - currentTime) / 1000L;
@@ -143,7 +131,6 @@ public class ContainerScanner {
             item.setItemMeta(meta);
             modified = true;
 
-            // Scan shulker boxes recursively
             if (item.getType().name().contains("SHULKER_BOX") && meta instanceof BlockStateMeta) {
                 BlockStateMeta bsm = (BlockStateMeta) meta;
                 if (bsm.getBlockState() instanceof ShulkerBox) {
@@ -155,8 +142,6 @@ public class ContainerScanner {
             }
         }
 
-        // ANTI-DUPE: Set items individually instead of bulk setContents
-        // This is more atomic and prevents timing-based duplication exploits
         if (modified) {
             for (int i = 0; i < contents.length; i++) {
                 inventory.setItem(i, contents[i]);
@@ -207,18 +192,15 @@ public class ContainerScanner {
      * Gets the expiration timestamp, migrating from REMAINING_KEY if needed.
      */
     private Long getExpirationTimestamp(ItemMeta meta) {
-        // Check for EXPIRY_KEY first (new system)
         if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
             return meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG);
         }
 
-        // Migrate from REMAINING_KEY (old system)
         if (meta.getPersistentDataContainer().has(ToolsManager.REMAINING_KEY, PersistentDataType.LONG)) {
             Long remainingSeconds = meta.getPersistentDataContainer().get(ToolsManager.REMAINING_KEY,
                     PersistentDataType.LONG);
             long expiryTimestamp = System.currentTimeMillis() + (remainingSeconds * 1000L);
 
-            // Migrate to new system
             meta.getPersistentDataContainer().remove(ToolsManager.REMAINING_KEY);
             meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
 

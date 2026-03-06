@@ -54,7 +54,6 @@ public class GUIListener
         Sound no = Sound.valueOf((String) cfg.getString("sounds.villager-no"));
         if (top instanceof GUIHandler.MainHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -94,7 +93,7 @@ public class GUIListener
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getSignInput().getSearchInput(p, (input) -> {
                     String term = input.trim().toLowerCase();
                     p.setMetadata("ah-filter", new FixedMetadataValue(this.controller.getPlugin(), term));
-                    this.controller.getAuctionManager().setPlayerFilter(p.getUniqueId(), term); // Persist
+                    this.controller.getAuctionManager().setPlayerFilter(p.getUniqueId(), term);
                     ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                             com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                             "Searched for '" + term + "' in Auction House");
@@ -109,7 +108,7 @@ public class GUIListener
                 String nextCat = GUIHandler.getNextCategory(this.controller, current);
                 p.setMetadata("ah-cat",
                         (MetadataValue) new FixedMetadataValue((Plugin) this.controller.getPlugin(), (Object) nextCat));
-                this.controller.getAuctionManager().setPlayerCategory(p.getUniqueId(), nextCat); // Persist
+                this.controller.getAuctionManager().setPlayerCategory(p.getUniqueId(), nextCat);
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
                         "Changed category to " + nextCat);
@@ -137,7 +136,6 @@ public class GUIListener
             }
 
             if (slot >= 0 && slot < perPage) {
-                // Get the clicked item to retrieve auction ID from PDC (prevents item shifting issues)
                 ItemStack clickedItem = event.getCurrentItem();
                 if (clickedItem == null || !clickedItem.hasItemMeta()) {
                     return;
@@ -148,21 +146,18 @@ public class GUIListener
                 org.bukkit.NamespacedKey itemIdKey = new org.bukkit.NamespacedKey(this.controller.getPlugin(), "auction-item-id");
                 
                 if (!pdc.has(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING)) {
-                    return; // Not an auction item
+                    return;
                 }
                 
                 String auctionItemId = pdc.get(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING);
                 
-                // Find the auction item by ID (safe from list shifts)
                 Optional<AuctionItem> optionalItem = this.controller.getAuctionManager().getActiveItems().stream()
                         .filter(ai -> ai.getId().toString().equals(auctionItemId))
                         .findFirst();
                         
                 if (!optionalItem.isPresent()) {
-                    // Item no longer exists (sold/expired)
                     p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available", "&cThis item is no longer available!")));
                     p.playSound(p.getLocation(), no, 1.0f, 1.0f);
-                    // Refresh the GUI to show current state
                     GUIHandler.openMainGUI(p, page, this.controller, perPage);
                     return;
                 }
@@ -176,7 +171,6 @@ public class GUIListener
                     if (ai2.getSeller().equals(p.getName())) {
                         p.playSound(p.getLocation(), no, 1.0f, 1.0f);
                     } else {
-                        // Check Quick Auction Buy
                         com.h2ph.PrismSurvival plugin = (com.h2ph.PrismSurvival) this.controller.getPlugin();
                         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager()
                                 .get(p.getUniqueId());
@@ -184,10 +178,8 @@ public class GUIListener
                         boolean hasPerm = p.hasPermission("prismsmp.quick.auction");
 
                         if (quickBuy && hasPerm) {
-                            // FAST BUY
                             purchaseItem(p, ai2);
                         } else {
-                            // NORMAL CONFIRM
                             GUIHandler.openBuyConfirm(p, ai2, this.controller);
                         }
                     }
@@ -196,7 +188,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.FilterHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -214,13 +205,12 @@ public class GUIListener
             String chosen = ChatColor.stripColor((String) event.getCurrentItem().getItemMeta().getDisplayName());
             p.setMetadata("ah-cat",
                     (MetadataValue) new FixedMetadataValue((Plugin) this.controller.getPlugin(), (Object) chosen));
-            this.controller.getAuctionManager().setPlayerCategory(p.getUniqueId(), chosen); // Persist
+            this.controller.getAuctionManager().setPlayerCategory(p.getUniqueId(), chosen);
             GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
             return;
         }
         if (top instanceof GUIHandler.SellConfirmHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -253,7 +243,6 @@ public class GUIListener
                 ItemStack toSell = held.clone();
                 p.getInventory().setItemInMainHand(null);
 
-                // Create the auction item and add it to the auction
                 AuctionItem auctionItem = new AuctionItem(
                         UUID.randomUUID(),
                         p.getName(),
@@ -277,7 +266,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.BuyConfirmHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -313,7 +301,6 @@ public class GUIListener
                 }
                 AuctionItem ai4 = opt.get();
 
-                // ATTEMPT ATOMIC REMOVAL FIRST
                 if (!this.controller.getAuctionManager().removeItem(ai4)) {
                     p.sendMessage(
                             Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available")));
@@ -323,14 +310,9 @@ public class GUIListener
                 }
 
                 if (this.controller.getAuctionManager().isExpired(ai4)) {
-                    // Expired check - similar to purchaseItem, we have it now.
-                    // Proceeding with purchase even if technically expired to avoid loss/revert
-                    // complexity.
-                    // The item is ours to process.
                 }
 
                 if (p.getInventory().firstEmpty() == -1) {
-                    // REVERT
                     this.controller.getAuctionManager().addItem(ai4);
                     p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.inventory-full")));
                     p.playSound(p.getLocation(), no, 1.0f, 1.0f);
@@ -338,7 +320,6 @@ public class GUIListener
                     return;
                 }
                 if (!EconomyHandler.chargePlayer(p, ai4.getPrice())) {
-                    // REVERT
                     this.controller.getAuctionManager().addItem(ai4);
                     p.sendMessage(
                             Utils.formatColors(this.controller.getConfig().getString("messages.insufficient-funds")));
@@ -350,7 +331,6 @@ public class GUIListener
                 String sellerName = ai4.getSeller();
                 ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai4);
                 p.getInventory().addItem(new ItemStack[] { finalItem });
-                // Item already removed
                 this.controller.getTransactionManager().recordSale(finalItem, ai4.getPrice(), ai4.getSeller(),
                         p.getName());
                 String itemName = Utils.prettifyMaterialName(ai4.getItemStack().getType());
@@ -376,7 +356,6 @@ public class GUIListener
                     seller.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             TextComponent.fromLegacyText((String) soldC));
 
-                    // Sound for online seller
                     try {
                         Sound notifySound = Sound.valueOf(this.controller.getConfig().getString("sounds.sale-notify",
                                 "ENTITY_EXPERIENCE_ORB_PICKUP"));
@@ -384,9 +363,7 @@ public class GUIListener
                     } catch (Exception ignored) {
                     }
                 } else {
-                    // Offline notification logic
                     UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
-                    // Record payment in database with detailed info
                     this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
                             ai4.getPrice(), p.getName(), itemName);
                 }
@@ -395,7 +372,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.YourItemsHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -446,7 +422,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.TransactionsHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -500,7 +475,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.AdminPlayerDetailsHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -515,7 +489,6 @@ public class GUIListener
             int slot = event.getRawSlot();
             if (slot >= 0 && slot < 27) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
-                    // Open Item Management GUI
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     List<AuctionItem> items = this.controller.getAuctionManager().getItems().stream()
                             .filter(ai -> ai.getSeller().equalsIgnoreCase(target))
@@ -528,12 +501,12 @@ public class GUIListener
                 }
                 return;
             }
-            if (slot == 48) { // Delete
+            if (slot == 48) {
                 String target = p.getMetadata("ah-admin-target").get(0).asString();
                 GUIHandler.openAdminDeleteConfirmGUI(p, target, this.controller);
                 return;
             }
-            if (slot == 49) { // Search
+            if (slot == 49) {
                 p.playSound(p.getLocation(), search, 1.0f, 1.0f);
                 p.setMetadata("ah-switching", new FixedMetadataValue(this.controller.getPlugin(), true));
                 p.closeInventory();
@@ -547,14 +520,14 @@ public class GUIListener
                 });
                 return;
             }
-            if (slot == 50) { // Transactions
+            if (slot == 50) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 String target = p.getMetadata("ah-admin-target").get(0).asString();
                 p.removeMetadata("tx-filter", (Plugin) this.controller.getPlugin());
                 GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), 1, this.controller);
                 return;
             }
-            if (slot == 45) { // Back to Player List
+            if (slot == 45) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 GUIHandler.openAdminPlayerListGUI(p, 1, this.controller);
                 return;
@@ -562,7 +535,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.AdminPlayerListHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -584,7 +556,7 @@ public class GUIListener
                 }
                 return;
             }
-            if (slot == 48) { // Search
+            if (slot == 48) {
                 p.playSound(p.getLocation(), search, 1.0f, 1.0f);
                 p.setMetadata("ah-switching", new FixedMetadataValue(this.controller.getPlugin(), true));
                 p.closeInventory();
@@ -598,7 +570,7 @@ public class GUIListener
                 });
                 return;
             }
-            if (slot == 49) { // Refresh
+            if (slot == 49) {
                 p.playSound(p.getLocation(), refresh, 1.0f, 1.0f);
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
@@ -606,19 +578,8 @@ public class GUIListener
                 GUIHandler.openAdminPlayerListGUI(p, page, this.controller);
                 return;
             }
-            if (slot == 53) { // Next check is done in openGUI, here we just check slot
-                // We rely on item presence or separate check.
-                // Since we only place item if valid, checking item != null or AIR is enough
-                // usually.
+            if (slot == 53) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
-                    // Check if it's the next arrow
-                    // Ideally check display name or nbt, but usually slot + item existence is safe
-                    // in controlled GUI
-                    // However, this slot 53 is also a content slot if not paging?
-                    // No, ITEMS_PER_PAGE is 45 (0-44). Slot 53 is bottom row.
-                    // Wait, in openAdminPlayerListGUI loop goes 0 to pageSellers.size().
-                    // pageSellers is subList of size 45 max. So items populate 0-44.
-                    // Slot 53 is safely navigation.
                     p.playSound(p.getLocation(), next, 1.0f, 1.0f);
                     GUIHandler.openAdminPlayerListGUI(p, page + 1, this.controller);
                 }
@@ -627,7 +588,6 @@ public class GUIListener
 
             if (slot < 45 && event.getCurrentItem() != null
                     && event.getCurrentItem().getType() == Material.PLAYER_HEAD) {
-                // Clicked a head
                 ItemMeta meta = event.getCurrentItem().getItemMeta();
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(this.controller.getPlugin(),
@@ -646,7 +606,6 @@ public class GUIListener
 
         if (top instanceof GUIHandler.AdminTransactionsHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -662,7 +621,7 @@ public class GUIListener
             int page = p.getMetadata("tx-page").stream().findFirst().map(MetadataValue::asInt).orElse(1);
             String target = p.getMetadata("ah-admin-target").get(0).asString();
 
-            if (slot == 45) { // Back or Prev
+            if (slot == 45) {
                 if (page > 1) {
                     if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
                         p.playSound(p.getLocation(), prev, 1.0f, 1.0f);
@@ -670,34 +629,21 @@ public class GUIListener
                                 this.controller);
                     }
                 } else {
-                    // Back to Details
                     p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                 }
                 return;
             }
-            if (slot == 49) { // Refresh
+            if (slot == 49) {
                 p.playSound(p.getLocation(), refresh, 1.0f, 1.0f);
                 p.removeMetadata("tx-filter", (Plugin) this.controller.getPlugin());
                 GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), page, this.controller);
                 return;
             }
-            if (slot == 50) { // Search
+            if (slot == 50) {
                 p.playSound(p.getLocation(), search, 1.0f, 1.0f);
                 p.setMetadata("ah-switching", new FixedMetadataValue(this.controller.getPlugin(), true));
                 p.closeInventory();
-                // Admin Tx Search -> same sign logic but need to handle filtering in
-                // openAdminTransactionsGUI?
-                // Currently openAdminTransactionsGUI doesn't check filter.
-                // But let's set the metadata and open the sign.
-                // Using "tx" type might conflict with player's own tx search if we don't
-                // distinguish.
-                // But unique implementation suggests "tx" uses "tx-filter" metadata which is
-                // per player.
-                // If admin searches, it filtered their view.
-                // Let's use "admin-tx" to be safe or reuse "tx" if it applies to the view.
-                // Reusing "tx" type in OpenSearchSign -> sets "tx-filter".
-                // We need to update openAdminTransactionsGUI to respect "tx-filter".
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getSignInput().getSearchInput(p, (input) -> {
                     if (!p.hasMetadata("ah-admin-target"))
                         return;
@@ -708,7 +654,7 @@ public class GUIListener
                 });
                 return;
             }
-            if (slot == 53) { // Next
+            if (slot == 53) {
                 if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
                     p.playSound(p.getLocation(), next, 1.0f, 1.0f);
                     GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(target), page + 1, this.controller);
@@ -754,7 +700,6 @@ public class GUIListener
         }
 
         if (top instanceof GUIHandler.TransactionManagementHolder) {
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -774,7 +719,7 @@ public class GUIListener
             String targetName = p.getMetadata("ah-admin-target").get(0).asString();
             UUID targetUuid = Bukkit.getOfflinePlayer(targetName).getUniqueId();
 
-            if (slot == 11) { // Delete
+            if (slot == 11) {
                 Optional<Transaction> opt = this.controller.getTransactionManager().getPlayerTransactions(targetUuid)
                         .stream()
                         .filter(tx -> tx.getTimestamp() == timestamp).findFirst();
@@ -783,13 +728,12 @@ public class GUIListener
                     this.controller.getTransactionManager().deleteTransaction(tx);
                     p.sendMessage(Utils.formatColors("&#34ee80Transaction record deleted and stats updated."));
                     p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_BREAK, 1.0f, 1.0f);
-                    // Back to list
                     GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(targetName), 1, this.controller);
                 }
                 return;
             }
 
-            if (slot == 15) { // Copy Item
+            if (slot == 15) {
                 Optional<Transaction> opt = this.controller.getTransactionManager().getPlayerTransactions(targetUuid)
                         .stream()
                         .filter(tx -> tx.getTimestamp() == timestamp).findFirst();
@@ -807,7 +751,7 @@ public class GUIListener
                 return;
             }
 
-            if (slot == 22) { // Back
+            if (slot == 22) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 GUIHandler.openAdminTransactionsGUI(p, Bukkit.getOfflinePlayer(targetName), 1, this.controller);
                 return;
@@ -815,7 +759,6 @@ public class GUIListener
         }
         if (top instanceof GUIHandler.ItemManagementHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -834,7 +777,7 @@ public class GUIListener
             }
             String itemId = p.getMetadata("ah-manage-item").get(0).asString();
 
-            if (slot == 11) { // Edit Price (Sign)
+            if (slot == 11) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 p.setMetadata("ah-switching", new FixedMetadataValue(this.controller.getPlugin(), true));
                 p.closeInventory();
@@ -849,7 +792,7 @@ public class GUIListener
                     double newPrice = Utils.parsePrice(term);
                     if (newPrice < 0) {
                         p.sendMessage(Utils.formatColors("&#ff4444Invalid price! Use numbers or k/m/b/t."));
-                    } else if (newPrice > 1_000_000_000_000.0) { // 1T Limit
+                    } else if (newPrice > 1_000_000_000_000.0) {
                         p.sendMessage(Utils.formatColors("&#ff4444Price cannot exceed 1T!"));
                     } else {
                         try {
@@ -863,7 +806,6 @@ public class GUIListener
                         }
                     }
 
-                    // Re-open Admin Details
                     if (p.hasMetadata("ah-admin-target")) {
                         String target = p.getMetadata("ah-admin-target").get(0).asString();
                         GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
@@ -874,7 +816,7 @@ public class GUIListener
                 return;
             }
 
-            if (slot == 12) { // Take Item (Chest)
+            if (slot == 12) {
                 Optional<AuctionItem> opt = this.controller.getAuctionManager().getItems().stream()
                         .filter(ai -> ai.getId().toString().equals(itemId)).findFirst();
                 if (opt.isPresent()) {
@@ -894,7 +836,6 @@ public class GUIListener
                     p.sendMessage(Utils.formatColors("&#34ee80Item taken from auction!"));
                     p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
                 }
-                // Return to details
                 if (p.hasMetadata("ah-admin-target")) {
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
@@ -904,7 +845,7 @@ public class GUIListener
                 return;
             }
 
-            if (slot == 14) { // Copy Item (Ender Chest)
+            if (slot == 14) {
                 Optional<AuctionItem> opt = this.controller.getAuctionManager().getItems().stream()
                         .filter(ai -> ai.getId().toString().equals(itemId)).findFirst();
                 if (opt.isPresent()) {
@@ -923,7 +864,6 @@ public class GUIListener
                     p.sendMessage(Utils.formatColors("&#34ee80Item copied from auction!"));
                     p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
                 }
-                // Return to details
                 if (p.hasMetadata("ah-admin-target")) {
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
@@ -933,13 +873,7 @@ public class GUIListener
                 return;
             }
 
-            if (slot == 15) { // Delete (Barrier)
-                // Direct delete as per user request (or confirm? user said "After deleting...
-                // return")
-                // Assuming direct delete for now, or we could redirect to confirm.
-                // Re-reading: "A barrier to delete this item ... After deleting do not close
-                // the GUI but return to the user's GUI detail"
-                // Implies immediate action.
+            if (slot == 15) {
                 Optional<AuctionItem> opt = this.controller.getAuctionManager().getItems().stream()
                         .filter(ai -> ai.getId().toString().equals(itemId)).findFirst();
                 if (opt.isPresent()) {
@@ -955,7 +889,6 @@ public class GUIListener
                         p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                     }
                 }
-                // Return to details
                 if (p.hasMetadata("ah-admin-target")) {
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
@@ -968,7 +901,6 @@ public class GUIListener
 
         if (top instanceof GUIHandler.AdminDeleteConfirmHolder) {
 
-            // Interaction Check
             if (event.getClickedInventory() == null)
                 return;
             if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
@@ -983,12 +915,12 @@ public class GUIListener
             int slot = event.getRawSlot();
             String target = p.getMetadata("ah-admin-target").get(0).asString();
 
-            if (slot == 11) { // Cancel
+            if (slot == 11) {
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                 return;
             }
-            if (slot == 15) { // Confirm
+            if (slot == 15) {
                 this.controller.getAuctionManager().removeAllItems(target);
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
@@ -1036,13 +968,11 @@ public class GUIListener
 
         this.controller.stopUpdateTask(p);
 
-        // Check if this close is just a switch to another menu
         if (p.hasMetadata("ah-switching")) {
             p.removeMetadata("ah-switching", (Plugin) this.controller.getPlugin());
             return;
         }
 
-        // Cleanup filters on manual close
         if (top instanceof GUIHandler.MainHolder) {
             p.removeMetadata("ah-filter", (Plugin) this.controller.getPlugin());
             this.controller.getAuctionManager().setPlayerFilter(p.getUniqueId(), "");
@@ -1050,8 +980,6 @@ public class GUIListener
             p.removeMetadata("tx-filter", (Plugin) this.controller.getPlugin());
         }
 
-        // Nested close logic
-        // Nested close logic
         this.controller.getPlugin().getSchedulerAdapter().runEntityTaskLater(p, () -> {
             if (top instanceof GUIHandler.TransactionsHolder) {
                 GUIHandler.openYourItemsGUI(p, this.controller);
@@ -1061,7 +989,6 @@ public class GUIListener
                 String target = p.getMetadata("ah-admin-target").get(0).asString();
                 GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
             } else if (top instanceof GUIHandler.AdminPlayerDetailsHolder) {
-                // If in admin view, go back to Player List
                 if (p.hasMetadata("ah-admin-view")) {
                     GUIHandler.openAdminPlayerListGUI(p, 1, this.controller);
                 } else {
@@ -1078,7 +1005,6 @@ public class GUIListener
             if (!p.isOnline() || !this.controller.getPlugin().isEnabled())
                 return;
 
-            // Claim pending sales from database (includes amount, buyer, and item)
             List<AuctionManager.OfflineSale> sales = this.controller.getPlugin().getDatabaseManager()
                     .getAndClearDetailedPendingSales(p.getUniqueId());
 
@@ -1106,7 +1032,6 @@ public class GUIListener
                         p.sendMessage(c);
                         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(c));
 
-                        // Also send detailed summary for multiple sales
                         p.sendMessage(Utils.formatColors("&#34ee80Detailed summary of offline sales:"));
                         for (AuctionManager.OfflineSale sale : sales) {
                             p.sendMessage(Utils.formatColors("&7- &f" + sale.item + " &7sold to &f" + sale.buyer
@@ -1123,7 +1048,7 @@ public class GUIListener
                     }
                 });
             }
-        }, 40L); // Delay 2 seconds to ensure player is fully loaded
+        }, 40L);
     }
 
     @EventHandler
@@ -1169,7 +1094,6 @@ public class GUIListener
     }
 
     private void purchaseItem(Player p, AuctionItem ai) {
-        // ATTEMPT ATOMIC REMOVAL FIRST
         if (!this.controller.getAuctionManager().removeItem(ai)) {
             p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available")));
             p.playSound(p.getLocation(),
@@ -1180,32 +1104,10 @@ public class GUIListener
             return;
         }
 
-        // DOUBLE CHECK EXPIRATION (Though technically removed, if it was expired we
-        // might want to refund/cancel?)
-        // If it's expired, it should have been handled by cleanup tasks, but let's be
-        // safe.
         if (this.controller.getAuctionManager().isExpired(ai)) {
-            // Revert removal? Or just let it be gone since it's expired?
-            // If we let it be gone, the seller loses the item if we don't return it.
-            // But usually expired items are handled by a separate task.
-            // If a player buys an expired item that wasn't cleaned up yet, we should
-            // probably allow it
-            // OR fail and return to seller.
-            // Current logic failed if expired.
-            // Let's stick to "If we removed it, we own the transaction".
-            // If it's expired, we can still let them buy it (race condition with expiration
-            // task?)
-            // The expiration task usually cancels/returns items.
-            // If we successfully removed it from the list, the expiration task can't touch
-            // it.
-            // So we are safe to proceed or cancel.
-            // If we cancel, we MUST return it to the list or return to seller.
-            // Let's allow the purchase if we got it, to avoid complexity of "re-adding" an
-            // expired item that might get cleaned up immediately.
         }
 
         if (p.getInventory().firstEmpty() == -1) {
-            // REVERT REMOVAL
             this.controller.getAuctionManager().addItem(ai);
             p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.inventory-full")));
             p.playSound(p.getLocation(),
@@ -1215,7 +1117,6 @@ public class GUIListener
         }
 
         if (!EconomyHandler.chargePlayer(p, ai.getPrice())) {
-            // REVERT REMOVAL
             this.controller.getAuctionManager().addItem(ai);
             p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.insufficient-funds")));
             p.playSound(p.getLocation(),
@@ -1227,7 +1128,6 @@ public class GUIListener
         String sellerName = ai.getSeller();
         ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai);
         p.getInventory().addItem(new ItemStack[] { finalItem });
-        // Item already removed at start of method.
         this.controller.getTransactionManager().recordSale(finalItem, ai.getPrice(), ai.getSeller(),
                 p.getName());
         String itemName = Utils.prettifyMaterialName(finalItem.getType());
@@ -1252,7 +1152,6 @@ public class GUIListener
             seller.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     TextComponent.fromLegacyText((String) soldC));
 
-            // Sound for online seller
             try {
                 Sound notifySound = Sound.valueOf(this.controller.getConfig().getString("sounds.sale-notify",
                         "ENTITY_EXPERIENCE_ORB_PICKUP"));
@@ -1260,9 +1159,7 @@ public class GUIListener
             } catch (Exception ignored) {
             }
         } else {
-            // Offline notification logic
             UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
-            // Record payment in database with detailed info
             this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
                     ai.getPrice(), p.getName(), itemName);
         }

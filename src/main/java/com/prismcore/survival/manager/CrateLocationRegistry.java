@@ -18,7 +18,6 @@ public class CrateLocationRegistry {
     private final File file;
     private FileConfiguration config;
 
-    // Map Location -> CrateName for fast lookup
     private final Map<Location, String> crateLocations = new ConcurrentHashMap<>();
 
     public CrateLocationRegistry(PrismSurvival plugin) {
@@ -38,7 +37,6 @@ public class CrateLocationRegistry {
         if (config.contains("crates")) {
             ConfigurationSection crates = config.getConfigurationSection("crates");
             for (String key : crates.getKeys(false)) {
-                // key is just an ID, we need location info
                 String worldName = crates.getString(key + ".world");
                 double x = crates.getDouble(key + ".x");
                 double y = crates.getDouble(key + ".y");
@@ -81,7 +79,6 @@ public class CrateLocationRegistry {
     }
 
     public void addLocation(String crateName, Location loc) {
-        // Normalize location to block location
         Location blockLoc = new Location(loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
         crateLocations.put(blockLoc, crateName);
         save();

@@ -45,7 +45,6 @@ public class PlayerDataManagerDB {
 
         try (Connection conn = this.plugin.getDatabaseManager().getConnection()) {
             if (conn != null && !conn.isClosed()) {
-                // Load global stats
                 try (PreparedStatement stmt = conn.prepareStatement(queryData)) {
                     stmt.setString(1, uuid.toString());
                     try (ResultSet rs = stmt.executeQuery()) {
@@ -62,13 +61,11 @@ public class PlayerDataManagerDB {
                     }
                 }
 
-                // Load category data (multipliers + progress)
                 try (PreparedStatement stmt = conn.prepareStatement(queryCategoryData)) {
                     stmt.setString(1, uuid.toString());
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
                             for (Category category : Category.values()) {
-                                // Load Multiplier
                                 String multiplierCol = category.name() + "_multiplier";
                                 try {
                                     double multiplier = rs.getDouble(multiplierCol);
@@ -78,7 +75,6 @@ public class PlayerDataManagerDB {
                                             .warning("Missing column " + multiplierCol + " in player_category_data");
                                 }
 
-                                // Load Progress
                                 String progressCol = category.name() + "_progress";
                                 try {
                                     double progress = rs.getDouble(progressCol);
@@ -120,7 +116,6 @@ public class PlayerDataManagerDB {
     }
 
     private void savePlayerDataSync(UUID uuid, PlayerData data) {
-        // Query for Global Stats
         String queryData = "INSERT INTO player_stats (uuid, break_blocks, placed_blocks, mob_kills, sell_made, playtime, deaths, kills, tool_expiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 +
                 " ON DUPLICATE KEY UPDATE break_blocks=VALUES(break_blocks),"
@@ -130,7 +125,6 @@ public class PlayerDataManagerDB {
                 +
                 " tool_expiry=VALUES(tool_expiry)";
 
-        // Query for Category Data
         StringBuilder queryCategoryData = new StringBuilder();
         queryCategoryData.append("INSERT INTO player_category_data (uuid");
         for (Category category : Category.values()) {
@@ -155,7 +149,6 @@ public class PlayerDataManagerDB {
 
         try (Connection conn = this.plugin.getDatabaseManager().getConnection()) {
 
-            // Save Global Stats
             try (PreparedStatement insertStmt = conn.prepareStatement(queryData)) {
                 int i = 1;
                 insertStmt.setString(i++, uuid.toString());
@@ -170,7 +163,6 @@ public class PlayerDataManagerDB {
                 insertStmt.executeUpdate();
             }
 
-            // Save Category Data
             try (PreparedStatement insertStmt = conn.prepareStatement(queryCategoryData.toString())) {
                 int i = 1;
                 insertStmt.setString(i++, uuid.toString());
@@ -181,7 +173,6 @@ public class PlayerDataManagerDB {
                 insertStmt.executeUpdate();
             }
 
-            // Reset dirty flag
             data.resetDirty();
         } catch (SQLException e) {
             e.printStackTrace();

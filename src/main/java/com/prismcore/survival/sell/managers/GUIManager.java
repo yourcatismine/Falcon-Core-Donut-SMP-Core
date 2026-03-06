@@ -194,21 +194,14 @@ public class GUIManager {
     }
 
     public Material getProgressIconMaterial(String categoryKey) {
-        // Same as category icon material for now based on previous config defaults
-        // structure
         return getCategoryIconMaterial(categoryKey);
     }
 
     public String getProgressIconName(String categoryKey) {
-        return getCategoryIconName(categoryKey); // Same as category icon
+        return getCategoryIconName(categoryKey);
     }
 
     public List<String> getProgressIconLore(String categoryKey) {
-        // Based on previous defaults, progress icon lore was distinct but similar
-        // structure
-        // Actually, looking at previous code, valid defaults were:
-        // Arrays.asList("&fSell ...", ..., "&fView your progress below") for progress
-        // icon (in Progress GUI top)
         switch (categoryKey) {
             case "CROPS":
                 return Arrays.asList("&fSell crops and farming materials to", "&fupgrade ur sell multiplier!", "",
@@ -340,6 +333,5 @@ public class GUIManager {
     }
 
     public void reload() {
-        // No-op
     }
 }

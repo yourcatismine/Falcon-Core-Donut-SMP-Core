@@ -25,13 +25,11 @@ public class BountyManager {
     public void load() {
         activeBounties.clear();
 
-        // Load from Database
         Map<UUID, Double> dbBounties = plugin.getDatabaseManager().loadAllBounties();
         for (Map.Entry<UUID, Double> entry : dbBounties.entrySet()) {
             activeBounties.put(entry.getKey(), new BountyEntry(entry.getValue(), System.currentTimeMillis()));
         }
 
-        // Migration from YML if it exists
         if (file.exists()) {
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             if (config.contains("bounties")) {
@@ -42,7 +40,6 @@ public class BountyManager {
                         UUID uuid = UUID.fromString(key);
                         double amount = config.getDouble("bounties." + key + ".amount");
 
-                        // Add to memory and save to DB
                         double finalAmount = activeBounties.getOrDefault(uuid, new BountyEntry(0.0, 0L)).getAmount()
                                 + amount;
                         activeBounties.put(uuid, new BountyEntry(finalAmount, System.currentTimeMillis()));
@@ -57,13 +54,12 @@ public class BountyManager {
                     file.delete();
                 }
             } else {
-                file.delete(); // Empty or invalid file
+                file.delete();
             }
         }
     }
 
     public void save() {
-        // No-op for YML saving, as everything is saved to DB immediately
     }
 
     public void addBounty(UUID target, double amount) {
@@ -71,14 +67,12 @@ public class BountyManager {
         double newAmount = current.getAmount() + amount;
         activeBounties.put(target, new BountyEntry(newAmount, System.currentTimeMillis()));
 
-        // Save to Database
         plugin.getDatabaseManager().saveBounty(target, newAmount);
     }
 
     public void removeBounty(UUID target) {
         activeBounties.remove(target);
 
-        // Delete from Database
         plugin.getDatabaseManager().deleteBounty(target);
     }
 

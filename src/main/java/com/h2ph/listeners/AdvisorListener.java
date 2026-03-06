@@ -25,7 +25,6 @@ public class AdvisorListener implements Listener {
     public void onPlayerEditBook(PlayerEditBookEvent event) {
         Player player = event.getPlayer();
 
-        // Check if player is marked as advisor writer
         if (!plugin.isPlayerMarkedAsAdvisorWriter(player.getUniqueId())) {
             return;
         }
@@ -33,10 +32,6 @@ public class AdvisorListener implements Listener {
         try {
             BookMeta newMeta = event.getNewBookMeta();
             if (newMeta != null) {
-                // If the book is signed or just saved, we can capture the pages.
-                // However, usually we want to wait for "sign" (when it becomes WRITTEN_BOOK) or
-                // just pages updates.
-                // PlayerEditBookEvent checks for signing via event.isSigning()
 
                 List<String> pages = newMeta.getPages();
                 if (pages != null && !pages.isEmpty()) {
@@ -50,10 +45,8 @@ public class AdvisorListener implements Listener {
             e.printStackTrace();
         }
 
-        // Unmark player after saving
         plugin.unmarkPlayerAsAdvisorWriter(player.getUniqueId());
 
-        // Clear the book from the player's inventory
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             if (!player.isOnline())
                 return;
@@ -74,7 +67,6 @@ public class AdvisorListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        // Cleanup if they quit while editing
         if (plugin.isPlayerMarkedAsAdvisorWriter(event.getPlayer().getUniqueId())) {
             plugin.unmarkPlayerAsAdvisorWriter(event.getPlayer().getUniqueId());
         }

@@ -41,7 +41,7 @@ public class PlayerActionHandler implements HttpHandler {
         String uuidStr = params.get("uuid");
         String action = params.get("action");
         String reason = params.getOrDefault("reason", "Admin Action");
-        String duration = params.get("duration"); // e.g. "1d", "1h"
+        String duration = params.get("duration");
         String nameParam = params.get("name");
 
         if (action == null || (uuidStr == null && nameParam == null)) {
@@ -57,15 +57,12 @@ public class PlayerActionHandler implements HttpHandler {
                 uuid = UUID.fromString(uuidStr);
                 op = plugin.getServer().getOfflinePlayer(uuid);
             } catch (IllegalArgumentException e) {
-                // Ignore if it's a register action, we might use nameParam
                 if (!"register".equalsIgnoreCase(action)) {
                     sendResponse(t, 400, "{\"error\": \"Invalid UUID format\"}");
                     return;
                 }
             }
         }
-        // playerName is primarily used for ban messages, where op should be valid.
-        // For 'register', 'op' might be null initially and resolved later.
         String playerName = (op != null && op.getName() != null) ? op.getName() : uuidStr;
 
         boolean success = false;
@@ -130,7 +127,6 @@ public class PlayerActionHandler implements HttpHandler {
                     pdWipe.setMoney(0, "Wipe");
                     pdWipe.setShards(0, "Wipe");
                     pdWipe.setShopSpent(0);
-                    // Clear inventory if online
                     if (op.isOnline()) {
                         Player p = op.getPlayer();
                         plugin.getSchedulerAdapter().runTask(() -> p.getInventory().clear());
@@ -143,9 +139,7 @@ public class PlayerActionHandler implements HttpHandler {
                 break;
 
             case "register":
-                // For register, we can use the UUID if already resolved, or try finding by name
-                // if the UUID was invalid/missing (though the handler currently requires it)
-                OfflinePlayer target = op; // Fallback to the resolved op if we have it
+                OfflinePlayer target = op;
 
                 if (target == null && nameParam != null) {
                     target = Bukkit.getOfflinePlayer(nameParam);
@@ -155,7 +149,6 @@ public class PlayerActionHandler implements HttpHandler {
                     final OfflinePlayer finalTarget = target;
                     plugin.getSchedulerAdapter().runTask(() -> finalTarget.setWhitelisted(true));
 
-                    // Initialize and save PlayerData
                     PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
                     if (pd.getName() == null && target.getName() != null) {
                         pd.setName(target.getName());

@@ -43,7 +43,6 @@ public class HazardSummaryHandler implements HttpHandler {
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("changeme"))
             return true;
 
-        // Check Bearer token (preferred by frontend)
         List<String> authHeaders = t.getRequestHeaders().get("Authorization");
         if (authHeaders != null && !authHeaders.isEmpty()) {
             String authHeader = authHeaders.get(0);

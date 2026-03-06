@@ -36,22 +36,18 @@ public class BountyGUIListener implements Listener {
 
             BountyGUI gui = new BountyGUI(plugin);
 
-            // Back
             if (slot == 45) {
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1f, 1f);
                 gui.open(player, holder.getPage() - 1, holder.getSortType(), holder.getSearchQuery());
             }
-            // Next
             else if (slot == 53) {
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1f, 1f);
                 gui.open(player, holder.getPage() + 1, holder.getSortType(), holder.getSearchQuery());
             }
-            // Refresh
             else if (slot == 49) {
                 player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1f);
                 gui.open(player, 0, holder.getSortType(), holder.getSearchQuery());
             }
-            // Sort
             else if (slot == 48) {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
                 BountyGUI.SortType nextSort = holder.getSortType() == BountyGUI.SortType.AMOUNT
@@ -59,7 +55,6 @@ public class BountyGUIListener implements Listener {
                         : BountyGUI.SortType.AMOUNT;
                 gui.open(player, 0, nextSort, holder.getSearchQuery());
             }
-            // Search
             else if (slot == 50) {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
                 player.closeInventory();
@@ -67,7 +62,6 @@ public class BountyGUIListener implements Listener {
                     gui.open(player, 0, holder.getSortType(), input);
                 });
             }
-            // Other (Heads)
             else {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
             }

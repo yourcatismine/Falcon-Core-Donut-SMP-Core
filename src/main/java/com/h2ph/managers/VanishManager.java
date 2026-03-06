@@ -38,7 +38,6 @@ public class VanishManager {
      * Hides a player from all other players
      */
     public void hidePlayer(Player player) {
-        // Validate player is still online and valid
         if (player == null || !player.isOnline()) {
             return;
         }
@@ -47,18 +46,14 @@ public class VanishManager {
             if (online.equals(player))
                 continue;
 
-            // Validate observer is still online and valid
             if (!online.isOnline() || !online.isValid()) {
                 continue;
             }
 
-            // Staff/OP might still want to see vanished players
-            // For now, let's hide from everyone except themselves
             if (!online.hasPermission("prism.admin.vanish.see")) {
                 try {
                     online.hidePlayer(plugin, player);
                 } catch (Exception e) {
-                    // Silently handle packet encoding errors to prevent server crash
                     plugin.getLogger().fine("Failed to hide player " + player.getName() + " from " + online.getName() + ": " + e.getMessage());
                 }
             }
@@ -69,13 +64,11 @@ public class VanishManager {
      * Shows a player to all other players
      */
     public void showPlayer(Player player) {
-        // Validate player is still online and valid
         if (player == null || !player.isOnline()) {
             return;
         }
         
         for (Player online : Bukkit.getOnlinePlayers()) {
-            // Validate observer is still online and valid
             if (!online.isOnline() || !online.isValid()) {
                 continue;
             }
@@ -83,7 +76,6 @@ public class VanishManager {
             try {
                 online.showPlayer(plugin, player);
             } catch (Exception e) {
-                // Silently handle packet encoding errors to prevent server crash
                 plugin.getLogger().fine("Failed to show player " + player.getName() + " to " + online.getName() + ": " + e.getMessage());
             }
         }
@@ -101,7 +93,7 @@ public class VanishManager {
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(message));
                 }
             }
-        }, 20L, 20L); // Every 1 second
+        }, 20L, 20L);
     }
 
     /**

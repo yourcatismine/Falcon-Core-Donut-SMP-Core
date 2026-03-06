@@ -27,12 +27,10 @@ public class OperatorListener implements Listener {
             String[] parts = msg.split(" ");
             if (parts.length >= 2) {
                 String target = parts[1];
-                // If not allowed, cancel and notify
                 boolean allowed = plugin.getDatabaseManager().isAllowedOperator(target);
                 if (!allowed) {
                     e.setCancelled(true);
                     e.getPlayer().sendMessage("§cThat player is not in the allowed operators list. Operation denied.");
-                    // ensure target is de-opped if they somehow were
                     Player p = Bukkit.getPlayerExact(target);
                     if (p != null && p.isOp()) {
                         plugin.getSchedulerAdapter().runTask(() -> p.setOp(false));
@@ -54,8 +52,6 @@ public class OperatorListener implements Listener {
                 String target = parts[1];
                 boolean allowed = plugin.getDatabaseManager().isAllowedOperator(target);
                 if (!allowed) {
-                    // For console, we cannot "cancel" server internal op easily, so
-                    // schedule to deop immediately after (1 tick delay)
                     plugin.getSchedulerAdapter().runTaskLater(() -> {
                         Player p = Bukkit.getPlayerExact(target);
                         if (p != null && p.isOp()) {

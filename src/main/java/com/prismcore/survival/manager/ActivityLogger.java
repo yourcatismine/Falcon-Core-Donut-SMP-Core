@@ -60,20 +60,19 @@ public class ActivityLogger {
                 String logsTable = "CREATE TABLE IF NOT EXISTS activity_logs (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                         "uuid VARCHAR(36) NOT NULL," +
-                        "type VARCHAR(20) NOT NULL," + // GENERAL, MESSAGE, ORDER, AUCTION, ITEM
+                        "type VARCHAR(20) NOT NULL," +
                         "content TEXT NOT NULL," +
                         "timestamp BIGINT NOT NULL" +
                         ")";
                 s.execute(logsTable);
 
-                // Index for performance
                 s.execute("CREATE INDEX IF NOT EXISTS idx_uuid_type ON activity_logs(uuid, type)");
                 s.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON activity_logs(timestamp)");
 
                 String hazardsTable = "CREATE TABLE IF NOT EXISTS hazards (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                         "uuid VARCHAR(36) NOT NULL," +
-                        "type VARCHAR(20) NOT NULL," + // SPEED, REPETITION
+                        "type VARCHAR(20) NOT NULL," +
                         "details TEXT NOT NULL," +
                         "timestamp BIGINT NOT NULL" +
                         ")";
@@ -107,7 +106,6 @@ public class ActivityLogger {
             if (!worker.awaitTermination(5, TimeUnit.SECONDS)) {
                 worker.shutdownNow();
             }
-            // Final drain
             processQueue();
         } catch (InterruptedException e) {
             worker.shutdownNow();
@@ -147,7 +145,7 @@ public class ActivityLogger {
                     ps.setLong(4, entry.timestamp);
                     ps.addBatch();
                     count++;
-                    if (count >= 500) { // Batch limit
+                    if (count >= 500) {
                         ps.executeBatch();
                         count = 0;
                     }
@@ -175,14 +173,9 @@ public class ActivityLogger {
         if (shuttingDown)
             return;
 
-        // Capture timestamp and data immediately on the calling thread
         LogEntry entry = new LogEntry(uuid, type, content, System.currentTimeMillis());
         logQueue.add(entry);
 
-        // Broadcast live - this can still be async via Folia for immediate feedback if
-        // needed
-        // but let's keep it simple for now or use the global scheduler for just the
-        // broadcast
         if (plugin.getApiServer() != null) {
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 if (!shuttingDown) {

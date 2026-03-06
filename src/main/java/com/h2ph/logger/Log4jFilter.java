@@ -14,7 +14,6 @@ public class Log4jFilter extends AbstractFilter {
         if (event == null)
             return Result.NEUTRAL;
 
-        // check message
         Message msg = event.getMessage();
         if (msg != null) {
             String text = msg.getFormattedMessage();
@@ -22,7 +21,6 @@ public class Log4jFilter extends AbstractFilter {
                 return Result.DENY;
         }
 
-        // check throwable
         Throwable t = event.getThrown();
         while (t != null) {
             if (shouldFilter(t.getMessage()))

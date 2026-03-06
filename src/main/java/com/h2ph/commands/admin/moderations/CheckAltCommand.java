@@ -50,7 +50,6 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
 
         String targetName = args[0];
 
-        // Async Processing
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             DatabaseManager.PlayerDataStats stats = null;
             UUID targetUuid = null;
@@ -60,7 +59,6 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
                 targetUuid = online.getUniqueId();
                 stats = plugin.getDatabaseManager().loadPlayerStats(targetUuid);
             } else {
-                // Try to find by name in DB first
                 String queryUuid = "SELECT uuid FROM player_names WHERE cached_name LIKE ? LIMIT 1";
                 try (Connection conn = plugin.getDatabaseManager().getConnection();
                         PreparedStatement ps = conn.prepareStatement(queryUuid)) {
@@ -72,7 +70,6 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
                         }
                     }
                 } catch (SQLException e) {
-                    // ignore
                 }
             }
 
@@ -90,7 +87,7 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(
                             ChatColor.translateAlternateColorCodes('&', "&7&m---------------------------------"));
                     sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&d Alt Accounts for &f" + targetName + " &7(" + ip + ")"));
+                            "&d Alt Accounts for &f" + targetName));
                     sender.sendMessage("");
 
                     int found = 0;
@@ -133,7 +130,6 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops and include offline players for alt checking
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         return Collections.emptyList();

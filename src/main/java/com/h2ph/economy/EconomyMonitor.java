@@ -9,9 +9,7 @@ public class EconomyMonitor {
     private static EconomyMonitor instance;
     private final PrismSurvival plugin;
 
-    // Total Money Tracking
     private final AtomicReference<Double> totalMoney = new AtomicReference<>(0.0);
-    // 24h Volume Tracking
     private final AtomicReference<Double> volume24h = new AtomicReference<>(0.0);
     private boolean initialized = false;
 
@@ -27,7 +25,6 @@ public class EconomyMonitor {
     }
 
     private void startPolling() {
-        // Poll every 10 seconds (200 ticks) for online players only
         plugin.getSchedulerAdapter().runTaskTimerAsync(this::updateOnlineTotalMoney, 200, 200);
     }
 
@@ -52,19 +49,13 @@ public class EconomyMonitor {
                 }
             }
         } catch (Exception e) {
-            // Silently fail
         }
 
-        // we don't overwrite totalMoney completely here, we just use this to keep
-        // online balances fresh
-        // totalMoney is more of a running total updated by onTransaction
         initialized = true;
     }
 
     public void onTransaction(double amount) {
-        // Update the running total
         totalMoney.updateAndGet(v -> v + amount);
-        // Update volume (absolute value of transaction)
         double absAmount = Math.abs(amount);
         volume24h.updateAndGet(v -> v + absAmount);
     }
@@ -82,8 +73,6 @@ public class EconomyMonitor {
     }
 
     private void startVolumeDecayTask() {
-        // Simple rolling decay to simulate 24h window
-        // Decay by 5% every hour
         plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
             volume24h.updateAndGet(v -> v * 0.95);
         }, 20 * 60 * 60, 20 * 60 * 60);

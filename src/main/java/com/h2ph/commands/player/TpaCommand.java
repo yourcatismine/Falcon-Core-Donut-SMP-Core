@@ -42,7 +42,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         String targetName = args[0];
         Player target = Bukkit.getPlayer(targetName);
 
-        // Cooldown check
         if (com.h2ph.managers.TpaRequestManager.getInstance().isOnCooldown(p.getUniqueId())) {
             String cooldownMsg = ChatColor.translateAlternateColorCodes('&', "&cPlease wait before requesting again.");
             p.sendMessage(cooldownMsg);
@@ -53,7 +52,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (target == null || !p.canSee(target)) {
-            // Check offline player asynchronously to prevent lag
             PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
                 boolean exists = offlineTarget.hasPlayedBefore();
@@ -82,7 +80,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target is in combat
         if (com.h2ph.listeners.CombatListener.getInstance() != null &&
                 com.h2ph.listeners.CombatListener.getInstance().isInCombat(target)) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis player is currently on combat.");
@@ -93,7 +90,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has disabled TPA requests
         com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && !targetData.isTpaRequests()) {
@@ -105,7 +101,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has ignored the sender
         if (targetData != null && targetData.isIgnoring(p.getUniqueId())) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -114,11 +109,9 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check Sender's "TPA Confirm Menus" setting
         com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(p.getUniqueId());
         if (senderData != null && !senderData.isTpaConfirmMenus()) {
-            // Send immediately
             com.h2ph.managers.TpaRequestManager.getInstance().sendRequest(p, target,
                     com.h2ph.managers.TpaRequestManager.RequestType.TPA);
             return true;
@@ -131,7 +124,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
     private void openTpaGUI(Player p, Player target) {
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        // Slot 10: Cancel
         ItemStack cancel = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta cancelMeta = cancel.getItemMeta();
         if (cancelMeta != null) {
@@ -143,7 +135,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(10, cancel);
 
-        // Slot 12: Location (World)
         Material worldMat = Material.GRASS_BLOCK;
         String locationName = "Overworld";
         switch (target.getWorld().getEnvironment()) {
@@ -169,14 +160,12 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(12, locItem);
 
-        // Slot 13: Player Head
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta headMeta = (SkullMeta) head.getItemMeta();
         if (headMeta != null) {
             headMeta.setOwningPlayer(target);
             headMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aᴘʟᴀʏᴇʀ"));
             List<String> lore = new ArrayList<>();
-            // Apply small caps to player name
             String smallCapsName = SmallCapsUtil.toSmallCaps(target.getName());
             lore.add(ChatColor.translateAlternateColorCodes('&', "&7" + smallCapsName));
             headMeta.setLore(lore);
@@ -184,7 +173,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(13, head);
 
-        // Slot 14: Region
         ItemStack regionItem = new ItemStack(Material.FEATHER);
         ItemMeta regionMeta = regionItem.getItemMeta();
         if (regionMeta != null) {
@@ -192,8 +180,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             List<String> lore = new ArrayList<>();
 
             String region = "Unknown";
-            // Check config
-            // Assuming PrismSurvival is main class and static instance available or passed
             try {
                 if (PrismSurvival.getInstance().getSurvivalConfig().contains("region")) {
                     List<String> regions = PrismSurvival.getInstance().getSurvivalConfig().getStringList("region");
@@ -210,14 +196,11 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(14, regionItem);
 
-        // Slot 16: Confirm request
         ItemStack confirm = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta confirmMeta = confirm.getItemMeta();
         if (confirmMeta != null) {
             confirmMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aᴄᴏɴꜰɪʀᴍ"));
             List<String> lore = new ArrayList<>();
-            // Small caps for player name in lore logic if needed, user said "%PLAYER_NAME%
-            // font must be - ᴀʙᴄᴅᴇ" generally
             String smallCapsName = SmallCapsUtil.toSmallCaps(target.getName());
             lore.add(
                     ChatColor.translateAlternateColorCodes('&', "&fClick to send " + smallCapsName + " a tpa request"));
@@ -226,9 +209,6 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
         gui.setItem(16, confirm);
 
-        // Play open sound? "Make sure there has a tripwire sounds on the GUI" -> likely
-        // on click.
-        // But usually opening has a sound too. I'll stick to clicks as requested.
 
         p.openInventory(gui);
     }

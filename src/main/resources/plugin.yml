@@ -350,6 +350,11 @@ commands:
     usage: /smithingtable
     permission: prism.smithingtable
 
+  minigames:
+    description: Transfer to the minigame server
+    usage: /minigames
+    aliases: []
+
   invsee:
     description: View another player's inventory
     usage: /invsee <player>
@@ -438,6 +443,9 @@ permissions:
     default: true
   prism.smithingtable:
     description: Allows opening the virtual smithing table
+    default: true
+  prism.minigames:
+    description: Allows transfer to minigame server
     default: true
   prismcore.admin.afk:
     description: Allows administration of AFK regions

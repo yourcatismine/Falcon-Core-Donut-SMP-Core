@@ -40,9 +40,8 @@ public class ShopCommand implements CommandExecutor, Listener {
     private final Map<UUID, BuyingSession> buyingSessions = new HashMap<>();
     private final Map<UUID, ShardPurchaseSession> shardPurchaseSessions = new HashMap<>();
     private final Map<String, FileConfiguration> titleToConfig = new HashMap<>();
-    private final Map<String, Map<Integer, BuyingSession>> sessionLookup = new HashMap<>(); // Cache for faster lookups
-    private final Map<String, Map<Integer, ShardPurchaseSession>> shardSessionLookup = new HashMap<>(); // Cache for
-                                                                                                        // shards
+    private final Map<String, Map<Integer, BuyingSession>> sessionLookup = new HashMap<>();
+    private final Map<String, Map<Integer, ShardPurchaseSession>> shardSessionLookup = new HashMap<>();
 
     private String cachedMainTitle;
     private String cachedShopPrefix;
@@ -68,13 +67,11 @@ public class ShopCommand implements CommandExecutor, Listener {
         }
         mainConfig = YamlConfiguration.loadConfiguration(configFile);
 
-        // Ensure categories directory exists
         File categoriesDir = new File(plugin.getDataFolder(), "economy/shop/categories");
         if (!categoriesDir.exists()) {
             categoriesDir.mkdirs();
         }
 
-        // Extract default category files from JAR if they don't exist
         String[] defaultCategories = { "end.yml", "nether.yml", "gear.yml", "food.yml", "shard.yml" };
         for (String categoryFile : defaultCategories) {
             File targetFile = new File(categoriesDir, categoryFile);
@@ -82,12 +79,10 @@ public class ShopCommand implements CommandExecutor, Listener {
                 try {
                     plugin.saveResource("economy/shop/categories/" + categoryFile, false);
                 } catch (Exception e) {
-                    // File doesn't exist in JAR, skip
                 }
             }
         }
 
-        // Load all .yml files in the categories directory
         File[] categoryFiles = categoriesDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
         if (categoryFiles != null) {
             for (File categoryFile : categoryFiles) {
@@ -97,7 +92,6 @@ public class ShopCommand implements CommandExecutor, Listener {
             }
         }
 
-        // Build main menu slots from config
         if (mainConfig.contains("categories")) {
             ConfigurationSection cats = mainConfig.getConfigurationSection("categories");
             for (String key : cats.getKeys(false)) {
@@ -107,13 +101,11 @@ public class ShopCommand implements CommandExecutor, Listener {
             }
         }
 
-        // Cache titles
         cachedMainTitle = color(mainConfig.getString("gui-title", "&8ѕʜᴏᴘ"));
         cachedShopPrefix = color("&8ѕʜᴏᴘ - ");
         cachedBuyingPrefix = color("&8ʙᴜʏɪɴɢ");
         cachedConfirmTitle = color("&8ᴄᴏɴꜰɪʀᴍ ᴘᴜʀᴄʜᴀѕᴇ");
 
-        // Build title -> config map
         titleToConfig.clear();
         for (FileConfiguration cfg : categoryConfigs.values()) {
             if (cfg.contains("gui-title")) {
@@ -122,7 +114,6 @@ public class ShopCommand implements CommandExecutor, Listener {
             }
         }
 
-        // Cache session data for faster lookups
         sessionLookup.clear();
         for (String title : titleToConfig.keySet()) {
             FileConfiguration config = titleToConfig.get(title);
@@ -142,9 +133,8 @@ public class ShopCommand implements CommandExecutor, Listener {
                 for (String key : items.getKeys(false)) {
                     int slot = items.getInt(key + ".slot");
 
-                    // Only cache standard buying sessions
                     if (items.contains(key + ".shard_price") || items.contains(key + ".command")) {
-                        continue; // Shard sessions are handled differently (complex logic in findShardSession)
+                        continue;
                     }
 
                     String matName = items.getString(key + ".material", "STONE");
@@ -169,12 +159,10 @@ public class ShopCommand implements CommandExecutor, Listener {
                 sessionLookup.put(title, slots);
             }
 
-            // --- Shard Session Caching ---
             Map<Integer, ShardPurchaseSession> shardSlots = new HashMap<>();
             if (items != null) {
                 for (String key : items.getKeys(false)) {
                     int slot = items.getInt(key + ".slot");
-                    // Only treat as shard shop item if it has shard_price OR has a command field
                     if (items.contains(key + ".shard_price") || items.contains(key + ".command")) {
                         String matName = items.getString(key + ".material", "STONE");
                         Material mat = Material.getMaterial(matName.toUpperCase());
@@ -210,25 +198,21 @@ public class ShopCommand implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
-        // Check for reload command with permission
         if (args.length > 0 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("prismcore.admin.shop")) {
             loadConfigs();
             sender.sendMessage(ChatColor.GREEN + "Shop configuration reloaded.");
             return true;
         }
 
-        // If not a player, deny access
         if (!(sender instanceof Player player)) {
             sender.sendMessage(ChatColor.RED + "Only players can use the shop.");
             return true;
         }
 
-        // Open shop GUI for any player (regardless of args or permissions)
         openMainMenu(player);
         return true;
     }
 
-    // --- GUIS ---
 
     private void openMainMenu(Player player) {
         buyingSessions.remove(player.getUniqueId());
@@ -269,7 +253,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                 if (mat == null)
                     mat = Material.STONE;
 
-                // Check if this is a shard shop item (items with price/currency or shard_price)
                 if (items.contains(key + ".shard_price") || items.contains(key + ".price")) {
                     String itemName = items.getString(key + ".name", "");
                     String currency = items.getString(key + ".currency", "SHARDS").toUpperCase();
@@ -295,7 +278,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                     item.setItemMeta(meta);
                     gui.setItem(slot, item);
                 } else {
-                    // Normal shop item (money-based)
                     double price = items.getDouble(key + ".price", 0.0);
                     int amount = items.getInt(key + ".amount", 1);
 
@@ -320,7 +302,6 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private void openBuyingMenu(Player player, BuyingSession session) {
-        // Pre-Check
         int space = getSpaceFor(player.getInventory(), session.baseItem);
         if (space <= 0) {
             sendInventoryFull(player);
@@ -343,7 +324,6 @@ public class ShopCommand implements CommandExecutor, Listener {
 
         int maxStack = session.baseItem.getMaxStackSize();
 
-        // Display Item
         ItemStack displayItem = session.baseItem.clone();
         displayItem.setAmount(Math.min(session.quantity, maxStack));
         ItemMeta meta = displayItem.getItemMeta();
@@ -365,11 +345,9 @@ public class ShopCommand implements CommandExecutor, Listener {
         displayItem.setItemMeta(meta);
         gui.setItem(13, displayItem);
 
-        // Buttons
         gui.setItem(21, createGuiItem(Material.RED_STAINED_GLASS_PANE, "&4ᴄᴀɴᴄᴇʟ", "&fClick to cancel"));
         gui.setItem(23, createGuiItem(Material.LIME_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ", "&fClick to buy"));
 
-        // Increments
         List<Integer> values = session.incrementValues;
         int[] addSlots = { 15, 16, 17 };
         int[] remSlots = { 11, 10, 9 };
@@ -379,18 +357,12 @@ public class ShopCommand implements CommandExecutor, Listener {
                 break;
             int val = values.get(i);
 
-            // Add Button
             if (session.quantity < maxStack) {
                 gui.setItem(addSlots[i], createGuiItem(Material.LIME_STAINED_GLASS_PANE, "&aAdd " + val, ""));
             }
 
-            // Remove Button Logic (FIXED)
-            // 1. Can we remove 'val' and still have at least 1 left? (e.g. 11 - 10 = 1)
             boolean canRemoveNormal = (session.quantity - val >= 1);
 
-            // 2. Are we maxed out and want to reset to 1? (e.g. 64 - 64, reset)
-            // CRITICAL FIX: Added 'maxStack > 1' to prevent this triggering for Shulker
-            // Boxes (Stack Size 1)
             boolean canRemoveReset = (session.quantity == maxStack && val == maxStack && maxStack > 1);
 
             if (canRemoveNormal || canRemoveReset) {
@@ -401,7 +373,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         player.openInventory(gui);
     }
 
-    // --- EVENTS ---
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
@@ -438,23 +409,20 @@ public class ShopCommand implements CommandExecutor, Listener {
         if (!isShop)
             return;
 
-        // Prevent double-click collecting items from the shop GUI
         if (event.getAction() == InventoryAction.COLLECT_TO_CURSOR) {
             event.setCancelled(true);
             return;
         }
 
         if (clickedInv.equals(topInv)) {
-            // Clicked in Shop GUI -> Always cancel to prevent taking items
             event.setCancelled(true);
         } else {
-            // Clicked in Player Inventory
             if (event.isShiftClick()) {
-                event.setCancelled(true); // Prevent shift-clicking items into the shop
+                event.setCancelled(true);
             } else {
-                event.setCancelled(false); // Allow moving/dropping items in own inventory
+                event.setCancelled(false);
             }
-            return; // Stop processing shop logic for player inventory clicks
+            return;
         }
 
         if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR)
@@ -466,7 +434,6 @@ public class ShopCommand implements CommandExecutor, Listener {
 
         int slot = event.getSlot();
 
-        // --- SHOP BUTTON LOGIC ---
 
         if (title.equals(cachedMainTitle)) {
             if (mainMenuSlots.containsKey(slot)) {
@@ -481,17 +448,14 @@ public class ShopCommand implements CommandExecutor, Listener {
                 return;
             }
 
-            // Check for shard shop item first
             ShardPurchaseSession shardSession = findShardSessionFromClick(player, title, slot);
             if (shardSession != null) {
-                // Check for inventory space (Shard shop items usually give 1 item)
                 ItemStack itemToTest = new ItemStack(shardSession.displayMaterial, 1);
                 if (getSpaceFor(player.getInventory(), itemToTest) <= 0) {
                     sendInventoryFull(player);
                     return;
                 }
 
-                // If it has values: defined, use the Buying Menu
                 if (shardSession.incrementValues != null && !shardSession.incrementValues.isEmpty()) {
                     BuyingSession session = new BuyingSession(
                             new ItemStack(shardSession.displayMaterial),
@@ -513,7 +477,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                 return;
             }
 
-            // Regular shop item
             BuyingSession session = findSessionFromClick(player, title, slot);
             if (session != null) {
                 if (getSpaceFor(player.getInventory(), session.baseItem) <= 0) {
@@ -558,14 +521,12 @@ public class ShopCommand implements CommandExecutor, Listener {
             for (int i = 0; i < remSlots.length; i++) {
                 if (slot == remSlots[i] && i < values.size()) {
                     int val = values.get(i);
-                    // Remove Normal
                     if (session.quantity - val >= 1) {
                         session.quantity -= val;
                         openBuyingMenu(player, session);
                     }
-                    // Remove Reset (Max -> 1)
                     else if (session.quantity == maxStack && val == maxStack && maxStack > 1) {
-                        session.quantity = 1; // Reset to 1
+                        session.quantity = 1;
                         openBuyingMenu(player, session);
                     }
                     return;
@@ -573,19 +534,16 @@ public class ShopCommand implements CommandExecutor, Listener {
             }
         }
 
-        // Handle shard confirmation GUI
         if (shardPurchaseSessions.containsKey(player.getUniqueId()) && title.equals(cachedConfirmTitle)) {
-            event.setCancelled(true); // Prevent auction from touching this
+            event.setCancelled(true);
             ShardPurchaseSession session = shardPurchaseSessions.get(player.getUniqueId());
 
-            // Cancel button (slot 11)
             if (slot == 11 && event.getCurrentItem().getType() == Material.RED_STAINED_GLASS_PANE) {
                 shardPurchaseSessions.remove(player.getUniqueId());
                 openCategory(player, session.categoryFile);
                 return;
             }
 
-            // Confirm button (slot 15)
             if (slot == 15 && event.getCurrentItem().getType() == Material.GREEN_STAINED_GLASS_PANE) {
                 processShardPurchase(player, session);
                 return;
@@ -597,7 +555,6 @@ public class ShopCommand implements CommandExecutor, Listener {
     public void onClose(InventoryCloseEvent event) {
     }
 
-    // --- LOGIC ---
 
     private void processPurchase(Player player, BuyingSession session) {
         int spaceAvailable = getSpaceFor(player.getInventory(), session.baseItem);
@@ -643,7 +600,6 @@ public class ShopCommand implements CommandExecutor, Listener {
             plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
 
-        // Execute command if present
         if (session.command != null && !session.command.isEmpty()) {
             String cmd = session.command
                     .replace("{gamertag}", player.getName())
@@ -661,14 +617,11 @@ public class ShopCommand implements CommandExecutor, Listener {
             String cmd = "spawner give " + player.getName() + " " + session.spawnerType + " " + buyAmount;
             plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
         } else {
-            // Give items normally
             ItemStack toGive = session.baseItem.clone();
             toGive.setAmount(buyAmount);
 
-            // Apply potion effects if configured
             if (session.potionEffects != null && !session.potionEffects.isEmpty()) {
                 if (toGive.getType() == Material.ARROW || toGive.getType() == Material.TIPPED_ARROW) {
-                    // Convert to tipped arrow if it's a regular arrow
                     if (toGive.getType() == Material.ARROW) {
                         toGive.setType(Material.TIPPED_ARROW);
                     }
@@ -681,16 +634,13 @@ public class ShopCommand implements CommandExecutor, Listener {
                                 org.bukkit.potion.PotionEffectType effectType = org.bukkit.potion.PotionEffectType
                                         .getByName(effectName);
                                 if (effectType != null) {
-                                    // Duration in ticks (20 ticks = 1 second)
                                     int durationTicks = session.effectDuration * 20;
-                                    // Level is 0-indexed in the PotionEffect constructor
                                     int amplifier = session.effectLevel - 1;
                                     org.bukkit.potion.PotionEffect effect = new org.bukkit.potion.PotionEffect(
                                             effectType, durationTicks, amplifier, false, true, true);
                                     potionMeta.addCustomEffect(effect, true);
                                 }
                             } catch (Exception e) {
-                                // Ignore invalid effect names
                             }
                         }
                         toGive.setItemMeta(potionMeta);
@@ -702,11 +652,9 @@ public class ShopCommand implements CommandExecutor, Listener {
 
         playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
 
-        // Track spending
         com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (pd != null) {
             pd.addShopSpent(totalCost);
-            // Save player data asynchronously to avoid server hangs
             plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
 
@@ -738,7 +686,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         if (slots != null) {
             BuyingSession template = slots.get(clickedSlot);
             if (template != null) {
-                // Return a copy with quantity 1
                 return new BuyingSession(template.baseItem, template.unitPrice, template.categoryFileName,
                         template.incrementValues, template.potionEffects, template.effectDuration,
                         template.effectLevel);
@@ -847,16 +794,13 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
-        // Final inventory space check
         ItemStack itemToTest = new ItemStack(session.displayMaterial, 1);
         if (getSpaceFor(player.getInventory(), itemToTest) <= 0) {
             sendInventoryFull(player);
             return;
         }
 
-        // Check currency and balance
         if (session.currency.equals("MONEY")) {
-            // Money-based purchase
             Economy econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
             if (!econ.has(player, session.price)) {
                 String errorMsg = ChatColor.RED + "You don't have enough money!";
@@ -864,7 +808,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                         new net.md_5.bungee.api.chat.TextComponent(errorMsg));
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
-                // Re-open the confirmation GUI to keep it open
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
                     if (shardPurchaseSessions.containsKey(player.getUniqueId())) {
                         openShardConfirmation(player, session);
@@ -872,10 +815,8 @@ public class ShopCommand implements CommandExecutor, Listener {
                 }, 1L);
                 return;
             }
-            // Deduct money
             econ.withdrawPlayer(player, session.price);
         } else {
-            // Shard-based purchase (default)
             double currentShards = pd.getShards();
             if (currentShards < session.price) {
                 String errorMsg = ChatColor.RED + "You don't have enough shards!";
@@ -883,7 +824,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                         new net.md_5.bungee.api.chat.TextComponent(errorMsg));
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
-                // Re-open the confirmation GUI to keep it open
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
                     if (shardPurchaseSessions.containsKey(player.getUniqueId())) {
                         openShardConfirmation(player, session);
@@ -891,37 +831,27 @@ public class ShopCommand implements CommandExecutor, Listener {
                 }, 1L);
                 return;
             }
-            // Deduct shards
             pd.removeShards(session.price, "Shop: " + session.displayMaterial.name());
             plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
 
-        // Execute command if present, otherwise fall back to old logic
         if (session.command != null && !session.command.isEmpty()) {
-            // Replace {gamertag} with actual player name
             String cmd = session.command
                     .replace("{gamertag}", player.getName())
                     .replace("{amount}", "1")
                     .replace("{quantity}", "1")
                     .replace("{value}", "1");
-            // Dispatch command on global scheduler (required for console commands on Folia)
             plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
         } else {
-            // Fallback to old logic for backward compatibility
             if (session.keyType != null) {
-                // It's a key - increment count (normalize key name first)
                 String normalizedKey = plugin.normalizeKeyName(session.keyType);
                 pd.addKey(normalizedKey);
-                // Save player data asynchronously to avoid server hangs
                 plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
             } else if (session.spawnerType != null) {
-                // It's a spawner - execute spawner command
                 String cmd = "spawner give " + player.getName() + " " + session.spawnerType + " 1";
-                // Dispatch command on global scheduler (required for console commands on Folia)
                 plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
             } else {
                 player.sendMessage(ChatColor.RED + "Error: Item type not recognized!");
-                // Refund currency
                 if (session.currency.equals("MONEY")) {
                     Economy econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
                     econ.depositPlayer(player, session.price);
@@ -946,7 +876,6 @@ public class ShopCommand implements CommandExecutor, Listener {
     private void openShardConfirmation(Player player, ShardPurchaseSession session) {
         Inventory gui = Bukkit.createInventory(null, 27, color("&8ᴄᴏɴꜰɪʀᴍ ᴘᴜʀᴄʜᴀѕᴇ"));
 
-        // Cancel button (slot 11)
         ItemStack cancel = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta cancelMeta = cancel.getItemMeta();
         cancelMeta.setDisplayName(color("&4ᴄᴀɴᴄᴇʟ"));
@@ -956,7 +885,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         cancel.setItemMeta(cancelMeta);
         gui.setItem(11, cancel);
 
-        // Item preview (slot 13)
         ItemStack preview = new ItemStack(session.displayMaterial);
         ItemMeta previewMeta = preview.getItemMeta();
         if (!session.displayName.isEmpty()) {
@@ -973,7 +901,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         preview.setItemMeta(previewMeta);
         gui.setItem(13, preview);
 
-        // Confirm button (slot 15)
         ItemStack confirm = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
         ItemMeta confirmMeta = confirm.getItemMeta();
         confirmMeta.setDisplayName(color("&aᴄᴏɴꜰɪʀᴍ"));
@@ -996,7 +923,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         int effectDuration;
         int effectLevel;
 
-        // Fields for shard/command support
         String currency = "MONEY";
         String command;
         String displayName;
@@ -1015,7 +941,6 @@ public class ShopCommand implements CommandExecutor, Listener {
             this.quantity = 1;
         }
 
-        // Constructor for Shard/Command conversion
         public BuyingSession(ItemStack baseItem, double unitPrice, String currency, String categoryFileName,
                 List<Integer> incrementValues, String command, String displayName, String keyType, String spawnerType) {
             this.baseItem = baseItem;

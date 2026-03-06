@@ -30,13 +30,11 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
 
-        // Permission check for the command itself
         if (!sender.hasPermission("prismcore.admin.economy")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
 
-        // Usage check
         if (args.length < 3) {
             sender.sendMessage(ChatColor.RED + "Usage: /economy <give|set|remove> <player> <amount>");
             return true;
@@ -67,9 +65,7 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
 
     private String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
-        // Use Math.floor to match the behavior of BalanceCommand and avoid rounding discrepancies
         scaled = Math.floor(scaled * 10) / 10.0;
-        // Use DecimalFormat for consistency with other classes
         java.text.DecimalFormat df = new java.text.DecimalFormat("#.#");
         return df.format(scaled) + suffix;
     }
@@ -89,14 +85,12 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
         String amountStr = args[2];
         double amount;
 
-        // Usage check
         if (args.length < 3) {
             sender.sendMessage(ChatColor.RED + "Usage: /economy <give|set|remove> <player> <amount>");
             playSound(sender, org.bukkit.Sound.ENTITY_VILLAGER_NO);
             return true;
         }
 
-        // Parse amount with custom suffixes
         try {
             amount = parseAmount(amountStr);
         } catch (NumberFormatException e) {
@@ -106,7 +100,6 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Validate action
         if (!isAdminAction(action)) {
             sender.sendMessage(ChatColor.RED + "Invalid action! Use: give, set, remove");
             playSound(sender, org.bukkit.Sound.ENTITY_VILLAGER_NO);
@@ -236,7 +229,6 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[1]);
         }
 

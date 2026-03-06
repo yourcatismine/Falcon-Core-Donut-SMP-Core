@@ -88,9 +88,9 @@ public class DeliverItemsMenu
         }
         ItemKey key = this.order.key;
         int need = this.order.remainingAmount();
-        ArrayList<ItemStack> acceptedDirect = new ArrayList<ItemStack>(); // Items placed directly
-        ArrayList<ItemStack> acceptedFromShulkers = new ArrayList<ItemStack>(); // Items extracted from shulkers
-        ArrayList<ItemStack> originalShulkers = new ArrayList<ItemStack>(); // Original shulkers before extraction
+        ArrayList<ItemStack> acceptedDirect = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> acceptedFromShulkers = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> originalShulkers = new ArrayList<ItemStack>();
         ArrayList<ItemStack> returns = new ArrayList<ItemStack>();
         ArrayList<ItemStack> processedShulkers = new ArrayList<ItemStack>();
         int acceptedAmount = 0;
@@ -103,7 +103,7 @@ public class DeliverItemsMenu
                 if (can > 0) {
                     ItemStack clone = it.clone();
                     clone.setAmount(can);
-                    acceptedDirect.add(clone); // Direct placement
+                    acceptedDirect.add(clone);
                     acceptedAmount += can;
                     if (it.getAmount() <= can)
                         continue;
@@ -116,15 +116,12 @@ public class DeliverItemsMenu
                 continue;
             }
             if (DeliverItemsMenu.isShulker(it)) {
-                // Clone the ORIGINAL shulker before extraction
                 ItemStack originalShulker = it.clone();
 
                 ItemStack[] cont;
                 BlockStateMeta meta = (BlockStateMeta) it.getItemMeta();
                 ShulkerBox box = (ShulkerBox) meta.getBlockState();
 
-                // Create a copy of the shulker that will be returned to the player (the
-                // "processed" shulker)
                 ItemStack processedShulkerItem = it.clone();
                 BlockStateMeta processedMeta = (BlockStateMeta) processedShulkerItem.getItemMeta();
                 ShulkerBox processedBox = (ShulkerBox) processedMeta.getBlockState();
@@ -132,8 +129,6 @@ public class DeliverItemsMenu
 
                 boolean extractedAny = false;
 
-                // We iterate over the ORIGINAL box contents to find what to take
-                // But we remove from the PROCESSED box inventory
                 ItemStack[] originalContents = box.getInventory().getContents();
 
                 for (int j = 0; j < originalContents.length; j++) {
@@ -144,14 +139,12 @@ public class DeliverItemsMenu
 
                     int can = Math.min(need - acceptedAmount, s.getAmount());
                     if (can <= 0)
-                        continue; // Should check other slots too if present
+                        continue;
 
                     ItemStack clone = s.clone();
                     clone.setAmount(can);
-                    acceptedFromShulkers.add(clone); // From shulker
+                    acceptedFromShulkers.add(clone);
 
-                    // Remove from the processed shulker inventory
-                    // We know the slot index 'j' corresponds to the same slot in processedInventory
                     ItemStack itemInProcessed = processedInventory.getItem(j);
                     if (itemInProcessed != null) {
                         if (itemInProcessed.getAmount() > can) {
@@ -168,16 +161,12 @@ public class DeliverItemsMenu
                 }
 
                 if (extractedAny) {
-                    // Update the processed shulker item with the new inventory state
                     processedMeta.setBlockState(processedBox);
                     processedShulkerItem.setItemMeta(processedMeta);
 
-                    // Store original shulker to return on cancel
                     originalShulkers.add(originalShulker);
-                    // Store processed shulker to return on confirm
                     processedShulkers.add(processedShulkerItem);
                 } else {
-                    // No items extracted, return shulker as-is
                     returns.add(it);
                 }
                 continue;

@@ -21,10 +21,8 @@ public class HomeManager {
 
     private final PrismSurvival plugin;
 
-    // In-memory cache: UUID -> (homeIndex -> HomeEntry)
     private final Map<UUID, Map<Integer, HomeEntry>> cache = new ConcurrentHashMap<>();
 
-    // Tracks players currently renaming a home: UUID -> homeIndex
     private final Map<UUID, Integer> renamingPlayers = new ConcurrentHashMap<>();
 
     public HomeManager(PrismSurvival plugin) {

@@ -36,7 +36,6 @@ public class HomeGUIListener implements Listener {
         if (!isHomeMain && !isHomeConfirm)
             return;
 
-        // ── Prevent double-click collecting items from the GUI ───────────────────
         if (event.getAction() == InventoryAction.COLLECT_TO_CURSOR) {
             event.setCancelled(true);
             return;
@@ -47,10 +46,8 @@ public class HomeGUIListener implements Listener {
             return;
 
         if (clickedInv.equals(topInv)) {
-            // Clicked in Top GUI -> handle as buttons
             event.setCancelled(true);
 
-            // Play sound if clicking a valid item
             ItemStack current = event.getCurrentItem();
             if (current != null && current.getType() != Material.AIR) {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
@@ -63,11 +60,9 @@ public class HomeGUIListener implements Listener {
                         (com.h2ph.gui.HomeDeleteConfirmGUI.HomeDeleteConfirmHolder) topInv.getHolder());
             }
         } else {
-            // Clicked in Player Inventory
             if (event.isShiftClick()) {
-                event.setCancelled(true); // Prevent shift-clicking items into the GUI
+                event.setCancelled(true);
             }
-            // Allow other interactions (move, drop, etc.)
         }
     }
 
@@ -80,7 +75,6 @@ public class HomeGUIListener implements Listener {
         if (!isHomeMain && !isHomeConfirm)
             return;
 
-        // Prevent dragging items into the top inventory
         int topSize = topInv.getSize();
         for (int slot : event.getRawSlots()) {
             if (slot < topSize) {
@@ -94,7 +88,6 @@ public class HomeGUIListener implements Listener {
         int slot = event.getRawSlot();
         HomeManager manager = plugin.getHomeManager();
 
-        // ── Bed Clicks (slots 3-7 for homes 1-5, and 21-25 for homes 6-10) ────────
         if ((slot >= HomeGUI.BED_START && slot < HomeGUI.BED_START + 5) ||
             (slot >= HomeGUI.BED_START_2 && slot < HomeGUI.BED_START_2 + 5)) {
 
@@ -109,7 +102,6 @@ public class HomeGUIListener implements Listener {
 
             if (clickedMat == Material.PURPLE_BED) {
                 if (event.getClick().isRightClick()) {
-                    // ── Trigger rename ───────────────────────────────────────────
                     manager.startRenaming(player.getUniqueId(), homeNumber);
                     player.closeInventory();
 
@@ -119,7 +111,6 @@ public class HomeGUIListener implements Listener {
                     return;
                 }
 
-                // ── Teleport to home ─────────────────────────────────────────────
                 Location dest = manager.getHomeLocation(player.getUniqueId(), homeNumber);
                 if (dest != null) {
                     player.closeInventory();
@@ -127,17 +118,14 @@ public class HomeGUIListener implements Listener {
                     plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &5%s", successMsg);
                 }
             } else if (clickedMat == Material.RED_BED) {
-                // ── Locked slot interaction ──────────────────────────────────────
                 String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
                 player.sendMessage(storeMsg);
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
             }
-            // Gray beds are purely decorative – no action
             return;
         }
 
-        // ── Dye Clicks (slots 12-16 for homes 1-5, and 30-34 for homes 6-10) ──────
         if ((slot >= HomeGUI.DYE_START && slot < HomeGUI.DYE_START + 5) ||
             (slot >= HomeGUI.DYE_START_2 && slot < HomeGUI.DYE_START_2 + 5)) {
 
@@ -151,24 +139,19 @@ public class HomeGUIListener implements Listener {
             Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
 
             if (clickedMat == Material.PURPLE_DYE) {
-                // ── Open Delete Confirmation ─────────────────────────────────────
                 com.h2ph.gui.HomeDeleteConfirmGUI.open(player, plugin, homeNumber);
 
             } else if (clickedMat == Material.GRAY_DYE) {
-                // ── Set home ─────────────────────────────────────────────────────
                 Location loc = player.getLocation().clone();
                 manager.setHome(player.getUniqueId(), homeNumber, loc);
 
-                // Chat message
                 player.sendMessage(HomeGUI.color("&7Home set"));
 
-                // Action bar message (no sound)
                 player.sendActionBar(
                         LegacyComponentSerializer.legacyAmpersand().deserialize("&7Home set"));
 
                 refreshGUI(player);
             } else if (clickedMat == Material.RED_DYE) {
-                // ── Locked slot interaction ──────────────────────────────────────
                 String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
                 player.sendMessage(storeMsg);
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
@@ -177,7 +160,6 @@ public class HomeGUIListener implements Listener {
             return;
         }
 
-        // ── Team Home Banner/Dye (10 and 19) ───────────────────────────────────
         if (slot == 10 || slot == 19) {
             com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
             com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
@@ -198,14 +180,12 @@ public class HomeGUIListener implements Listener {
                     player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return;
                 }
-                // Set Team Home
                 plugin.getTeamManager().setTeamHome(team.getId(), player.getLocation());
                 player.sendMessage(HomeGUI.color("&7Team home set"));
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize("&7Team home set"));
                 refreshGUI(player);
 
             } else if (clickedMat == Material.PURPLE_BANNER) {
-                // Teleport to Team Home
                 Location dest = plugin.getTeamManager().getTeamHomeLocation(team.getId());
                 if (dest != null) {
                     player.closeInventory();
@@ -223,24 +203,20 @@ public class HomeGUIListener implements Listener {
                     player.sendMessage(HomeGUI.color("&cOnly the team owner can delete the team home."));
                     return;
                 }
-                // Open Delete Confirmation (Index 0 used for team home)
                 com.h2ph.gui.HomeDeleteConfirmGUI.open(player, plugin, 0);
             }
         }
     }
 
-    // ─────────────────────────────────────────────
-    // Handle Deletion Confirmation GUI
-    // ─────────────────────────────────────────────
     private void handleDeleteConfirmation(InventoryClickEvent event, Player player,
             com.h2ph.gui.HomeDeleteConfirmGUI.HomeDeleteConfirmHolder holder) {
         int slot = event.getRawSlot();
         HomeManager manager = plugin.getHomeManager();
         int homeIndex = holder.getData().homeIndex();
 
-        if (slot == 11) { // Cancel
+        if (slot == 11) {
             refreshGUI(player);
-        } else if (slot == 15) { // Confirm
+        } else if (slot == 15) {
             if (homeIndex == 0) {
                 com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
                 if (team != null) {
@@ -253,9 +229,6 @@ public class HomeGUIListener implements Listener {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // Refresh the open GUI in place
-    // ─────────────────────────────────────────────
     private void refreshGUI(Player player) {
         HomeGUI.open(player, plugin);
     }

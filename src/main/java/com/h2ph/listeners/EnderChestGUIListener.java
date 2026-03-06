@@ -44,10 +44,8 @@ public class EnderChestGUIListener implements Listener {
 
         Player player = e.getPlayer();
 
-        // Cancel vanilla ender chest (we handle block interaction for everyone)
         e.setCancelled(true);
 
-        // Open GUI with block reference — triggers lid open animation
         new EnderChestGUI(plugin).open(player, block);
     }
 
@@ -67,21 +65,16 @@ public class EnderChestGUIListener implements Listener {
         EnderChestGUI.EnderChestHolder holder = (EnderChestGUI.EnderChestHolder) e.getInventory().getHolder();
         UUID ownerUUID = holder.getOwnerUUID();
 
-        // Snapshot before the inventory is cleared
         ItemStack[] contents = e.getInventory().getContents().clone();
 
-        // Close sound
         player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_CLOSE, 1f, 1f);
 
-        // Unregister viewer → sends lid-close animation if this was the last viewer
         Block sourceBlock = holder.getSourceBlock();
         if (sourceBlock != null) {
             plugin.getEnderChestManager().unregisterViewer(sourceBlock, player);
         }
 
-        // Only save if this is the last viewer
         if (e.getInventory().getViewers().size() <= 1) {
-            // Save async — REPLACE INTO upserts the single row for this UUID
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents);
             });
@@ -104,15 +97,12 @@ public class EnderChestGUIListener implements Listener {
         UUID ownerUUID = holder.getOwnerUUID();
         ItemStack[] contents = openInv.getContents().clone();
 
-        // Unregister viewer so the lid animation closes for nearby players
         Block sourceBlock = holder.getSourceBlock();
         if (sourceBlock != null) {
             plugin.getEnderChestManager().unregisterViewer(sourceBlock, player);
         }
 
-        // Only save if this is the last viewer
         if (openInv.getViewers().size() <= 1) {
-            // Asynchronous save on quit
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 plugin.getEnderChestManager().saveEnderChest(ownerUUID, contents);
             });

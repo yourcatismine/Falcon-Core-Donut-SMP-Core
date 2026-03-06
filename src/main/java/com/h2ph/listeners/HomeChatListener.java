@@ -30,12 +30,10 @@ public class HomeChatListener implements Listener {
             return;
         }
 
-        // Intercept the chat message
         event.setCancelled(true);
         String newName = event.getMessage().trim();
         int homeIndex = manager.getRenamingIndex(uuid);
 
-        // Stop renaming state
         manager.stopRenaming(uuid);
 
         if (newName.isEmpty()) {
@@ -43,12 +41,10 @@ public class HomeChatListener implements Listener {
             return;
         }
 
-        // Apply rename
         manager.renameHome(uuid, homeIndex, newName);
 
         player.sendMessage(HomeGUI.color("&7Home renamed to: &d" + newName));
 
-        // Re-open GUI on main thread
         plugin.getSchedulerAdapter().runTask(() -> HomeGUI.open(player, plugin));
     }
 }

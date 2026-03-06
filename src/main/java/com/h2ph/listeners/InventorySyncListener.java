@@ -26,7 +26,6 @@ public class InventorySyncListener implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        // Fetch inventory asynchronously to avoid hanging the main thread
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             try {
                 String[] data = plugin.getDatabaseManager().loadInventory(uuid);
@@ -39,9 +38,8 @@ public class InventorySyncListener implements Listener {
                             ItemStack[] inventory = ItemSerializationManager.itemStackArrayFromBase64(invBase64);
                             ItemStack[] armor = ItemSerializationManager.itemStackArrayFromBase64(armorBase64);
 
-                            // Apply inventory synchronously
                             plugin.getSchedulerAdapter().runEntityTask(player, () -> {
-                                if (player.isOnline()) { // Check if player is still online
+                                if (player.isOnline()) {
                                     player.getInventory().setContents(inventory);
                                     player.getInventory().setArmorContents(armor);
                                 }

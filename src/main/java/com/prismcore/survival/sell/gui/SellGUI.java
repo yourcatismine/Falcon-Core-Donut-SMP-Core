@@ -57,10 +57,8 @@ public class SellGUI
     public void openGUI(Player player) {
         Inventory inv = Bukkit.createInventory((InventoryHolder) null, (int) 54, (String) this.guiTitle);
 
-        // Add category icons to bottom row (45-53)
         for (Category category : Category.values()) {
             int slot = this.plugin.getGUIManager().getCategorySlot(category.getKey());
-            // Ensure slot is within bounds of bottom row if possible, or just trust config
             if (slot >= 0 && slot < 54) {
                 inv.setItem(slot, this.createCategoryIcon(player, category));
             }
@@ -77,19 +75,17 @@ public class SellGUI
             String name = this.plugin.getGUIManager().getCategoryIconName(category.getKey());
             meta.setDisplayName(MessageUtil.colorize(name));
 
-            // Calculate placeholders
             PlayerData data = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             double progress = data.getProgress(category);
             double multiplier = data.getMultiplier(category);
 
-            // Logic borrowed from ProgressGUI to ensure consistency
             double requiredProgress = this.getRequiredProgressForLevel(multiplier);
 
             double percentage = 0.0;
             if (requiredProgress > 0) {
                 percentage = Math.min(progress / requiredProgress * 100.0, 100.0);
             } else {
-                percentage = 100.0; // Max level?
+                percentage = 100.0;
             }
 
             String progressBar = this.plugin.getGUIManager().buildProgressBar(percentage);
@@ -113,7 +109,6 @@ public class SellGUI
                 meta.setCustomModelData(modelData);
             }
 
-            // Add enchantments if configured
             List<String> enchants = this.plugin.getGUIManager().getCategoryIconEnchantments(category.getKey());
             for (String enchantStr : enchants) {
                 String[] parts = enchantStr.split(":");
@@ -125,7 +120,6 @@ public class SellGUI
                             meta.addEnchant(ench, level, true);
                         }
                     } catch (Exception e) {
-                        // Ignore invalid enchantments
                     }
                 }
             }
@@ -163,18 +157,13 @@ public class SellGUI
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
 
-        // Check if clicked bottom row (Category icons)
-        // Since it's a 54 slot GUI, top inventory slots are 0-53
         if (slot >= 0 && slot < 54) {
-            // Check if it's a category slot
             ItemStack clicked = event.getCurrentItem();
             if (clicked != null && clicked.getType() != Material.AIR) {
-                // If the slot corresponds to a category, open that category
                 for (Category category : Category.values()) {
                     if (this.plugin.getGUIManager().getCategorySlot(category.getKey()) == slot) {
                         event.setCancelled(true);
                         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                        // Open Progress GUI for this category
                         this.plugin.getProgressGUI().openCategoryGUI(player, category);
                         return;
                     }
@@ -200,11 +189,7 @@ public class SellGUI
         List<ItemStack> unsoldItems = new ArrayList<>();
         Map<String, double[]> soldItemsToAdd = new HashMap<>();
 
-        // Iterate through all slots
-        // Items in category slots should be ignored/cancelled in click event, but here
-        // we just check if it's sellable
         for (int i = 0; i < 54; i++) {
-            // Skip category slots
             boolean isCategorySlot = false;
             for (Category category : Category.values()) {
                 if (this.plugin.getGUIManager().getCategorySlot(category.getKey()) == i) {
@@ -222,7 +207,6 @@ public class SellGUI
             double itemTotal = 0.0;
             boolean contentSold = false;
 
-            // Check for Shulker Box
             if (item.getItemMeta() instanceof org.bukkit.inventory.meta.BlockStateMeta) {
                 org.bukkit.inventory.meta.BlockStateMeta bsm = (org.bukkit.inventory.meta.BlockStateMeta) item
                         .getItemMeta();
@@ -241,7 +225,6 @@ public class SellGUI
                             Category category = this.plugin.getPricesManager().getCategory(content);
                             double amount = price * content.getAmount();
 
-                            // Apply multiplier
                             if (category != null) {
                                 PlayerData data = this.plugin.getPlayerDataManager()
                                         .getPlayerData(player.getUniqueId());
@@ -252,17 +235,13 @@ public class SellGUI
                                         categoryProgressToAdd.getOrDefault(category, 0.0) + amount);
                             }
 
-                            // Add to item total (multiply by shulker stack amount if stacked, though
-                            // uncommon)
                             itemTotal += amount * item.getAmount();
 
-                            // Record in sell history
                             String matName = content.getType().name();
                             double[] stats = soldItemsToAdd.computeIfAbsent(matName, k -> new double[] { 0, 0 });
                             stats[0] += content.getAmount() * item.getAmount();
                             stats[1] += amount * item.getAmount();
 
-                            // Remove item from shulker
                             contents[j] = null;
                             shulkerModified = true;
                             contentSold = true;
@@ -277,13 +256,11 @@ public class SellGUI
                 }
             }
 
-            // Check price of the item itself (might be empty shulker now)
             double selfPrice = this.plugin.getPricesManager().getPrice(item);
             if (selfPrice > 0) {
                 Category category = this.plugin.getPricesManager().getCategory(item);
                 double amount = selfPrice * item.getAmount();
 
-                // Apply multiplier
                 if (category != null) {
                     PlayerData data = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
                     double multiplier = data.getMultiplier(category);
@@ -294,7 +271,6 @@ public class SellGUI
 
                 itemTotal += amount;
 
-                // Record in sell history
                 String matName = item.getType().name();
                 double[] stats = soldItemsToAdd.computeIfAbsent(matName, k -> new double[] { 0, 0 });
                 stats[0] += item.getAmount();
@@ -304,9 +280,6 @@ public class SellGUI
             if (itemTotal > 0) {
                 totalSold += itemTotal;
 
-                // If selfPrice <= 0, the container is NOT sold, so return it (empty or
-                // partially filled)
-                // If selfPrice > 0, the container IS sold, so don't return it
                 if (selfPrice <= 0) {
                     unsoldItems.add(item);
                 }
@@ -322,7 +295,6 @@ public class SellGUI
                 this.plugin.getDatabaseManager().saveSellHistoryAsync(player.getUniqueId(), soldItemsToAdd);
             }
 
-            // Update sellMade stat and persist immediately — don't wait for quit
             PlayerData sellData = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             sellData.setSellMade(sellData.getSellMade() + totalSold);
             this.plugin.getPlayerDataManager().savePlayerDataAsync(player.getUniqueId());
@@ -340,7 +312,6 @@ public class SellGUI
 
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
 
-            // Update progress
             PlayerData data = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             for (Map.Entry<Category, Double> entry : categoryProgressToAdd.entrySet()) {
                 data.addProgress(entry.getKey(), entry.getValue());
@@ -348,7 +319,6 @@ public class SellGUI
             }
         }
 
-        // Return unsold items
         for (ItemStack item : unsoldItems) {
             HashMap<Integer, ItemStack> leftOver = player.getInventory().addItem(item);
             if (!leftOver.isEmpty()) {
@@ -368,7 +338,6 @@ public class SellGUI
             double currentMultiplier = data.getMultiplier(category);
             int currentLevel = this.getCurrentLevel(currentMultiplier);
 
-            // Check if max level reached
             if (currentLevel >= levelPrices.size()) {
                 return;
             }

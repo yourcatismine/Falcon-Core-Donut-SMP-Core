@@ -76,7 +76,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 }
                 handleLeave(player, data);
                 break;
-            case "distand": // fallthrough for common typo
+            case "distand":
             case "disband":
                 if (data.getTeamId() == null) {
                     sendNoTeamError(player);
@@ -122,7 +122,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             name = "&d" + name;
         }
 
-        if (name.length() < 3 || name.length() > 32) { // Increased limit for colors
+        if (name.length() < 3 || name.length() > 32) {
             player.sendMessage(ChatColor.RED + "Team name must be between 3 and 16 characters (ignoring colors).");
             return;
         }
@@ -172,7 +172,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         Player onlineTarget = target.getPlayer();
         if (onlineTarget == null)
-            return; // Should not happen if isOnline() is true
+            return;
 
         if (onlineTarget.getUniqueId().equals(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You cannot invite yourself!");
@@ -282,7 +282,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         if (team == null)
             return;
 
-        // Open confirm GUI
         new com.h2ph.gui.TeamDisbandMenu(plugin, player, team).open();
     }
 
@@ -408,7 +407,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             if (sub.equals("invite") || sub.equals("kick") || sub.equals("join")) {
-                // Use async player name cache to prevent TPS drops
                 return plugin.getPlayerNameCache().getCompletions(args[1]);
             }
         }

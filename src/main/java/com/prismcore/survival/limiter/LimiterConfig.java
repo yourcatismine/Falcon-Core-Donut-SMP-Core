@@ -20,7 +20,6 @@ public class LimiterConfig {
     private FileConfiguration config;
     private File configFile;
 
-    // Entity Limits
     private int defaultEntityLimit;
     private int defaultItemLimit;
     private double regionEntityMultiplier;
@@ -33,14 +32,12 @@ public class LimiterConfig {
     private Set<Material> ignoredItems = EnumSet.noneOf(Material.class);
     private Map<EntityType, Integer> customEntityLimits = new HashMap<>();
 
-    // Protection
     private boolean protectNamedEntities;
     private boolean protectLeashedEntities;
     private boolean protectTamedAnimals;
     private boolean protectEquippedEntities;
     private boolean protectBossEntities;
 
-    // Settings
     private boolean debugRemovals;
     private boolean cleanProtectedIfOverLimit;
     private boolean cleanAllLoadedChunks;
@@ -65,7 +62,6 @@ public class LimiterConfig {
         }
         config = YamlConfiguration.loadConfiguration(configFile);
 
-        // Load Entity Limits
         defaultEntityLimit = config.getInt("entity-limits.default-limit", 100);
         defaultItemLimit = config.getInt("entity-limits.item-limit", 300);
         regionEntityMultiplier = config.getDouble("entity-limits.region-multiplier.entity", 1.0);
@@ -107,14 +103,12 @@ public class LimiterConfig {
             }
         }
 
-        // Load Protection Settings
         protectNamedEntities = config.getBoolean("protection.protect-named-entities", true);
         protectLeashedEntities = config.getBoolean("protection.protect-leashed-entities", true);
         protectTamedAnimals = config.getBoolean("protection.protect-tamed-animals", true);
         protectEquippedEntities = config.getBoolean("protection.protect-equipped-entities", true);
         protectBossEntities = config.getBoolean("protection.protect-boss-entities", true);
 
-        // Load General Settings
         debugRemovals = config.getBoolean("settings.debug-removals", false);
         cleanProtectedIfOverLimit = config.getBoolean("settings.clean-protected-if-over-limit", true);
         cleanAllLoadedChunks = config.getBoolean("settings.clean-all-loaded-chunks", true);

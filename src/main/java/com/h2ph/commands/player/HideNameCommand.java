@@ -25,7 +25,6 @@ public class HideNameCommand implements CommandExecutor, Listener {
 
     private final PrismSurvival plugin;
 
-    // Reflection Cache
     private Method getHandleMethod;
     private Method getGameProfileMethod;
     private long profileFieldOffset = -1;
@@ -62,27 +61,21 @@ public class HideNameCommand implements CommandExecutor, Listener {
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(id);
 
         if (data.isNameHidden()) {
-            // --- DISABLE (RESTORE) ---
             data.setNameHidden(false);
 
-            // Notify & Sound
             sendActionBar(p, "&7Your gamertag is normal.");
             p.playSound(p.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1.0f, 1.0f);
 
-            // Restore Overhead Name (Flash Refresh) - Don't touch display/tablist names to preserve prefixes
             refreshPlayer(p, p.getName());
 
         } else {
-            // --- ENABLE (HIDE) ---
             data.setNameHidden(true);
 
-            // Notify & Sound
             sendActionBar(p, "&7Your gamertag is hidden.");
             p.playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
 
-            String obf = ChatColor.MAGIC + p.getName(); // Fully obfuscated name based on gamertag
+            String obf = ChatColor.MAGIC + p.getName();
 
-            // Set Overhead Name (Flash Refresh) - Don't touch display/tablist names to preserve prefixes and group sorting
             refreshPlayer(p, obf);
         }
         return true;
@@ -90,26 +83,20 @@ public class HideNameCommand implements CommandExecutor, Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onChat(AsyncPlayerChatEvent evt) {
-        // Enforce the obfuscated name in chat format
         if (plugin.getPlayerDataManager().get(evt.getPlayer().getUniqueId()).isNameHidden()) {
             String message = evt.getMessage().trim();
             Player player = evt.getPlayer();
             String originalDisplayName = player.getDisplayName();
             
-            // Special case: If hidden player says "Hi", show their real name
             if (message.equalsIgnoreCase("Hi") || message.equalsIgnoreCase("Hello")) {
-                // Don't modify anything - let the original format show with real name
                 return;
             } else {
-                // Temporarily set obfuscated display name for this chat event
-                // Preserve any existing prefix/suffix by replacing only the name part
                 String playerName = player.getName();
                 String obfuscatedName = ChatColor.MAGIC + playerName;
                 String modifiedDisplayName = originalDisplayName.replace(playerName, obfuscatedName);
                 
                 player.setDisplayName(modifiedDisplayName);
                 
-                // Schedule restoration of original display name after the event
                 plugin.getSchedulerAdapter().runTask(() -> {
                     player.setDisplayName(originalDisplayName);
                 });
@@ -117,7 +104,6 @@ public class HideNameCommand implements CommandExecutor, Listener {
         }
     }
 
-    // --- TAB COMPLETE HANDLING ---
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onTabComplete(TabCompleteEvent evt) {
         if (!(evt.getSender() instanceof Player))
@@ -125,7 +111,6 @@ public class HideNameCommand implements CommandExecutor, Listener {
 
         Player observer = (Player) evt.getSender();
 
-        // Admins with see permission skip the filter
         if (observer.hasPermission("prism.hidename.see"))
             return;
 
@@ -136,7 +121,6 @@ public class HideNameCommand implements CommandExecutor, Listener {
             if (plugin.getPlayerDataManager().get(online.getUniqueId()).isNameHidden()) {
                 String realName = online.getName();
 
-                // If the real name is in the suggestion list, remove it
                 if (completions.removeIf(s -> s.equalsIgnoreCase(realName))) {
                     modified = true;
                 }
@@ -148,34 +132,25 @@ public class HideNameCommand implements CommandExecutor, Listener {
         }
     }
 
-    // --- JOIN HANDLING (UPDATED) ---
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent evt) {
         Player p = evt.getPlayer();
 
-        // 1. IF THE JOINING PLAYER IS HIDDEN (Apply hide to self)
         if (plugin.getPlayerDataManager().get(p.getUniqueId()).isNameHidden()) {
-            evt.setJoinMessage(null); // Hide join message to be safe
+            evt.setJoinMessage(null);
 
-            // Wait 5 ticks for login to finish, then apply the visual hack
             plugin.getSchedulerAdapter().runTaskLater(() -> {
                 String obf = ChatColor.MAGIC + p.getName();
-                // Don't override display/tablist names - let prefixes and group sorting work
-                refreshPlayer(p, obf); // Refreshes for everyone online
+                refreshPlayer(p, obf);
             }, 5L);
         }
 
-        // 2. IF OTHERS ARE HIDDEN (Apply existing hides to the new joiner)
-        // We wait a bit longer (10 ticks) to ensure the client is ready for packet
-        // updates
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.equals(p))
                     continue;
 
                 if (plugin.getPlayerDataManager().get(player.getUniqueId()).isNameHidden()) {
-                    // If the new joiner is an admin with bypass, we skip the refresh
-                    // so they continue seeing the real name in the correct TAB position.
                     if (p.hasPermission("prism.hidename.see")) {
                         continue;
                     }
@@ -201,44 +176,34 @@ public class HideNameCommand implements CommandExecutor, Listener {
      * Updates ALL players.
      */
     private void refreshPlayer(Player target, String nameToSend) {
-        // Validate target player is still online and valid
         if (target == null || !target.isOnline()) {
             return;
         }
         
         String realName = target.getName();
 
-        // 1. Swap to Fake (briefly to send packets)
         setGameProfileName(target, nameToSend);
 
-        // 2. Hide/Show for observers WHO SHOULD SEE A CHANGE
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.equals(target))
                 continue;
 
-            // Validate observer is still online and valid
             if (!online.isOnline() || !online.isValid()) {
                 continue;
             }
 
-            // if they have permission to see real names, they ALWAYS see real names,
-            // so we skip the refresh for them entirely. This preserves their sorting.
             if (online.hasPermission("prism.hidename.see")) {
                 continue;
             }
 
             try {
-                // Simple hide/show forces the server to resend the ADD_PLAYER info packet
                 online.hidePlayer(plugin, target);
                 online.showPlayer(plugin, target);
             } catch (Exception e) {
-                // Silently handle packet encoding errors to prevent server crash
-                // This can happen when players disconnect during the operation
                 plugin.getLogger().fine("Failed to update player visibility for " + online.getName() + ": " + e.getMessage());
             }
         }
 
-        // 3. Restore to Real after a short delay (2 ticks)
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             if (target != null && target.isOnline()) {
                 setGameProfileName(target, realName);
@@ -252,27 +217,22 @@ public class HideNameCommand implements CommandExecutor, Listener {
      * Updates ONLY the observer.
      */
     private void refreshPlayerForObserver(Player target, Player observer, String nameToSend) {
-        // Validate both players are still online and valid
         if (target == null || !target.isOnline() || observer == null || !observer.isOnline() || !observer.isValid()) {
             return;
         }
         
         String realName = target.getName();
 
-        // 1. HACK: Set profile to FAKE name
         boolean success = setGameProfileName(target, nameToSend);
 
         if (success) {
             try {
-                // 2. SEND PACKETS: Hide and Show player only to the specific observer
                 observer.hidePlayer(plugin, target);
                 observer.showPlayer(plugin, target);
             } catch (Exception e) {
-                // Silently handle packet encoding errors to prevent server crash
                 plugin.getLogger().fine("Failed to update player visibility for observer " + observer.getName() + ": " + e.getMessage());
             }
 
-            // 3. SAFETY: Revert profile to REAL name after a short delay
             plugin.getSchedulerAdapter().runTaskLater(() -> {
                 if (target != null && target.isOnline()) {
                     setGameProfileName(target, realName);
@@ -316,12 +276,10 @@ public class HideNameCommand implements CommandExecutor, Listener {
                 return false;
             }
 
-            // Create a new GameProfile instance
             java.lang.reflect.Constructor<?> constructor = oldProfile.getClass().getConstructor(UUID.class,
                     String.class);
             Object newProfile = constructor.newInstance(p.getUniqueId(), newName);
 
-            // Copy properties (skins, etc)
             try {
                 Method getProperties = oldProfile.getClass().getMethod("getProperties");
                 Object properties = getProperties.invoke(oldProfile);
@@ -331,7 +289,6 @@ public class HideNameCommand implements CommandExecutor, Listener {
             } catch (Exception ignored) {
             }
 
-            // Find the field in EntityPlayer that holds the GameProfile
             if (profileFieldOffset == -1) {
                 Class<?> clazz = entityPlayer.getClass();
                 while (clazz != Object.class) {

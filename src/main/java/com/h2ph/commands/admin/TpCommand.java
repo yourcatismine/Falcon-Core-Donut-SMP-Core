@@ -39,7 +39,6 @@ public class TpCommand implements CommandExecutor, TabCompleter {
         String targetName = args[0];
         Player target = Bukkit.getPlayer(targetName);
 
-        // If target is online and visible to the sender
         if (target != null && p.canSee(target)) {
             String teleportingMsg = ChatColor.translateAlternateColorCodes('&',
                     "&7Teleporting to &d" + target.getName());
@@ -57,12 +56,10 @@ public class TpCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Handle offline or non-existent players asynchronously to avoid TPS drop
         PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
             org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
             boolean exists = offlineTarget.hasPlayedBefore();
 
-            // Return to main thread to send messages/sounds
             PrismSurvival.getInstance().getSchedulerAdapter().runTask(() -> {
                 if (!p.isOnline())
                     return;
@@ -74,12 +71,10 @@ public class TpCommand implements CommandExecutor, TabCompleter {
                     msg = ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.");
                 }
 
-                // Both chat and actionbar
                 p.sendMessage(msg);
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                         (net.md_5.bungee.api.chat.BaseComponent) new TextComponent(msg));
 
-                // Villager no sound
                 p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             });
         });
@@ -89,7 +84,6 @@ public class TpCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        // Only provide completion for the first argument (player name)
         if (args.length == 1) {
             List<String> playerNames = new ArrayList<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -100,7 +94,6 @@ public class TpCommand implements CommandExecutor, TabCompleter {
             return org.bukkit.util.StringUtil.copyPartialMatches(args[0], playerNames, new ArrayList<>());
         }
 
-        // Return empty list for any other arguments to hide coordinates
         return Collections.emptyList();
     }
 }

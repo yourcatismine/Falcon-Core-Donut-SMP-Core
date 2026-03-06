@@ -37,7 +37,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
     private final List<ItemCatalog.Entry> pageEntries = new ArrayList<>();
     private int page = 0;
 
-    // 0: Most Paid, 1: Most Delivered, 2: Recently, 3: Per Item
     private int sortIndex = 0;
     private boolean internalPageSwitch = false;
 
@@ -65,11 +64,8 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
 
         List<ItemCatalog.Entry> all = new ArrayList<>(ItemCatalog.build(this.module));
 
-        // Explicitly filter disabled items again just in case ItemCatalog missed it or
-        // cache is stale
         all.removeIf(e -> this.module.cfg().isDisabled(e.base));
 
-        // Filter
         if (!"All".equalsIgnoreCase(v.filter)) {
             Set<Material> allow = this.module.filters().resolve(v.filter);
             if (allow != null && !allow.isEmpty()) {
@@ -77,7 +73,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             }
         }
 
-        // Search
         if (v.search != null && !v.search.isBlank()) {
             String s = v.search.toLowerCase(Locale.ENGLISH);
             all.removeIf(e -> !e.search.contains(s));
@@ -100,10 +95,8 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
                 return e1.display.compareToIgnoreCase(e2.display);
             });
         } else {
-            // Default Sort
             all.sort(Comparator.comparing(e -> e.display));
             if (v.alpha == AlphaSort.Z_A) {
-                // Collections.reverse(all);
             }
         }
         return all;
@@ -152,12 +145,10 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             this.inv.setItem(i - from, item);
         }
 
-        // Nav - Back
         if (this.page > 0) {
             this.inv.setItem(45, makeItem(Material.ARROW, "&5ʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
-        // Sort - Slot 48
         List<String> sortOptions = List.of("Most Paid", "Most Delivered", "Recently Listed", "Most Money Per Item");
         List<String> sortLore = new ArrayList<>();
         for (int i = 0; i < sortOptions.size(); i++) {
@@ -166,7 +157,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
         }
         this.inv.setItem(48, makeItem(Material.CAULDRON, "&5ѕᴏʀᴛ", sortLore));
 
-        // Filter - Slot 49
         PlayerStateManager.ItemView v = this.module.state().items(this.p.getUniqueId());
         List<String> categories = List.of("All", "Blocks", "Tools", "Food", "Combat", "Potions", "Books", "Ingredients",
                 "Utilities");
@@ -177,10 +167,8 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
         }
         this.inv.setItem(49, makeItem(Material.HOPPER, "&5ꜰɪʟᴛᴇʀ", filterLore));
 
-        // Search - Slot 50
         this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&5ѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
 
-        // Next - Slot 53
         if (this.page < maxPage) {
             this.inv.setItem(53, makeItem(Material.ARROW, "&5ɴᴇхᴛ", List.of("&fClick to go to the next page")));
         }
@@ -208,11 +196,9 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -221,7 +207,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
 
         int slot = e.getSlot();
 
-        // Back
         if (slot == 45) {
             if (this.page > 0) {
                 int oldPage = this.page + 1;
@@ -236,7 +221,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Next
         if (slot == 53) {
             ItemStack clicked = e.getCurrentItem();
             if (clicked != null && clicked.getType() == Material.ARROW) {
@@ -252,7 +236,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Sort - Slot 48 (was 47)
         if (slot == 48) {
             this.sortIndex = (this.sortIndex + 1) % 4;
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -261,7 +244,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Filter - Slot 49 (was 48)
         if (slot == 49) {
             PlayerStateManager.ItemView v = this.module.state().items(this.p.getUniqueId());
             List<String> categories = List.of("All", "Blocks", "Tools", "Food", "Combat", "Potions", "Books",
@@ -278,7 +260,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
 
             int nextIdx = (idx + 1) % categories.size();
             v.filter = categories.get(nextIdx);
-            // this.module.state().saveAllPrefs(); // Removed
 
             this.page = 0;
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -287,7 +268,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        // Search - Slot 50 (was 49)
         if (slot == 50) {
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
@@ -307,7 +287,6 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
                         com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
                         "Searched Item: '" + (v.search == null ? "None" : v.search) + "'");
 
-                // this.module.state().saveAllPrefs(); // Removed
                 TaskUtil.runEntity(this.module.getPlugin(), this.p, this::open);
             });
             return;

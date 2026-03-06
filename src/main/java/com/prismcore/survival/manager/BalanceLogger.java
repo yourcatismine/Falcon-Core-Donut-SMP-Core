@@ -17,8 +17,6 @@ public class BalanceLogger {
     }
 
     public void start() {
-        // Run every 10 minutes (12000 ticks)
-        // Initial delay: 1 minute (1200 ticks) to let players load
         plugin.getSchedulerAdapter().runTaskTimerAsync(() -> {
             for (Player player : plugin.getServer().getOnlinePlayers()) {
                 logBalance(player);
@@ -32,7 +30,6 @@ public class BalanceLogger {
         if (data == null)
             return;
 
-        // Use Vault balance if available, fallback to internal
         net.milkbowl.vault.economy.Economy eco = getEconomy();
         double money = (eco != null) ? eco.getBalance(player) : data.getMoney();
         double shards = data.getShards();

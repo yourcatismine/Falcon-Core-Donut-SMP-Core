@@ -18,16 +18,13 @@ public class DuelGUIListener implements Listener {
         if (title.equals(GUI_TITLE)) {
             event.setCancelled(true);
 
-            // Only process clicks in the GUI (not player inventory)
             if (event.getRawSlot() >= event.getView().getTopInventory().getSize()) {
                 return;
             }
 
-            // Handle navigation to Regions GUI (Slot 11)
             if (event.getRawSlot() == 11) {
                 if (event.getWhoClicked() instanceof org.bukkit.entity.Player) {
                     org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getWhoClicked();
-                    // Play click sound for non-empty slot
                     if (event.getCurrentItem() != null && event.getCurrentItem().getType() != org.bukkit.Material.AIR) {
                         try {
                             player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.5f,
@@ -43,7 +40,6 @@ public class DuelGUIListener implements Listener {
         } else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ʀᴇɢɪᴏɴѕ"))) {
             event.setCancelled(true);
 
-            // Only process clicks in the GUI (not player inventory)
             if (event.getRawSlot() >= event.getView().getTopInventory().getSize()) {
                 return;
             }
@@ -51,7 +47,6 @@ public class DuelGUIListener implements Listener {
             if (event.getCurrentItem() != null && event.getWhoClicked() instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getWhoClicked();
 
-                // Play click sound for non-empty slot
                 if (event.getCurrentItem().getType() != org.bukkit.Material.AIR) {
                     try {
                         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.5f, 1.2f);
@@ -62,14 +57,12 @@ public class DuelGUIListener implements Listener {
                 com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
                         com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
 
-                if (event.getCurrentItem().hasItemMeta()) { // Check Meta
+                if (event.getCurrentItem().hasItemMeta()) {
                     org.bukkit.persistence.PersistentDataContainer pdc = event.getCurrentItem().getItemMeta()
                             .getPersistentDataContainer();
                     if (pdc.has(guiManager.getRegionKey(), org.bukkit.persistence.PersistentDataType.STRING)) {
                         String regionName = pdc.get(guiManager.getRegionKey(),
                                 org.bukkit.persistence.PersistentDataType.STRING);
-                        // Removed redundant isRedirecting.add - Regions GUI close doesn't need
-                        // suppression
                         guiManager.openRegionSettingsGUI(player, regionName);
                     }
                 }
@@ -77,19 +70,16 @@ public class DuelGUIListener implements Listener {
         } else if (title.contains(ChatColor.translateAlternateColorCodes('&', "ѕᴇᴛᴛɪɴɢѕ"))
                 && !title.equals(GUI_TITLE)
                 && !title.equals(com.h2ph.commands.player.SettingsCommand.GUI_TITLE)) {
-            // Region Settings GUI
             event.setCancelled(true);
 
-            // Only process clicks in the GUI (not player inventory)
             if (event.getRawSlot() >= event.getView().getTopInventory().getSize()) {
-                return; // Click was in player inventory, ignore
+                return;
             }
 
             if (event.getCurrentItem() == null || !(event.getWhoClicked() instanceof org.bukkit.entity.Player))
                 return;
             org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getWhoClicked();
 
-            // Play tripwire click sound for non-empty slots in GUI only
             try {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.5f, 1.2f);
             } catch (Exception ignored) {
@@ -116,7 +106,6 @@ public class DuelGUIListener implements Listener {
             boolean save = false;
             boolean refresh = false;
 
-            // Helper to check unset
             boolean isUnsetClick = false;
             if (event.getCurrentItem().getItemMeta().hasLore()) {
                 for (String line : event.getCurrentItem().getItemMeta().getLore()) {
@@ -127,14 +116,13 @@ public class DuelGUIListener implements Listener {
                 }
             }
 
-            if (slot == 11) { // Pos 1
+            if (slot == 11) {
                 if (isUnsetClick) {
                     config.set("spawn1", null);
                     player.sendMessage(ChatColor.GRAY + "Position 1 unset.");
                     save = true;
                     refresh = true;
                 } else {
-                    // Start Setup
                     setupSessions.put(player.getUniqueId(), regionName + ":spawn1");
                     isRedirecting.add(player.getUniqueId());
                     player.closeInventory();
@@ -142,14 +130,13 @@ public class DuelGUIListener implements Listener {
                             ChatColor.GRAY + "Go to the location for position 1 to set it and type " + ChatColor.GREEN
                                     + "confirm" + ChatColor.GRAY + " in chat.");
                 }
-            } else if (slot == 15) { // Pos 2
+            } else if (slot == 15) {
                 if (isUnsetClick) {
                     config.set("spawn2", null);
                     player.sendMessage(ChatColor.GRAY + "Position 2 unset.");
                     save = true;
                     refresh = true;
                 } else {
-                    // Start Setup
                     setupSessions.put(player.getUniqueId(), regionName + ":spawn2");
                     isRedirecting.add(player.getUniqueId());
                     player.closeInventory();
@@ -157,7 +144,7 @@ public class DuelGUIListener implements Listener {
                             ChatColor.GRAY + "Go to the location for position 2 to set it and type " + ChatColor.GREEN
                                     + "confirm" + ChatColor.GRAY + " in chat.");
                 }
-            } else if (slot == 13) { // Clock
+            } else if (slot == 13) {
                 int minutes = config.getInt("looting-minutes", 5);
                 if (event.isLeftClick()) {
                     if (minutes < 10)
@@ -169,11 +156,11 @@ public class DuelGUIListener implements Listener {
                 config.set("looting-minutes", minutes);
                 save = true;
                 refresh = true;
-            } else if (slot == 18) { // Back
+            } else if (slot == 18) {
                 isRedirecting.add(player.getUniqueId());
                 guiManager.openRegionsGUI(player);
                 return;
-            } else if (slot == 26) { // Delete Region (Request Confirmation)
+            } else if (slot == 26) {
                 isRedirecting.add(player.getUniqueId());
                 guiManager.openDeleteConfirmGUI(player, regionName);
                 return;
@@ -189,7 +176,7 @@ public class DuelGUIListener implements Listener {
             }
 
             if (refresh) {
-                isRedirecting.add(player.getUniqueId()); // Prevent "Back" to Regions
+                isRedirecting.add(player.getUniqueId());
                 guiManager.openRegionSettingsGUI(player, regionName);
             }
         } else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&4ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛɪᴏɴ?"))) {
@@ -201,7 +188,6 @@ public class DuelGUIListener implements Listener {
                 return;
             org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getWhoClicked();
 
-            // Play click sound
             try {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.5f, 1.2f);
             } catch (Exception ignored) {
@@ -220,15 +206,15 @@ public class DuelGUIListener implements Listener {
             String regionName = pdc.get(guiManager.getRegionKey(), org.bukkit.persistence.PersistentDataType.STRING);
             int slot = event.getRawSlot();
 
-            if (slot == 11) { // Cancel -> Back to Settings
+            if (slot == 11) {
                 isRedirecting.add(player.getUniqueId());
                 guiManager.openRegionSettingsGUI(player, regionName);
-            } else if (slot == 15) { // Confirm -> Delete
+            } else if (slot == 15) {
                 java.io.File file = new java.io.File(
                         com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDataFolder(),
                         "survival/regions/duels/" + regionName + ".yml");
 
-                isRedirecting.add(player.getUniqueId()); // Prevent back-logic from messing up
+                isRedirecting.add(player.getUniqueId());
                 player.closeInventory();
 
                 if (file.exists()) {
@@ -241,7 +227,6 @@ public class DuelGUIListener implements Listener {
                         } catch (Exception ignored) {
                         }
 
-                        // Update Arena Manager
                         com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDuelArenaManager()
                                 .reloadArena(regionName);
                     } else {
@@ -251,7 +236,6 @@ public class DuelGUIListener implements Listener {
                     player.sendMessage(ChatColor.RED + "Region file not found (already deleted?).");
                 }
 
-                // Reopen regions list
                 com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
                         .runEntityTaskLater(player, () -> guiManager.openRegionsGUI(player), 1L);
             }
@@ -261,14 +245,12 @@ public class DuelGUIListener implements Listener {
     @EventHandler
     public void onInventoryClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
         String title = event.getView().getTitle();
-        // Fix: Exclude the main Settings GUI from this check
         if (title.contains(ChatColor.translateAlternateColorCodes('&', "ѕᴇᴛᴛɪɴɢѕ"))
                 && !title.equals(GUI_TITLE)
                 && !title.equals(com.h2ph.commands.player.SettingsCommand.GUI_TITLE)) {
             if (event.getPlayer() instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getPlayer();
                 if (!isRedirecting.contains(player.getUniqueId())) {
-                    // Go back to regions
                     com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
                             .runEntityTaskLater(player, () -> {
                                 com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
@@ -294,7 +276,6 @@ public class DuelGUIListener implements Listener {
                 String regionName = parts[0];
                 String path = parts[1];
 
-                // Save Logic (Must be Sync)
                 com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
                         .runEntityTask(player, () -> {
                             try {
@@ -306,9 +287,7 @@ public class DuelGUIListener implements Listener {
 
                                 org.bukkit.Location loc = player.getLocation();
                                 config.set(path + ".world", loc.getWorld().getName());
-                                config.set(path + ".x", loc.getBlockX()); // Use Block coords as requested generally,
-                                                                          // but maybe exact? Request said {x} {y} {z}
-                                                                          // which implies int usually, lore uses int.
+                                config.set(path + ".x", loc.getBlockX());
                                 config.set(path + ".y", loc.getBlockY());
                                 config.set(path + ".z", loc.getBlockZ());
                                 config.set(path + ".yaw", loc.getYaw());
@@ -318,11 +297,9 @@ public class DuelGUIListener implements Listener {
                                 player.sendMessage(ChatColor.GREEN + "Position set successfully.");
                                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 
-                                // Reload Arena (Safety Check)
                                 com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDuelArenaManager()
                                         .reloadArena(regionName);
 
-                                // Reopen GUI
                                 com.h2ph.commands.admin.duels.DuelGUIManager reopenManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
                                         com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
                                 reopenManager.openRegionSettingsGUI(player, regionName);
@@ -336,8 +313,6 @@ public class DuelGUIListener implements Listener {
             } else if (msg.equalsIgnoreCase("cancel")) {
                 setupSessions.remove(player.getUniqueId());
                 player.sendMessage(ChatColor.RED + "Setup cancelled.");
-                // Maybe reopen GUI? User didn't specify. Just keeping it closed is
-                // safer/standard.
             } else {
                 player.sendMessage(ChatColor.RED + "Please type 'confirm' to set the location, or 'cancel' to abort.");
             }

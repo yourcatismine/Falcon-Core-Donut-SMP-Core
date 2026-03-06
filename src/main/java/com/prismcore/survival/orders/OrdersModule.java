@@ -84,9 +84,6 @@ public class OrdersModule {
         if (this.orderManager != null) {
             this.orderManager.saveAll();
         }
-        // if (this.stateManager != null) {
-        // this.stateManager.saveAllPrefs();
-        // }
         instance = null;
     }
 

@@ -49,16 +49,12 @@ public class ToolsManager {
     public void loadConfig() {
         configFile = new File(plugin.getDataFolder(), "survival/tools/config.yml");
         if (!configFile.exists()) {
-            // Ensure the directory exists
             configFile.getParentFile().mkdirs();
-            // Try to save default resource if it exists in jar, otherwise create empty or
-            // default
             if (plugin.getResource("survival/tools/config.yml") != null) {
                 plugin.saveResource("survival/tools/config.yml", false);
             } else {
                 try {
                     configFile.createNewFile();
-                    // Load empty config to act upon
                     config = YamlConfiguration.loadConfiguration(configFile);
                 } catch (IOException e) {
                     plugin.getLogger().log(Level.SEVERE, "Could not create config for tools", e);
@@ -97,13 +93,12 @@ public class ToolsManager {
 
         long playerIntervalTicks = playerIntervalSeconds * 20L;
         if (playerIntervalTicks <= 0)
-            playerIntervalTicks = 600L; // 30 seconds default
+            playerIntervalTicks = 600L;
 
         long containerIntervalTicks = containerIntervalSeconds * 20L;
         if (containerIntervalTicks <= 0)
-            containerIntervalTicks = 1200L; // 60 seconds default
+            containerIntervalTicks = 1200L;
 
-        // Task 1: Update online player inventories (check expiration + update lore)
         plugin.getSchedulerAdapter().runTaskTimer(() -> {
             for (Player p : plugin.getServer().getOnlinePlayers()) {
                 plugin.getSchedulerAdapter().runEntityTask(p, () -> {
@@ -112,12 +107,7 @@ public class ToolsManager {
             }
         }, playerIntervalTicks, playerIntervalTicks);
 
-        // Note: Container scanning (chests, etc.) has been removed to avoid Folia
-        // threading issues
-        // Containers don't need real-time countdown updates - players see updated lore
-        // when they open them
 
-        // Task 2: Scan online player ender chests
         plugin.getSchedulerAdapter().runTaskTimer(() -> {
             for (Player p : plugin.getServer().getOnlinePlayers()) {
                 plugin.getSchedulerAdapter().runEntityTask(p, () -> {
@@ -128,7 +118,6 @@ public class ToolsManager {
     }
 
     public void updatePlayerTools(Player player) {
-        // Legacy method - now uses ContainerScanner
         containerScanner.scanInventory(player.getInventory(), player.getLocation(), player);
     }
 
@@ -141,7 +130,6 @@ public class ToolsManager {
         }
         boolean useCountdown = cfg.getBoolean("use-countdown", true);
         long timerSec = (overrideTimer > 0) ? overrideTimer : cfg.getLong("timer", 0L);
-        // NO Expiry calculation here. Just store raw seconds.
 
         try {
             mat = org.bukkit.Material.valueOf((String) cfg.getString("material", "").toUpperCase());
@@ -185,7 +173,6 @@ public class ToolsManager {
         if (meta instanceof org.bukkit.inventory.meta.Damageable) {
             ((org.bukkit.inventory.meta.Damageable) meta).setDamage(0);
         }
-        // Set Expiration Timestamp (timestamp-based system)
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG,
                 expiryTimestamp);
@@ -243,7 +230,6 @@ public class ToolsManager {
         }
         meta.getPersistentDataContainer().set(ToolsManager.MULTI_KEY, org.bukkit.persistence.PersistentDataType.BYTE,
                 (byte) 1);
-        // Set Expiration Timestamp (timestamp-based system)
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG,
                 expiryTimestamp);
@@ -299,7 +285,6 @@ public class ToolsManager {
             }).toList();
             meta.setLore(finalLore);
         }
-        // Set Expiration Timestamp (timestamp-based system)
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG,
                 expiryTimestamp);
@@ -322,10 +307,8 @@ public class ToolsManager {
             return;
         }
 
-        // Set potion to water bottle base
         meta.setBasePotionType(org.bukkit.potion.PotionType.WATER);
 
-        // Set custom color
         String colorHex = cfg.getString("potion-color", "8B5CF6");
         try {
             int rgb = Integer.parseInt(colorHex, 16);
@@ -346,7 +329,6 @@ public class ToolsManager {
             meta.setLore(finalLore);
         }
 
-        // Mark as shard booster and store expiration timestamp
         meta.getPersistentDataContainer().set(ToolsManager.BOOSTER_KEY, org.bukkit.persistence.PersistentDataType.BYTE,
                 (byte) 1);
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
@@ -379,7 +361,6 @@ public class ToolsManager {
         if (!meta.getPersistentDataContainer().has(EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG))
             return;
 
-        // Determine the config key for this tool type
         String configKey = null;
         if (meta.getPersistentDataContainer().has(MULTI_KEY, org.bukkit.persistence.PersistentDataType.BYTE)) {
             configKey = "multitool";
@@ -410,7 +391,6 @@ public class ToolsManager {
         long freshExpiry = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG, freshExpiry);
 
-        // Also clear last-update timestamp so lore refreshes on next scanner tick
         meta.getPersistentDataContainer().remove(LAST_UPDATE_KEY);
 
         item.setItemMeta(meta);
@@ -468,10 +448,8 @@ public class ToolsManager {
             meta.setLore(finalLore);
         }
 
-        // Mark as sell axe
         meta.getPersistentDataContainer().set(SELL_AXE_KEY, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
 
-        // Expiry
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG,
                 expiryTimestamp);

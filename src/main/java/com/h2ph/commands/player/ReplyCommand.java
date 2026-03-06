@@ -32,7 +32,6 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
-        // --- MUTE CHECK ---
         com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(player.getUniqueId());
         if (senderData != null && senderData.isMuted()) {
@@ -67,10 +66,8 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
         Player target = null;
         String message = "";
 
-        // Check if first argument is a player
         Player potentialTarget = Bukkit.getPlayer(args[0]);
         if (potentialTarget != null) {
-            // Case: /reply <player> <message>
             if (args.length < 2) {
                 player.sendMessage(ChatColor.RED + "Usage: /reply <player> <message>");
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
@@ -78,21 +75,18 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
             }
             target = potentialTarget;
 
-            // Build message from args[1] onwards
             StringBuilder messageBuilder = new StringBuilder();
             for (int i = 1; i < args.length; i++) {
                 messageBuilder.append(args[i]).append(" ");
             }
             message = messageBuilder.toString().trim();
 
-            // Check if there is an existing conversation
             if (!pmManager.hasConversation(player.getUniqueId(), target.getUniqueId())) {
                 player.sendMessage(ChatColor.GRAY + "You dont have a previous private messages to this player.");
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         } else {
-            // Case: /reply <message> (Reply to last messenger)
             UUID lastMessengerId = pmManager.getReplyTarget(player.getUniqueId());
             if (lastMessengerId == null) {
                 player.sendMessage(ChatColor.RED + "You have nobody to reply to.");
@@ -107,7 +101,6 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Build message from args[0] onwards
             StringBuilder messageBuilder = new StringBuilder();
             for (int i = 0; i < args.length; i++) {
                 messageBuilder.append(args[i]).append(" ");
@@ -121,7 +114,6 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has private messages enabled
         com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
                 .get(target.getUniqueId());
         if (data != null && !data.isPrivateMessages()) {
@@ -132,7 +124,6 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Send messages
         String senderFormat = ChatColor.translateAlternateColorCodes('&',
                 "&dyou -> " + target.getName() + ":&f " + message);
         String receiverFormat = ChatColor.translateAlternateColorCodes('&',
@@ -146,15 +137,12 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
         com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(target.getUniqueId(),
                 ActivityLogger.LogType.MESSAGE, "PM from " + player.getName() + ": " + message);
 
-        // Update reply targets
         pmManager.setReplyTarget(target.getUniqueId(), player.getUniqueId());
         pmManager.setReplyTarget(player.getUniqueId(), target.getUniqueId());
 
-        // Sound Notification
         com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && targetData.isSoundNotifications()) {
-            // Sound removed upon request
         }
 
         return true;

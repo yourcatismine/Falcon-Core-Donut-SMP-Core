@@ -46,7 +46,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
         this.queueManager.setRequestManager(this.requestManager);
     }
 
-    // ...
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
@@ -56,7 +55,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             if (sender instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
                 if (queueManager.isInQueue(player.getUniqueId())) {
-                    // Do not let open queue again, play error sound only
                     try {
                         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     } catch (Exception ignored) {
@@ -72,7 +70,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
 
         String subCommand = args[0].toLowerCase();
 
-        // 1. Check for specific subcommands first
         if (subCommand.equals("leave")) {
             if (!(sender instanceof org.bukkit.entity.Player)) {
                 sender.sendMessage(ChatColor.RED + "Only players can use this command.");
@@ -80,11 +77,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             }
             org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
 
-            // Check if in active duel (fighting)
             if (arenaManager.isInDuel(player)) {
-                // Forfeit
-                // We set health to 0 to trigger PlayerDeathEvent.
-                // This ensures items drop for looting and standard end-duel logic is triggered.
                 String msg = org.bukkit.ChatColor.GRAY + "You forfeited the match.";
                 sender.sendMessage(msg);
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -94,7 +87,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Check if looting (winner phase)
             if (arenaManager.isLooting(player)) {
                 String msg = org.bukkit.ChatColor.GRAY + "You left the arena.";
                 sender.sendMessage(msg);
@@ -104,7 +96,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Not in duel or looting
             String errorMsg = ChatColor.RED + "You are not in a duel.";
             sender.sendMessage(errorMsg);
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -131,7 +122,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             }
             return true;
         } else if (subCommand.equals("queue")) {
-            // Handle queue GUI with live updates
             if (!(sender instanceof org.bukkit.entity.Player)) {
                 sender.sendMessage(ChatColor.RED + "Only players can use this command.");
                 return true;
@@ -140,7 +130,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             queueManager.openQueueGUI(player);
             return true;
         } else if (subCommand.equals("cancel")) {
-            // Handle cancellation
             if (!(sender instanceof org.bukkit.entity.Player)) {
                 sender.sendMessage(ChatColor.RED + "Only players can use this command.");
                 return true;
@@ -168,77 +157,27 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // 2. If valid player name, treat as duel request
         org.bukkit.entity.Player target = Bukkit.getPlayer(subCommand);
         if (target != null) {
             if (!(sender instanceof org.bukkit.entity.Player)) {
                 sender.sendMessage(ChatColor.RED + "Only players can request duels.");
                 return true;
             }
-            // If in queue, cancel queue
             org.bukkit.entity.Player creator = (org.bukkit.entity.Player) sender;
             if (queueManager.isInQueue(creator.getUniqueId())) {
                 queueManager.leaveQueue(creator);
                 creator.sendMessage(ChatColor.YELLOW + "You left the duel queue to send a request.");
             }
 
-            // Register Listener locally? OR should Main class register it?
-            // Listener needs to be registered. Since DuelCreationGUI implements Listener,
-            // we can register it when created, but we need to unregister it when closed.
-            // OR, better, make DuelCreationGUI instance persistent?
-            // Unregistering listeners is tricky.
-            // Better: Have a singleton Manager that handles clicks, or use a general
-            // persistent implementation.
-            // Given the structure, creating a new GUI + Listener per request is messy for
-            // memory if not cleaned.
 
-            // SIMPLER APPROACH for this codebase:
-            // Instantiate DuelCreationGUI, register events, open inventory.
-            // The GUI class itself should unregister itself on Close.
-            // Does DuelCreationGUI handle unregister?
-            // I wrote "public class DuelCreationGUI implements InventoryHolder, Listener"
-            // But I didn't add logic to unregister.
-            // Let's assume for now we register, and memory leaks are "future problem"? NO.
-            // Let's rely on checking holder in a global listener or...
-            //
-            // Actually, `DuelCreationGUI` as written acts as the holder.
-            // We can have a SINGLE `DuelGUIListener` in the plugin that checks
-            // `event.getInventory().getHolder() instanceof DuelCreationGUI`.
-            // Retrying logic:
-            // I cannot dynamically register listeners safely without unregistering.
-            // I will modify `DuelCreationGUI` to NOT be a listener itself, but handle
-            // clicks via a central listener, OR
-            // stick to `DuelCommand` registering it and `DuelCreationGUI` unregistering on
-            // close.
 
-            // Let's go with: Open GUI. Detailed logic below creates and opens it.
-            // I will need to register a GLOBAL listener for DuelCreationGUI interactions if
-            // I haven't already.
-            // Wait, I created `DuelCreationGUI` file but haven't registered a listener for
-            // it in `PrismSurvival` yet.
-            // I should probably register a dedicated `DuelCreationListener` or similar.
-            //
-            // Refactoring plan:
-            // 1. Open GUI here.
-            // 2. I need to make sure the events are handled.
-            // Since I can't easily edit PrismSurvival to register a NEW class without
-            // potential conflict or restart,
-            // I'll assume I can add a listener or use `DuelCommand` as the listener?
-            // `DuelCommand` is already a CommandExecutor.
-            // Let's make `DuelCommand` (or a manager) listen for InventoryClick.
 
-            // Checking `DuelCreationGUI.java` content again...
-            // It HAS `@EventHandler public void onClick`.
-            // So it expects to be registered.
 
-            // Disable self-duel (handled in sendRequest but good to check here too if
-            // needed, but RequestManager handles it)
             if (creator.getUniqueId().equals(target.getUniqueId())) {
                 creator.sendMessage(ChatColor.RED + "You cannot duel yourself.");
                 return true;
             }
 
-            // Check if target has disabled duel requests
             com.prismcore.survival.manager.PlayerData targetData = plugin.getPlayerDataManager()
                     .get(target.getUniqueId());
             if (targetData != null && !targetData.isDuelRequests()) {
@@ -253,7 +192,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Check if target has ignored the sender
             if (targetData != null && targetData.isIgnoring(creator.getUniqueId())) {
                 String errorMsg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
                 creator.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -272,10 +210,8 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check for offline/unknown player
         if (sender instanceof org.bukkit.entity.Player) {
             org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
-            // Iterate through offline players to find a match (case-insensitive)
             org.bukkit.OfflinePlayer offlineTarget = null;
             for (org.bukkit.OfflinePlayer op : Bukkit.getOfflinePlayers()) {
                 if (op.getName() != null && op.getName().equalsIgnoreCase(subCommand)) {
@@ -284,11 +220,8 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 }
             }
 
-            // Also check offline target settings if we wanted to be thorough, but offline
-            // players can't receive requests anyway
-            // in this system (live requests). So we just show "Not Online".
 
-            if (offlineTarget != null) { // We found them in the cache/offline list
+            if (offlineTarget != null) {
                 String msg = ChatColor.RED + "This user is not online.";
                 sender.sendMessage(msg);
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -311,8 +244,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // 3. Fallback
-        // 3. Fallback (Open GUI by default for players)
         if (sender instanceof org.bukkit.entity.Player) {
             queueManager.openQueueGUI((org.bukkit.entity.Player) sender);
         } else {
@@ -369,7 +300,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             config.set("created-by", bukkitPlayer.getName());
             config.set("created-at", System.currentTimeMillis());
 
-            // Detect Biome from Center
             int minX = min.getX();
             int maxX = max.getX();
             int minY = min.getY();
@@ -382,18 +312,13 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             int centerZ = (minZ + maxZ) / 2;
             org.bukkit.block.Biome biome = bukkitPlayer.getWorld().getBiome(centerX, centerY, centerZ);
 
-            // Format Biome Name (e.g. PLAINS -> Plains, DESERT -> Desert)
             String biomeName = biome.name().toLowerCase();
             biomeName = Character.toUpperCase(biomeName.charAt(0)) + biomeName.substring(1);
-            // Handle underscores (e.g. FOREST_HILLS -> Forest Hills) - Optional but nicer
-            // Actually user example just said "Plains" or "Desert".
-            // Simple Capitalization is robust enough for now.
 
             config.set("biome", biomeName);
 
             config.save(duelFile);
 
-            // Reload into memory immediately
             arenaManager.reloadArena(name);
 
             sender.sendMessage(ChatColor.GREEN + "Duel region " + ChatColor.YELLOW + name + ChatColor.GREEN
@@ -420,15 +345,10 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
         guiManager.openSettingsGUI(player);
     }
 
-    // Helper createItem removed as it's now in GUIManager, or kept if used
-    // elsewhere?
-    // It is used only in handleSettings locally. so we can remove it or keep if
-    // needed later.
-    // Clean up:
     /*
      * private ItemStack createItem(Material material, String name, String... lore)
      * {
-     * // ... (Moved to Manager)
+     *
      * }
      */
 
@@ -450,7 +370,6 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 completions.add("settings");
             }
 
-            // Suggest online players
             completions.addAll(Bukkit.getOnlinePlayers().stream()
                     .map(org.bukkit.entity.Player::getName)
                     .collect(Collectors.toList()));
@@ -461,9 +380,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && (args[0].equalsIgnoreCase("accept") || args[0].equalsIgnoreCase("decline"))) {
-            // Suggest players who might have sent a request?
-            // For now, just online players is fine as helper, or return null for default.
-            return null; // Return null to show online players by default
+            return null;
         }
 
         return Collections.emptyList();

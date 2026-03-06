@@ -28,8 +28,6 @@ public class InvSeeGUI {
 
         viewer.openInventory(inv);
 
-        // Start a sync task to keep the GUI updated
-        // Use Folia-compatible viewer task
         viewer.getScheduler().runAtFixedRate(plugin, (task) -> {
             if (!viewer.isOnline() || !viewer.getOpenInventory().getTitle().contains("ɪɴᴠᴇɴᴛᴏʀʏ")) {
                 task.cancel();
@@ -57,17 +55,13 @@ public class InvSeeGUI {
         ItemStack[] armor = target.getInventory().getArmorContents();
         ItemStack offhand = target.getInventory().getItemInOffHand();
 
-        // Armor: 0 (Boots), 1 (Legs), 2 (Chest), 3 (Head) in Spigot armor array
-        // We display as: Head, Chest, Legs, Boots (0, 1, 2, 3 in GUI)
-        inv.setItem(0, armor[3]); // Head
-        inv.setItem(1, armor[2]); // Chest
-        inv.setItem(2, armor[1]); // Legs
-        inv.setItem(3, armor[0]); // Boots
+        inv.setItem(0, armor[3]);
+        inv.setItem(1, armor[2]);
+        inv.setItem(2, armor[1]);
+        inv.setItem(3, armor[0]);
 
-        // Offhand in slot 8
         inv.setItem(8, offhand);
 
-        // Glass pane separator in row 1
         ItemStack glass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         org.bukkit.inventory.meta.ItemMeta meta = glass.getItemMeta();
         if (meta != null) {
@@ -78,9 +72,6 @@ public class InvSeeGUI {
             inv.setItem(i, glass);
         }
 
-        // Main Inventory: 18-53
-        // Target contents: 0-8 (Hotbar), 9-35 (Main)
-        // We want to map them logically or directly. Let's do 18-53 as 0-35.
         for (int i = 0; i < 36; i++) {
             inv.setItem(18 + i, contents[i]);
         }

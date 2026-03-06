@@ -22,7 +22,6 @@ public class TransactionManager {
         UUID sellerUuid = controller.getPlugin().getServer().getOfflinePlayer(seller).getUniqueId();
         UUID buyerUuid = controller.getPlugin().getServer().getOfflinePlayer(buyer).getUniqueId();
 
-        // Save to Database
         controller.getPlugin().getDatabaseManager().addAuctionTransactionAsync(sellerUuid, txSeller);
         controller.getPlugin().getDatabaseManager().addAuctionTransactionAsync(buyerUuid, txBuyer);
 
@@ -66,7 +65,6 @@ public class TransactionManager {
     }
 
     public void loadFromConfig() {
-        // Migration logic: Read from YML once and move to Database
         FileConfiguration cfg = this.controller.getStorageConfig();
         if (!cfg.isConfigurationSection("transactions")) {
             return;
@@ -96,14 +94,12 @@ public class TransactionManager {
     }
 
     public void saveToConfig() {
-        // No longer needed, as we use Database
     }
 
     public void deleteTransaction(Transaction tx) {
         UUID sellerUuid = this.controller.getPlugin().getServer().getOfflinePlayer(tx.getSeller()).getUniqueId();
         UUID buyerUuid = this.controller.getPlugin().getServer().getOfflinePlayer(tx.getBuyer()).getUniqueId();
 
-        // Delete from DB
         controller.getPlugin().getDatabaseManager().deleteAuctionTransactionAsync(sellerUuid, tx.getTimestamp(),
                 tx.getPrice());
         controller.getPlugin().getDatabaseManager().deleteAuctionTransactionAsync(buyerUuid, tx.getTimestamp(),

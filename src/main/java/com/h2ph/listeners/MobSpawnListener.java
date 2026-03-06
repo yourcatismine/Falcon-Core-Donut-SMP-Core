@@ -18,7 +18,6 @@ public class MobSpawnListener implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        // Only care about natural spawns of Monsters (Hostile mobs) and Slimes
         if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) {
             return;
         }
@@ -27,8 +26,6 @@ public class MobSpawnListener implements Listener {
             return;
         }
 
-        // Radius should be exactly 150 as requested.
-        // If ANY player within 150 blocks has the setting enabled, cancel the spawn.
         double radiusSquared = 150.0 * 150.0;
 
         boolean shouldCancel = event.getLocation().getWorld().getPlayers().stream()

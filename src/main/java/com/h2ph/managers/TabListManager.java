@@ -74,7 +74,6 @@ public class TabListManager implements Listener {
         this.maxRows = rows;
         this.maxTabEntries = columns * rows;
         
-        // Load group sorting configuration
         this.groupSortingEnabled = config.getBoolean("TAB.GROUP_SORTING.ENABLED", true);
         this.groupRankings.clear();
         
@@ -89,7 +88,6 @@ public class TabListManager implements Listener {
     public void reloadTabList() {
         tabEntries.clear();
         loadConfig();
-        // Immediately update all online players' TAB lists
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateTabList(player);
         }
@@ -191,7 +189,6 @@ public class TabListManager implements Listener {
         Component headerComp = LegacyComponentSerializer.legacySection().deserialize(headerColored);
         Component footerComp = LegacyComponentSerializer.legacySection().deserialize(footerColored);
 
-        // Set player list header and footer using Paper API
         player.sendPlayerListHeaderAndFooter(headerComp, footerComp);
         lastSentHeaderFooter.put(player.getUniqueId(), headerFooterKey);
     }
@@ -199,7 +196,6 @@ public class TabListManager implements Listener {
     private void updatePlayerDisplayNames(Player player) {
         Map<UUID, String> playerNames = playerDisplayNames.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
 
-        // Get all online players and sort them by group ranking if enabled
         List<Player> sortedPlayers;
         if (groupSortingEnabled) {
             sortedPlayers = Bukkit.getOnlinePlayers().stream()
@@ -212,11 +208,8 @@ public class TabListManager implements Listener {
         for (Player onlinePlayer : sortedPlayers) {
             UUID onlineUUID = onlinePlayer.getUniqueId();
 
-            // Check if player is in spectator mode
             if (onlinePlayer.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
-                // Only show spectators if viewer has permission
                 if (!player.hasPermission("prism.admin.see_spectators")) {
-                    // Remove from TAB if they were previously shown
                     playerNames.remove(onlineUUID);
                     continue;
                 }
@@ -236,10 +229,8 @@ public class TabListManager implements Listener {
             if (lastDisplayName != null && lastDisplayName.equals(displayName))
                 continue;
 
-            // Update player list name using Paper API
             player.playerListName(LegacyComponentSerializer.legacySection().deserialize(displayName));
 
-            // Alternatively, for all players we can use:
             onlinePlayer.setPlayerListName(displayName);
             playerNames.put(onlineUUID, displayName);
         }
@@ -270,13 +261,11 @@ public class TabListManager implements Listener {
         int rank1 = getGroupRanking(p1);
         int rank2 = getGroupRanking(p2);
         
-        // Higher ranking comes first (descending order)
         int groupCompare = Integer.compare(rank2, rank1);
         if (groupCompare != 0) {
             return groupCompare;
         }
         
-        // If same group ranking, sort alphabetically by name
         return p1.getName().compareToIgnoreCase(p2.getName());
     }
 
@@ -370,7 +359,6 @@ public class TabListManager implements Listener {
         boolean modified = false;
         
         if (!groupSortingEnabled) {
-            // Use original logic if group sorting is disabled
             Iterator<PlayerData> iterator = entries.iterator();
             while (iterator.hasNext()) {
                 PlayerData data = iterator.next();
@@ -398,7 +386,6 @@ public class TabListManager implements Listener {
             return modified;
         }
 
-        // Group sorting enabled - sort entries by group ranking
         List<PlayerData> sortedEntries = new ArrayList<>();
         Iterator<PlayerData> iterator = entries.iterator();
         
@@ -433,7 +420,6 @@ public class TabListManager implements Listener {
             }
         }
         
-        // Sort the entries by group ranking
         sortedEntries.sort((data1, data2) -> {
             UUID uuid1 = extractUuid(data1);
             UUID uuid2 = extractUuid(data2);
@@ -448,7 +434,6 @@ public class TabListManager implements Listener {
             return comparePlayersByGroupRanking(p1, p2);
         });
         
-        // Update the entries list with sorted order
         entries.clear();
         entries.addAll(sortedEntries);
         
@@ -507,27 +492,22 @@ public class TabListManager implements Listener {
         if (text == null || text.isEmpty())
             return "";
 
-        // {ping} - Player's ping
         if (text.contains("{ping}")) {
             text = text.replace("{ping}", String.valueOf(player.getPing()));
         }
 
-        // {tps} - Server TPS
         if (text.contains("{tps}")) {
             text = text.replace("{tps}", String.format("%.2f", getServerTPS()));
         }
 
-        // {mspt} - Milliseconds per tick
         if (text.contains("{mspt}")) {
             text = text.replace("{mspt}", String.format("%.2f", getServerMSPT()));
         }
 
-        // %online% - Online player count
         if (text.contains("%online%")) {
             text = text.replace("%online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
         }
 
-        // PlaceholderAPI support ({server_tps_1}, {mspt}, etc.)
         if (text.contains("%") && plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             text = PlaceholderAPI.setPlaceholders(player, text);
         }
@@ -537,7 +517,6 @@ public class TabListManager implements Listener {
 
     private double getServerTPS() {
         try {
-            // Try modern Paper/Folia API first
             Object server = Bukkit.getServer();
             java.lang.reflect.Method method = server.getClass().getMethod("recentTps");
             Object result = method.invoke(server);
@@ -546,12 +525,10 @@ public class TabListManager implements Listener {
                 double[] tpsArray = (double[]) result;
                 if (tpsArray.length > 0) {
                     double tps = tpsArray[0];
-                    // Cap at 20.0 (max TPS)
                     return Math.min(tps, 20.0);
                 }
             }
         } catch (Exception e) {
-            // Fallback approach: use average tick time if available
             try {
                 Object server = Bukkit.getServer();
                 java.lang.reflect.Method method = server.getClass().getMethod("getAverageTickTime");
@@ -560,14 +537,12 @@ public class TabListManager implements Listener {
                 if (result instanceof double[]) {
                     double[] avgTickTime = (double[]) result;
                     if (avgTickTime.length > 0) {
-                        // Convert milliseconds to TPS: TPS = 1000 / avgTickTime
                         double tickTimeMs = avgTickTime[0];
                         double tps = 1000.0 / Math.max(tickTimeMs, 50.0);
                         return Math.min(tps, 20.0);
                     }
                 }
             } catch (Exception ex) {
-                // Final fallback
             }
         }
         return 20.0;
@@ -575,7 +550,6 @@ public class TabListManager implements Listener {
 
     private double getServerMSPT() {
         try {
-            // Try to get average tick time directly
             Object server = Bukkit.getServer();
             java.lang.reflect.Method method = server.getClass().getMethod("getAverageTickTime");
             Object result = method.invoke(server);
@@ -583,30 +557,25 @@ public class TabListManager implements Listener {
             if (result instanceof double[]) {
                 double[] avgTickTime = (double[]) result;
                 if (avgTickTime.length > 0) {
-                    // Return the first value (1 minute average)
                     double mspt = avgTickTime[0];
-                    return Math.max(0, Math.min(mspt, 100.0)); // Cap at 100ms
+                    return Math.max(0, Math.min(mspt, 100.0));
                 }
             }
         } catch (Exception e) {
-            // Fallback: calculate from TPS
             try {
                 double tps = getServerTPS();
-                // MSPT = 1000 / TPS
                 double mspt = 1000.0 / Math.max(tps, 0.01);
                 return Math.min(mspt, 100.0);
             } catch (Exception ex) {
-                // Final fallback
             }
         }
-        return 50.0; // Default: 50ms (20 TPS)
+        return 50.0;
     }
 
     private String color(String text) {
         if (text == null || text.isEmpty())
             return "";
 
-        // Fast path: skip regex if no hex indicator is present
         if (!text.contains("&#")) {
             return ChatColor.translateAlternateColorCodes('&', text);
         }

@@ -9,8 +9,7 @@ public class StringUtils {
 
     static {
         char[] normal = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        char[] small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ".toCharArray(); // Note: some chars like 'x' might not have perfect
-                                                                   // small caps in all fonts, using best approx.
+        char[] small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ".toCharArray();
 
         for (int i = 0; i < normal.length; i++) {
             if (i < small.length) {

@@ -30,7 +30,6 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
-        // --- MUTE CHECK ---
         com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(player.getUniqueId());
         if (senderData != null && senderData.isMuted()) {
@@ -62,7 +61,6 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         String targetName = args[0];
 
-        // Build the message from args[1] onwards
         StringBuilder messageBuilder = new StringBuilder();
         for (int i = 1; i < args.length; i++) {
             messageBuilder.append(args[i]).append(" ");
@@ -76,18 +74,15 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if player exists (online)
         if (target == null) {
             final String finalTargetName = targetName;
             com.h2ph.PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(finalTargetName);
                 if (offlineTarget.hasPlayedBefore()) {
-                    // User is offline
                     String offlineMsg = ChatColor.RED + "This user is not online.";
                     player.sendMessage(offlineMsg);
                     player.sendActionBar(Component.text("This user is not online.", NamedTextColor.RED));
                 } else {
-                    // User does not exist
                     String noExistMsg = ChatColor.RED + "That user does not exist.";
                     player.sendMessage(noExistMsg);
                     player.sendActionBar(Component.text("That user does not exist.", NamedTextColor.RED));
@@ -97,7 +92,6 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has private messages enabled
         com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
                 .get(target.getUniqueId());
         if (data != null && !data.isPrivateMessages()) {
@@ -108,7 +102,6 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if target has ignored the sender
         if (data != null && data.isIgnoring(player.getUniqueId())) {
             String errorMsg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -117,7 +110,6 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Send messages
         String senderFormat = ChatColor.translateAlternateColorCodes('&',
                 "&dyou -> " + target.getName() + ":&f " + message);
         String receiverFormat = ChatColor.translateAlternateColorCodes('&',
@@ -131,17 +123,14 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
         com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(target.getUniqueId(),
                 ActivityLogger.LogType.MESSAGE, "PM from " + player.getName() + ": " + message);
 
-        // Update reply targets
         com.h2ph.managers.PrivateMessageManager pmManager = com.h2ph.PrismSurvival.getInstance()
                 .getPrivateMessageManager();
         pmManager.setReplyTarget(target.getUniqueId(), player.getUniqueId());
         pmManager.setReplyTarget(player.getUniqueId(), target.getUniqueId());
 
-        // Sound Notification
         com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && targetData.isSoundNotifications()) {
-            // Sound removed upon request
         }
 
         return true;

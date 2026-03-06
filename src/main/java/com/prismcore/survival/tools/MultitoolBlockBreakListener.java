@@ -115,7 +115,6 @@ public class MultitoolBlockBreakListener implements Listener {
         ItemStack morphed = new ItemStack(newToolMat, 1);
         ItemMeta newMeta = morphed.getItemMeta();
         if (newMeta != null) {
-            // Need to declare final variables for lambda
             ItemMeta finalNewMeta = newMeta;
             meta.getEnchants().forEach((ench, lvl) -> finalNewMeta.addEnchant(ench, lvl.intValue(), true));
             if (meta.hasDisplayName()) {

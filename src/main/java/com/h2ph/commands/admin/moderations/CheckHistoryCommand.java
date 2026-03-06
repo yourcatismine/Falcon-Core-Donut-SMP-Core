@@ -40,21 +40,17 @@ public class CheckHistoryCommand implements CommandExecutor {
             return true;
         }
 
-        // Toggle the history logging state
         boolean newState = !data.isCheckHistory();
         data.setCheckHistory(newState);
         
-        // Save the change
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
         if (newState) {
-            // History logging turned ON - Actionbar only always show
             String actionMsg = ChatColor.translateAlternateColorCodes('&', "&7Logging History on.");
 
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionMsg));
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1f);
         } else {
-            // History logging turned OFF - Actionbar only
             String actionMsg = ChatColor.translateAlternateColorCodes('&', "&7Logging History off.");
 
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionMsg));

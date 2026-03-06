@@ -15,26 +15,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Arrays;
 import java.util.List;
 
-// Permission required for home slots 3-10
-// prismcore.home.3 / .4 / ... / .10 — or prismcore.home.all for all homes
-// slots without permission show a locked RED_BED / RED_DYE
 
 public class HomeGUI {
 
-    // ── How many personal home slots ──
     public static final int HOME_COUNT = 10;
 
-    // Homes 1-5: beds at slots 3-7, dyes at slots 12-16
     public static final int BED_START = 3;
     public static final int DYE_START = 12;
 
-    // Homes 6-10: beds at slots 21-25, dyes at slots 30-34
     public static final int BED_START_2 = 21;
     public static final int DYE_START_2 = 30;
 
-    // ─────────────────────────────────────────────
-    // Inventory holder (used to identify this GUI)
-    // ─────────────────────────────────────────────
     public static class HomeHolder implements InventoryHolder {
         @Override
         public Inventory getInventory() {
@@ -42,45 +33,35 @@ public class HomeGUI {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // Open the GUI for a player
-    // ─────────────────────────────────────────────
     public static void open(Player player, PrismSurvival plugin) {
         HomeManager manager = plugin.getHomeManager();
 
-        // Title: &8ʜᴏᴍᴇѕ (size 36 = 4 rows, slots 0-35)
         String title = color("&8\u029c\u1d0f\u1d0d\u1d07\u0455");
         Inventory inv = Bukkit.createInventory(new HomeHolder(), 36, title);
 
-        // ── Team Home Logic ──────────────────────────────────────────────────
         com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         boolean isOwner = data != null && "OWNER".equalsIgnoreCase(data.getTeamRole());
 
         if (team == null) {
-            // Slot 10 : Gray Banner – No Team
             inv.setItem(10, make(Material.GRAY_BANNER,
                     color("&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                     List.of(color("&cYou are not in a team."))));
         } else if (!team.hasHome()) {
-            // Slot 10 : Gray Banner – Team Home (Not set)
             inv.setItem(10, make(Material.GRAY_BANNER,
                     color("&dYour team does not have a home"),
                     List.of(color("&fNo team home"))));
 
-            // Slot 19 : Gray Dye – Team Home (Second row, Not set, Owner only)
             if (isOwner) {
                 inv.setItem(19, make(Material.GRAY_DYE,
                         color("&dYour team does not have a home"),
                         List.of(color("&fNo team home"))));
             }
         } else {
-            // Slot 10 : Purple Banner – Team Home (Set)
             inv.setItem(10, make(Material.PURPLE_BANNER,
                     color("&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                     List.of(color("&fCick to teleport to team home"))));
 
-            // Slot 19 : Purple Dye – Delete Team Home (Owner only)
             if (isOwner) {
                 inv.setItem(19, make(Material.PURPLE_DYE,
                         color("&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
@@ -88,26 +69,19 @@ public class HomeGUI {
             }
         }
 
-        // ── Slots 3-7, 12-16 (homes 1-5) and 21-25, 30-34 (homes 6-10)
-        // ─────────────────────────────────────────────────────────────────────
         for (int i = 0; i < HOME_COUNT; i++) {
             int homeNumber = i + 1;
 
-            // Calculate slot based on home group
             int bedSlot, dyeSlot;
             if (i < 5) {
-                // Homes 1-5
                 bedSlot = BED_START + i;
                 dyeSlot = DYE_START + i;
             } else {
-                // Homes 6-10
                 bedSlot = BED_START_2 + (i - 5);
                 dyeSlot = DYE_START_2 + (i - 5);
             }
 
-            // Slots 3-10 require permission prismcore.home.N or prismcore.home.all
             if (homeNumber >= 3 && !player.hasPermission("prismcore.home." + homeNumber) && !player.hasPermission("prismcore.home.all")) {
-                // ── Locked slot ──────────────────────────────────────────────────
                 List<String> lockedLore = List.of(
                         color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes"));
                 inv.setItem(bedSlot, make(Material.RED_BED,
@@ -120,31 +94,25 @@ public class HomeGUI {
             }
 
             if (manager.hasHome(player.getUniqueId(), homeNumber)) {
-                // ── Home IS set ──────────────────────────────────────────────────
                 String homeName = manager.getHomeName(player.getUniqueId(), homeNumber);
                 String baseName = color("&d\u029c\u1d0f\u1d0d\u1d07 " + homeNumber);
                 String displayName = (homeName != null && !homeName.isEmpty()) ? baseName + " " + homeName : baseName;
 
-                // Purple bed: click to teleport
                 ItemStack bed = make(Material.PURPLE_BED,
                         displayName,
                         List.of(color("&fClick to teleport to your home")));
                 inv.setItem(bedSlot, bed);
 
-                // Purple dye: click to delete
                 ItemStack dye = make(Material.PURPLE_DYE,
                         displayName,
                         List.of(color("&fClick to delete " + ChatColor.stripColor(displayName))));
                 inv.setItem(dyeSlot, dye);
             } else {
-                // ── No home set ─────────────────────────────────────────────────
-                // Gray bed (top) – decorative only
                 ItemStack bed = make(Material.GRAY_BED,
                         color("&7\u0274\u1d0f \u029c\u1d0f\u1d0d\u1d07 \u0455\u1d07\u1d1b"),
                         List.of(color("&f- Click to save your location")));
                 inv.setItem(bedSlot, bed);
 
-                // Gray dye (bottom) – click to set
                 ItemStack dye = make(Material.GRAY_DYE,
                         color("&7\u0274\u1d0f \u029c\u1d0f\u1d0d\u1d07 \u0455\u1d07\u1d1b"),
                         List.of(color("&f- Click to save your location")));
@@ -155,7 +123,6 @@ public class HomeGUI {
         player.openInventory(inv);
     }
 
-    // ── Helpers ──
     public static ItemStack make(Material mat, String name, List<String> lore) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();

@@ -33,17 +33,13 @@ public class ShardsManager implements Listener {
     private int rewardAmount;
     private String permission;
 
-    // Kill Reward Config
     private int killRewardAmount;
-    private int killRewardCooldown; // Seconds
+    private int killRewardCooldown;
 
-    // Messages & Sounds
     private String activeActionbarMessage;
 
-    // Cooldown Map: Killer UUID -> Victim UUID -> Expiry Time (Millis)
     private final Map<UUID, Map<UUID, Long>> killCooldowns = new HashMap<>();
 
-    // Active Time Map: Player UUID -> Seconds Active
     private final Map<UUID, Integer> activeTime = new HashMap<>();
 
     private BukkitTask task;
@@ -69,25 +65,20 @@ public class ShardsManager implements Listener {
         killRewardAmount = config.getInt("kill-reward.amount", 1);
         killRewardCooldown = config.getInt("kill-reward.cooldown", 300);
 
-        // passiveChatMessage = config.getString("messages.passive.chat", "&7You have
-        // received &5{shard} shards.");
         activeActionbarMessage = config.getString("messages.active.actionbar",
                 "&5+{shards} shards&7 for killing &f{PLAYER}");
     }
 
     public void reloadConfig() {
         loadConfig();
-        // Cancel old task if running
         if (task != null && !task.isCancelled()) {
             task.cancel();
             task = null;
         }
         startTask();
-        // Clear cooldowns on reload? Maybe not, prevents bypass.
     }
 
     private void startTask() {
-        // Run every second (20 ticks) to increment counters
         task = plugin.getSchedulerAdapter().runTaskTimer(() -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 updateActiveTime(player);
@@ -100,13 +91,10 @@ public class ShardsManager implements Listener {
             return;
         }
 
-        // Pause passive timer if player is in an AFK region (they earn shards from
-        // AFKManager instead)
         if (plugin.getAfkManager().getRegionAt(player.getLocation()) != null) {
             return;
         }
 
-        // Not AFK -> Increment
         UUID uuid = player.getUniqueId();
         int current = activeTime.getOrDefault(uuid, 0);
         current++;
@@ -123,16 +111,14 @@ public class ShardsManager implements Listener {
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         int amount;
 
-        // Use separate amounts instead of multiplication
         if (data.hasActiveShardBooster()) {
-            amount = 8; // Fixed amount with booster
+            amount = 8;
         } else {
-            amount = 2; // Fixed base amount for passive (changed from rewardAmount)
+            amount = 2;
         }
 
         data.addShards(amount, "Passive Reward");
 
-        // Unified actionbar notification
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                 TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&d+" + amount + " prism")));
     }
@@ -145,7 +131,7 @@ public class ShardsManager implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         activeTime.remove(event.getPlayer().getUniqueId());
-        killCooldowns.remove(event.getPlayer().getUniqueId()); // Optional clean up
+        killCooldowns.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler
@@ -160,15 +146,12 @@ public class ShardsManager implements Listener {
         UUID killerId = killer.getUniqueId();
         UUID victimId = victim.getUniqueId();
 
-        // Check cooldown
         if (isOnCooldown(killerId, victimId)) {
             return;
         }
 
-        // Give Reward
         plugin.getPlayerDataManager().get(killerId).addShards(killRewardAmount, "Kill Reward: " + victim.getName());
 
-        // Message (Actionbar only)
         if (activeActionbarMessage != null && !activeActionbarMessage.isEmpty()) {
             if (plugin.getPlayerDataManager().get(killerId).isShardsNotifier()) {
                 String msg = activeActionbarMessage
@@ -179,7 +162,6 @@ public class ShardsManager implements Listener {
             }
         }
 
-        // Set Cooldown
         setCooldown(killerId, victimId);
     }
 
@@ -193,7 +175,7 @@ public class ShardsManager implements Listener {
         }
         long expiry = victimCooldowns.get(victimId);
         if (System.currentTimeMillis() > expiry) {
-            victimCooldowns.remove(victimId); // Expired
+            victimCooldowns.remove(victimId);
             return false;
         }
         return true;

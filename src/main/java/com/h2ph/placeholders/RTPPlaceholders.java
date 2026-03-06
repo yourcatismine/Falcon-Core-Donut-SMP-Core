@@ -38,9 +38,8 @@ public class RTPPlaceholders extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
-        // %prismsmp_countdown_{region}%
         if (params.toLowerCase().startsWith("countdown_")) {
-            String regionName = params.substring(10); // Remove "countdown_" prefix
+            String regionName = params.substring(10);
             return String.valueOf(plugin.getRTPQueueManager().getCountdown(regionName));
         }
 

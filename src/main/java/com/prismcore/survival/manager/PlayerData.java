@@ -21,8 +21,8 @@ public class PlayerData {
     private String mutedBy;
     private long muteDate;
     private final Map<String, Integer> keys = new HashMap<>();
-    private String name; // Cached name
-    private long shardBoosterExpiry; // Timestamp when shard booster expires
+    private String name;
+    private long shardBoosterExpiry;
     private boolean vanished = false;
     private boolean combatLogged = false;
     private boolean teamChat = false;
@@ -157,7 +157,6 @@ public class PlayerData {
         this.shopSpent += amount;
     }
 
-    // Key management
     public void addKey(String keyName) {
         int current = keys.getOrDefault(keyName, 0);
         keys.put(keyName, current + 1);
@@ -186,7 +185,6 @@ public class PlayerData {
         return keys;
     }
 
-    // Update tracking
     private long lastSeenUpdate = 0;
 
     public long getLastSeenUpdate() {
@@ -197,7 +195,6 @@ public class PlayerData {
         this.lastSeenUpdate = lastSeenUpdate;
     }
 
-    // Shard Booster management
     public boolean hasActiveShardBooster() {
         return shardBoosterExpiry > System.currentTimeMillis();
     }
@@ -216,8 +213,7 @@ public class PlayerData {
         return (shardBoosterExpiry - System.currentTimeMillis()) / 1000L;
     }
 
-    // Settings
-    private boolean hideChat = false; // Default: Chat Visible (OFF from "Hide Chat" perspective)
+    private boolean hideChat = false;
 
     public boolean isHideChat() {
         return hideChat;
@@ -227,7 +223,7 @@ public class PlayerData {
         this.hideChat = hideChat;
     }
 
-    private boolean privateMessages = true; // Default: ON (Allowed)
+    private boolean privateMessages = true;
 
     public boolean isPrivateMessages() {
         return privateMessages;
@@ -247,7 +243,7 @@ public class PlayerData {
         this.fastCrystals = fastCrystals;
     }
 
-    private boolean payAlerts = true; // Default: ON (Receive Alerts)
+    private boolean payAlerts = true;
 
     public boolean isPayAlerts() {
         return payAlerts;
@@ -259,7 +255,7 @@ public class PlayerData {
 
     private boolean quickAuctionBuy = false;
     private boolean disableMobSpawns = false;
-    private boolean checkHistory = false; // Default: History logging OFF
+    private boolean checkHistory = false;
 
     public boolean isDisableMobSpawns() {
         return disableMobSpawns;
@@ -275,7 +271,7 @@ public class PlayerData {
 
     public void setCheckHistory(boolean checkHistory) {
         this.checkHistory = checkHistory;
-    } // Default: OFF
+    }
 
     public boolean isQuickAuctionBuy() {
         return quickAuctionBuy;
@@ -285,7 +281,7 @@ public class PlayerData {
         this.quickAuctionBuy = quickAuctionBuy;
     }
 
-    private boolean soundNotifications = true; // Default: ON
+    private boolean soundNotifications = true;
 
     public boolean isSoundNotifications() {
         return soundNotifications;
@@ -295,7 +291,7 @@ public class PlayerData {
         this.soundNotifications = soundNotifications;
     }
 
-    private boolean tpaConfirmMenus = true; // Default: ON
+    private boolean tpaConfirmMenus = true;
 
     public boolean isTpaConfirmMenus() {
         return tpaConfirmMenus;
@@ -305,7 +301,7 @@ public class PlayerData {
         this.tpaConfirmMenus = tpaConfirmMenus;
     }
 
-    private boolean duelRequests = true; // Default: ON
+    private boolean duelRequests = true;
 
     public boolean isDuelRequests() {
         return duelRequests;
@@ -315,7 +311,7 @@ public class PlayerData {
         this.duelRequests = duelRequests;
     }
 
-    private boolean tpaRequests = true; // Default: ON
+    private boolean tpaRequests = true;
 
     public boolean isTpaRequests() {
         return tpaRequests;
@@ -325,7 +321,7 @@ public class PlayerData {
         this.tpaRequests = tpaRequests;
     }
 
-    private boolean tpaHereRequests = true; // Default: ON
+    private boolean tpaHereRequests = true;
 
     public boolean isTpaHereRequests() {
         return tpaHereRequests;
@@ -335,7 +331,7 @@ public class PlayerData {
         this.tpaHereRequests = tpaHereRequests;
     }
 
-    private boolean showScoreboard = true; // Default: ON
+    private boolean showScoreboard = true;
 
     public boolean isShowScoreboard() {
         return showScoreboard;
@@ -345,7 +341,7 @@ public class PlayerData {
         this.showScoreboard = showScoreboard;
     }
 
-    private boolean payments = true; // Default: ON
+    private boolean payments = true;
 
     public boolean isPayments() {
         return payments;
@@ -355,7 +351,7 @@ public class PlayerData {
         this.payments = payments;
     }
 
-    private boolean shardsNotifier = true; // Default: ON
+    private boolean shardsNotifier = true;
 
     public boolean isShardsNotifier() {
         return shardsNotifier;
@@ -365,8 +361,8 @@ public class PlayerData {
         this.shardsNotifier = shardsNotifier;
     }
 
-    private boolean tpAuto = false; // Default: OFF
-    private boolean respawnRTP = true; // Default: ON
+    private boolean tpAuto = false;
+    private boolean respawnRTP = true;
 
     public boolean isTpAuto() {
         return tpAuto;
@@ -384,7 +380,7 @@ public class PlayerData {
         this.respawnRTP = respawnRTP;
     }
 
-    private String auctionSortOrder = "Highest Price"; // Default
+    private String auctionSortOrder = "Highest Price";
     private String auctionFilter = "";
     private String auctionCategory = "All";
 
@@ -514,7 +510,6 @@ public class PlayerData {
         this.pendingKickTeamName = pendingKickTeamName;
     }
 
-    // Ignore system - players this player has ignored
     private final Set<UUID> ignoredPlayers = new HashSet<>();
 
     public boolean isIgnoring(UUID playerUuid) {

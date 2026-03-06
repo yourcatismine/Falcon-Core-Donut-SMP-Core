@@ -37,28 +37,20 @@ public class PlayerDataManager {
     public PlayerData get(UUID uuid) {
         PlayerData data = playerDataMap.get(uuid);
         if (data != null) {
-            // If it's in the cache, it might be marked for unloading.
-            // Reset the flag since the player is now active again.
             data.setUnloading(false);
             return data;
         }
 
-        // Check if there's an active save operation for this player.
-        // If so, we MUST wait for it to finish before loading to avoid stale data.
         CompletableFuture<Void> saveFuture = savingFutures.get(uuid);
         if (saveFuture != null && !saveFuture.isDone()) {
             try {
-                // Wait for the save to complete (with a reasonable timeout if possible, but
-                // join() is safer here)
                 saveFuture.join();
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Error waiting for save future for " + uuid, e);
             }
         }
 
-        // Use computeIfAbsent to ensure thread-safety and prevent duplicate loads
         return playerDataMap.computeIfAbsent(uuid, k -> {
-            // Load from file/database
             return loadPlayer(k);
         });
     }
@@ -66,7 +58,6 @@ public class PlayerDataManager {
     public PlayerData loadPlayer(UUID uuid) {
         PlayerData data = new PlayerData(plugin, uuid);
 
-        // Load Stats from Database (Money, Shards, ShopSpent)
         DatabaseManager.PlayerDataStats stats = null;
         if (plugin.getDatabaseManager().isConnected()) {
             stats = plugin.getDatabaseManager().loadPlayerStats(uuid);
@@ -80,7 +71,6 @@ public class PlayerDataManager {
             data.setIp(stats.ip);
         }
 
-        // Load Shards Data (Migration/Fallback)
         File legacyShardsFolder = new File(plugin.getDataFolder(), "economy/shards/players");
         File shardsFile = new File(legacyShardsFolder, uuid.toString() + "-shards.db");
         if (shardsFile.exists()) {
@@ -99,28 +89,21 @@ public class PlayerDataManager {
             }
         }
 
-        // Load Keys Data (New Location)
         File cratesFile = new File(dataFolderCrates, uuid.toString() + ".db");
         if (cratesFile.exists()) {
             FileConfiguration cratesConfig = YamlConfiguration.loadConfiguration(cratesFile);
             if (cratesConfig.contains("keys")) {
-                // Clear legacy keys if we found new data? No, let's just overwrite/merge.
-                // Usually better to start fresh from new source if it exists.
-                // But simplified: Just load on top.
                 for (String key : cratesConfig.getConfigurationSection("keys").getKeys(false)) {
                     int count = cratesConfig.getInt("keys." + key, 0);
                     data.setKeyCount(key, count);
                 }
             }
-            // Load tracking
             if (cratesConfig.contains("last_seen_update")) {
                 data.setLastSeenUpdate(cratesConfig.getLong("last_seen_update"));
             }
-            // Load shard booster expiry
             if (cratesConfig.contains("shard_booster_expiry")) {
                 data.setShardBoosterExpiry(cratesConfig.getLong("shard_booster_expiry"));
             }
-            // Load Settings
             if (cratesConfig.contains("settings.hide_chat")) {
                 data.setHideChat(cratesConfig.getBoolean("settings.hide_chat"));
             }
@@ -184,7 +167,6 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.respawn_rtp")) {
                 data.setRespawnRTP(cratesConfig.getBoolean("settings.respawn_rtp"));
             }
-            // Load Mute Data
             if (cratesConfig.contains("mute.muted")) {
                 data.setMuted(cratesConfig.getBoolean("mute.muted"));
             }
@@ -210,7 +192,6 @@ public class PlayerDataManager {
                 data.setPendingKickTeamName(cratesConfig.getString("pending_kick_team"));
             }
 
-            // Load ignored players list
             if (cratesConfig.contains("ignored_players")) {
                 java.util.List<String> ignoredUuids = cratesConfig.getStringList("ignored_players");
                 java.util.Set<java.util.UUID> ignoredSet = new java.util.HashSet<>();
@@ -218,14 +199,12 @@ public class PlayerDataManager {
                     try {
                         ignoredSet.add(java.util.UUID.fromString(uuidString));
                     } catch (IllegalArgumentException e) {
-                        // Invalid UUID, skip
                     }
                 }
                 data.setIgnoredPlayers(ignoredSet);
             }
         }
 
-        // Load Team Data from SQL (Local Database)
         if (plugin.getPrismSell().getDatabaseManager().isConnected()) {
             try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
                 if (conn != null && !conn.isClosed()) {
@@ -244,11 +223,9 @@ public class PlayerDataManager {
                     }
                 }
             } catch (SQLException e) {
-                // Silently fail
             }
         }
 
-        // Load Money Data (Migration/Fallback)
         File legacyMoneyFolder = new File(plugin.getDataFolder(), "economy/money/players");
         File moneyFile = new File(legacyMoneyFolder, uuid.toString() + "-money.db");
         if (moneyFile.exists()) {
@@ -257,13 +234,11 @@ public class PlayerDataManager {
                 data.setMoney(moneyConfig.getDouble("money", 0.0), "YML Fallback");
                 migratedFromYml = true;
             }
-            // Load cached name if exists
             if (moneyConfig.contains("cached_name")) {
                 data.setName(moneyConfig.getString("cached_name"));
             }
         }
 
-        // Complete migration if necessary
         if (migratedFromYml) {
             final PlayerData finalData = data;
             plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
@@ -272,7 +247,6 @@ public class PlayerDataManager {
             });
         }
 
-        // If name is still null (not in money file), try shards file or fetch and cache
         if (data.getName() == null && shardsFile.exists()) {
             FileConfiguration shardsConfig = YamlConfiguration.loadConfiguration(shardsFile);
             if (shardsConfig.contains("cached_name")) {
@@ -280,9 +254,6 @@ public class PlayerDataManager {
             }
         }
 
-        // If still null, fetch it safely (async usually) or just leave it null until
-        // save?
-        // Ideally we fetch it now if we can, but if this is called async it's fine.
         if (data.getName() == null) {
             org.bukkit.OfflinePlayer op = org.bukkit.Bukkit.getOfflinePlayer(uuid);
             if (op.getName() != null) {
@@ -290,7 +261,6 @@ public class PlayerDataManager {
             }
         }
 
-        // Cache/Update name in DB for leaderboards
         if (data.getName() != null) {
             plugin.getDatabaseManager().savePlayerNameAsync(uuid, data.getName());
         }
@@ -314,10 +284,8 @@ public class PlayerDataManager {
 
     public void savePlayer(UUID uuid, PlayerData data) {
 
-        // Legacy YML saving removed - Database is source of truth
         plugin.getDatabaseManager().savePlayerStats(uuid, data);
 
-        // Save Keys Data (New Location)
         File cratesFile = new File(dataFolderCrates, uuid.toString() + ".db");
         FileConfiguration cratesConfig = new YamlConfiguration();
 
@@ -330,7 +298,6 @@ public class PlayerDataManager {
         cratesConfig.set("last_seen_update", data.getLastSeenUpdate());
         cratesConfig.set("shard_booster_expiry", data.getShardBoosterExpiry());
 
-        // Save Settings
         cratesConfig.set("settings.hide_chat", data.isHideChat());
         cratesConfig.set("settings.private_messages", data.isPrivateMessages());
         cratesConfig.set("settings.pay_alerts", data.isPayAlerts());
@@ -353,7 +320,6 @@ public class PlayerDataManager {
         cratesConfig.set("settings.fast_crystals", data.isFastCrystals());
         cratesConfig.set("settings.respawn_rtp", data.isRespawnRTP());
 
-        // Save Mute Data
         cratesConfig.set("mute.muted", data.isMuted());
         cratesConfig.set("mute.reason", data.getMuteReason());
         cratesConfig.set("mute.expiry", data.getMuteExpiry());
@@ -363,7 +329,6 @@ public class PlayerDataManager {
         cratesConfig.set("combat_logged", data.isCombatLogged());
         cratesConfig.set("pending_kick_team", data.getPendingKickTeamName());
 
-        // Save ignored players list
         java.util.List<String> ignoredUuids = new java.util.ArrayList<>();
         for (UUID ignoredUuid : data.getIgnoredPlayers()) {
             ignoredUuids.add(ignoredUuid.toString());
@@ -376,12 +341,10 @@ public class PlayerDataManager {
             plugin.getLogger().severe("Failed to save crates data for " + uuid + ": " + e.getMessage());
         }
 
-        // Save name to SQL for leaderboards
         if (data.getName() != null) {
             plugin.getDatabaseManager().savePlayerNameAsync(uuid, data.getName());
         }
 
-        // Save name_hidden to SQL
         if (plugin.getPrismSell().getDatabaseManager().isConnected()) {
             plugin.getPrismSell().getDatabaseManager().updateNameHidden(uuid, data.isNameHidden());
         }
@@ -394,7 +357,6 @@ public class PlayerDataManager {
      */
     public void saveMoneyAsync(UUID uuid, PlayerData data) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
-            // Save to Database
             plugin.getDatabaseManager().savePlayerStats(uuid, data);
             plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
         });
@@ -403,26 +365,18 @@ public class PlayerDataManager {
     public void unload(UUID uuid) {
         PlayerData data = playerDataMap.get(uuid);
         if (data != null) {
-            // Mark as unloading so that final cleanup knows it's okay to remove
             data.setUnloading(true);
 
-            // Save first, then remove from map ONLY after save is complete
-            // This prevents race conditions where a fast rejoin loads stale data
             CompletableFuture<Void> saveFuture = CompletableFuture.runAsync(() -> {
                 savePlayer(uuid, data);
             }, runnable -> plugin.getSchedulerAdapter().runTaskAsync(runnable));
 
-            // Track this save future
             savingFutures.put(uuid, saveFuture);
 
             saveFuture.whenComplete((v, throwable) -> {
                 try {
-                    // Remove the future once done
                     savingFutures.remove(uuid, saveFuture);
 
-                    // Remove from map AFTER save is finished, but ONLY if still marked as
-                    // unloading.
-                    // If the player rejoined, get() would have set unloading to false.
                     if (data.isUnloading()) {
                         playerDataMap.remove(uuid, data);
                     }
@@ -433,13 +387,12 @@ public class PlayerDataManager {
         }
     }
 
-    // Leaderboard Support
 
     private long lastShardsUpdate = 0;
     private List<LeaderboardEntry> cachedShardsTop = null;
     private long lastMoneyUpdate = 0;
     private List<LeaderboardEntry> cachedMoneyTop = null;
-    private static final long CACHE_DURATION = 60 * 1000; // 1 minute cache
+    private static final long CACHE_DURATION = 60 * 1000;
 
     public static class LeaderboardEntry {
         public String name;
@@ -474,14 +427,10 @@ public class PlayerDataManager {
         }
 
         List<LeaderboardEntry> entries = new ArrayList<>();
-        // Iterate all offline players - can be heavy, but necessary for external eco
-        // without direct DB access
         for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
             if (p.getName() == null)
                 continue;
             try {
-                // Essentials and others usually handle this call efficiently enough or caching
-                // is needed
                 if (eco.hasAccount(p)) {
                     double bal = eco.getBalance(p);
                     if (bal > 0) {
@@ -500,27 +449,19 @@ public class PlayerDataManager {
     private boolean isUpdatingMoney = false;
 
     public List<LeaderboardEntry> getTopMoney(int limit) {
-        // Return memory cache immediately if valid
         if (cachedMoneyTop != null && !cachedMoneyTop.isEmpty()) {
-            // If cache is getting old, trigger update in background, but still return
-            // current cache
             if (System.currentTimeMillis() - lastMoneyUpdate > CACHE_DURATION) {
                 triggerVaultUpdateAsync();
             }
             return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
         }
 
-        // Check if we should use Vault
         if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
             triggerVaultUpdateAsync();
-            // Fallthrough to look at internal database as temporary placeholder
         }
 
         List<LeaderboardEntry> entries = plugin.getDatabaseManager().getTopMoney(limit);
 
-        // If we have nothing from Vault yet, we don't overwrite cachedMoneyTop heavily
-        // unless we have to.
-        // Actually, let's allow internal storage to be the "initial" cache.
         if (cachedMoneyTop == null || cachedMoneyTop.isEmpty()) {
             if (!entries.isEmpty()) {
                 cachedMoneyTop = entries;

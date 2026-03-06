@@ -37,7 +37,6 @@ public class GUIHandler {
         }
         searchFilter = searchFilter.trim().toLowerCase();
 
-        // Ensure metadata is set so other parts of the plugin can read it
         if (!player.hasMetadata("ah-filter") && !searchFilter.isEmpty()) {
             player.setMetadata("ah-filter", new FixedMetadataValue(controller.getPlugin(), searchFilter));
         }
@@ -46,7 +45,6 @@ public class GUIHandler {
                 ? ((MetadataValue) player.getMetadata("ah-cat").get(0)).asString()
                 : controller.getAuctionManager().getPlayerCategory(player.getUniqueId());
 
-        // Ensure metadata is set
         if (!player.hasMetadata("ah-cat")) {
             player.setMetadata("ah-cat", new FixedMetadataValue(controller.getPlugin(), category));
         }
@@ -111,7 +109,6 @@ public class GUIHandler {
 
                 meta.setLore(finalLore);
 
-                // Store expiration time and auction item ID in PDC for live updates and secure purchasing
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 org.bukkit.NamespacedKey expireKey = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
                 org.bukkit.NamespacedKey itemIdKey = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-item-id");
@@ -358,14 +355,11 @@ public class GUIHandler {
                     remaining = 0L;
                 }
                 
-                // Check if this is an amethyst tool - if so, calculate remaining time from tool expiry
                 org.bukkit.persistence.PersistentDataContainer pdc = mm.getPersistentDataContainer();
                 if (pdc.has(com.prismcore.survival.tools.ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG)) {
-                    // This is an amethyst tool - calculate remaining time from tool expiry timestamp
                     Long toolExpiry = pdc.get(com.prismcore.survival.tools.ToolsManager.EXPIRY_KEY, org.bukkit.persistence.PersistentDataType.LONG);
                     if (toolExpiry != null) {
                         long toolRemaining = (toolExpiry - System.currentTimeMillis()) / 1000L;
-                        // Use the tool's remaining time instead of auction duration
                         remaining = Math.max(0, toolRemaining);
                     }
                 }
@@ -378,7 +372,6 @@ public class GUIHandler {
                             .replace("{time}", time);
                     auctionLore.add(Utils.formatColors(processed));
                 }
-                // Check if this is a refunded item from Falcon Orders
                 org.bukkit.NamespacedKey refundKey = new org.bukkit.NamespacedKey(controller.getPlugin(),
                         "refund-from");
                 String refundFrom = pdc.get(refundKey, org.bukkit.persistence.PersistentDataType.STRING);
@@ -399,7 +392,6 @@ public class GUIHandler {
                 if (mm != null) {
                     mm.setLore(finalLore);
 
-                    // Store expiration time in PDC for live updates
                     org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
                             "auction-expire");
                     long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
@@ -514,7 +506,6 @@ public class GUIHandler {
             if (meta != null) {
                 meta.setLore(lore);
 
-                // Store transaction timestamp in PDC for live updates
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
                         "transaction-timestamp");
@@ -624,7 +615,6 @@ public class GUIHandler {
             ItemMeta meta = item.getItemMeta();
             List<String> lore = (meta != null && meta.hasLore()) ? meta.getLore() : new ArrayList<>();
 
-            // Add auction details
             long elapsed = (System.currentTimeMillis() - ai.getListedAt()) / 1000L;
             long remain = (long) ai.getDuration() - elapsed;
             if (remain < 0L)
@@ -641,7 +631,6 @@ public class GUIHandler {
             if (meta != null) {
                 meta.setLore(lore);
 
-                // Store expiration time for live updates
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(), "auction-expire");
                 long expirationTime = ai.getListedAt() + (ai.getDuration() * 1000L);
@@ -652,7 +641,6 @@ public class GUIHandler {
             inv.setItem(i, item);
         }
 
-        // Slot 48: Delete All Items (Barrier)
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dim = delete.getItemMeta();
         if (dim != null) {
@@ -664,7 +652,6 @@ public class GUIHandler {
         }
         inv.setItem(48, delete);
 
-        // Slot 49: Search
         ItemStack search = new ItemStack(Material.OAK_SIGN);
         ItemMeta sm = search.getItemMeta();
         if (sm != null) {
@@ -676,7 +663,6 @@ public class GUIHandler {
         }
         inv.setItem(49, search);
 
-        // Slot 50: Transactions
         ItemStack tx = new ItemStack(Material.PAPER);
         ItemMeta tm = tx.getItemMeta();
         if (tm != null) {
@@ -704,16 +690,9 @@ public class GUIHandler {
         String title = Utils.formatColors("&8ɪᴛᴇᴍ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ");
         Inventory inv = Bukkit.createInventory(new ItemManagementHolder(), 27, title);
 
-        // Slot 11: Edit Price (Oak Sign)
         ItemStack sign = new ItemStack(Material.OAK_SIGN);
         ItemMeta sm = sign.getItemMeta();
         FileConfiguration cfg = controller.getConfig();
-        // Assuming there isn't a specific config for this, reusing Sell Layout or
-        // creating defaults?
-        // User asked "same name and lore to the config" - likely refers to a generic
-        // edit/sign item or we create one.
-        // Let's use standard format for consistency or hardcode as requested if new.
-        // Actually, user standard "edit price" might be from main-gui or similar.
         if (sm != null) {
             sm.setDisplayName(Utils.formatColors("&aᴇᴅɪᴛ ᴘʀɪᴄᴇ"));
             List<String> sLore = new ArrayList<>();
@@ -723,7 +702,6 @@ public class GUIHandler {
         }
         inv.setItem(11, sign);
 
-        // Slot 12: Take Item (Chest)
         ItemStack take = new ItemStack(Material.CHEST);
         ItemMeta tm = take.getItemMeta();
         if (tm != null) {
@@ -735,7 +713,6 @@ public class GUIHandler {
         }
         inv.setItem(12, take);
 
-        // Slot 13: The Item
         ItemStack displayItem = item.getItemStack().clone();
         ItemMeta dm = displayItem.getItemMeta();
         List<String> dLore = new ArrayList<>();
@@ -750,7 +727,6 @@ public class GUIHandler {
         }
         inv.setItem(13, displayItem);
 
-        // Slot 14: Copy Item (Ender Chest)
         ItemStack copy = new ItemStack(Material.ENDER_CHEST);
         ItemMeta cm = copy.getItemMeta();
         if (cm != null) {
@@ -762,7 +738,6 @@ public class GUIHandler {
         }
         inv.setItem(14, copy);
 
-        // Slot 15: Delete Item (Barrier)
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dim = delete.getItemMeta();
         if (dim != null) {
@@ -777,12 +752,6 @@ public class GUIHandler {
         p.setMetadata("ah-switching", new FixedMetadataValue(controller.getPlugin(), true));
         p.setMetadata("ah-manage-item", new FixedMetadataValue(controller.getPlugin(), item.getId().toString()));
         p.openInventory(inv);
-        // Not starting update task here as it might conflict or be unnecessary for
-        // simple static view
-        // unless we want live time updates. User said "Time Life" in lore so yes.
-        // However, standard update task targets specific holders. We might need to add
-        // this Holder to update check.
-        // For now, static time is acceptable or we add later.
 
     }
 
@@ -854,12 +823,10 @@ public class GUIHandler {
                     + itemName + " for &a$" + priceFmt);
             lore.add(line);
 
-            // Time line
             lore.add(Utils.formatColors("&a" + timeAgo + " ago"));
             if (meta != null) {
                 meta.setLore(lore);
 
-                // Store transaction timestamp for live updates
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(controller.getPlugin(),
                         "transaction-timestamp");
@@ -999,18 +966,15 @@ public class GUIHandler {
         Inventory inv = Bukkit.createInventory(new AdminDeleteConfirmHolder(), 27,
                 Utils.formatColors("&8" + Utils.toSmallCaps("CONFIRM DELETION")));
 
-        // Slot 11: Cancel
         ItemStack cancel = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta cm = cancel.getItemMeta();
         cm.setDisplayName(Utils.formatColors("&c" + Utils.toSmallCaps("CANCEL")));
-        // Use simple lore
         List<String> cLore = new ArrayList<>();
         cLore.add(Utils.formatColors("&7Click to cancel"));
         cm.setLore(cLore);
         cancel.setItemMeta(cm);
         inv.setItem(11, cancel);
 
-        // Slot 13: Confirmation Info
         ItemStack info = new ItemStack(Material.PAPER);
         ItemMeta im = info.getItemMeta();
         im.setDisplayName(Utils.formatColors("&aᴄᴏɴꜰɪʀᴍᴀᴛɪᴏɴ"));
@@ -1020,7 +984,6 @@ public class GUIHandler {
         info.setItemMeta(im);
         inv.setItem(13, info);
 
-        // Slot 15: Confirm
         ItemStack confirm = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta conMeta = confirm.getItemMeta();
         conMeta.setDisplayName(Utils.formatColors("&a" + Utils.toSmallCaps("CONFIRM")));
@@ -1065,20 +1028,17 @@ public class GUIHandler {
         Inventory inv = Bukkit.createInventory(new AdminPlayerListHolder(), 54, initialTitle);
 
         FileConfiguration cfg = controller.getConfig();
-        // Add static nav items immediately so it looks "real"
         inv.setItem(48, GUIHandler.makeItem(cfg, "main-gui.items.search"));
         inv.setItem(49, GUIHandler.makeItem(cfg, "transactions-gui.items.refresh"));
 
         p.setMetadata("ah-switching", new FixedMetadataValue(controller.getPlugin(), true));
         p.openInventory(inv);
 
-        // Run data fetching async
         controller.getPlugin().getSchedulerAdapter().runTaskAsync(() -> {
             String filter = p.hasMetadata("ah-admin-player-filter")
                     ? p.getMetadata("ah-admin-player-filter").get(0).asString().toLowerCase()
                     : "";
 
-            // Collect all players (offline included) - This is the heavy part
             List<OfflinePlayer> sellers = Arrays.stream(Bukkit.getOfflinePlayers())
                     .filter(op -> op.getName() != null)
                     .filter(op -> filter.isEmpty() || op.getName().toLowerCase().contains(filter))
@@ -1095,24 +1055,19 @@ public class GUIHandler {
             int end = Math.min(start + perPage, total);
             List<OfflinePlayer> pageSellers = sellers.subList(start, end);
 
-            // Go back to main thread to POPULATE the ALREADY OPEN inventory
             controller.getPlugin().getSchedulerAdapter().runTask(() -> {
                 if (!p.isOnline())
                     return;
 
-                // Check if user still has the initial inventory open
                 if (p.getOpenInventory().getTopInventory() != inv
                         && !p.getOpenInventory().getTitle().equals(initialTitle)) {
-                    // User closed it or moved away
                     return;
                 }
 
-                // If we need to update title for page numbers
                 String finalTitle = Utils.formatColors("&8ᴀᴅᴍɪɴ ᴀᴜᴄᴛɪᴏɴ (" + finalPage + "/" + totalPages + ")");
                 Inventory finalInv;
                 if (!finalTitle.equals(initialTitle)) {
                     finalInv = Bukkit.createInventory(new AdminPlayerListHolder(), 54, finalTitle);
-                    // Copy static items
                     finalInv.setItem(48, GUIHandler.makeItem(cfg, "main-gui.items.search"));
                     finalInv.setItem(49, GUIHandler.makeItem(cfg, "transactions-gui.items.refresh"));
                     p.openInventory(finalInv);
@@ -1120,7 +1075,6 @@ public class GUIHandler {
                     finalInv = inv;
                 }
 
-                // Populate Heads
                 for (int i = 0; i < pageSellers.size(); ++i) {
                     OfflinePlayer seller = pageSellers.get(i);
                     String sellerName = seller.getName();
@@ -1150,7 +1104,6 @@ public class GUIHandler {
                     finalInv.setItem(i, head);
                 }
 
-                // Navigation Items update based on calculated pages
                 if (finalPage >= 2) {
                     finalInv.setItem(45, GUIHandler.makeItem(cfg, "transactions-gui.items.previous-page"));
                 }
@@ -1167,7 +1120,6 @@ public class GUIHandler {
         String title = Utils.formatColors("&8ᴛʀᴀɴѕᴀᴄᴛɪᴏɴ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ");
         Inventory inv = Bukkit.createInventory(new TransactionManagementHolder(), 27, title);
 
-        // Slot 11: Delete Transaction
         ItemStack delete = new ItemStack(Material.BARRIER);
         ItemMeta dm = delete.getItemMeta();
         if (dm != null) {
@@ -1182,7 +1134,6 @@ public class GUIHandler {
         }
         inv.setItem(11, delete);
 
-        // Slot 13: The Item (Info)
         ItemStack item = tx.getItem().clone();
         ItemMeta im = item.getItemMeta();
         if (im != null) {
@@ -1196,7 +1147,6 @@ public class GUIHandler {
         }
         inv.setItem(13, item);
 
-        // Slot 15: Copy Item
         ItemStack copy = new ItemStack(Material.CHEST);
         ItemMeta cm = copy.getItemMeta();
         if (cm != null) {
@@ -1209,7 +1159,6 @@ public class GUIHandler {
         }
         inv.setItem(15, copy);
 
-        // Slot 22: Back
         ItemStack back = new ItemStack(Material.ARROW);
         ItemMeta bm = back.getItemMeta();
         bm.setDisplayName(Utils.formatColors("&cʙᴀᴄᴋ"));

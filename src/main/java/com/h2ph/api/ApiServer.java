@@ -21,15 +21,10 @@ public class ApiServer {
 
     private final PrismSurvival plugin;
     private HttpServer server;
-    // Live clients for Ban/Unban events
     private final List<HttpExchange> liveClients = new CopyOnWriteArrayList<>();
-    // Live clients for Chat Filter events
     private final List<HttpExchange> filterClients = new CopyOnWriteArrayList<>();
-    // Live clients for Command events
     private final List<HttpExchange> commandClients = new CopyOnWriteArrayList<>();
-    // Live clients for Sign events
     private final List<HttpExchange> signClients = new CopyOnWriteArrayList<>();
-    // Live clients for Activity Logs history
     private final List<HttpExchange> activityClients = new CopyOnWriteArrayList<>();
     private String apiKey;
     private String region;
@@ -91,7 +86,6 @@ public class ApiServer {
             server.start();
             plugin.getLogger().info("API Server started on port " + port);
 
-            // Schedule Rate Limit Cleanup (every 5 minutes)
             plugin.getSchedulerAdapter().runTaskTimerAsync(this::cleanupRateLimits, 6000L, 6000L);
 
         } catch (IOException e) {
@@ -115,7 +109,6 @@ public class ApiServer {
         }
     }
 
-    // Broadcasts a new ban event to all connected live feedback clients
     public void broadcastBan(String playerName, String reason, String duration, String bannedBy, String banId) {
         String json = String.format(
                 "{\"type\": \"BAN\", \"player\": \"%s\", \"reason\": \"%s\", \"duration\": \"%s\", \"bannedBy\": \"%s\", \"banId\": \"%s\"}",
@@ -200,7 +193,7 @@ public class ApiServer {
                 return;
             }
 
-            String query = t.getRequestURI().getQuery(); // search={BANID|NAME|UUID}
+            String query = t.getRequestURI().getQuery();
             String search = null;
             if (query != null && query.contains("search=")) {
                 for (String param : query.split("&")) {
@@ -217,22 +210,18 @@ public class ApiServer {
                 return;
             }
 
-            // Database lookup: try by ban id, then by player name, then by uuid
             String response = "{\"error\": \"Database unavailable\"}";
 
             if (plugin.getOffendPlugin() != null) {
                 DatabaseManager db = plugin.getOffendPlugin().getDatabaseManager();
                 DatabaseManager.BanInfo info = null;
 
-                // Try by ban id first
                 info = db.getBanInfoById(search);
 
-                // Try by name
                 if (info == null) {
                     info = db.getBanInfoByName(search);
                 }
 
-                // Try by UUID
                 if (info == null) {
                     try {
                         java.util.UUID u = java.util.UUID.fromString(search);
@@ -273,13 +262,12 @@ public class ApiServer {
             t.getResponseHeaders().set("Connection", "keep-alive");
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
 
-            t.sendResponseHeaders(200, 0); // Chunked encoding
+            t.sendResponseHeaders(200, 0);
 
             liveClients.add(t);
         }
     }
 
-    // Handles the Chat Filter Live Feed
     private class FilterFeedHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -296,13 +284,12 @@ public class ApiServer {
             t.getResponseHeaders().set("Connection", "keep-alive");
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
 
-            t.sendResponseHeaders(200, 0); // Chunked encoding
+            t.sendResponseHeaders(200, 0);
 
             filterClients.add(t);
         }
     }
 
-    // Broadcasts an unban event
     public void broadcastUnban(String playerName, String staffName) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String json = String.format(
@@ -326,7 +313,6 @@ public class ApiServer {
         });
     }
 
-    // Broadcasts a chat filter violation (Sends to filterClients)
     public void broadcastChatFilter(String playerName, String message, String detected) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String json = String.format(
@@ -350,9 +336,7 @@ public class ApiServer {
         });
     }
 
-    // Broadcasts a command usage event
     public void broadcastCommandUsage(Player player, String command) {
-        // Extract data on main thread
         final String playerName = player.getName();
         final boolean isOp = player.isOp();
         final int x = player.getLocation().getBlockX();
@@ -408,15 +392,13 @@ public class ApiServer {
             t.getResponseHeaders().set("Connection", "keep-alive");
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
 
-            t.sendResponseHeaders(200, 0); // Chunked encoding
+            t.sendResponseHeaders(200, 0);
 
             commandClients.add(t);
         }
     }
 
-    // Broadcasts a sign usage event
     public void broadcastSignUsage(Player player, String text, List<String> nearbyPlayers) {
-        // Extract on main thread
         final String playerName = player.getName();
         final boolean isOp = player.isOp();
         final int x = player.getLocation().getBlockX();
@@ -425,8 +407,6 @@ public class ApiServer {
         final String dimension = formatDimension(player.getWorld().getEnvironment());
         final String address = player.getAddress().getAddress().getHostAddress();
         final long time = System.currentTimeMillis();
-        // nearbyPlayers passed in is likely a copy or list of strings, safe to use if
-        // it's List<String>
 
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String nearJson = "[" + nearbyPlayers.stream()
@@ -443,7 +423,7 @@ public class ApiServer {
                     x + ", " + y + ", " + z,
                     time,
                     time,
-                    escape(dimension), // fixed escape call matching original context
+                    escape(dimension),
                     escape(region),
                     escape(address));
 
@@ -480,7 +460,7 @@ public class ApiServer {
             t.getResponseHeaders().set("Connection", "keep-alive");
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
 
-            t.sendResponseHeaders(200, 0); // Chunked encoding
+            t.sendResponseHeaders(200, 0);
 
             signClients.add(t);
         }
@@ -527,7 +507,7 @@ public class ApiServer {
             t.getResponseHeaders().set("Connection", "keep-alive");
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
 
-            t.sendResponseHeaders(200, 0); // Chunked encoding
+            t.sendResponseHeaders(200, 0);
 
             activityClients.add(t);
         }
@@ -581,7 +561,6 @@ public class ApiServer {
             DatabaseManager db = plugin.getOffendPlugin().getDatabaseManager();
             DatabaseManager.BanInfo info = null;
 
-            // Resolve target
             if (banId != null && !banId.isEmpty()) {
                 info = db.getBanInfoById(banId);
                 if (info == null) {
@@ -589,9 +568,7 @@ public class ApiServer {
                     return;
                 }
             } else if (playerToUnban != null && !playerToUnban.isEmpty()) {
-                // Try by name
                 info = db.getBanInfoByName(playerToUnban);
-                // Try by UUID
                 if (info == null) {
                     try {
                         java.util.UUID u = java.util.UUID.fromString(playerToUnban);
@@ -599,7 +576,6 @@ public class ApiServer {
                     } catch (IllegalArgumentException ignored) {
                     }
                 }
-                // Try as ban id
                 if (info == null) {
                     String cleanId = playerToUnban.replace("#", "");
                     info = db.getBanInfoById(cleanId);
@@ -610,9 +586,7 @@ public class ApiServer {
                 }
             }
 
-            // Perform unban in DB
             try {
-                // Prefer removing by ban ID if present
                 if (info.id != null && !info.id.isEmpty()) {
                     db.removeBanById(info.id);
                 } else if (info.uuid != null && !info.uuid.isEmpty()) {
@@ -629,7 +603,6 @@ public class ApiServer {
                     db.resetOffenseCount(info.uuid, info.reasonKey);
                 }
 
-                // Broadcast unban to live clients
                 ApiServer.this.broadcastUnban(
                         info.playerName != null ? info.playerName : (info.uuid != null ? info.uuid : "unknown"), "API");
 
@@ -660,10 +633,9 @@ public class ApiServer {
                 return;
             }
 
-            // Parse params
             String query = t.getRequestURI().getQuery();
             String player = null;
-            String reason = null; // Default handled by banPlayer
+            String reason = null;
             String duration = null;
 
             if (query != null) {
@@ -671,12 +643,12 @@ public class ApiServer {
                     String[] pair = param.split("=");
                     if (pair.length >= 2) {
                         String key = pair[0];
-                        String val = pair[1]; // Basic decoding might be needed if values have spaces/special chars
+                        String val = pair[1];
 
                         if (key.equals("player"))
                             player = val;
                         else if (key.equals("reason"))
-                            reason = val; // val.replace("+", " ")?
+                            reason = val;
                         else if (key.equals("duration"))
                             duration = val;
                     }
@@ -697,14 +669,8 @@ public class ApiServer {
             final String finalReason = (reason != null && !reason.isEmpty()) ? reason : "Banned";
             final String finalDuration = duration;
 
-            // Run on correct thread/async for resolution
-            // But we want to return response.
-            // Since resolution and ban are async operations, we can block here if IO is ok?
-            // ApiServer handlers are executed on a cached thread pool (default executor),
-            // so blocking one thread is acceptable.
 
             try {
-                // 1. Resolve Player
                 org.bukkit.OfflinePlayer target = plugin.getServer().getPlayer(targetName);
                 if (target == null) {
                     target = plugin.getOffendPlugin().resolveOfflinePlayer(targetName);
@@ -715,11 +681,6 @@ public class ApiServer {
                     return;
                 }
 
-                // 2. Execute Ban (Blocking call to async logic? no banPlayer should be called
-                // async)
-                // banPlayer requires async context for DB ops. We are in HTTP handler thread,
-                // which is async to Main Thread.
-                // So calling banPlayer directly is safe/correct.
 
                 DatabaseManager.BanInfo info = plugin.getOffendPlugin().banPlayer(
                         plugin.getServer().getConsoleSender(),
@@ -728,7 +689,6 @@ public class ApiServer {
                         finalReason,
                         finalDuration);
 
-                // 3. Return JSON with ID
                 String response = String.format(
                         "{\"status\": \"banned\", \"player\": \"%s\", \"banId\": \"%s\", \"reason\": \"%s\", \"duration\": \"%s\"}",
                         escape(info.playerName),
@@ -763,7 +723,6 @@ public class ApiServer {
 
             String path = t.getRequestURI().getPath();
 
-            // Handle /onlineplayers
             if (path.endsWith("/onlineplayers")) {
                 List<String> jsonList = new ArrayList<>();
                 net.milkbowl.vault.economy.Economy eco = getEconomy();
@@ -802,7 +761,6 @@ public class ApiServer {
                 return;
             }
 
-            // Handle ?player=<gamertag>
             String query = t.getRequestURI().getQuery();
             String playerName = null;
             if (query != null) {
@@ -816,7 +774,6 @@ public class ApiServer {
             }
 
             if (playerName != null) {
-                // Try to find player (online first, then offline)
                 org.bukkit.OfflinePlayer target = plugin.getServer().getPlayer(playerName);
                 if (target == null) {
                     target = plugin.getServer().getOfflinePlayer(playerName);
@@ -825,7 +782,6 @@ public class ApiServer {
                 if (target != null && (target.hasPlayedBefore() || target.isOnline())) {
                     net.milkbowl.vault.economy.Economy eco = getEconomy();
                     double balance = (eco != null) ? eco.getBalance(target) : 0.0;
-                    // Load user data if not online (PlayerDataManager usually handles this)
                     double shards = 0.0;
                     try {
                         shards = plugin.getPlayerDataManager().get(target.getUniqueId()).getShards();
@@ -840,7 +796,6 @@ public class ApiServer {
                     long lastPlayed = target.getLastPlayed();
                     boolean isOnline = target.isOnline();
 
-                    // Format playtime
                     int playtimeTicks = target.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
                     String playtimeFormatted = formatPlaytime(playtimeTicks / 20L);
 
@@ -888,7 +843,6 @@ public class ApiServer {
                 return;
             }
 
-            // Parse params
             String query = t.getRequestURI().getQuery();
             String playerName = null;
 
@@ -906,7 +860,6 @@ public class ApiServer {
                 return;
             }
 
-            // Get Economy
             net.milkbowl.vault.economy.Economy eco = getEconomy();
             if (eco == null) {
                 sendResponse(t, 500, "{\"error\": \"Economy plugin not found\"}");
@@ -1021,12 +974,10 @@ public class ApiServer {
                 return;
             }
 
-            // Calculate playtime
             int ticks = 0;
             try {
                 ticks = target.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
             } catch (Exception e) {
-                // Statistic might be missing or failed to load
             }
             long seconds = ticks / 20L;
             String formatted = formatPlaytime(seconds);
@@ -1042,7 +993,7 @@ public class ApiServer {
 
         private List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> cachedTop = null;
         private long lastUpdate = 0;
-        private static final long CACHE_DURATION = 300 * 1000; // 5 minutes
+        private static final long CACHE_DURATION = 300 * 1000;
 
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -1061,12 +1012,7 @@ public class ApiServer {
                 if (cachedTop != null && (System.currentTimeMillis() - lastUpdate < CACHE_DURATION)) {
                     top = cachedTop;
                 } else {
-                    // Generate
                     top = new ArrayList<>();
-                    // WARNING: This iterates all offline players. Heavy operation.
-                    // Doing it on this thread (CachedThreadPool) is better than main,
-                    // BUT getOfflinePlayers() and getStatistic() might be blocking or sync-only.
-                    // We'll try. If it errors, we handle it.
 
                     try {
                         org.bukkit.OfflinePlayer[] players = plugin.getServer().getOfflinePlayers();
@@ -1091,7 +1037,7 @@ public class ApiServer {
                         lastUpdate = System.currentTimeMillis();
                     } catch (Exception e) {
                         e.printStackTrace();
-                        top = new ArrayList<>(); // Empty on failure
+                        top = new ArrayList<>();
                     }
                 }
             }
@@ -1281,10 +1227,9 @@ public class ApiServer {
         os.close();
     }
 
-    // --- Rate Limiting ---
     private final java.util.Map<String, RateLimit> rateLimits = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final int RATE_LIMIT = 100; // Requests per minute
-    private static final long RATE_TIME = 60000; // 1 Minute in ms
+    private static final int RATE_LIMIT = 100;
+    private static final long RATE_TIME = 60000;
 
     private boolean isRateLimited(HttpExchange t) {
         String ip = t.getRemoteAddress().getAddress().getHostAddress();
@@ -1311,7 +1256,6 @@ public class ApiServer {
         }
     }
 
-    // --- Cleanup Task ---
     public void cleanupRateLimits() {
         long now = System.currentTimeMillis();
         rateLimits.entrySet().removeIf(entry -> now > entry.getValue().resetTime);

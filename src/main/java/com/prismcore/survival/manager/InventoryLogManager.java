@@ -22,7 +22,7 @@ public class InventoryLogManager {
     private final Map<UUID, String> lastKnownStates = new HashMap<>();
     private final Map<UUID, Long> lastLoggedTime = new HashMap<>();
     private final Gson gson = new Gson();
-    private static final long COOLDOWN_MS = 2000L; // 2 seconds
+    private static final long COOLDOWN_MS = 2000L;
 
     public InventoryLogManager(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -60,7 +60,6 @@ public class InventoryLogManager {
         PlayerInventory inv = player.getInventory();
         JsonObject root = new JsonObject();
 
-        // Main Slots (0-35)
         JsonObject slots = new JsonObject();
         for (int i = 0; i <= 35; i++) {
             ItemStack item = inv.getItem(i);
@@ -70,7 +69,6 @@ public class InventoryLogManager {
         }
         root.add("slots", slots);
 
-        // Armor
         JsonObject armor = new JsonObject();
         if (inv.getHelmet() != null)
             armor.add("helmet", serializeItem(inv.getHelmet()));
@@ -82,7 +80,6 @@ public class InventoryLogManager {
             armor.add("boots", serializeItem(inv.getBoots()));
         root.add("armor", armor);
 
-        // Offhand
         if (inv.getItemInOffHand() != null && inv.getItemInOffHand().getType() != Material.AIR) {
             root.add("offhand", serializeItem(inv.getItemInOffHand()));
         }
@@ -101,7 +98,6 @@ public class InventoryLogManager {
                 obj.addProperty("name", meta.getDisplayName());
             }
 
-            // Lore
             if (meta.hasLore()) {
                 JsonArray lore = new JsonArray();
                 for (String line : meta.getLore()) {
@@ -110,7 +106,6 @@ public class InventoryLogManager {
                 obj.add("lore", lore);
             }
 
-            // Enchantments
             if (meta.hasEnchants()) {
                 JsonObject enchants = new JsonObject();
                 meta.getEnchants().forEach((enchant, level) -> {
@@ -119,7 +114,6 @@ public class InventoryLogManager {
                 obj.add("enchantments", enchants);
             }
 
-            // Container Contents (Shulker Boxes, etc.)
             if (meta instanceof BlockStateMeta) {
                 BlockStateMeta bsm = (BlockStateMeta) meta;
                 if (bsm.getBlockState() instanceof Container) {

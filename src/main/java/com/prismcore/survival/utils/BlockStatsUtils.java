@@ -13,7 +13,6 @@ public class BlockStatsUtils {
                 try {
                     total += player.getStatistic(Statistic.MINE_BLOCK, m);
                 } catch (IllegalArgumentException e) {
-                    // Statistic not tracked for this material or invalid
                 }
             }
         }
@@ -27,7 +26,6 @@ public class BlockStatsUtils {
                 try {
                     total += player.getStatistic(Statistic.USE_ITEM, m);
                 } catch (IllegalArgumentException e) {
-                    // Statistic not tracked for this material
                 }
             }
         }

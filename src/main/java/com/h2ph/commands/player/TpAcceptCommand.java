@@ -32,7 +32,6 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
         Player targetPlayer = null;
 
         if (args.length > 0) {
-            // Accept specific player
             Player target = Bukkit.getPlayer(args[0]);
             if (target != null) {
                 request = TpaRequestManager.getInstance().getRequest(p.getUniqueId(), target.getUniqueId());
@@ -55,7 +54,6 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
         } else {
-            // Accept last request
             request = TpaRequestManager.getInstance().getLastRequest(p.getUniqueId());
             if (request != null) {
                 targetPlayer = Bukkit.getPlayer(request.getSender());
@@ -80,11 +78,10 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
 
         if (targetPlayer == null || !targetPlayer.isOnline()) {
             p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat player is no longer online."));
-            TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender()); // Cleanup
+            TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());
             return true;
         }
 
-        // Check if acceptor is in combat
         if (com.h2ph.listeners.CombatListener.getInstance() != null &&
                 com.h2ph.listeners.CombatListener.getInstance().isInCombat(p)) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cYou are currently on combat.");
@@ -93,16 +90,12 @@ public class TpAcceptCommand implements CommandExecutor, TabCompleter {
                     new net.md_5.bungee.api.chat.TextComponent(msg));
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 
-            // Clear the request as requested: "Well clear the requests say the error
-            // message we had that you are in combat"
             TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());
             return true;
         }
 
-        // Use Manager logic
         TpaRequestManager.getInstance().acceptRequest(p, targetPlayer, request.getType());
 
-        // Remove request after accept
         TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());
 
         return true;

@@ -51,7 +51,6 @@ public class EconomyHandler {
             EconomyResponse res = vaultEcon.withdrawPlayer((OfflinePlayer) player, amount);
             return res.transactionSuccess();
         } else {
-            // Internal Economy
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data == null)
                 return false;
@@ -80,7 +79,6 @@ public class EconomyHandler {
         if (useVault && vaultEcon != null) {
             vaultEcon.depositPlayer(player, amount);
         } else {
-            // Internal Economy
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null) {
                 data.addMoney(amount, source);
@@ -99,7 +97,6 @@ public class EconomyHandler {
             EconomyResponse res = vaultEcon.depositPlayer(off, amount);
             return res != null && res.transactionSuccess();
         } else {
-            // Internal Economy
             OfflinePlayer off = plugin.getServer().getOfflinePlayer(playerName);
             if (off.hasPlayedBefore() || off.isOnline()) {
                 PlayerData data = plugin.getPlayerDataManager().get(off.getUniqueId());

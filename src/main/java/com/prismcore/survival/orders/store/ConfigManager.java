@@ -148,7 +148,6 @@ public class ConfigManager {
                 p.playSound(p.getLocation(), sound, vol, pitch);
             }
         } catch (IllegalArgumentException | NullPointerException illegalArgumentException) {
-            // Invalid sound name, silently ignore
         }
     }
 

@@ -39,7 +39,6 @@ public class HomeDeleteConfirmGUI {
     public static void open(Player player, PrismSurvival plugin, int homeIndex) {
         HomeManager manager = plugin.getHomeManager();
 
-        // ── Get home name for display ──
         String displayName;
         if (homeIndex == 0) {
             com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
@@ -53,21 +52,17 @@ public class HomeDeleteConfirmGUI {
 
         ConfirmData data = new ConfirmData(homeIndex, displayName);
 
-        // Title: &8ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛᴇ (size 27 = 3 rows)
         String title = HomeGUI
                 .color("&8\u1d04\u1d0f\u0274\u043c\u026a\u0280\u1d0d \u1d05\u1d07\u1d0c\u1d07\u1d1b\u1d07");
         Inventory inv = Bukkit.createInventory(new HomeDeleteConfirmHolder(data), 27, title);
 
-        // Slot 11: Red Glass (Cancel)
         inv.setItem(11, HomeGUI.make(Material.RED_STAINED_GLASS_PANE,
                 HomeGUI.color("&4\u1d04\u1d00\u0274\u1d04\u1d07\u1d0c"),
                 List.of(HomeGUI.color("&fClick to cancel"))));
 
-        // Slot 13: Purple Bed (Info) - Purple Banner if Team Home
         inv.setItem(13,
                 HomeGUI.make(homeIndex == 0 ? Material.PURPLE_BANNER : Material.PURPLE_BED, displayName, List.of()));
 
-        // Slot 15: Green Glass (Confirm)
         inv.setItem(15, HomeGUI.make(Material.GREEN_STAINED_GLASS_PANE,
                 HomeGUI.color("&a\u1d04\u1d0f\u0274\u043c\u026a\u0280\u1d0d"),
                 List.of(HomeGUI.color("&fClick to delete"))));

@@ -29,9 +29,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
-        // Check if sender is a player (required for all non-admin commands)
         if (!(sender instanceof Player)) {
-            // Console can only use admin commands
             if (args.length >= 3 && sender.hasPermission("prismcore.admin.shards")) {
                 return handleAdminCommand(sender, args);
             }
@@ -41,39 +39,31 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
-        // No args - show player's own shards
         if (args.length == 0) {
             showOwnShards(player);
             return true;
         }
 
-        // 1 arg
         if (args.length == 1) {
             String arg = args[0];
 
-            // Check if it's an admin subcommand without permission - silently show own
-            // shards
             if (arg.equalsIgnoreCase("give") || arg.equalsIgnoreCase("set") || arg.equalsIgnoreCase("remove")) {
                 showOwnShards(player);
                 return true;
             }
 
-            // Otherwise treat as player name lookup
             showOtherPlayerShards(player, arg);
             return true;
         }
 
-        // Handle pay command
         if (args[0].equalsIgnoreCase("pay")) {
             return handlePayCommand(player, args);
         }
 
-        // 3+ args - admin command
         if (sender.hasPermission("prismcore.admin.shards")) {
             return handleAdminCommand(sender, args);
         }
 
-        // No permission for admin command/Invalid args - silently show own shards
         showOwnShards(player);
         return true;
     }
@@ -102,7 +92,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Validate name format before lookup (3-16 chars, alphanumeric)
         if (!targetName.matches("[a-zA-Z0-9_]{3,16}")) {
             String errorMsg = ChatColor.RED + "That user does not exist.";
             sender.sendMessage(errorMsg);
@@ -152,7 +141,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(message));
 
-        // Unload if they are offline and weren't loaded
         if (!target.isOnline()) {
             plugin.getPlayerDataManager().unload(target.getUniqueId());
         }
@@ -164,15 +152,12 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
      */
     private String formatNumber(int number) {
         if (number >= 1_000_000) {
-            // Millions
             int millions = number / 1_000_000;
             return millions + "m";
         } else if (number >= 1_000) {
-            // Thousands
             int thousands = number / 1_000;
             return thousands + "k";
         } else {
-            // Less than 1000
             return String.valueOf(number);
         }
     }
@@ -191,14 +176,12 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         String amountStr = args[2];
         int amount;
 
-        // Prevent paying self
         if (sender.getName().equalsIgnoreCase(targetName)) {
             sender.sendMessage(ChatColor.RED + "You cannot pay yourself!");
             playSound(sender, org.bukkit.Sound.ENTITY_VILLAGER_NO);
             return true;
         }
 
-        // Parse amount
         try {
             amount = parseAmount(amountStr);
         } catch (NumberFormatException e) {
@@ -214,7 +197,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Validate name length
         if (targetName.length() < 3 || targetName.length() > 16) {
             String errorMsg = ChatColor.RED + "That player does not exist.";
             sender.sendMessage(errorMsg);
@@ -228,7 +210,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Validate name format before lookup
         if (!targetName.matches("[a-zA-Z0-9_]{3,16}")) {
             String errorMsg = ChatColor.RED + "That player does not exist.";
             sender.sendMessage(errorMsg);
@@ -264,7 +245,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Load sender data
         PlayerData senderData = plugin.getPlayerDataManager().get(sender.getUniqueId());
         if (senderData == null) {
             senderData = plugin.getPlayerDataManager().loadPlayer(sender.getUniqueId());
@@ -278,7 +258,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
         final PlayerData finalSenderData = senderData;
 
-        // Move IO to async thread
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             PlayerData targetData = plugin.getPlayerDataManager().get(target.getUniqueId());
             boolean targetWasLoaded = targetData != null;
@@ -294,7 +273,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
 
             final PlayerData finalTargetData = targetData;
 
-            // Check if target has ignored the sender
             if (finalTargetData.isIgnoring(sender.getUniqueId())) {
                 plugin.getSchedulerAdapter().runTask(() -> {
                     sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player."));
@@ -303,12 +281,10 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                 return;
             }
 
-            // Execute transaction on main thread for safety
             plugin.getSchedulerAdapter().runTask(() -> {
                 finalSenderData.removeShards(amount, "Payment to " + target.getName());
                 finalTargetData.addShards(amount, "Payment from " + sender.getName());
 
-                // Save data async
                 plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
                 plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
 
@@ -316,12 +292,10 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                     plugin.getPlayerDataManager().unload(target.getUniqueId());
                 }
 
-                // Notify sender
                 sender.sendMessage(ChatColor.GRAY + "You paid " + target.getName() + " " +
                         ChatColor.DARK_PURPLE + formatNumber(amount) + " shards");
                 playSound(sender, org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME);
 
-                // Notify target if online
                 if (target.isOnline()) {
                     Player targetPlayer = target.getPlayer();
                     if (targetPlayer != null) {
@@ -352,7 +326,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         String amountStr = args[2];
         int amount;
 
-        // Parse amount
         try {
             amount = parseAmount(amountStr);
         } catch (NumberFormatException e) {
@@ -362,22 +335,18 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Validate action
         if (!action.equals("give") && !action.equals("set") && !action.equals("remove")) {
             sender.sendMessage(ChatColor.RED + "Invalid action! Use: give, set, or remove");
             playSound(sender, org.bukkit.Sound.ENTITY_VILLAGER_NO);
             return true;
         }
 
-        // Online check first
         Player onlineTarget = Bukkit.getPlayer(targetName);
         if (onlineTarget != null) {
             processAdminCommand(sender, onlineTarget, action, amount);
             return true;
         }
 
-        // Async lookup
-        // Validate name format before lookup
         if (!targetName.matches("[a-zA-Z0-9_]{3,16}")) {
             String errorMsg = ChatColor.RED + "That user does not exist.";
             sender.sendMessage(errorMsg);
@@ -404,7 +373,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         if (!target.hasPlayedBefore() && !target.isOnline()) {
             String errorMsg = ChatColor.RED + "That user does not exist.";
             sender.sendMessage(errorMsg);
-            // Send actionbar if sender is a player
             if (sender instanceof Player) {
                 ((Player) sender).spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                         new net.md_5.bungee.api.chat.TextComponent(errorMsg));
@@ -496,7 +464,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
         int multiplier = 1;
         String numberPart = input;
 
-        // Check for suffix
         if (Character.isLetter(lastChar)) {
             numberPart = input.substring(0, input.length() - 1);
 
@@ -512,7 +479,6 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                     break;
                 case 't':
                     // For trillion, we need to be careful with int overflow
-                    // Parse as long first, then convert
                     double base = Double.parseDouble(numberPart);
                     if (!Double.isFinite(base)) {
                         throw new NumberFormatException("Shards amount is not finite");
@@ -527,14 +493,12 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Parse the number part (can be decimal like 1.5k)
         double base = Double.parseDouble(numberPart);
         if (!Double.isFinite(base)) {
             throw new NumberFormatException("Shards amount is not finite");
         }
         long result = (long) (base * multiplier);
 
-        // Clamp to int range
         if (result > Integer.MAX_VALUE) {
             return Integer.MAX_VALUE;
         }
@@ -551,12 +515,10 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             @NotNull String[] args) {
         List<String> completions = new ArrayList<>();
 
-        // First argument: action
         if (args.length == 1) {
             List<String> actions = new ArrayList<>();
             actions.add("pay");
 
-            // Only show admin subcommands to players with admin permission
             if (sender.hasPermission("prismcore.admin.shards")) {
                 actions.add("give");
                 actions.add("set");
@@ -568,19 +530,14 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
                     .collect(Collectors.toList());
         }
 
-        // pay command args
         if (args[0].equalsIgnoreCase("pay")) {
-            // Second argument: player name
             if (args.length == 2) {
-                // Use async player name cache to prevent TPS drops
                 completions = plugin.getPlayerNameCache().getCompletions(args[1]);
-                // Remove self from suggestions for shards command
                 if (sender instanceof Player) {
                     completions.remove(sender.getName());
                 }
                 return completions;
             }
-            // Third argument: amount suggestions
             if (args.length == 3) {
                 List<String> amounts = Arrays.asList("10", "50", "100", "500", "1000", "1k", "10k", "100k", "1m");
                 return amounts.stream()
@@ -589,17 +546,13 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Admin command args
         if (sender.hasPermission("prismcore.admin.shards")) {
             String action = args[0].toLowerCase();
             if (action.equals("give") || action.equals("set") || action.equals("remove")) {
-                // Second argument: player name
                 if (args.length == 2) {
-                    // Use async player name cache to prevent TPS drops
                     return plugin.getPlayerNameCache().getCompletions(args[1]);
                 }
 
-                // Third argument: amount suggestions
                 if (args.length == 3) {
                     List<String> amounts = Arrays.asList("10", "50", "100", "500", "1000", "1k", "10k", "100k", "1m");
                     return amounts.stream()

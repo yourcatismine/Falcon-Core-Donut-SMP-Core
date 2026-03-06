@@ -47,9 +47,8 @@ public class IgnoreCommand implements CommandExecutor, TabCompleter {
 
         if (target != null) {
             targetUuid = target.getUniqueId();
-            targetName = target.getName(); // Use exact name
+            targetName = target.getName();
         } else {
-            // Check offline player asynchronously
             final String finalTargetName = targetName;
             final Player finalPlayer = player;
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -79,7 +78,6 @@ public class IgnoreCommand implements CommandExecutor, TabCompleter {
     }
 
     private void processIgnoreCommand(Player player, UUID targetUuid, String targetName) {
-        // Check if trying to ignore themselves
         if (targetUuid.equals(player.getUniqueId())) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
@@ -90,7 +88,6 @@ public class IgnoreCommand implements CommandExecutor, TabCompleter {
             playerData = plugin.getPlayerDataManager().loadPlayer(player.getUniqueId());
         }
 
-        // Check if already ignoring
         if (playerData.isIgnoring(targetUuid)) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You are already ignoring this player.");
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -99,22 +96,18 @@ public class IgnoreCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Add to ignore list
         playerData.addIgnoredPlayer(targetUuid);
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
-        // Send confirmation messages
         String confirmMsg = ChatColor.translateAlternateColorCodes('&', "&7You ignored&d " + targetName + "&7.");
         player.sendMessage(confirmMsg);
         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(confirmMsg));
-        // No sound as specified in requirements
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         return Collections.emptyList();

@@ -46,26 +46,22 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
         String targetName = args[0];
         
-        // Use async to prevent TPS drop
         controller.getPlugin().getSchedulerAdapter().runTaskAsync(() -> {
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
             
             if (targetPlayer == null || (!targetPlayer.hasPlayedBefore() && !targetPlayer.isOnline())) {
-                // Send error message and sound using entity task (sync)
                 controller.getPlugin().getSchedulerAdapter().runEntityTask(player, () -> {
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             TextComponent.fromLegacyText(Utils.formatColors("&cThat player does not exist.")));
                     try {
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     } catch (Exception e) {
-                        // Fallback
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_HURT, 1f, 1f);
                     }
                 });
                 return;
             }
             
-            // Open GUI on the entity task (sync)
             controller.getPlugin().getSchedulerAdapter().runEntityTask(player, () -> {
                 openProfileGUI(player, targetPlayer);
             });
@@ -81,7 +77,6 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops  
             return controller.getPlugin().getPlayerNameCache().getCompletions(args[0]);
         }
 
@@ -94,7 +89,6 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         
         Inventory inv = Bukkit.createInventory((InventoryHolder) new ProfileHolder(targetPlayer), 36, title);
         
-        // Slot 11: Purple Bed - Homes
         ItemStack homesBed = new ItemStack(Material.PURPLE_BED);
         ItemMeta homesMeta = homesBed.getItemMeta();
         if (homesMeta != null) {
@@ -104,7 +98,6 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         }
         inv.setItem(11, homesBed);
         
-        // Slot 12: Enderchest
         ItemStack enderchest = new ItemStack(Material.ENDER_CHEST);
         ItemMeta echestMeta = enderchest.getItemMeta();
         if (echestMeta != null) {
@@ -114,7 +107,6 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         }
         inv.setItem(12, enderchest);
         
-        // Slot 13: Chest - Inventory
         ItemStack chest = new ItemStack(Material.CHEST);
         ItemMeta chestMeta = chest.getItemMeta();
         if (chestMeta != null) {

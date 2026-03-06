@@ -287,7 +287,6 @@ public final class ItemKey {
             try {
                 max = Math.max(1, e.getMaxLevel());
             } catch (Throwable throwable) {
-                // empty catch block
             }
         }
         if (max <= 1 || level <= 1) {

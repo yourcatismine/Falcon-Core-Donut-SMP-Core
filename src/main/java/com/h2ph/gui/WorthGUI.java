@@ -74,10 +74,8 @@ public class WorthGUI {
         Map<ItemKey, Double> pricesMap = plugin.getPrismSell().getPricesManager().getPrices();
         List<Map.Entry<ItemKey, Double>> items = new ArrayList<>(pricesMap.entrySet());
 
-        // Filtering
         items = items.stream().filter(entry -> matchesFilter(entry.getKey(), filterType)).collect(Collectors.toList());
 
-        // Sorting
         switch (sortType) {
             case HIGHEST_PRICE:
                 items.sort((e1, e2) -> Double.compare(e2.getValue(), e1.getValue()));
@@ -117,7 +115,6 @@ public class WorthGUI {
             inv.setItem(i - start, item);
         }
 
-        // Navigation
         if (page > 0) {
             inv.setItem(45, createItem(Material.ARROW, "&aʙᴀᴄᴋ", "&fClick to go to the previous page"));
         }
@@ -125,8 +122,6 @@ public class WorthGUI {
             inv.setItem(53, createItem(Material.ARROW, "&aɴᴇхᴛ", "&fClick to go to the next page"));
         }
 
-        // Action Buttons
-        // Slot 48: Sort
         List<String> sortLore = new ArrayList<>();
         for (SortType st : SortType.values()) {
             if (st == sortType) {
@@ -137,10 +132,8 @@ public class WorthGUI {
         }
         inv.setItem(48, createItem(Material.CAULDRON, "&dѕᴏʀᴛ", sortLore));
 
-        // Slot 49: Refresh
         inv.setItem(49, createItem(Material.ANVIL, "&dɪᴛᴇᴍ ᴘʀɪᴄᴇѕ", "&fClick to refresh"));
 
-        // Slot 50: Filter
         List<String> filterLore = new ArrayList<>();
         for (FilterType ft : FilterType.values()) {
             if (ft == filterType) {
@@ -236,7 +229,6 @@ public class WorthGUI {
 
     private String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
-        // Use Math.floor with 10x scaling to match other formatting methods
         scaled = Math.floor(scaled * 10) / 10.0;
         if (scaled == (long) scaled) {
             return String.valueOf((long) scaled) + suffix;

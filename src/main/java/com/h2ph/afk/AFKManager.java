@@ -22,12 +22,9 @@ public class AFKManager {
     private FileConfiguration config;
 
     private final Map<String, AFKRegion> regions = new HashMap<>();
-    // Map<PlayerUUID, SecondsRemaining>
     private final Map<UUID, Integer> playerCountdowns = new ConcurrentHashMap<>();
-    // Set<PlayerUUID> to track who has already seen the entry title
     private final Set<UUID> playerInRegion = Collections.synchronizedSet(new HashSet<>());
 
-    // Config values
     private String title;
     private String subtitle;
     private String actionbar;
@@ -39,9 +36,7 @@ public class AFKManager {
 
     public AFKManager(PrismSurvival plugin) {
         this.plugin = plugin;
-        // plugins/PrismCore/survival/regions/AFK
         this.regionsFolder = new File(plugin.getDataFolder(), "survival/regions/AFK");
-        // plugins/PrismCore/survival/AFK/config.yml
         this.configFile = new File(plugin.getDataFolder(), "survival/AFK/config.yml");
 
         loadConfig();
@@ -95,7 +90,6 @@ public class AFKManager {
         }
     }
 
-    // ... (rest of class)
 
     public void loadRegions() {
         regions.clear();
@@ -118,7 +112,7 @@ public class AFKManager {
         FileConfiguration data = YamlConfiguration.loadConfiguration(file);
         String worldName = data.getString("world");
         if (worldName == null || Bukkit.getWorld(worldName) == null)
-            return; // Skip invalid worlds
+            return;
 
         Vector min = data.getVector("min");
         Vector max = data.getVector("max");
@@ -172,7 +166,6 @@ public class AFKManager {
         return null;
     }
 
-    // Getters for Config
     public String getTitle() {
         return title;
     }
@@ -193,7 +186,6 @@ public class AFKManager {
         return rewardAmount;
     }
 
-    // State Management
     public boolean isPlayerInRegion(UUID uuid) {
         return playerInRegion.contains(uuid);
     }
@@ -203,7 +195,7 @@ public class AFKManager {
             playerInRegion.add(uuid);
         } else {
             playerInRegion.remove(uuid);
-            playerCountdowns.remove(uuid); // Reset countdown on exit
+            playerCountdowns.remove(uuid);
         }
     }
 
@@ -216,7 +208,6 @@ public class AFKManager {
     }
 
     public void startTask() {
-        // Run every 20 ticks (1 second)
         plugin.getSchedulerAdapter().runTaskTimer(() -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 handlePlayer(player);
@@ -229,30 +220,23 @@ public class AFKManager {
         AFKRegion region = getRegionAt(player.getLocation());
 
         if (region == null) {
-            // Player is not in any AFK region
             if (isPlayerInRegion(uuid)) {
-                // Was inside, now outside
                 setPlayerInRegion(uuid, false);
             }
             return;
         }
 
-        // Player is inside an AFK region
         if (!isPlayerInRegion(uuid)) {
-            // Just entered
             setPlayerInRegion(uuid, true);
             resetPlayerCountdown(uuid);
 
-            // Show entry titles
             if (!title.isEmpty() || !subtitle.isEmpty()) {
                 player.sendTitle(title, subtitle, 10, 70, 20);
             }
 
-            // Play sound
             if (entrySound != null) {
                 player.playSound(player.getLocation(), entrySound, entrySoundVolume, entrySoundPitch);
             } else {
-                // Fallback
                 String rawSound = config.getString("entry-sound.sound");
                 if (rawSound != null && !rawSound.isEmpty()) {
                     player.playSound(player.getLocation(), rawSound, entrySoundVolume, entrySoundPitch);
@@ -260,32 +244,25 @@ public class AFKManager {
             }
         }
 
-        // Handle Countdown
         int remaining = getPlayerCountdown(uuid);
 
-        // Show Actionbar
         if (!actionbar.isEmpty()) {
             String msg = actionbar.replace("<COUNTDOWN>", String.valueOf(remaining));
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
         }
 
-        // Decrement or Reward
         if (remaining <= 1) {
-            // Time up, give reward
-            // Check for active shard booster
             com.prismcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(uuid);
             int multiplier = playerData.hasActiveShardBooster() ? 2 : 1;
             String source = multiplier > 1 ? "AFK Reward (Booster)" : "AFK Reward";
             int amountGained = rewardAmount * multiplier;
             playerData.addShards(amountGained, source);
 
-            // Unified actionbar notification
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(
                             ChatColor.translateAlternateColorCodes('&', "&d+" + amountGained)));
 
-            // Reset countdown
             resetPlayerCountdown(uuid);
         } else {
             setPlayerCountdown(uuid, remaining - 1);

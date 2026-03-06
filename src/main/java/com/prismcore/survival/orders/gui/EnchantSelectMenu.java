@@ -122,7 +122,6 @@ public class EnchantSelectMenu
                     continue;
                 return true;
             } catch (Throwable throwable) {
-                // empty catch block
             }
         }
         return false;
@@ -146,9 +145,6 @@ public class EnchantSelectMenu
         this.options = all;
         this.render();
         this.p.openInventory(this.inv);
-        // Sound removed as per request
-        // this.module.cfg().play(this.p, "sounds.open", "BLOCK_CHEST_OPEN", 0.7f,
-        // 1.0f);
     }
 
     private void render() {
@@ -241,11 +237,9 @@ public class EnchantSelectMenu
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -352,7 +346,6 @@ public class EnchantSelectMenu
             try {
                 sm.addStoredEnchant(opt.ench, opt.level, true);
             } catch (Throwable throwable) {
-                // empty catch block
             }
             if (lore != null && !lore.isEmpty()) {
                 ArrayList<String> ll = new ArrayList<String>();

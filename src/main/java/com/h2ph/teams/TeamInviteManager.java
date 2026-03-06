@@ -21,7 +21,6 @@ public class TeamInviteManager {
     }
 
     public void shutdown() {
-        // No-op after Redis removal
     }
 
     public void sendInvite(UUID targetUuid, String inviterName, String teamName, String teamId) {
@@ -30,7 +29,6 @@ public class TeamInviteManager {
             PlayerData data = plugin.getPlayerDataManager().get(targetUuid);
             if (data != null) {
                 long expiry = System.currentTimeMillis() + 30000;
-                // Note: Assuming PlayerData has addTeamInvite method as seen in previous code
                 data.addTeamInvite(teamId, inviterName, expiry);
 
                 target.playSound(target.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1f);
@@ -78,10 +76,7 @@ public class TeamInviteManager {
                 target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f, 1f);
             }
         } else {
-            // Offline kick notification storage
             data.setPendingKickTeamName(teamName);
-            // The team removal itself is done in TeamCommand/TeamManager
-            // But we need to ensure the PlayerData in cache/DB is updated when they join
         }
     }
 }

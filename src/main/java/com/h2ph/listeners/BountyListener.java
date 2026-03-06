@@ -33,7 +33,6 @@ public class BountyListener implements Listener {
 
         UUID victimId = victim.getUniqueId();
         if (plugin.getBountyManager().hasBounty(victimId)) {
-            // Check if killer and victim are in the same team
             com.h2ph.teams.Team vTeam = plugin.getTeamManager().getPlayerTeam(victimId);
             com.h2ph.teams.Team kTeam = plugin.getTeamManager().getPlayerTeam(killer.getUniqueId());
 

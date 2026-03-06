@@ -36,7 +36,6 @@ public class RTPQueueManager {
     }
 
     public void loadQueues() {
-        // Cleanup
         disable();
 
         cachedQueues.clear();
@@ -74,12 +73,10 @@ public class RTPQueueManager {
                     Math.max(x1, x2), Math.max(y1, y2), Math.max(z1, z2));
             cachedQueues.add(region);
 
-            // Initialize global countdown
             globalCountdowns.put(regionName, 20);
             playersInQueue.put(regionName, java.util.concurrent.ConcurrentHashMap.newKeySet());
         }
 
-        // Ensure timer is running
         startGlobalTimer();
     }
 
@@ -94,7 +91,6 @@ public class RTPQueueManager {
                 int nextVal;
 
                 if (current <= 1) {
-                    // Teleport everyone in queue
                     teleportQueue(region);
                     nextVal = 20;
                 } else {
@@ -102,11 +98,9 @@ public class RTPQueueManager {
                 }
                 globalCountdowns.put(name, nextVal);
 
-                // Trigger pre-calculation at 5 seconds remaining
                 if (nextVal == 5) {
                     java.util.Set<java.util.UUID> players = playersInQueue.get(name);
                     if (players != null && !players.isEmpty()) {
-                        // Pick a leader to determine the group location
                         java.util.UUID leaderId = players.iterator().next();
                         Player leader = plugin.getServer().getPlayer(leaderId);
 
@@ -120,22 +114,17 @@ public class RTPQueueManager {
                             final String type = worldType;
                             RTPManager.calculateLocation(leader, name, worldType, (centerLoc) -> {
                                 if (centerLoc != null) {
-                                    // Distribute this location to all players with slight scatter
                                     for (java.util.UUID uuid : players) {
-                                        // Skip if already has a location? No, overwrite for group sync
 
                                         org.bukkit.Location target = centerLoc.clone();
-                                        // Scatter +/- 3 blocks
                                         double dx = (Math.random() * 6) - 3;
                                         double dz = (Math.random() * 6) - 3;
                                         target.add(dx, 0, dz);
 
-                                        // Re-adjust Y for overworld to ensure safety
                                         if (type.equals("overworld")) {
                                             int highestY = target.getWorld().getHighestBlockYAt(target);
                                             target.setY(highestY + 1);
                                         }
-                                        // For nether/end, we keep the center Y (safe-ish assumption for small scatter)
 
                                         preCalculatedLocations.put(uuid, target);
                                     }
@@ -145,8 +134,6 @@ public class RTPQueueManager {
                     }
                 }
 
-                // Send synchronized titles to all players in this queue
-                // Delay by 10 ticks (0.5s) to match slow hologram/placeholder updates
                 final int displayVal = nextVal;
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
                     java.util.Set<java.util.UUID> players = playersInQueue.get(name);
@@ -167,7 +154,6 @@ public class RTPQueueManager {
                         for (java.util.UUID uuid : players) {
                             Player player = plugin.getServer().getPlayer(uuid);
                             if (player != null && player.isOnline()) {
-                                // Updates: 0 fade-in/out for crisp synchronization
                                 player.sendTitle(titleText, subtitleText, 0, 30, 0);
                                 if (playTickSound) {
                                     player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f,
@@ -189,7 +175,6 @@ public class RTPQueueManager {
         for (java.util.UUID uuid : players) {
             Player player = plugin.getServer().getPlayer(uuid);
             if (player != null && player.isOnline()) {
-                // Check if we have a pre-calculated location
                 org.bukkit.Location target = preCalculatedLocations.remove(uuid);
 
                 if (target != null) {
@@ -201,7 +186,6 @@ public class RTPQueueManager {
                     if (player.getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END)
                         worldType = "end";
 
-                    // Fallback: calculate now if missed pre-calc
                     RTPManager.calculateLocation(player, region.name, worldType, (loc) -> {
                         if (loc != null) {
                             teleportPlayer(player, loc);
@@ -209,7 +193,6 @@ public class RTPQueueManager {
                     });
                 }
             } else {
-                // Offline clean up
                 preCalculatedLocations.remove(uuid);
             }
         }
@@ -239,13 +222,11 @@ public class RTPQueueManager {
         if (players != null) {
             players.add(uuid);
 
-            // Send immediate title
             Player player = plugin.getServer().getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 int current = globalCountdowns.getOrDefault(regionKey, 20);
                 String titleText = ChatColor.translateAlternateColorCodes('&', "&dʀᴛᴘ ᴢᴏɴᴇ");
                 String subtitleText = ChatColor.translateAlternateColorCodes('&', "&fTeleporting in " + current);
-                // Initial send: Fade in
                 player.sendTitle(titleText, subtitleText, 10, 40, 10);
             }
         }
@@ -272,7 +253,6 @@ public class RTPQueueManager {
                 subtitleText = ChatColor.translateAlternateColorCodes('&', "&fTeleporting in " + current);
             }
 
-            // Send with 0 stay and 10 fade-out to trigger smooth exit
             player.sendTitle(titleText, subtitleText, 0, 0, 10);
         }
     }
@@ -330,7 +310,6 @@ public class RTPQueueManager {
     }
 
     public void createQueue(Player player, String regionName) {
-        // Check if the region exists in rtp folder
         File rtpFolder = new File(plugin.getDataFolder(), "rtp");
         File regionFolder = new File(rtpFolder, regionName);
 
@@ -339,7 +318,6 @@ public class RTPQueueManager {
             return;
         }
 
-        // Get WorldEdit selection
         try {
             com.sk89q.worldedit.entity.Player worldEditPlayer = BukkitAdapter.adapt(player);
             LocalSession session = WorldEdit.getInstance().getSessionManager().get(worldEditPlayer);
@@ -354,7 +332,6 @@ public class RTPQueueManager {
             BlockVector3 max = region.getMaximumPoint();
             String worldName = player.getWorld().getName();
 
-            // Save to rtp/queue/<region>.yml
             File queueFolder = new File(rtpFolder, "queue");
             if (!queueFolder.exists()) {
                 queueFolder.mkdirs();
@@ -362,7 +339,6 @@ public class RTPQueueManager {
 
             File queueFile = new File(queueFolder, regionName + ".yml");
 
-            // Create file if not exists
             if (!queueFile.exists()) {
                 queueFile.createNewFile();
             }
@@ -378,7 +354,7 @@ public class RTPQueueManager {
             config.set("pos2.z", max.getZ());
 
             config.save(queueFile);
-            loadQueues(); // Reload cache
+            loadQueues();
 
             player.sendMessage(ChatColor.GREEN + "RTP Queue for region " + ChatColor.YELLOW + regionName +
                     ChatColor.GREEN + " created successfully!");
@@ -408,7 +384,7 @@ public class RTPQueueManager {
         return Arrays.stream(files)
                 .filter(File::isDirectory)
                 .map(File::getName)
-                .filter(name -> !name.equalsIgnoreCase("queue")) // Exclude "queue" folder
+                .filter(name -> !name.equalsIgnoreCase("queue"))
                 .collect(Collectors.toList());
     }
 
@@ -428,7 +404,7 @@ public class RTPQueueManager {
 
         if (queueFile.delete()) {
             player.sendMessage(ChatColor.GREEN + "RTP Queue '" + regionName + "' deleted successfully.");
-            loadQueues(); // Reload cache
+            loadQueues();
         } else {
             player.sendMessage(ChatColor.RED + "Failed to delete RTP Queue '" + regionName + "'.");
         }

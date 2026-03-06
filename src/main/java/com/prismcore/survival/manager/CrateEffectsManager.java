@@ -40,7 +40,7 @@ public class CrateEffectsManager {
                     renderEffect(loc.clone().add(0.5, 0.5, 0.5), effect);
                 }
             }
-        }, 1L, 4L); // Run every 4 ticks (5 times a second)
+        }, 1L, 4L);
     }
 
     private List<String> getEffectsForCrate(String crateName) {
@@ -65,7 +65,7 @@ public class CrateEffectsManager {
     private double time = 0;
 
     private void renderEffect(Location center, String effectName) {
-        time += 0.1; // Increment time for animation
+        time += 0.1;
         if (time > 1000)
             time = 0;
 
@@ -121,7 +121,6 @@ public class CrateEffectsManager {
         }
     }
 
-    // 1. Helix
     private void renderHelix(Location center) {
         double radius = 1.2;
         for (double y = 0; y <= 2; y += 0.1) {
@@ -131,7 +130,6 @@ public class CrateEffectsManager {
         }
     }
 
-    // 2. Double Helix
     private void renderDoubleHelix(Location center) {
         double radius = 1.0;
         for (double y = 0; y <= 2; y += 0.2) {
@@ -145,10 +143,9 @@ public class CrateEffectsManager {
         }
     }
 
-    // 3. Halo
     private void renderHalo(Location center) {
         double radius = 0.8;
-        double y = 1.2 + Math.sin(time) * 0.2; // Bobbing
+        double y = 1.2 + Math.sin(time) * 0.2;
         for (int i = 0; i < 20; i++) {
             double angle = 2 * Math.PI * i / 20;
             double x = radius * Math.cos(angle + time);
@@ -157,7 +154,6 @@ public class CrateEffectsManager {
         }
     }
 
-    // 4. Ground Rings
     private void renderGroundRings(Location center) {
         double maxRadius = 2.0;
         double speed = 1.0;
@@ -171,11 +167,10 @@ public class CrateEffectsManager {
         }
     }
 
-    // 5. Vortex
     private void renderVortex(Location center) {
         for (int i = 0; i < 3; i++) {
             double y = (time * 2 + i * 2) % 3;
-            double r = 1.5 * (1 - (y / 3.0)); // Decreasing radius as it goes up
+            double r = 1.5 * (1 - (y / 3.0));
             double angle = y * 4 + time * 2;
 
             double x = r * Math.cos(angle);
@@ -184,18 +179,15 @@ public class CrateEffectsManager {
         }
     }
 
-    // 6. Fountain
     private void renderFountain(Location center) {
         center.getWorld().spawnParticle(Particle.SPLASH, center.clone().add(0, 0.5, 0), 10, 0.2, 0.5, 0.2, 0.1);
         center.getWorld().spawnParticle(Particle.BUBBLE_POP, center.clone().add(0, 0.5, 0), 5, 0.3, 0.3, 0.3, 0.05);
     }
 
-    // 7. Disco
     private void renderDisco(Location center) {
         if (Math.random() < 0.3) {
             center.getWorld().spawnParticle(Particle.NOTE, center.clone().add(0, 0.5, 0), 3, 0.5, 0.5, 0.5, 1);
         }
-        // Random colored dust
         double r = Math.random();
         double g = Math.random();
         double b = Math.random();
@@ -206,7 +198,6 @@ public class CrateEffectsManager {
                 center.clone().add(Math.cos(angle), Math.random(), Math.sin(angle)), 0, dust);
     }
 
-    // 8. Beacon
     private void renderBeacon(Location center) {
         for (double y = 0; y < 4; y += 0.5) {
             center.getWorld().spawnParticle(Particle.INSTANT_EFFECT, center.clone().add(0, y, 0), 0);
@@ -217,12 +208,11 @@ public class CrateEffectsManager {
         }
     }
 
-    // 9. Pulse
     private void renderPulse(Location center) {
         double maxRadius = 2.5;
-        double radius = (Math.sin(time) + 1) / 2 * maxRadius; // 0 to 2.5
+        double radius = (Math.sin(time) + 1) / 2 * maxRadius;
 
-        for (int i = 0; i < 20; i++) { // Sphere checks roughly
+        for (int i = 0; i < 20; i++) {
             double phi = Math.random() * Math.PI;
             double theta = Math.random() * Math.PI * 2;
             double x = radius * Math.sin(phi) * Math.cos(theta);
@@ -232,23 +222,18 @@ public class CrateEffectsManager {
         }
     }
 
-    // 10. Orbit
     private void renderOrbit(Location center) {
-        // 3 Orbs
         for (int i = 0; i < 3; i++) {
             double angle = time * 2 + (i * (Math.PI * 2 / 3));
             double x = 1.5 * Math.cos(angle);
             double z = 1.5 * Math.sin(angle);
             double y = Math.sin(time + i) * 0.5 + 0.5;
             center.getWorld().spawnParticle(Particle.DRAGON_BREATH, center.clone().add(x, y, z), 0, 0, 0, 0);
-            // Trail
             center.getWorld().spawnParticle(Particle.WITCH, center.clone().add(x, y, z), 0);
         }
     }
 
-    // 11. Ender
     private void renderEnder(Location center) {
-        // Reverse portal logic: particles appearing far and moving in
         for (int i = 0; i < 3; i++) {
             double angle = Math.random() * Math.PI * 2;
             double dist = 2.0;
@@ -258,16 +243,10 @@ public class CrateEffectsManager {
 
             Location start = center.clone().add(itemX, itemY, itemZ);
             Vector dir = center.toVector().subtract(start.toVector()).normalize().multiply(0.2);
-            // Can't set velocity directly on spawnParticle easily for all types, but PORTAL
-            // moves randomly often.
-            // ENCHANT moves to player.
-            // REVERSE_PORTAL moves out?
-            // DRAGON_BREATH sits.
             center.getWorld().spawnParticle(Particle.REVERSE_PORTAL, start, 0, dir.getX(), dir.getY(), dir.getZ(), 1);
         }
     }
 
-    // 12. Tornado (Spinning particles rising)
     private void renderTornado(Location center) {
         double maxH = 3.0;
         double maxR = 1.5;
@@ -280,10 +259,9 @@ public class CrateEffectsManager {
         }
     }
 
-    // 13. Sphere
     private void renderSphere(Location center) {
         double r = 1.5;
-        for (int i = 0; i < 15; i++) { // Render localized sphere points over time
+        for (int i = 0; i < 15; i++) {
             double u = Math.random();
             double v = Math.random();
             double theta = 2 * Math.PI * u;
@@ -295,9 +273,7 @@ public class CrateEffectsManager {
         }
     }
 
-    // 14. Lava Drip
     private void renderLavaDrip(Location center) {
-        // Roof drip effect
         if (Math.random() < 0.2) {
             double x = (Math.random() - 0.5) * 1.5;
             double z = (Math.random() - 0.5) * 1.5;
@@ -305,21 +281,17 @@ public class CrateEffectsManager {
         }
     }
 
-    // 15. Enchant (Sucking in)
     private void renderEnchant(Location center) {
         for (int i = 0; i < 5; i++) {
             double x = (Math.random() - 0.5) * 3;
             double z = (Math.random() - 0.5) * 3;
-            // High up
             Location start = center.clone().add(x, 2, z);
-            // Vector towards center
             Vector v = center.toVector().add(new Vector(0, 0.5, 0)).subtract(start.toVector()).normalize()
                     .multiply(0.2);
             center.getWorld().spawnParticle(Particle.ENCHANT, start, 0, v.getX(), v.getY(), v.getZ());
         }
     }
 
-    // 16. Flame Crown
     private void renderFlameCrown(Location center) {
         double radius = 0.7;
         double y = 1.2;
@@ -328,10 +300,7 @@ public class CrateEffectsManager {
             double angle = (2 * Math.PI * i / points) + time;
             double x = radius * Math.cos(angle);
             double z = radius * Math.sin(angle);
-            center.getWorld().spawnParticle(Particle.FLAME, center.clone().add(x, y, z), 0, 0, 0.05, 0); // Small speed
-                                                                                                         // makes flames
-                                                                                                         // flicker
-                                                                                                         // nicely
+            center.getWorld().spawnParticle(Particle.FLAME, center.clone().add(x, y, z), 0, 0, 0.05, 0);
         }
     }
 }

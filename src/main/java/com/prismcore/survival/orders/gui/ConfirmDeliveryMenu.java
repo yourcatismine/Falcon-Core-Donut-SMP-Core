@@ -38,16 +38,15 @@ public class ConfirmDeliveryMenu
         implements InventoryHolder,
         MenuOwner {
     
-    // Anti-dupe: Track processing state per order to prevent packet manipulation
     private static final java.util.Set<java.util.UUID> processingOrders = java.util.concurrent.ConcurrentHashMap.newKeySet();
     
     private final OrdersModule module;
     private final Player p;
     private final Order order;
-    private final List<ItemStack> acceptedDirect; // Items placed directly in delivery menu
-    private final List<ItemStack> acceptedFromShulkers; // Items extracted from shulker boxes
-    private final List<ItemStack> processedShulkers; // Shulker boxes with delivered items removed
-    private final List<ItemStack> originalShulkers; // Original shulker boxes before extraction
+    private final List<ItemStack> acceptedDirect;
+    private final List<ItemStack> acceptedFromShulkers;
+    private final List<ItemStack> processedShulkers;
+    private final List<ItemStack> originalShulkers;
     private final int acceptedAmount;
     private Inventory inv;
     private boolean finalized = false;
@@ -77,14 +76,11 @@ public class ConfirmDeliveryMenu
         int summarySlot = 13;
         int confirmSlot = 15;
 
-        // Slot 13: Summary Item (Using logic from YourOrdersMenu)
         this.inv.setItem(summarySlot, createOrderItem(this.order));
 
-        // Slot 11: Cancel
         this.inv.setItem(cancelSlot, this.module.cfg().button("gui.confirm.items.cancel", "RED_STAINED_GLASS_PANE",
                 "&4ᴄᴀɴᴄᴇʟ", List.of("&fClick to cancel")));
 
-        // Slot 15: Confirm
         this.inv.setItem(confirmSlot, this.module.cfg().dynamicItem(Material.LIME_STAINED_GLASS_PANE,
                 "gui.confirm.items.confirm", "&aᴄᴏɴꜰɪʀᴍ", List.of("&fClick to deliver"), null));
 
@@ -148,11 +144,9 @@ public class ConfirmDeliveryMenu
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -168,12 +162,10 @@ public class ConfirmDeliveryMenu
                     "Clicked Cancel in Confirm Delivery Menu");
             this.finalized = true;
 
-            // Return original shulkers (not the extracted items from them)
             for (ItemStack shulker : this.originalShulkers) {
                 this.giveBackOrDrop(shulker);
             }
 
-            // Return direct items (not from shulkers)
             for (ItemStack directItem : this.acceptedDirect) {
                 this.giveBackOrDrop(directItem);
             }
@@ -183,7 +175,6 @@ public class ConfirmDeliveryMenu
             return;
         }
         if (slot == 15) {
-            // ANTI-DUPE: Prevent concurrent processing of the same order
             if (!processingOrders.add(this.order.id)) {
                 this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                 this.p.sendMessage(Utils.formatColors("&cDelivery already in progress! Please wait."));
@@ -191,15 +182,13 @@ public class ConfirmDeliveryMenu
             }
             
             try {
-                this.finalized = true; // Mark finalized to avoid double-refund on close
+                this.finalized = true;
 
-                // ANTI-DUPE: Fresh database validation - CRITICAL for packet manipulation protection
                 Order freshOrder = this.module.orders().getOrder(this.order.id);
                 if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
                     this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                     this.p.sendMessage(Utils.formatColors("&cThis order is no longer active!"));
 
-                    // Return items on error
                     for (ItemStack shulker : this.originalShulkers) {
                         this.giveBackOrDrop(shulker);
                     }
@@ -213,20 +202,16 @@ public class ConfirmDeliveryMenu
 
                 this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
 
-                // Combine all accepted items for delivery
                 List<ItemStack> allAccepted = new ArrayList<>();
                 allAccepted.addAll(this.acceptedDirect);
                 allAccepted.addAll(this.acceptedFromShulkers);
 
-                // ANTI-DUPE: Try to apply delivery with proper exception handling
                 try {
                     this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount, this.p.getUniqueId());
                 } catch (IllegalStateException ex) {
-                    // Order was completed/canceled by another action or packet manipulation detected
                     this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                     this.p.sendMessage(Utils.formatColors("&cDelivery failed: " + ex.getMessage()));
                     
-                    // Return all items since delivery failed
                     for (ItemStack shulker : this.originalShulkers) {
                         this.giveBackOrDrop(shulker);
                     }
@@ -238,12 +223,10 @@ public class ConfirmDeliveryMenu
                     return;
                 }
 
-                // Return the processed shulker boxes (with items removed) to the player
                 for (ItemStack processedShulker : this.processedShulkers) {
                     this.giveBackOrDrop(processedShulker);
                 }
 
-                // Log Metrics
                 long startTime = this.p.hasMetadata("prismorder.deliveryStartTime")
                         ? this.p.getMetadata("prismorder.deliveryStartTime").get(0).asLong()
                         : System.currentTimeMillis();
@@ -254,7 +237,6 @@ public class ConfirmDeliveryMenu
                                 + "s");
                 this.p.removeMetadata("prismorder.deliveryStartTime", this.module.getPlugin());
 
-                // ANTI-DUPE: Final validation after delivery - ensure order state is current
                 Order finalOrder = this.module.orders().getOrder(this.order.id);
                 if (finalOrder != null) {
                     this.order.delivered = finalOrder.delivered;
@@ -269,7 +251,6 @@ public class ConfirmDeliveryMenu
                             () -> new OrdersMainMenu(this.module, this.p).open(), 1L);
                 }
             } finally {
-                // ANTI-DUPE: Always remove from processing set to allow legitimate future clicks
                 processingOrders.remove(this.order.id);
             }
         }
@@ -281,7 +262,6 @@ public class ConfirmDeliveryMenu
             return;
         }
         if (!this.finalized) {
-            // Return original shulkers and direct items on unexpected close
             for (ItemStack shulker : this.originalShulkers) {
                 this.giveBackOrDrop(shulker);
             }

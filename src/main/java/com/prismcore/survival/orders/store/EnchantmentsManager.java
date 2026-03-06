@@ -255,7 +255,6 @@ public class EnchantmentsManager {
                     ench = Enchantment.getByName((String) parts[0].toUpperCase(Locale.ENGLISH));
                 }
             } catch (Throwable throwable) {
-                // empty catch block
             }
             if (ench == null)
                 continue;
@@ -391,7 +390,6 @@ public class EnchantmentsManager {
             try {
                 out.add(Integer.parseInt(part));
             } catch (Exception exception) {
-                // empty catch block
             }
         }
         return out;

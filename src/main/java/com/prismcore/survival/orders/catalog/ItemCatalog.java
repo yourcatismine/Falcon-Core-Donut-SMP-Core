@@ -82,7 +82,6 @@ public final class ItemCatalog {
                 pm.setBasePotionType(type);
                 it.setItemMeta((ItemMeta) pm);
             } catch (Throwable throwable) {
-                // empty catch block
             }
         }
         String kind = switch (mat) {

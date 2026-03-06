@@ -50,11 +50,8 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
             Player onlineTarget = Bukkit.getPlayer(targetName);
 
             if (onlineTarget != null) {
-                // Online player: data is cached, fetch synchronously
                 fetchAndOpenSync(player, onlineTarget);
             } else {
-                // Offline player: HTTP UUID lookup, SQL query & YAML reads -> MUST be async on
-                // Folia
                 plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
                     @SuppressWarnings("deprecation")
                     org.bukkit.OfflinePlayer check = Bukkit.getOfflinePlayer(targetName);
@@ -74,11 +71,9 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
                         return;
                     }
 
-                    // Pre-fetch all data on async thread
                     double bal = 0, spent = 0, made = 0;
                     long shards = 0, kills = 0, deaths = 0, ticks = 0, placed = 0, broken = 0, mobs = 0;
 
-                    // 1. Get Money (Vault - Most accurate)
                     RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager()
                             .getRegistration(Economy.class);
                     if (rsp != null) {
@@ -89,7 +84,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
                         }
                     }
 
-                    // 2. Get Shards and Shop Spent (Core PlayerDataManager - YAML)
                     try {
                         com.prismcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager()
                                 .get(check.getUniqueId());
@@ -100,7 +94,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
                     } catch (Throwable ignored) {
                     }
 
-                    // 3. Get Specialized Stats (PrismSell SQL)
                     try {
                         if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
                             com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell()
@@ -134,7 +127,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
             return true;
         }
 
-        // Self
         fetchAndOpenSync(player, player);
         return true;
     }
@@ -143,7 +135,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
         double bal = 0, spent = 0, made = 0;
         long shards = 0, kills = 0, deaths = 0, ticks = 0, placed = 0, broken = 0, mobs = 0;
 
-        // 1. Get Money (Vault)
         RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp != null) {
             Economy econ = rsp.getProvider();
@@ -153,7 +144,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
             }
         }
 
-        // 2. Get Shards and Shop Spent (Core PlayerDataManager)
         try {
             com.prismcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager().get(target.getUniqueId());
             if (corePd != null) {
@@ -163,7 +153,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
         } catch (Throwable ignored) {
         }
 
-        // 3. Get specialized stats (SQL)
         try {
             if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
                 com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell().getPlayerDataManager()
@@ -339,7 +328,6 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         return Collections.emptyList();

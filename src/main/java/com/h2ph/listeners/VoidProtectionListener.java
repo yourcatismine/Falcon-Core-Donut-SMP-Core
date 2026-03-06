@@ -25,7 +25,6 @@ public class VoidProtectionListener implements Listener {
         if (event.getTo() == null)
             return;
 
-        // Only check if they actually moved blocks to save performance
         if (event.getFrom().getBlockX() == event.getTo().getBlockX() &&
                 event.getFrom().getBlockY() == event.getTo().getBlockY() &&
                 event.getFrom().getBlockZ() == event.getTo().getBlockZ()) {
@@ -47,13 +46,11 @@ public class VoidProtectionListener implements Listener {
         String worldName = p.getWorld().getName();
         
         if (plugin.getSpawnManager() != null) {
-            // Use the new world-specific spawn logic
             spawnLoc = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
             spawnName = "world spawn";
             
-            // If no world-specific spawn, try named spawns as fallback
             if (spawnLoc == null) {
-                spawnLoc = plugin.getSpawnManager().getSpawn("spawn"); // Try "spawn" first
+                spawnLoc = plugin.getSpawnManager().getSpawn("spawn");
                 if (spawnLoc == null) {
                     java.util.List<String> spawns = plugin.getSpawnManager().listSpawns();
                     if (!spawns.isEmpty()) {

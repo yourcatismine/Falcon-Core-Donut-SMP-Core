@@ -47,9 +47,8 @@ public class UnignoreCommand implements CommandExecutor, TabCompleter {
 
         if (target != null) {
             targetUuid = target.getUniqueId();
-            targetName = target.getName(); // Use exact name
+            targetName = target.getName();
         } else {
-            // Check offline player asynchronously
             final String finalTargetName = targetName;
             final Player finalPlayer = player;
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -84,7 +83,6 @@ public class UnignoreCommand implements CommandExecutor, TabCompleter {
             playerData = plugin.getPlayerDataManager().loadPlayer(player.getUniqueId());
         }
 
-        // Check if actually ignoring this player
         if (!playerData.isIgnoring(targetUuid)) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You are not ignoring this player.");
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -93,16 +91,13 @@ public class UnignoreCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Remove from ignore list
         playerData.removeIgnoredPlayer(targetUuid);
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
-        // Send confirmation messages
         String confirmMsg = ChatColor.translateAlternateColorCodes('&', "&7You unignored&d " + targetName + "&7.");
         player.sendMessage(confirmMsg);
         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(confirmMsg));
-        // No sound as specified in requirements
     }
 
     @Override
@@ -117,7 +112,6 @@ public class UnignoreCommand implements CommandExecutor, TabCompleter {
                 String partial = args[0].toLowerCase();
                 
                 for (UUID ignoredUuid : ignoredPlayers) {
-                    // Try to get online player first
                     Player ignoredPlayer = Bukkit.getPlayer(ignoredUuid);
                     if (ignoredPlayer != null) {
                         String name = ignoredPlayer.getName();
@@ -125,7 +119,6 @@ public class UnignoreCommand implements CommandExecutor, TabCompleter {
                             ignoredNames.add(name);
                         }
                     } else {
-                        // Try offline player
                         org.bukkit.OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(ignoredUuid);
                         String name = offlinePlayer.getName();
                         if (name != null && name.toLowerCase().startsWith(partial)) {

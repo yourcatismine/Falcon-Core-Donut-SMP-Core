@@ -36,20 +36,17 @@ public class ProfileGUIListener implements Listener {
         boolean isProfileHomes = topInv.getHolder() instanceof ProfileHomesGUI.ProfileHomesHolder;
         boolean isProfileInventory = topInv.getHolder() instanceof ProfileInventoryGUI.ProfileInventoryHolder;
 
-        // Handle profile inventory live syncing
         if (isProfileInventory) {
             syncProfileInventory((ProfileInventoryGUI.ProfileInventoryHolder) topInv.getHolder(), topInv, player);
             return;
         }
 
-        // Don't process profile inventory as buttons
         if (isProfileInventory)
             return;
 
         if (!isProfileMain && !isProfileHomes)
             return;
 
-        // Prevent double-click collecting items
         if (event.getAction() == InventoryAction.COLLECT_TO_CURSOR) {
             event.setCancelled(true);
             return;
@@ -60,10 +57,8 @@ public class ProfileGUIListener implements Listener {
             return;
 
         if (clickedInv.equals(topInv)) {
-            // Clicked in Top GUI -> handle as buttons
             event.setCancelled(true);
 
-            // Play tripwire sound if clicking a valid item
             ItemStack current = event.getCurrentItem();
             if (current != null && current.getType() != Material.AIR) {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
@@ -75,11 +70,9 @@ public class ProfileGUIListener implements Listener {
                 handleProfileHomesClick(event, player);
             }
         } else {
-            // Clicked in Player Inventory
             if (event.isShiftClick()) {
-                event.setCancelled(true); // Prevent shift-clicking items into the GUI
+                event.setCancelled(true);
             }
-            // Allow other interactions (move items to inventory)
         }
     }
 
@@ -88,28 +81,23 @@ public class ProfileGUIListener implements Listener {
         if (targetPlayer == null || !targetPlayer.isOnline())
             return;
 
-        // Don't sync if the target player is viewing a custom GUI (prevent interference while they edit their inventory)
         InventoryType type = targetPlayer.getOpenInventory().getTopInventory().getType();
         if (type != InventoryType.CRAFTING && type != InventoryType.PLAYER) {
             return;
         }
 
-        // Schedule the sync with a 1-tick delay to ensure the click is processed first
         plugin.getSchedulerAdapter().runEntityTaskLater(viewer, () -> {
-            // Double-check the target player is still viewing standard inventory
             InventoryType currentType = targetPlayer.getOpenInventory().getTopInventory().getType();
             if (currentType != InventoryType.CRAFTING && currentType != InventoryType.PLAYER) {
                 return;
             }
 
-            // Sync storage items (slots 0-26)
             ItemStack[] storageItems = new ItemStack[27];
             for (int i = 0; i < 27; i++) {
                 storageItems[i] = inv.getItem(i);
             }
             targetPlayer.getInventory().setStorageContents(storageItems);
             
-            // Sync armor (slots 27-30: boots, leggings, chestplate, helmet)
             ItemStack[] armorItems = new ItemStack[4];
             for (int i = 0; i < 4; i++) {
                 ItemStack item = inv.getItem(27 + i);
@@ -117,11 +105,9 @@ public class ProfileGUIListener implements Listener {
             }
             targetPlayer.getInventory().setArmorContents(armorItems);
             
-            // Sync offhand (slot 31)
             ItemStack offhandItem = inv.getItem(31);
             targetPlayer.getInventory().setItemInOffHand(offhandItem);
             
-            // Update the target player's inventory
             targetPlayer.updateInventory();
         }, 1L);
     }
@@ -133,20 +119,17 @@ public class ProfileGUIListener implements Listener {
         boolean isProfileHomes = topInv.getHolder() instanceof ProfileHomesGUI.ProfileHomesHolder;
         boolean isProfileInventory = topInv.getHolder() instanceof ProfileInventoryGUI.ProfileInventoryHolder;
 
-        // Sync profile inventory live on drag
         if (isProfileInventory && event.getWhoClicked() instanceof Player player) {
             syncProfileInventory((ProfileInventoryGUI.ProfileInventoryHolder) topInv.getHolder(), topInv, player);
             return;
         }
 
-        // Don't prevent drag for profile inventory
         if (isProfileInventory)
             return;
 
         if (!isProfileMain && !isProfileHomes)
             return;
 
-        // Prevent dragging items into the top inventory
         int topSize = topInv.getSize();
         for (int slot : event.getRawSlots()) {
             if (slot < topSize) {
@@ -159,7 +142,6 @@ public class ProfileGUIListener implements Listener {
     private void handleProfileMainClick(InventoryClickEvent event, Player player) {
         int slot = event.getRawSlot();
 
-        // Slot 11: Homes button
         if (slot == 11) {
             ProfileCommand.ProfileHolder holder = (ProfileCommand.ProfileHolder) event.getView().getTopInventory().getHolder();
             OfflinePlayer targetPlayer = holder.getTargetPlayer();
@@ -170,17 +152,14 @@ public class ProfileGUIListener implements Listener {
             }
         }
         
-        // Slot 12: Enderchest button
         if (slot == 12) {
             ProfileCommand.ProfileHolder holder = (ProfileCommand.ProfileHolder) event.getView().getTopInventory().getHolder();
             OfflinePlayer targetPlayer = holder.getTargetPlayer();
 
             if (targetPlayer != null) {
-                // Open target player's enderchest
                 com.h2ph.managers.EnderChestManager enderChestManager = plugin.getEnderChestManager();
                 String targetName = targetPlayer.getName() != null ? targetPlayer.getName() : "Unknown";
                 
-                // Preload and open the enderchest asynchronously
                 plugin.getSchedulerAdapter().runTaskAsync(() -> {
                     ItemStack[] contents = enderChestManager.loadEnderChest(targetPlayer.getUniqueId());
                     plugin.getSchedulerAdapter().runTask(() -> {
@@ -195,29 +174,23 @@ public class ProfileGUIListener implements Listener {
             }
         }
         
-        // Slot 13: Inventory button (online players only)
         if (slot == 13) {
             ProfileCommand.ProfileHolder holder = (ProfileCommand.ProfileHolder) event.getView().getTopInventory().getHolder();
             OfflinePlayer targetPlayer = holder.getTargetPlayer();
 
             if (targetPlayer != null) {
-                // Check if player is online
                 Player onlineTarget = targetPlayer.getPlayer();
                 if (onlineTarget == null || !onlineTarget.isOnline()) {
-                    // Player is offline - show error
                     player.closeInventory();
                     player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             net.md_5.bungee.api.chat.TextComponent.fromLegacyText(Utils.formatColors("&cThis feature is only for online player.")));
                     try {
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     } catch (Exception e) {
-                        // Fallback
                     }
                     return;
                 }
                 
-                // Player is online - open their inventory with custom title
-                // Use a task with 1 tick delay to ensure the profile GUI is fully closed first
                 plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
                     ProfileInventoryGUI.open(player, onlineTarget);
                 }, 1L);
@@ -228,7 +201,6 @@ public class ProfileGUIListener implements Listener {
     private void handleProfileHomesClick(InventoryClickEvent event, Player player) {
         int slot = event.getRawSlot();
 
-        // Slot 1: Back button
         if (slot == 1) {
             ProfileHomesGUI.ProfileHomesHolder holder = (ProfileHomesGUI.ProfileHomesHolder) event.getView().getTopInventory().getHolder();
             OfflinePlayer targetPlayer = holder.getTargetPlayer();
@@ -239,7 +211,6 @@ public class ProfileGUIListener implements Listener {
             return;
         }
 
-        // Slots 11-15 and 20-24: Home beds (click to teleport)
         if ((slot >= ProfileHomesGUI.BED_START && slot < ProfileHomesGUI.BED_START + 5) ||
             (slot >= ProfileHomesGUI.BED_START_2 && slot < ProfileHomesGUI.BED_START_2 + 5)) {
             
@@ -262,24 +233,19 @@ public class ProfileGUIListener implements Listener {
                     if (homeLoc != null) {
                         player.closeInventory();
                         
-                        // Send "Teleporting..." actionbar with sound
                         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                                 net.md_5.bungee.api.chat.TextComponent.fromLegacyText(Utils.formatColors("&7Teleporting...")));
                         try {
                             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
                         } catch (Exception e) {
-                            // Fallback
                         }
                         
-                        // Teleport without countdown using async for Folia compatibility
                         player.teleportAsync(homeLoc).thenRun(() -> {
-                            // Send "Teleported." actionbar with sound
                             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                                     net.md_5.bungee.api.chat.TextComponent.fromLegacyText(Utils.formatColors("&7Teleported.")));
                             try {
                                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
                             } catch (Exception e) {
-                                // Fallback
                             }
                         }).exceptionally(ex -> {
                             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -299,19 +265,15 @@ public class ProfileGUIListener implements Listener {
 
         Inventory inv = event.getInventory();
         
-        // Check if this is a profile inventory view
         if (inv.getHolder() instanceof ProfileInventoryGUI.ProfileInventoryHolder holder) {
-            // Sync the inventory changes back to the target player if they're still online
             Player targetPlayer = Bukkit.getPlayer(holder.getTargetPlayerUUID());
             if (targetPlayer != null && targetPlayer.isOnline()) {
-                // Sync storage items (slots 0-26)
                 ItemStack[] storageItems = new ItemStack[27];
                 for (int i = 0; i < 27; i++) {
                     storageItems[i] = inv.getItem(i);
                 }
                 targetPlayer.getInventory().setStorageContents(storageItems);
                 
-                // Sync armor (slots 27-30: boots, leggings, chestplate, helmet)
                 ItemStack[] armorItems = new ItemStack[4];
                 for (int i = 0; i < 4; i++) {
                     ItemStack item = inv.getItem(27 + i);
@@ -319,11 +281,9 @@ public class ProfileGUIListener implements Listener {
                 }
                 targetPlayer.getInventory().setArmorContents(armorItems);
                 
-                // Sync offhand (slot 31)
                 ItemStack offhandItem = inv.getItem(31);
                 targetPlayer.getInventory().setItemInOffHand(offhandItem);
                 
-                // Update the target player's inventory
                 targetPlayer.updateInventory();
             }
         }

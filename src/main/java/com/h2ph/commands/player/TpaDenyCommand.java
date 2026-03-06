@@ -56,10 +56,8 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Deny the request (remove it)
         TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());
 
-        // Get sender name for feedback
         org.bukkit.OfflinePlayer senderPlayer = org.bukkit.Bukkit.getOfflinePlayer(request.getSender());
         String senderName = senderPlayer.getName() != null ? senderPlayer.getName() : "Unknown";
         String smallCapsSender = SmallCapsUtil.toSmallCaps(senderName);
@@ -75,7 +73,6 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
 
         p.sendMessage(feedback);
         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(feedback));
-        // No sound for success as requested
 
         return true;
     }

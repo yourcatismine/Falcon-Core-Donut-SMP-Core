@@ -46,8 +46,6 @@ public class MessageHider implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.setJoinMessage(null);
 
-        // Redundancy check: Ensure the world they joined definitely has the rule set
-        // (Just in case something reset it)
         setGamerule(event.getPlayer().getWorld());
     }
 

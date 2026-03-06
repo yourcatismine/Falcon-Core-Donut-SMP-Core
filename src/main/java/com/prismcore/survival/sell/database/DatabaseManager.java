@@ -24,7 +24,6 @@ public class DatabaseManager {
     }
 
     public void connect() {
-        // Load MySQL settings from data.yml
         File dataFile = new File(plugin.getDataFolder(), "data/data.yml");
         FileConfiguration dataConfig = YamlConfiguration.loadConfiguration(dataFile);
 
@@ -42,17 +41,15 @@ public class DatabaseManager {
             hikariConfig.setUsername(username);
             hikariConfig.setPassword(password);
 
-            // HikariCP optimization settings
             hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
             hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
             hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
             hikariConfig.addDataSourceProperty("useServerPrepStmts", "true");
 
-            // Connection health/timeout settings
             hikariConfig.setConnectionTimeout(30000);
-            hikariConfig.setIdleTimeout(300000); // 5 minutes
-            hikariConfig.setMaxLifetime(600000); // 10 minutes
-            hikariConfig.setKeepaliveTime(300000); // 5 minutes
+            hikariConfig.setIdleTimeout(300000);
+            hikariConfig.setMaxLifetime(600000);
+            hikariConfig.setKeepaliveTime(300000);
             hikariConfig.setMinimumIdle(2);
             hikariConfig.setMaximumPoolSize(10);
 
@@ -64,7 +61,6 @@ public class DatabaseManager {
     }
 
     private void createTables() {
-        // player_stats table
         try (Connection connection = getConnection();
                 java.sql.Statement stmt = connection.createStatement()) {
             StringBuilder queryBuilder = new StringBuilder();
@@ -89,7 +85,6 @@ public class DatabaseManager {
 
             stmt.execute(queryBuilder.toString());
 
-            // teams table
             String teamsTable = "CREATE TABLE IF NOT EXISTS teams (" +
                     "id VARCHAR(36) PRIMARY KEY, " +
                     "name VARCHAR(32) NOT NULL, " +
@@ -106,7 +101,6 @@ public class DatabaseManager {
                     ")";
             stmt.execute(teamsTable);
 
-            // team_members table
             String teamMembersTable = "CREATE TABLE IF NOT EXISTS team_members (" +
                     "team_id VARCHAR(36) NOT NULL, " +
                     "uuid VARCHAR(36) NOT NULL, " +
@@ -117,14 +111,12 @@ public class DatabaseManager {
                     ")";
             stmt.execute(teamMembersTable);
 
-            // enderchest table
             String enderchestTable = "CREATE TABLE IF NOT EXISTS enderchest (" +
                     "uuid VARCHAR(36) PRIMARY KEY, " +
                     "contents TEXT" +
                     ")";
             stmt.execute(enderchestTable);
 
-            // sell_history table
             String sellHistoryTable = "CREATE TABLE IF NOT EXISTS sell_history (" +
                     "uuid VARCHAR(36) NOT NULL, " +
                     "item VARCHAR(64) NOT NULL, " +
@@ -135,7 +127,6 @@ public class DatabaseManager {
                     ")";
             stmt.execute(sellHistoryTable);
 
-            // player_homes table
             String playerHomesTable = "CREATE TABLE IF NOT EXISTS player_homes (" +
                     "uuid VARCHAR(36) NOT NULL, " +
                     "home_index INT NOT NULL, " +
@@ -150,7 +141,6 @@ public class DatabaseManager {
                     ")";
             stmt.execute(playerHomesTable);
 
-            // player_category_data table
             StringBuilder categoryDataQuery = new StringBuilder("CREATE TABLE IF NOT EXISTS player_category_data (");
             categoryDataQuery.append("uuid VARCHAR(36) PRIMARY KEY");
             for (com.prismcore.survival.sell.category.Category category : com.prismcore.survival.sell.category.Category
@@ -161,7 +151,6 @@ public class DatabaseManager {
             categoryDataQuery.append(")");
             stmt.execute(categoryDataQuery.toString());
 
-            // Migration: Add columns if they don't exist
             String[] statsColumns = {
                     "money DOUBLE DEFAULT 0",
                     "shards BIGINT DEFAULT 0",
@@ -184,11 +173,9 @@ public class DatabaseManager {
                 try {
                     stmt.execute("ALTER TABLE player_stats ADD COLUMN " + columnDef);
                 } catch (SQLException ignored) {
-                    // Column already exists
                 }
             }
         } catch (SQLException e) {
-            // Silently fail
         }
     }
 
@@ -215,7 +202,6 @@ public class DatabaseManager {
             ps.setString(2, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            // Silently fail
         }
     }
 
@@ -231,7 +217,6 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            // Silently fail
         }
         return false;
     }
@@ -288,27 +273,22 @@ public class DatabaseManager {
             return;
         String uuidStr = uuid.toString();
         try (Connection conn = getConnection()) {
-            // 1. Player Stats
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM player_stats WHERE uuid = ?")) {
                 ps.setString(1, uuidStr);
                 ps.executeUpdate();
             }
-            // 2. Sell History
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM sell_history WHERE uuid = ?")) {
                 ps.setString(1, uuidStr);
                 ps.executeUpdate();
             }
-            // 3. Player Homes
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM player_homes WHERE uuid = ?")) {
                 ps.setString(1, uuidStr);
                 ps.executeUpdate();
             }
-            // 4. Player Category Data
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM player_category_data WHERE uuid = ?")) {
                 ps.setString(1, uuidStr);
                 ps.executeUpdate();
             }
-            // 5. Enderchest
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM enderchest WHERE uuid = ?")) {
                 ps.setString(1, uuidStr);
                 ps.executeUpdate();

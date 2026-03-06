@@ -49,19 +49,16 @@ public class OtpCommand implements CommandExecutor, TabCompleter {
 
         String targetName = args[0];
 
-        // First check if player is online
         Player onlineTarget = Bukkit.getPlayer(targetName);
         if (onlineTarget != null && p.canSee(onlineTarget)) {
             sendError(p, "&cThat player is online.");
             return true;
         }
 
-        // Async check for offline status and location
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
             UUID targetUuid = offlineTarget.getUniqueId();
 
-            // Check status in DB
             String statusQuery = "SELECT status FROM player_stats WHERE uuid = ?";
             try (java.sql.Connection conn = plugin.getDatabaseManager().getConnection();
                     java.sql.PreparedStatement ps = conn.prepareStatement(statusQuery)) {
@@ -83,7 +80,6 @@ public class OtpCommand implements CommandExecutor, TabCompleter {
                 return;
             }
 
-            // Get last location from DB
             plugin.getDatabaseManager().getLastLocationAsync(targetUuid, loc -> {
                 if (loc == null) {
                     plugin.getSchedulerAdapter().runTask(() -> sendError(p, "&cNo location found for this player."));
@@ -130,7 +126,7 @@ public class OtpCommand implements CommandExecutor, TabCompleter {
     }
 
     private void updateCacheIfNeeded() {
-        if (System.currentTimeMillis() - lastCacheUpdate > 10000) { // Update every 10 seconds
+        if (System.currentTimeMillis() - lastCacheUpdate > 10000) {
             lastCacheUpdate = System.currentTimeMillis();
             plugin.getDatabaseManager().getOfflinePlayersAsync(names -> {
                 offlinePlayersCache.clear();

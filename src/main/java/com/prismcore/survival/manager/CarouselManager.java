@@ -39,14 +39,12 @@ public class CarouselManager {
         Inventory gui = Bukkit.createInventory(null, 27,
                 ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ"));
 
-        // Setup Static Items
         setupStaticItems(gui);
 
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (crateFile.exists()) {
             FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
 
-            // 1. Load Configured Items
             if (config.contains("contents")) {
                 ConfigurationSection contents = config.getConfigurationSection("contents");
                 for (String key : contents.getKeys(false)) {
@@ -61,22 +59,19 @@ public class CarouselManager {
                 }
             }
 
-            // 2. Fill Empty Slots with Random Items from Crate
             List<ItemStack> rewardPool = getCrateContents(config);
             if (!rewardPool.isEmpty()) {
-                // Fill Carousel Slots (10-16) if empty
                 for (int i = 10; i <= 16; i++) {
                     if (gui.getItem(i) == null || gui.getItem(i).getType() == Material.AIR) {
                         gui.setItem(i, getRandomItem(rewardPool));
                     }
                 }
 
-                // Fill Filler Slots (Background) if empty
                 for (int i = 0; i < gui.getSize(); i++) {
                     if (i == 4 || i == 22)
-                        continue; // Skip buttons
+                        continue;
                     if (i >= 10 && i <= 16)
-                        continue; // Skip Carousel
+                        continue;
                     if (gui.getItem(i) == null || gui.getItem(i).getType() == Material.AIR) {
                         gui.setItem(i, getRandomItem(rewardPool));
                     }
@@ -88,24 +83,15 @@ public class CarouselManager {
         player.setMetadata("prism_active_crate_type", new org.bukkit.metadata.FixedMetadataValue(plugin, "CAROUSEL"));
         player.setMetadata("prism_active_crate", new org.bukkit.metadata.FixedMetadataValue(plugin, crateName));
 
-        // Start Background Animation Immediately (Slow: 5 ticks)
         startBackgroundAnimation(player, gui, 5L);
     }
 
     private void startBackgroundAnimation(Player player, Inventory gui, long period) {
-        // Stop existing background task if any
         if (backgroundTasks.containsKey(player.getUniqueId())) {
             backgroundTasks.get(player.getUniqueId()).cancel();
             backgroundTasks.remove(player.getUniqueId());
         }
 
-        // Define path order for "Clockwise Swirl" rotation including all background
-        // slots
-        // Range updated for 10-16 carousel:
-        // Top Row: 0, 1, 2, 3, 5, 6, 7, 8
-        // Right Side: 17 (16 is now carousel)
-        // Bottom Row (Reverse): 26, 25, 24, 23, 21, 20, 19, 18
-        // Left Side: 9 (10 is now carousel)
         List<Integer> backgroundSlots = Arrays.asList(
                 0, 1, 2, 3, 5, 6, 7, 8,
                 17,
@@ -115,16 +101,13 @@ public class CarouselManager {
         BukkitTask task = plugin.getSchedulerAdapter().runTaskTimer(new Runnable() {
             @Override
             public void run() {
-                // Optimize: Check if player is online and viewing THIS crate
                 if (!player.isOnline() || !player.getOpenInventory().getTitle().contains("ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ")) {
                     handleClose(player);
                     return;
                 }
 
-                // Shift Background Items
                 ItemStack lastItem = gui.getItem(backgroundSlots.get(backgroundSlots.size() - 1));
 
-                // Shift forward
                 for (int i = backgroundSlots.size() - 1; i > 0; i--) {
                     int currentSlot = backgroundSlots.get(i);
                     int prevSlot = backgroundSlots.get(i - 1);
@@ -173,10 +156,8 @@ public class CarouselManager {
         ItemStack reward = pickReward(crateName);
         pendingRewards.put(player.getUniqueId(), reward);
 
-        // Speed up background animation! (Fast: 2 ticks)
         startBackgroundAnimation(player, gui, 2L);
 
-        // Start Main Carousel Animation (Variable Speed)
         startVariableSpeedAnimation(player, crateName, gui, reward);
     }
 
@@ -185,11 +166,10 @@ public class CarouselManager {
         FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
         List<ItemStack> contents = getCrateContents(config);
 
-        // Recursive runnable for variable speed
         Runnable animationStep = new Runnable() {
             int ticksElapsed = 0;
             int currentStep = 0;
-            long currentDelay = 2L; // Start Fast
+            long currentDelay = 2L;
 
             @Override
             public void run() {
@@ -198,17 +178,10 @@ public class CarouselManager {
                     return;
                 }
 
-                // Shift Main Carousel (10-16)
                 for (int i = 16; i > 10; i--) {
                     gui.setItem(i, gui.getItem(i - 1));
                 }
 
-                // Inject final reward so it lands on Slot 13 (Center) at the end
-                // Total Steps = 50. Last Step = 49.
-                // Step 49 ends at Slot 10.
-                // Step 48 ends at Slot 11.
-                // Step 47 ends at Slot 12.
-                // Step 46 ends at Slot 13.
                 if (currentStep == 46) {
                     gui.setItem(10, finalReward);
                 } else {
@@ -218,35 +191,29 @@ public class CarouselManager {
 
                 currentStep++;
 
-                // Done?
-                if (currentStep >= 50) { // Total steps ~ 50
+                if (currentStep >= 50) {
                     finish(player, gui, finalReward);
                     return;
                 }
 
-                // Adjust Speed
                 if (currentStep < 30)
-                    currentDelay = 2L; // Fast
+                    currentDelay = 2L;
                 else if (currentStep < 40)
-                    currentDelay = 5L; // Slowing
+                    currentDelay = 5L;
                 else if (currentStep < 45)
-                    currentDelay = 10L;// Slow
+                    currentDelay = 10L;
                 else
-                    currentDelay = 15L; // Very Slow
+                    currentDelay = 15L;
 
-                // Schedule next step
                 BukkitTask nextTask = plugin.getSchedulerAdapter().runTaskLater(this, currentDelay);
                 activeTasks.put(player.getUniqueId(), nextTask);
             }
         };
 
-        // Kickoff
         BukkitTask task = plugin.getSchedulerAdapter().runTaskLater(animationStep, 2L);
         activeTasks.put(player.getUniqueId(), task);
     }
 
-    // Kept merely to avoid breaking existing references, though not used by
-    // handleStartClick anymore
     private void startAnimation(Player player, String crateName, Inventory gui, ItemStack finalReward) {
         startVariableSpeedAnimation(player, crateName, gui, finalReward);
     }
@@ -254,34 +221,26 @@ public class CarouselManager {
     private void finish(Player player, Inventory gui, ItemStack reward) {
         stopAndClean(player.getUniqueId());
 
-        // 1. Give Reward Logic (CRITICAL: Do this first)
         if (player.isOnline()) {
-            // Refresh expiry so YAML-baked timestamps don't cause instant self-destruct
             com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
                     .getInstance();
             if (toolsManager != null) {
                 toolsManager.refreshExpiryForReward(reward);
             }
             player.getInventory().addItem(reward);
-            // Log activity
             plugin.getActivityLogger().log(player.getUniqueId(),
                     com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
                     "Won " + reward.getType() + " x" + reward.getAmount() + " from carousel spin");
         }
         pendingRewards.remove(player.getUniqueId());
 
-        // Place reward in center for visual
         gui.setItem(13, reward);
 
-        // 2. Celebrate (Aesthetics)
-        // 2. Celebrate (Aesthetics)
         try {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
             player.playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f, 1f);
             player.playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1f, 1f);
 
-            // Spawn Firework safely on the correct thread (Region Thread)
-            // Fixes NPE on Folia when running from Global Task
             plugin.getSchedulerAdapter().runAtLocation(player.getLocation(), () -> {
                 try {
                     org.bukkit.entity.Firework fw = (org.bukkit.entity.Firework) player.getWorld().spawnEntity(
@@ -298,55 +257,32 @@ public class CarouselManager {
                     fwm.setPower(1);
                     fw.setFireworkMeta(fwm);
 
-                    // Detonate immediately (approx) using the same thread context or scheduling
-                    // carefully
-                    // Using runTaskLater on adapter might default to global if not careful, but
-                    // SchedulerAdapter
-                    // only has runTaskLater (GLOBAL/SYNC).
-                    // We should use a region-specific delay if possible, but for now let's just use
-                    // runAtLocation again
-                    // effectively or just standard adapter delay which might go global.
-                    // BUT altering entity (detonate) *usually* requires region thread.
-                    // Let's use internal scheduler if available or just skip detonate delay if
-                    // risky.
-                    // Better: just let it fly for a tick.
                     plugin.getSchedulerAdapter().runAtLocation(player.getLocation(), fw::detonate);
                 } catch (Exception ex) {
-                    // Ignore errors during spawn
                 }
             });
         } catch (Exception e) {
-            // Ignore aesthetic errors
         }
 
-        // Slow background down again? Or keep it spinning?
-        // User didn't specify, but usually it slows down or stops.
-        // Let's keep it running fast or revert to slow?
-        // "recycling should start to gain more speed" -> Implies it speeds up.
-        // Let's revert to slow after finish implies "calm down".
         startBackgroundAnimation(player, gui, 5L);
     }
 
     public void handleClose(Player player) {
         UUID uuid = player.getUniqueId();
 
-        // Stop Active Task
         if (activeTasks.containsKey(uuid)) {
             activeTasks.get(uuid).cancel();
             activeTasks.remove(uuid);
         }
 
-        // Stop Background Task
         if (backgroundTasks.containsKey(uuid)) {
             backgroundTasks.get(uuid).cancel();
             backgroundTasks.remove(uuid);
         }
 
         if (pendingRewards.containsKey(uuid)) {
-            // Give pending reward immediately
             ItemStack reward = pendingRewards.remove(uuid);
             if (player.isOnline()) {
-                // Refresh expiry so YAML-baked timestamps don't cause instant self-destruct
                 com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
                         .getInstance();
                 if (toolsManager != null) {
@@ -354,7 +290,6 @@ public class CarouselManager {
                 }
                 player.getInventory().addItem(reward);
                 player.sendMessage(ChatColor.GREEN + "You received your crate reward!");
-                // Log activity
                 plugin.getActivityLogger().log(player.getUniqueId(),
                         com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
                         "Received pending reward " + reward.getType() + " x" + reward.getAmount()
@@ -368,15 +303,8 @@ public class CarouselManager {
             activeTasks.get(uuid).cancel();
             activeTasks.remove(uuid);
         }
-        // Background task continues until handleClose is called (e.g. at end of finish
-        // when GUI might close?
-        // No, finish keeps GUI open usually, but let's leave background running until
-        // close).
-        // Wait, finish places an item and... does NOT close inventory. So background
-        // can keep spinning!
     }
 
-    // Helpers
     private List<ItemStack> getCrateContents(FileConfiguration config) {
         List<ItemStack> items = new ArrayList<>();
         if (config.contains("contents")) {

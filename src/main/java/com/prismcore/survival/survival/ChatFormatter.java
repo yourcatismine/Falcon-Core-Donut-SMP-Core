@@ -12,7 +12,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 public class ChatFormatter implements Listener {
 
     public ChatFormatter(PrismSurvival plugin) {
-        // Plugin instance is currently unused but kept for constructor compatibility
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -29,14 +28,12 @@ public class ChatFormatter implements Listener {
 
         format = format.replace("%prefix%", prefix)
                 .replace("%player_name%", player.getName())
-                .replace("%message%", "%2$s"); // %2$s is the placeholder for the message in Bukkit's setFormat
+                .replace("%message%", "%2$s");
 
         event.setFormat(translateColorCodes(format));
     }
 
     private String translateColorCodes(String message) {
-        // 1. Translate Hex colors (&#RRGGBB, #RRGGBB, <#RRGGBB>, {#RRGGBB})
-        // Matches &#RRGGBB, #RRGGBB, <#RRGGBB>, {#RRGGBB}
         java.util.regex.Pattern hexPattern = java.util.regex.Pattern
                 .compile("(?:&|)?#([A-Fa-f0-9]{6})|(?:<|\\{)#([A-Fa-f0-9]{6})(?:>|\\})");
         java.util.regex.Matcher matcher = hexPattern.matcher(message);
@@ -52,7 +49,6 @@ public class ChatFormatter implements Listener {
         matcher.appendTail(sb);
         message = sb.toString();
 
-        // 2. Translate legacy colors (&7, &f, etc)
         return ChatColor.translateAlternateColorCodes('&', message);
     }
 

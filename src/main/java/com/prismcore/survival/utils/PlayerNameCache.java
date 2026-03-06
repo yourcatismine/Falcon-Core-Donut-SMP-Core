@@ -21,7 +21,7 @@ public class PlayerNameCache {
     private boolean initialized = false;
     
     public PlayerNameCache(SchedulerAdapter scheduler) {
-        this(scheduler, 1000); // Default max 1000 cached names
+        this(scheduler, 1000);
     }
     
     public PlayerNameCache(SchedulerAdapter scheduler, int maxCacheSize) {
@@ -36,10 +36,8 @@ public class PlayerNameCache {
         if (initialized) return;
         initialized = true;
         
-        // Initial load
         updateCacheAsync();
         
-        // Schedule periodic updates every 5 minutes (6000 ticks)
         scheduler.runTaskTimer(() -> updateCacheAsync(), 6000L, 6000L);
     }
     
@@ -50,7 +48,6 @@ public class PlayerNameCache {
         List<String> suggestions = new ArrayList<>();
         String lowerToken = token.toLowerCase();
         
-        // Add online players (always current)
         for (Player player : Bukkit.getOnlinePlayers()) {
             String name = player.getName();
             if (name.toLowerCase().startsWith(lowerToken)) {
@@ -58,14 +55,12 @@ public class PlayerNameCache {
             }
         }
         
-        // Add cached offline players
         for (String name : cachedOfflineNames) {
             if (name.toLowerCase().startsWith(lowerToken)) {
                 suggestions.add(name);
             }
         }
         
-        // Add recent players who might not be in main cache yet
         for (String name : recentPlayers) {
             if (name.toLowerCase().startsWith(lowerToken) && !suggestions.contains(name)) {
                 suggestions.add(name);
@@ -81,9 +76,7 @@ public class PlayerNameCache {
     public void addRecentPlayer(String playerName) {
         if (playerName != null) {
             recentPlayers.add(playerName);
-            // Keep recent players list reasonable size
             if (recentPlayers.size() > 100) {
-                // Remove oldest entries (this is simple, could be improved with LRU)
                 Iterator<String> iterator = recentPlayers.iterator();
                 for (int i = 0; i < 20 && iterator.hasNext(); i++) {
                     iterator.next();
@@ -101,7 +94,6 @@ public class PlayerNameCache {
             try {
                 Set<String> newCache = new HashSet<>();
                 
-                // Get offline players (this is the expensive operation we're moving off main thread)
                 OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
                 
                 if (offlinePlayers != null) {
@@ -111,7 +103,6 @@ public class PlayerNameCache {
                             if (name != null && !name.trim().isEmpty()) {
                                 newCache.add(name);
                                 
-                                // Limit cache size to prevent memory issues
                                 if (newCache.size() >= maxCacheSize) {
                                     break;
                                 }
@@ -120,14 +111,12 @@ public class PlayerNameCache {
                     }
                 }
                 
-                // Update cache on main thread (thread-safe operation)
                 scheduler.runTask(() -> {
                     cachedOfflineNames.clear();
                     cachedOfflineNames.addAll(newCache);
                 });
                 
             } catch (Exception e) {
-                // Log error but don't crash - TAB completion will fall back to online players only
                 System.err.println("Error updating player name cache: " + e.getMessage());
             }
         });

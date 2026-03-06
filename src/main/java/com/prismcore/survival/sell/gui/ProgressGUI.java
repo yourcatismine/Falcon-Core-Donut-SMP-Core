@@ -157,7 +157,6 @@ public class ProgressGUI
                     continue;
                 meta.addEnchant(ench, level, true);
             } catch (NumberFormatException numberFormatException) {
-                // empty catch block
             }
         }
         item.setItemMeta(meta);

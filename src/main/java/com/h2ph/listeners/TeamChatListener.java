@@ -34,7 +34,6 @@ public class TeamChatListener implements Listener {
             return;
         }
 
-        // Cancel the original event so it doesn't go to global chat
         event.setCancelled(true);
 
         Team team = teamManager.getTeam(data.getTeamId());
@@ -48,7 +47,6 @@ public class TeamChatListener implements Listener {
 
         Set<UUID> members = teamManager.getTeamMemberUuids(team.getId());
 
-        // Broadcast only to team members
         for (UUID memberUuid : members) {
             Player member = Bukkit.getPlayer(memberUuid);
             if (member != null && member.isOnline()) {
@@ -56,7 +54,6 @@ public class TeamChatListener implements Listener {
             }
         }
 
-        // Log to console as well
         plugin.getLogger().info("[Team Chat: " + team.getName() + "] " + player.getName() + ": " + message);
     }
 }

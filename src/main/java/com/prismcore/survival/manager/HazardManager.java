@@ -16,7 +16,6 @@ public class HazardManager {
     private final PrismSurvival plugin;
     private final Map<UUID, PlayerActivity> activityStore = new ConcurrentHashMap<>();
 
-    // Configurable thresholds
     private static final long SPEED_THRESHOLD_MS = 1500;
     private static final int REPETITION_THRESHOLD = 5;
 
@@ -28,12 +27,10 @@ public class HazardManager {
         PlayerActivity activity = activityStore.computeIfAbsent(uuid, k -> new PlayerActivity());
         long now = System.currentTimeMillis();
 
-        // 1. Speed Check
         if (now - activity.lastActionTime < SPEED_THRESHOLD_MS) {
             logHazard(uuid, "SPEED", "Rapid interaction: " + details + " (" + (now - activity.lastActionTime) + "ms)");
         }
 
-        // 2. Repetition Check
         if (details.equals(activity.lastActionDetails)) {
             activity.repetitionCount++;
             if (activity.repetitionCount >= REPETITION_THRESHOLD) {

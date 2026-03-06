@@ -23,19 +23,13 @@ public class KeyAllManager {
 
     public void loadConfig() {
         configFile = new File(plugin.getDataFolder(), "crates/keys/config.yml");
-        // If file doesn't exist in data folder, save resource if available
         if (!configFile.exists()) {
-            // We can't rely on saveResource throwing exception if resource doesn't exist,
-            // but since we know it exists in src/main/resources, it should be fine.
-            // However, the user might have just created it.
             try {
                 plugin.saveResource("crates/keys/config.yml", false);
             } catch (IllegalArgumentException e) {
-                // Resource might not be in the jar yet if running from IDE without build
             }
         }
 
-        // We load from the file, but if it's empty/missing properties, we use defaults
         if (configFile.exists()) {
             config = YamlConfiguration.loadConfiguration(configFile);
         } else {
@@ -73,30 +67,25 @@ public class KeyAllManager {
             if (System.currentTimeMillis() >= nextKeyAllTime) {
                 runKeyAll();
             }
-        }, 20L, 20L); // Check every second
+        }, 20L, 20L);
     }
 
     public void runKeyAll() {
-        // Distribute keys to all online players
         for (org.bukkit.entity.Player player : plugin.getServer().getOnlinePlayers()) {
             com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null) {
                 int current = data.getKeyCount(rewardKey);
                 data.setKeyCount(rewardKey, current + rewardAmount);
 
-                // Play sound
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
 
-                // Send message 1
                 player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                         "&7You have received a &a" + rewardKey + "&7 from keyall"));
 
-                // Send message 2 (Clickable)
                 net.md_5.bungee.api.chat.TextComponent message = new net.md_5.bungee.api.chat.TextComponent(
                         org.bukkit.ChatColor.translateAlternateColorCodes('&', "&a[Click to teleport]"));
                 message.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                         net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND, "/warp crates"));
-                // Optional hover text
                 message.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                         net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
                         new net.md_5.bungee.api.chat.ComponentBuilder("Click to warp").create()));
@@ -110,7 +99,6 @@ public class KeyAllManager {
             }
         }
 
-        // Reset timer
         nextKeyAllTime = System.currentTimeMillis() + intervalMillis;
     }
 

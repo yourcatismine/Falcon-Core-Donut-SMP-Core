@@ -187,7 +187,6 @@ public final class TaskUtil {
             try {
                 r.run();
             } catch (Throwable throwable) {
-                // empty catch block
             }
         };
     }
@@ -390,7 +389,6 @@ public final class TaskUtil {
                     Method m2 = this.task.getClass().getMethod("cancel", Boolean.TYPE);
                     m2.invoke(this.task, true);
                 } catch (Throwable throwable) {
-                    // empty catch block
                 }
                 return;
             }

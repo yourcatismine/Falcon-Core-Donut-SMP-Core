@@ -50,7 +50,6 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
                 if (files != null) {
                     for (java.io.File file : files) {
                         if (file.isDirectory()) {
-                            // Check for config.yml inside
                             java.io.File configFile = new java.io.File(file, "config.yml");
                             if (configFile.exists()) {
                                 regions.add(file.getName());
@@ -59,7 +58,6 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
                     }
                 }
             }
-            // Filter by current input
             String input = args[0].toLowerCase();
             java.util.List<String> filtered = new java.util.ArrayList<>();
             for (String region : regions) {
@@ -73,7 +71,6 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
     }
 
     public static void openRTPGUI(Player player) {
-        // Small chest size = 27 slots (9 columns * 3 rows)
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
         updateItems(gui, player);
@@ -82,8 +79,6 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
     }
 
     public static void openOverworldGUI(Player player) {
-        // Same title for sub-menu as requested (or implied if it's the "next GUI")
-        // Title: &8ʀᴀɴᴅᴏᴍ ᴛᴇʟᴇᴘᴏʀᴛ
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
         updateOverworldItems(gui, player);
@@ -95,12 +90,6 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
         String count = formatCount(getPlayerCount("overworld"));
         String ping = getPing(player);
 
-        // Slot 10 - GRASS_BLOCK
-        // &aᴏᴠᴇʀᴡᴏʀʟᴅ
-        // &fClick to randomly teleport
-        // space
-        // &7Players (&5ONLINE_PLAYERS eg. 2.92K&7)
-        // &7Europe (&5PING_MS&7)
         gui.setItem(10, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
                 "&fClick to randomly teleport",
                 "",
@@ -109,36 +98,22 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
     }
 
     public static void updateItems(Inventory gui, Player player) {
-        // Placeholders
         String overworldCount = formatCount(getPlayerCount("overworld"));
         String netherCount = formatCount(getPlayerCount("nether"));
         String endCount = formatCount(getPlayerCount("end"));
         String ping = getPing(player);
 
-        // Slot 11 - Grass Block (Overworld)
-        // &aᴏᴠᴇʀᴡᴏʀʟᴅ
-        // &fClick to select a region
-        // space
-        // &7Players (&5{TOTAL_ONLINE}&7)
         gui.setItem(11, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
                 "&fClick to select a region",
                 "",
                 "&7Players (&5" + overworldCount + "&7)"));
 
-        // Slot 14 - Netherrack (Nether)
-        // &aɴᴇᴛʜᴇʀ
-        // &fClick to randomly teleport
-        // space
-        // &7Players (&5{TOTAL_ONLINE}&7)
-        // &7Europe (&5PING_MS&7)
-        // Slot 13 - Netherrack (Nether)
         gui.setItem(13, createItem(org.bukkit.Material.NETHERRACK, "&aɴᴇᴛʜᴇʀ",
                 "&fClick to randomly teleport",
                 "",
                 "&7Players (&5" + netherCount + "&7)",
                 "&7Europe (&5" + ping + "ms&7)"));
 
-        // Slot 15 - End Stone (End)
         gui.setItem(15, createItem(org.bukkit.Material.END_STONE, "&aᴇɴᴅ",
                 "&fClick to randomly teleport",
                 "",
@@ -154,7 +129,7 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
 
         String worldName = main.getRTPConfig().getString("worlds." + type + ".world");
         if (worldName == null) {
-            return 0; // Config key default fallbacks could be handled here or in config loading
+            return 0;
         }
 
         org.bukkit.World world = Bukkit.getWorld(worldName);

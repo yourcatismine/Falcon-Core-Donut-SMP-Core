@@ -50,7 +50,6 @@ public class UnmuteCommand implements CommandExecutor, TabCompleter {
             targetUUID = target.getUniqueId();
             finalTargetName = target.getName();
         } else {
-            // Support offline player unmuting
             targetUUID = Bukkit.getOfflinePlayer(targetName).getUniqueId();
             finalTargetName = targetName;
         }
@@ -71,17 +70,14 @@ public class UnmuteCommand implements CommandExecutor, TabCompleter {
         data.setMuteReason(null);
         plugin.getPlayerDataManager().savePlayerAsync(targetUUID);
 
-        // Remove from MySQL
         plugin.getDatabaseManager().removeMute(targetUUID);
 
-        // Admin Message
         String adminMsg = ChatColor.translateAlternateColorCodes('&', "&d" + finalTargetName + "&7 has been unmuted.");
         sender.sendMessage(adminMsg);
         if (sender instanceof Player) {
             ((Player) sender).spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(adminMsg));
         }
 
-        // Target Message
         if (target != null && target.isOnline()) {
             String targetMsg = ChatColor.translateAlternateColorCodes('&', "&7You have been unmuted.");
             target.sendMessage(targetMsg);
@@ -95,7 +91,6 @@ public class UnmuteCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         return Collections.emptyList();

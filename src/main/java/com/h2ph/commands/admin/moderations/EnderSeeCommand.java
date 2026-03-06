@@ -40,7 +40,6 @@ public class EnderSeeCommand implements CommandExecutor, TabCompleter {
         if (target != null && target.isOnline()) {
             new EnderChestGUI(plugin).open(player, target.getUniqueId(), target.getName(), null);
         } else {
-            // Support offline player
             org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(args[0]);
             if (offlineTarget.hasPlayedBefore() || offlineTarget.getName() != null) {
                 new EnderChestGUI(plugin).open(player, offlineTarget.getUniqueId(), offlineTarget.getName(), null);

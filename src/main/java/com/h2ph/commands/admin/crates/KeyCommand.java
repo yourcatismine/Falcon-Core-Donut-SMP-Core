@@ -29,14 +29,13 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Syntax: /key <give|set|remove|reset> <player> <key> <amount>
 
         if (!sender.hasPermission("prism.admin.key")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission.");
             return true;
         }
 
-        if (args.length < 3) { // Require at least sub, player, key
+        if (args.length < 3) {
             sender.sendMessage(ChatColor.RED + "Usage: /key <give|set|remove|reset> <player> <key> [amount]");
             return true;
         }
@@ -59,7 +58,6 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Validate Key
         if (!plugin.getKeyAllManager().isValidKey(keyName)) {
             sender.sendMessage(ChatColor.RED + "Invalid key name.");
             return true;
@@ -75,7 +73,6 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
             }
             sender.sendMessage(ChatColor.GREEN + "Updated keys for " + Bukkit.getOnlinePlayers().size() + " players.");
         } else {
-            // Get Target
             OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
             if (target == null || (!target.hasPlayedBefore() && !target.isOnline())) {
                 sendError(sender, "That player does not exist.");
@@ -128,7 +125,6 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.GREEN + "Updated keys for " + target.getName() + ". New balance: " + nevv);
         }
 
-        // Feedback to target if online and receiving keys
         if (target.isOnline() && (sub.equals("give") || (sub.equals("set") && nevv > current))) {
             Player p = target.getPlayer();
             int received = sub.equals("give") ? amount : (nevv - current);
@@ -149,18 +145,11 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendFeedback(Player player, String key, int amount) {
-        // Play sound
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
 
-        // Send message 1
         player.sendMessage(ChatColor.translateAlternateColorCodes('&',
                 "&7You have received &a" + amount + " " + key + " keys&7."));
 
-        // Send message 2 (Clickable) usually for KeyAll...
-        // User said "Same message to our keyall when the player receives a key"
-        // KeyAll message: "&7You have received a &a" + rewardKey + "&7 from keyall"
-        // Then clickable warp text.
-        // I'll copy the clickable text structure.
 
         net.md_5.bungee.api.chat.TextComponent message = new net.md_5.bungee.api.chat.TextComponent(
                 ChatColor.translateAlternateColorCodes('&', "&a[Click to teleport]"));
@@ -186,10 +175,8 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             return filter(args[0], Arrays.asList("give", "set", "remove", "reset"));
         } else if (args.length == 2) {
-            // Null for players = all players
             return null;
         } else if (args.length == 3) {
-            // Keys
             Set<String> keys = plugin.getKeyAllManager().getValidKeys();
             return filter(args[2], new ArrayList<>(keys));
         } else if (args.length == 4 && !args[0].equalsIgnoreCase("reset")) {

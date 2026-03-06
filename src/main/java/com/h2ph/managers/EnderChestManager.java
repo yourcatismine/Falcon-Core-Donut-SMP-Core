@@ -38,12 +38,8 @@ public class EnderChestManager {
 
     private final PrismSurvival plugin;
 
-    // Tracks which players currently have a specific block's GUI open
-    // Key: block location, Value: set of player UUIDs viewing it
     private final Map<Location, Set<UUID>> blockViewers = Collections.synchronizedMap(new HashMap<>());
 
-    // Map to track active enderchest inventories by owner UUID for live-syncing and
-    // caching
     private final Map<UUID, org.bukkit.inventory.Inventory> activeInventories = new ConcurrentHashMap<>();
 
     public EnderChestManager(PrismSurvival plugin) {
@@ -93,11 +89,6 @@ public class EnderChestManager {
             org.bukkit.block.Block sourceBlock, ItemStack[] initialContents) {
         return activeInventories.computeIfAbsent(ownerUUID, uuid -> {
             String title = org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8Ender Chest");
-            // If viewing own chest, use default title
-            // Note: We don't have the viewer here, but we can check if ownerName is a
-            // placeholder or just use the generic title if it matches a certain pattern
-            // For now, let's keep it simple. The GUI open method will handle the title if
-            // needed.
 
             org.bukkit.inventory.Inventory inv = org.bukkit.Bukkit.createInventory(
                     new com.h2ph.gui.EnderChestGUI.EnderChestHolder(ownerUUID, ownerName, sourceBlock), 54, title);
@@ -113,9 +104,6 @@ public class EnderChestManager {
         });
     }
 
-    // -----------------------------------------------------------------------
-    // Block Animation (PacketEvents Block Action packets)
-    // -----------------------------------------------------------------------
 
     /**
      * Called when a player opens the GUI from a specific block.
@@ -128,7 +116,6 @@ public class EnderChestManager {
         viewers.add(player.getUniqueId());
 
         if (wasEmpty) {
-            // First viewer — send open animation (viewer count = 1)
             sendBlockAction(block, 1);
         }
     }
@@ -146,7 +133,6 @@ public class EnderChestManager {
         viewers.remove(player.getUniqueId());
         if (viewers.isEmpty()) {
             blockViewers.remove(loc);
-            // Last viewer left — send close animation (viewer count = 0)
             sendBlockAction(block, 0);
         }
     }
@@ -162,25 +148,20 @@ public class EnderChestManager {
     private void sendBlockAction(Block block, int viewerCount) {
         Vector3i pos = new Vector3i(block.getX(), block.getY(), block.getZ());
 
-        // Get the numeric global block type ID that the packet requires
         WrappedBlockState wrappedState = SpigotConversionUtil.fromBukkitBlockData(block.getBlockData());
         int blockTypeId = wrappedState.getGlobalId();
 
         WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(
                 pos,
-                1, // action ID 1 = animate chest lid (same as vanilla)
-                viewerCount, // 0 = close, ≥1 = open
+                1,
+                viewerCount,
                 blockTypeId);
 
-        // Send to all players within 64 blocks so everyone sees the animation
         for (Player nearby : block.getWorld().getNearbyPlayers(block.getLocation(), 64)) {
             PacketEvents.getAPI().getPlayerManager().sendPacket(nearby, packet);
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Load
-    // -----------------------------------------------------------------------
 
     public ItemStack[] loadEnderChest(UUID uuid) {
         ItemStack[] contents = new ItemStack[54];
@@ -200,13 +181,9 @@ public class EnderChestManager {
         return contents;
     }
 
-    // -----------------------------------------------------------------------
-    // Save
-    // -----------------------------------------------------------------------
 
     public void saveEnderChest(UUID uuid, ItemStack[] items) {
         String serialized = serializeContents(items);
-        // REPLACE INTO = INSERT OR REPLACE — upserts the single row for this UUID
         String query = "REPLACE INTO enderchest (uuid, contents) VALUES (?, ?)";
         try (Connection conn = getConnection();
                 PreparedStatement ps = conn.prepareStatement(query)) {
@@ -232,9 +209,6 @@ public class EnderChestManager {
         });
     }
 
-    // -----------------------------------------------------------------------
-    // Serialization helpers (format: "slot:base64|slot:base64|...")
-    // -----------------------------------------------------------------------
 
     private String serializeContents(ItemStack[] items) {
         StringBuilder sb = new StringBuilder();

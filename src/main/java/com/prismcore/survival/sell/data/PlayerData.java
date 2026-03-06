@@ -66,7 +66,6 @@ public class PlayerData {
 
     private boolean dirty;
 
-    // Extended Stats
     private long breakBlocks;
     private long placedBlocks;
     private long mobKills;

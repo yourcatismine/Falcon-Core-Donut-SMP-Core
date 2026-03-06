@@ -23,9 +23,8 @@ import org.bukkit.inventory.InventoryHolder;
 public class MenuListener
         implements Listener {
     
-    // ANTI-DUPE: Track last click times per player for DELIVERY CONFIRMATION menus only
     private static final java.util.Map<java.util.UUID, Long> lastDeliveryClickTimes = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final long DELIVERY_MIN_CLICK_INTERVAL = 100; // 100ms minimum between delivery confirmation clicks
+    private static final long DELIVERY_MIN_CLICK_INTERVAL = 100;
     
     private final PrismSurvival plugin;
 
@@ -40,7 +39,6 @@ public class MenuListener
             return;
         }
         
-        // ANTI-DUPE: Apply rate limiting ONLY to ConfirmDeliveryMenu (where the exploit exists)
         if (inventoryHolder instanceof com.prismcore.survival.orders.gui.ConfirmDeliveryMenu) {
             if (e.getWhoClicked() instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) e.getWhoClicked();
@@ -49,7 +47,6 @@ public class MenuListener
                 Long lastTime = lastDeliveryClickTimes.get(playerId);
                 
                 if (lastTime != null && (currentTime - lastTime) < DELIVERY_MIN_CLICK_INTERVAL) {
-                    // Rapid clicking detected in delivery confirmation - likely packet manipulation
                     e.setCancelled(true);
                     com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(playerId,
                             com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,

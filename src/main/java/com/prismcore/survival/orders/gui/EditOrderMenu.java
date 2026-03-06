@@ -71,7 +71,6 @@ public class EditOrderMenu
         int rows = this.module.cfg().rows("edit", 3);
         this.inv = Bukkit.createInventory(this, rows * 9, Utils.formatColors("&8ᴏʀᴅᴇʀѕ -> ᴇᴅɪᴛ ᴏʀᴅᴇʀ"));
 
-        // Filler
         int[] fillerSlots = new int[] { 0, 1, 2, 9, 11, 18, 19, 20 };
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta fm = filler.getItemMeta();
@@ -84,7 +83,6 @@ public class EditOrderMenu
                 this.inv.setItem(s, filler);
         }
 
-        // Slot 10: Target Item
         OfflinePlayer op = Bukkit.getOfflinePlayer(this.order.owner);
         String ownerName = op != null && op.getName() != null ? op.getName() : "Unknown";
 
@@ -127,10 +125,8 @@ public class EditOrderMenu
         target = GuiVariant.merge(target, this.order.key.buildIcon());
         this.inv.setItem(10, target);
 
-        // Buttons
         boolean hasItemsToCollect = !this.order.storage.isEmpty();
 
-        // Cancel (Slot 13)
         if (hasItemsToCollect) {
             this.inv.setItem(13,
                     makeButton(Material.BARRIER, "&cᴄᴀɴᴄᴇʟ",
@@ -141,11 +137,9 @@ public class EditOrderMenu
                     makeButton(Material.RED_TERRACOTTA, "&aᴄᴀɴᴄᴇʟ", List.of("&fClick to cancel/remove this order")));
         }
 
-        // Collect (Slot 15) - Always
         this.inv.setItem(15, makeButton(Material.CHEST, "&aᴄᴏʟʟᴇᴄᴛ", List.of("&fClick to collect items")));
 
         this.p.openInventory(this.inv);
-        // Sound removed as per request
     }
 
     private ItemStack makeButton(Material mat, String name, List<String> lore) {
@@ -166,11 +160,9 @@ public class EditOrderMenu
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -180,7 +172,6 @@ public class EditOrderMenu
 
         boolean hasItemsToCollect = !this.order.storage.isEmpty();
 
-        // Slot 13: Cancel
         if (slot == 13) {
             if (!hasItemsToCollect) {
                 com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
@@ -197,12 +188,9 @@ public class EditOrderMenu
             return;
         }
 
-        // Slot 15: Collect
         if (slot == 15) {
             com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
                     com.prismcore.survival.manager.ActivityLogger.LogType.ORDER, "Clicked Collect in Edit Order Menu");
-            // Always open, even if empty, as per visual request (button is always there).
-            // CollectItemsMenu should handle empty gracefully.
             this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
             this.p.setMetadata(META_SUPPRESS_CLOSE,
                     (MetadataValue) new FixedMetadataValue((Plugin) this.module.getPlugin(), (Object) true));

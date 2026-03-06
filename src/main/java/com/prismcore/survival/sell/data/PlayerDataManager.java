@@ -56,7 +56,6 @@ public class PlayerDataManager {
                     Category category = Category.valueOf(key);
                     data.setProgress(category, progressSection.getDouble(key));
                 } catch (IllegalArgumentException illegalArgumentException) {
-                    // empty catch block
                 }
             }
         }
@@ -66,7 +65,6 @@ public class PlayerDataManager {
                     Category category = Category.valueOf(key);
                     data.setMultiplier(category, multiplierSection.getDouble(key));
                 } catch (IllegalArgumentException illegalArgumentException) {
-                    // empty catch block
                 }
             }
         }
@@ -99,7 +97,6 @@ public class PlayerDataManager {
         if (data == null) {
             return;
         }
-        // Use PrismSurvival's scheduler adapter if available, or just Bukkit async
         PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> savePlayerData(uuid));
     }
 

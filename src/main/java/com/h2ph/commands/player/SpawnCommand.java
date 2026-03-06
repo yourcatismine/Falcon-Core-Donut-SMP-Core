@@ -38,7 +38,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
 
         if (args.length >= 1) {
             String key = args[0];
-            // numeric index (1-based)
             try {
                 int idx = Integer.parseInt(key);
                 java.util.List<String> names = new java.util.ArrayList<>();
@@ -49,7 +48,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
                     }
                 }
 
-                // If no spawns or index out of bounds, open GUI instead of error
                 if (names.isEmpty() || idx < 1 || idx > names.size()) {
                     openSpawnGUI(p);
                     return true;
@@ -71,7 +69,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
                 }
                 return true;
             } catch (NumberFormatException ex) {
-                // treat as name
                 if (plugin.getSpawnManager() != null) {
                     org.bukkit.Location tgt = plugin.getSpawnManager().getSpawn(key);
                     if (tgt != null) {
@@ -79,13 +76,11 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
                         return true;
                     }
                 }
-                // Not found by name? open GUI
                 openSpawnGUI(p);
                 return true;
             }
         }
 
-        // No args -> open GUI
         openSpawnGUI(p);
         return true;
     }
@@ -101,7 +96,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
                     names.addAll(plugin.getSpawnManager().listSpawns());
             } catch (Throwable ignored) {
             }
-            // numeric suggestions 1..N where N is saved spawn count
             for (int i = 1; i <= names.size(); i++)
                 out.add(String.valueOf(i));
             List<String> res = new ArrayList<>();
@@ -145,7 +139,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
         int size = 54;
         Inventory gui = Bukkit.createInventory(null, size, GUI_TITLE);
 
-        // place configured spawn items starting at slot 0 (leave other slots empty)
         for (int i = 0; i < names.size() && i < size; i++) {
             String spawnName = names.get(i);
             ItemStack spawnItem = new ItemStack(Material.GLOW_ITEM_FRAME);
@@ -172,7 +165,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
             gui.setItem(i, spawnItem);
         }
 
-        // Add Random Spawn Button
         ItemStack randomSpawn = new ItemStack(Material.BEACON);
         ItemMeta rsm = randomSpawn.getItemMeta();
         if (rsm != null) {
@@ -207,12 +199,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
         }
 
         if (current.getType() == Material.GLOW_ITEM_FRAME) {
-            // It's a spawn point
-            // Assuming order matches index + 1
             int slot = e.getRawSlot();
-            // We just need to find the spawn name from the slot or from display name?
-            // Display name: "&aѕᴘᴀᴡɴ X"
-            // Let's use slot index to map back to spawn name list
             List<String> names = new ArrayList<>();
             try {
                 if (plugin.getSpawnManager() != null)
@@ -230,7 +217,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
             }
 
         } else if (current.getType() == Material.BEACON) {
-            // Random spawn
             List<String> names = new ArrayList<>();
             try {
                 if (plugin.getSpawnManager() != null)

@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 public class InteractionTracker {
 
     private final Map<UUID, Long> lastInteractionTime = new ConcurrentHashMap<>();
-    private static final long UNSAFE_WINDOW_MS = 2000; // 2 seconds after interaction
+    private static final long UNSAFE_WINDOW_MS = 2000;
 
     /**
      * Mark a player as having just interacted with their inventory.
@@ -30,7 +30,7 @@ public class InteractionTracker {
     public boolean isSafeToUpdate(Player player) {
         Long lastTime = lastInteractionTime.get(player.getUniqueId());
         if (lastTime == null) {
-            return true; // Never interacted, safe
+            return true;
         }
 
         long timeSinceInteraction = System.currentTimeMillis() - lastTime;
@@ -42,8 +42,7 @@ public class InteractionTracker {
      */
     public void cleanup() {
         long now = System.currentTimeMillis();
-        lastInteractionTime.entrySet().removeIf(entry -> now - entry.getValue() > 60000 // Remove entries older than 1
-                                                                                        // minute
+        lastInteractionTime.entrySet().removeIf(entry -> now - entry.getValue() > 60000
         );
     }
 }

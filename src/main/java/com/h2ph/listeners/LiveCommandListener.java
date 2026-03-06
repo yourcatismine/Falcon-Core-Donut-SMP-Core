@@ -18,12 +18,10 @@ public class LiveCommandListener implements Listener {
         if (event.isCancelled())
             return;
 
-        // Broadcast to API Server
         plugin.getApiServer().broadcastCommandUsage(
                 event.getPlayer(),
                 event.getMessage());
 
-        // Log to Activity System
         plugin.getActivityLogger().log(
                 event.getPlayer().getUniqueId(),
                 com.prismcore.survival.manager.ActivityLogger.LogType.GENERAL,

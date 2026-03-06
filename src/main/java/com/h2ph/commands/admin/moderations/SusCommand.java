@@ -16,7 +16,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-// BukkitRunnable import removed
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -31,19 +30,15 @@ public class SusCommand implements CommandExecutor, Listener {
     private final String GUI_TITLE = ChatColor.DARK_GRAY + toSmallCaps("suspicious activity");
     private final String PREFIX = ChatColor.DARK_GRAY + toSmallCaps("security") + " " + ChatColor.RESET;
 
-    // Data Storage
     private final Map<UUID, SuspectData> susDataMap = new HashMap<>();
 
-    // Pagination Storage
     private final Map<UUID, Integer> playerPageMap = new HashMap<>();
 
     public SusCommand(JavaPlugin plugin) {
         this.plugin = plugin;
 
-        // 1. Initialize Log Hook
         injectLog4jHook();
 
-        // 2. Start Auto-Clear (120s)
         startAutoClearTask();
     }
 
@@ -66,7 +61,6 @@ public class SusCommand implements CommandExecutor, Listener {
         }
     }
 
-    // --- 1. LOG HOOK (Reflection) ---
     private void injectLog4jHook() {
         try {
             Class<?> logManagerClass = Class.forName("org.apache.logging.log4j.LogManager");
@@ -125,11 +119,9 @@ public class SusCommand implements CommandExecutor, Listener {
         });
     }
 
-    // --- 2. PARSER ---
     private void handleLogMessage(String rawMessage) {
         String clean = ChatColor.stripColor(rawMessage).replaceAll("\\u001B\\[[;\\d]*m", "");
 
-        // Matrix
         if (clean.contains("Matrix") || clean.contains("[Matrix]")) {
             if (clean.contains("using") || clean.contains("tried") || clean.contains("failed") ||
                     clean.contains("combat") || clean.contains("abnormally") || clean.contains("tring") ||
@@ -137,7 +129,6 @@ public class SusCommand implements CommandExecutor, Listener {
                 parseLog(clean, "Matrix");
             }
         }
-        // Vulcan
         else if (clean.contains("Vulcan") && clean.contains("failed")) {
             parseLog(clean, "Vulcan");
         }
@@ -192,7 +183,6 @@ public class SusCommand implements CommandExecutor, Listener {
         data.latestCheck = check;
     }
 
-    // --- 3. GUI SYSTEM (PAGINATION) ---
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -244,13 +234,11 @@ public class SusCommand implements CommandExecutor, Listener {
         gui.setItem(49, createButton(Material.NETHER_STAR, ChatColor.AQUA + toSmallCaps("refresh"),
                 ChatColor.GRAY + "Click to reload"));
 
-        // Previous Button - Only show if we are on Page 1 (Index 1) or higher
         if (page > 0) {
             gui.setItem(45,
                     createButton(Material.ARROW, ChatColor.GREEN + "ᴘʀᴇᴠɪᴏᴜѕ", ChatColor.WHITE + "Click to previous"));
         }
 
-        // Next Button - Only show if we are NOT on the last page
         if (page < totalPages - 1) {
             gui.setItem(53,
                     createButton(Material.ARROW, ChatColor.GREEN + "ɴᴇхᴛ ᴘᴀɢᴇ", ChatColor.WHITE + "Click to next"));
@@ -272,7 +260,6 @@ public class SusCommand implements CommandExecutor, Listener {
             List<String> lore = new ArrayList<>();
             lore.add(ChatColor.GRAY + "Flag: " + ChatColor.LIGHT_PURPLE + data.latestCheck);
             lore.add(ChatColor.GRAY + "Total Flags: " + ChatColor.WHITE + data.totalFlags);
-            // REMOVED: Vulcan/Matrix detailed breakdown
             lore.add(ChatColor.GRAY + "Last: " + secondsAgo + "s ago");
             lore.add("");
             lore.add(ChatColor.YELLOW + "Click to Teleport");
@@ -308,7 +295,6 @@ public class SusCommand implements CommandExecutor, Listener {
 
         if (item.getType() == Material.NETHER_STAR) {
             openSusGUI(admin, currentPage);
-            // No message sent on refresh
         } else if (item.getType() == Material.ARROW && item.getItemMeta().getDisplayName().contains("ᴘʀᴇᴠɪᴏᴜѕ")) {
             openSusGUI(admin, currentPage - 1);
         } else if (item.getType() == Material.ARROW && item.getItemMeta().getDisplayName().contains("ɴᴇхᴛ ᴘᴀɢᴇ")) {
@@ -332,7 +318,6 @@ public class SusCommand implements CommandExecutor, Listener {
         }
     }
 
-    // --- UTILS ---
     private static class SuspectData {
         String name;
         int totalFlags = 0;

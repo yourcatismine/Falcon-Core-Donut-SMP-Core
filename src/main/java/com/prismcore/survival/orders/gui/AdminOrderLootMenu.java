@@ -49,7 +49,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
         String title = Utils.formatColors("&8ʟᴏᴏᴛ: " + Utils.toSmallCaps(order.id.toString().substring(0, 8)));
         this.inv = Bukkit.createInventory(this, 54, title);
 
-        // Fill items (0-44)
         synchronized (order.storage) {
             if (order.storage.isEmpty()) {
                 this.inv.setItem(22, makeItem(Material.BARRIER, "&cɴᴏ ʟᴏᴏᴛ ᴛᴏ ᴄᴏʟʟᴇᴄᴛ",
@@ -69,7 +68,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                     if (meta != null) {
                         List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
 
-                        // Add "Delivered by" info
                         String delivererUuidStr = meta.getPersistentDataContainer().get(OrdersModule.DELIVERER_KEY,
                                 PersistentDataType.STRING);
                         if (delivererUuidStr != null) {
@@ -91,8 +89,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                 }
             }
 
-            // Pagination Arrows
-            if (page > 0) { // Page 1 is index 0
+            if (page > 0) {
                 this.inv.setItem(45, makeItem(Material.ARROW, "&5ᴘʀᴇᴠɪᴏᴜѕ ᴘᴀɢᴇ", List.of("&fGo to page " + page)));
             }
 
@@ -101,15 +98,12 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
             }
         }
 
-        // Drop Loot (48)
         this.inv.setItem(48, makeItem(Material.DROPPER, "&aᴅʀᴏᴘ ʟᴏᴏᴛ",
                 List.of("&fClick to drop all delivered items", "&ffor this specific order on the ground.")));
 
-        // Delete/Refund Order (49)
         this.inv.setItem(49, makeItem(Material.TNT, "&cᴅᴇʟᴇᴛᴇ & ʀᴇꜰᴜɴᴅ ᴏʀᴅᴇʀ",
                 List.of("&fClick to cancel this order and", "&frefund remaining items to AH.")));
 
-        // Refresh (50)
         this.inv.setItem(50, makeItem(Material.MAP, "&6ʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
 
         this.admin.openInventory(this.inv);
@@ -142,7 +136,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
 
         int slot = e.getSlot();
 
-        if (slot >= 0 && slot < 45) { // Collect individual item
+        if (slot >= 0 && slot < 45) {
             synchronized (order.storage) {
                 int itemIndex = page * 45 + slot;
 
@@ -161,14 +155,14 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
 
                         this.module.orders().saveOrder(order);
                         admin.playSound(admin.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
-                        open(); // Refresh
+                        open();
                     }
                 }
             }
             return;
         }
 
-        if (slot == 45) { // Previous
+        if (slot == 45) {
             if (page > 0) {
                 page--;
                 this.internalSwitch = true;
@@ -178,7 +172,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 53) { // Next
+        if (slot == 53) {
             if ((page + 1) * 45 < order.storage.size()) {
                 page++;
                 this.internalSwitch = true;
@@ -188,7 +182,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 48) { // Drop Loot
+        if (slot == 48) {
             synchronized (order.storage) {
                 if (order.storage.isEmpty()) {
                     admin.sendMessage(Utils.formatColors("&cNo loot to collect."));
@@ -198,7 +192,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
 
                 int start = page * 45;
                 if (start >= order.storage.size()) {
-                    // Safety check if page somehow got out of sync
                     page = Math.max(0, (order.storage.size() - 1) / 45);
                     open();
                     return;
@@ -207,8 +200,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                 int end = Math.min(start + 45, order.storage.size());
                 int droppedCount = 0;
 
-                // Capture items to drop FIRST to avoid concurrent modification issues during
-                // world.dropItem if it takes time
                 List<ItemStack> toDrop = new ArrayList<>();
                 for (int i = end - 1; i >= start; i--) {
                     ItemStack item = order.storage.remove(i);
@@ -218,7 +209,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                     }
                 }
 
-                // Drop items in the world
                 for (ItemStack item : toDrop) {
                     admin.getWorld().dropItem(admin.getLocation(), item);
                 }
@@ -227,7 +217,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                 admin.sendMessage(Utils.formatColors("&aDropped " + droppedCount + " items from this page."));
                 admin.playSound(admin.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.0f);
 
-                // Adjust page if current page became empty
                 if (page > 0 && page * 45 >= order.storage.size()) {
                     page--;
                 }
@@ -236,7 +225,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 49) { // Delete & Refund
+        if (slot == 49) {
             this.admin.setMetadata(META_SUPPRESS_RETURN,
                     new org.bukkit.metadata.FixedMetadataValue(this.module.getPlugin(), true));
             AdminOrderDetailsMenu detailsMenu = new AdminOrderDetailsMenu(this.module, this.admin, this.target);
@@ -247,7 +236,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 50) { // Refresh
+        if (slot == 50) {
             this.internalSwitch = true;
             admin.playSound(admin.getLocation(), Sound.UI_TOAST_IN, 1.0f, 1.0f);
             open();

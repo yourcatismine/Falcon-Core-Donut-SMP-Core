@@ -32,12 +32,10 @@ public class TpAutoCommand implements CommandExecutor {
         data.setTpAuto(newState);
 
         if (newState) {
-            // ON
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You turned on tpauto.");
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
             p.playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1f);
         } else {
-            // OFF
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You turned off tpauto.");
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
             p.playSound(p.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1f, 1f);

@@ -38,14 +38,12 @@ public class ShardBoosterListener implements Listener {
             return;
         }
 
-        // Check if this is a shard booster
         if (!meta.getPersistentDataContainer().has(ToolsManager.BOOSTER_KEY, PersistentDataType.BYTE)) {
             return;
         }
 
         Player player = event.getPlayer();
 
-        // Get booster duration (priority: REMAINING_KEY > EXPIRY_KEY > default 24h)
         long durationSeconds = 86400L;
         if (meta.getPersistentDataContainer().has(ToolsManager.REMAINING_KEY, PersistentDataType.LONG)) {
             durationSeconds = meta.getPersistentDataContainer().get(ToolsManager.REMAINING_KEY,
@@ -60,15 +58,11 @@ public class ShardBoosterListener implements Listener {
             return;
         }
 
-        // Calculate expiry timestamp
         long expiryMillis = System.currentTimeMillis() + (durationSeconds * 1000L);
 
-        // Activate booster for player
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         data.setShardBoosterExpiry(expiryMillis);
 
-        // Award 8 shards if the player has the passive permission or is in an AFK
-        // region
         boolean inAfkRegion = plugin.getAfkManager().getRegionAt(player.getLocation()) != null;
         if (player.hasPermission("prism.shards.passive") || inAfkRegion) {
             data.addShards(8, "Shard Booster Reward");
@@ -76,10 +70,8 @@ public class ShardBoosterListener implements Listener {
 
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
-        // Play activation sound
         player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 2.0f);
 
-        // Send activation message
         String msg = ChatColor.translateAlternateColorCodes('&', "&dShard booster activated.");
         player.sendMessage(msg);
         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,

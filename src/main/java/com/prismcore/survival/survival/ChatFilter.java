@@ -20,11 +20,9 @@ public class ChatFilter implements Listener {
 
     private final PrismSurvival plugin;
 
-    // Data Storage
     private final Map<UUID, Long> chatCooldowns = new HashMap<>();
     private final Map<UUID, String> lastMessages = new HashMap<>();
 
-    // Config & Patterns
     private final List<Pattern> badWordPatterns = new ArrayList<>();
 
     public ChatFilter(PrismSurvival plugin) {
@@ -32,15 +30,12 @@ public class ChatFilter implements Listener {
         loadConfigAndPatterns();
     }
 
-    // Reloads config and builds the smart regex patterns
     public void loadConfigAndPatterns() {
         FileConfiguration config = plugin.getChatFilterConfig();
         this.badWordPatterns.clear();
 
         List<String> words = config.getStringList("chat-filter.bad-words");
 
-        // Add some common variations that aren't strict matches if needed
-        // (You can remove this if you strictly rely on config)
         if (!words.contains("fucm"))
             words.add("fucm");
         if (!words.contains("fck"))
@@ -56,12 +51,10 @@ public class ChatFilter implements Listener {
         Player player = event.getPlayer();
         FileConfiguration config = plugin.getChatFilterConfig();
 
-        // 1. Bypass Check (Guards content filters only)
         boolean hasBypass = player.hasPermission("prism.chat.bypass");
 
         UUID uuid = player.getUniqueId();
 
-        // --- MUTE CHECK ---
         PlayerData data = plugin.getPlayerDataManager().get(uuid);
         if (data != null && data.isMuted()) {
             event.setCancelled(true);
@@ -70,7 +63,6 @@ public class ChatFilter implements Listener {
                 reason = "No Reason Provided";
             long expiry = data.getMuteExpiry();
 
-            // Calculate remaining duration string
             String durationLeft = "Permanent";
             if (expiry > 0) {
                 long totalSeconds = (expiry - System.currentTimeMillis()) / 1000;
@@ -91,7 +83,6 @@ public class ChatFilter implements Listener {
         String message = event.getMessage();
 
         if (!hasBypass) {
-            // --- CHAT LENGTH CHECK ---
             int maxLength = config.getInt("chat-filter.max-length", 256);
             if (message.length() > maxLength) {
                 event.setCancelled(true);
@@ -99,7 +90,6 @@ public class ChatFilter implements Listener {
                 return;
             }
 
-            // --- ANTI-SPAM ---
             long cooldownTime = config.getLong("chat-filter.cooldown-ms", 2000);
             if (chatCooldowns.containsKey(uuid)) {
                 long diff = currentTime - chatCooldowns.get(uuid);
@@ -112,7 +102,6 @@ public class ChatFilter implements Listener {
                 }
             }
 
-            // --- ANTI-REPEAT ---
             if (config.getBoolean("chat-filter.block-repeats", true)) {
                 if (lastMessages.containsKey(uuid) && lastMessages.get(uuid).equalsIgnoreCase(message)) {
                     event.setCancelled(true);
@@ -121,42 +110,32 @@ public class ChatFilter implements Listener {
                 }
             }
 
-            // --- SMART BAD WORD FILTER ---
-            // remove color codes first to prevent "&cf&au&cc&kk" bypass
             String cleanMsg = ChatColor.stripColor(message);
 
             for (Pattern pattern : badWordPatterns) {
                 Matcher matcher = pattern.matcher(cleanMsg);
-                if (matcher.find()) { // .find() checks if the pattern exists anywhere in the string
+                if (matcher.find()) {
                     event.setCancelled(true);
 
-                    // Broadcast to API
                     if (plugin.getApiServer() != null) {
                         plugin.getApiServer().broadcastChatFilter(player.getName(), message, matcher.group());
                     }
 
-                    // Silent block (no message sent to player)
                     return;
                 }
             }
         }
 
-        // Update Data
         chatCooldowns.put(uuid, currentTime);
         lastMessages.put(uuid, message);
 
         plugin.getActivityLogger().log(uuid, ActivityLogger.LogType.MESSAGE, "Chat: " + message);
 
-        // --- HIDE CHAT FILTER ---
-        // Remove recipients who have 'hideChat' enabled
-        // Unless they are the sender (sender always sees their own message usually, or
-        // loop skips them)
-        // But getRecipients() allows modification.
         java.util.Iterator<Player> iterator = event.getRecipients().iterator();
         while (iterator.hasNext()) {
             Player recipient = iterator.next();
             if (recipient.getUniqueId().equals(uuid))
-                continue; // Sender always sees their own chat
+                continue;
 
             PlayerData recipientData = plugin.getPlayerDataManager().get(recipient.getUniqueId());
             if (recipientData != null && recipientData.isHideChat()) {
@@ -164,13 +143,11 @@ public class ChatFilter implements Listener {
             }
         }
 
-        // --- IGNORE FILTER ---
-        // Remove recipients who have ignored the sender
         iterator = event.getRecipients().iterator();
         while (iterator.hasNext()) {
             Player recipient = iterator.next();
             if (recipient.getUniqueId().equals(uuid))
-                continue; // Sender always sees their own chat
+                continue;
 
             PlayerData recipientData = plugin.getPlayerDataManager().get(recipient.getUniqueId());
             if (recipientData != null && recipientData.isIgnoring(uuid)) {
@@ -193,17 +170,12 @@ public class ChatFilter implements Listener {
     private Pattern buildSmartPattern(String word) {
         StringBuilder sb = new StringBuilder();
 
-        // Iterate over every letter in the bad word
         for (char c : word.toLowerCase().toCharArray()) {
             String charRegex = getCharRegex(c);
 
-            // Appends the character regex + logic for repeats and separators
-            // [fF]+ means "one or more f's"
-            // [\W_]* means "zero or more symbols/spaces/underscores"
             sb.append(charRegex).append("+[\\W_]*");
         }
 
-        // Compile (Case Insensitive)
         return Pattern.compile(sb.toString(), Pattern.CASE_INSENSITIVE);
     }
 
@@ -243,7 +215,7 @@ public class ChatFilter implements Listener {
             case 'e':
                 return "[eE3\u00eb\u00e9]";
             case 'f':
-                return "[fF]"; // ph is harder to regex char-by-char, usually better as separate word
+                return "[fF]";
             case 'g':
                 return "[gG69]";
             case 'h':
@@ -251,7 +223,7 @@ public class ChatFilter implements Listener {
             case 'i':
                 return "[iI1!|l\u00ef]";
             case 'k':
-                return "[kKcC]"; // 'c' can sound like 'k'
+                return "[kKcC]";
             case 'l':
                 return "[lL1|!]";
             case 'o':
@@ -261,7 +233,7 @@ public class ChatFilter implements Listener {
             case 't':
                 return "[tT7+]";
             case 'u':
-                return "[uUvV0*!#]"; // 'v' often used for 'u', '*' used to censor
+                return "[uUvV0*!#]";
             case 'v':
                 return "[vVuU]";
             default:

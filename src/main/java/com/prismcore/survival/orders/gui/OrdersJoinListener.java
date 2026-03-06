@@ -31,7 +31,6 @@ public class OrdersJoinListener implements Listener {
             return;
 
         if (records.size() == 1) {
-            // Single delivery message
             OfflineNotificationManager.DeliveryRecord record = records.get(0);
             String message = Utils.formatColors("&5" + record.getDelivererName() + "&7 delivered you &a"
                     + Utils.abbr(record.getAmount()) + " &a" + record.getItemName() + "&7 while you were away");
@@ -39,7 +38,6 @@ public class OrdersJoinListener implements Listener {
             player.sendMessage(message);
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
         } else {
-            // Multiple deliveries message
             double totalMoney = 0;
             for (OfflineNotificationManager.DeliveryRecord record : records) {
                 totalMoney += record.getMoney();
@@ -51,7 +49,6 @@ public class OrdersJoinListener implements Listener {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
         }
 
-        // Play sound
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 }

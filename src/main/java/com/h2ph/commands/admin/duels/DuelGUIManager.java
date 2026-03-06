@@ -48,15 +48,12 @@ public class DuelGUIManager {
         Inventory gui = Bukkit.createInventory(null, 54,
                 ChatColor.translateAlternateColorCodes('&', "&8ᴅᴜᴇʟ ѕᴇᴛᴛɪɴɢѕ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ"));
 
-        // Slot 11: Regions
         ItemStack regionsItem = createItem(Material.GRASS_BLOCK, "&aʀᴇɢɪᴏɴѕ", null, "&fClick to view all regions");
         gui.setItem(11, regionsItem);
 
-        // Slot 13: Settings
         ItemStack settingsItem = createItem(Material.WRITABLE_BOOK, "&aѕᴇᴛᴛɪɴɢѕ", null, "&fClick to open settings");
         gui.setItem(13, settingsItem);
 
-        // Slot 15: Manage Players
         ItemStack playersItem = createItem(Material.NAME_TAG, "&aᴍᴀɴᴀɢᴇ ᴘʟᴀʏᴇʀѕ", null, "&fClick to manage players");
         gui.setItem(15, playersItem);
 
@@ -78,7 +75,7 @@ public class DuelGUIManager {
             int slot = 0;
             for (File file : files) {
                 if (slot > 44)
-                    break; // Limit to 45 slots
+                    break;
 
                 String nameRaw = file.getName().replace(".yml", "");
                 String nameSmallCaps = toSmallCaps(nameRaw);
@@ -86,7 +83,6 @@ public class DuelGUIManager {
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
                 String creator = config.getString("created-by", "Unknown");
 
-                // &a{NAME} - But use these fonts ᴀʙᴄᴅ
                 ItemStack item = createItem(Material.GRASS_BLOCK,
                         "&a" + nameSmallCaps,
                         nameRaw,
@@ -108,9 +104,8 @@ public class DuelGUIManager {
         File file = new File(plugin.getDataFolder(), "survival/regions/duels/" + regionName + ".yml");
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
-        int minutes = config.getInt("looting-minutes", 5); // Default 5
+        int minutes = config.getInt("looting-minutes", 5);
 
-        // Slot 11: Pos 1
         List<String> pos1Lore = new ArrayList<>();
         if (config.contains("spawn1.world")) {
             int x = config.getInt("spawn1.x");
@@ -124,13 +119,11 @@ public class DuelGUIManager {
         ItemStack pos1 = createItem(Material.ARMOR_STAND, "&aᴘʟᴀʏᴇʀ 1", regionName, pos1Lore.toArray(new String[0]));
         gui.setItem(11, pos1);
 
-        // Slot 13: Clock
         ItemStack clock = createItem(Material.CLOCK, "&aᴍɪɴᴜᴛᴇѕ ꜰᴏʀ ʟᴏᴏᴛɪɴɢ", regionName,
                 "&7" + minutes + " minutes",
                 "&fLeft click to extend / Right click to deduct");
         gui.setItem(13, clock);
 
-        // Slot 15: Pos 2
         List<String> pos2Lore = new ArrayList<>();
         if (config.contains("spawn2.world")) {
             int x = config.getInt("spawn2.x");
@@ -144,11 +137,9 @@ public class DuelGUIManager {
         ItemStack pos2 = createItem(Material.ARMOR_STAND, "&aᴘʟᴀʏᴇʀ 2", regionName, pos2Lore.toArray(new String[0]));
         gui.setItem(15, pos2);
 
-        // Slot 18: Back
         ItemStack backBtn = createItem(Material.ARROW, "&eʙᴀᴄᴋ", null, "&fReturn to regions");
         gui.setItem(18, backBtn);
 
-        // Slot 26: Delete Region
         ItemStack deleteBtn = createItem(Material.RED_STAINED_GLASS_PANE, "&4ð¦¸¿ð¦»¿ð¦¿ð¦´ð¦Æð¦´ ð¦¦ð¦´ð¦¸ð¦ªð¦¾ð¦½",
                 regionName,
                 "&fClick to delete this region");
@@ -161,18 +152,15 @@ public class DuelGUIManager {
         Inventory gui = Bukkit.createInventory(null, 27,
                 ChatColor.translateAlternateColorCodes('&', "&4ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛɪᴏɴ?"));
 
-        // Slot 11: Cancel
         ItemStack cancelBtn = createItem(Material.GREEN_STAINED_GLASS_PANE, "&aᴄᴀɴᴄᴇʟ", regionName,
                 "&fKeep " + regionName);
         gui.setItem(11, cancelBtn);
 
-        // Slot 13: Info
         ItemStack infoBtn = createItem(Material.PAPER, "&e" + toSmallCaps(regionName), null,
                 "&7Are you sure you want to delete this?",
                 "&cThis action cannot be undone.");
         gui.setItem(13, infoBtn);
 
-        // Slot 15: Confirm Delete
         ItemStack confirmBtn = createItem(Material.RED_CONCRETE, "&4ᴄᴏɴꜰɪʀᴍ ᴅᴇʟᴇᴛᴇ", regionName,
                 "&fDelete " + regionName + " forever");
         gui.setItem(15, confirmBtn);
@@ -202,30 +190,24 @@ public class DuelGUIManager {
         int losses = statsManager.getLosses(uuid);
         int streak = statsManager.getStreak(uuid);
 
-        // Slot 10 - Red Glass - Cancel
         ItemStack cancelItem = createItem(Material.RED_STAINED_GLASS_PANE, "&4ᴄᴀɴᴄᴇʟ", null, "&fClick to cancel");
         gui.setItem(10, cancelItem);
 
-        // Slot 12 - Clock - Await Time
         ItemStack clockItem = createItem(Material.CLOCK, "&aᴡᴀɪᴛ ᴛɪᴍᴇ", null,
                 "&7Estimated Wait: Calculating...",
                 "&7Currently queued: " + queuedPlayerCount);
         gui.setItem(12, clockItem);
 
-        // Slot 13 - Gray Dye - Statistics
         ItemStack statsItem = createItem(Material.GRAY_DYE, "&aѕᴛᴀᴛɪѕᴛɪᴄѕ", null,
                 "&7Wins: " + wins,
                 "&7Losses: " + losses,
                 "&7Streak: " + streak);
         gui.setItem(13, statsItem);
 
-        // Slot 14 - Feather - Region
-        // For now, hardcode Europe with placeholder MS
         ItemStack regionItem = createItem(Material.FEATHER, "&aʀᴇɢɪᴏɴ", null,
                 "&7Europe (&5--&7)");
         gui.setItem(14, regionItem);
 
-        // Slot 16 - Green Glass - Confirm
         ItemStack confirmItem = createItem(Material.GREEN_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ", null,
                 "&fClick to start searching for match");
         gui.setItem(16, confirmItem);
@@ -244,7 +226,6 @@ public class DuelGUIManager {
             }
             meta.setLore(loreList);
 
-            // Store Region Name in PDC if provided
             if (storedRegionName != null) {
                 meta.getPersistentDataContainer().set(regionKey, org.bukkit.persistence.PersistentDataType.STRING,
                         storedRegionName);

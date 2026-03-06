@@ -54,7 +54,6 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                 .filter(o -> !o.canceled && !o.completed)
                 .collect(Collectors.toList());
 
-        // Fill orders (0-44)
         int slot = 0;
         for (Order o : playerOrders) {
             if (slot >= 45)
@@ -62,18 +61,14 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             this.inv.setItem(slot++, createAdminOrderDisplayItem(o));
         }
 
-        // Delete All Button (47)
         this.inv.setItem(47, makeItem(Material.BARRIER, "&cᴅᴇʟᴇᴛᴇ ᴀʟʟ ᴏʀᴅᴇʀѕ",
                 List.of("&fClick to cancel and refund all", "&factive orders for this player.")));
 
-        // Refresh (48)
         this.inv.setItem(48, makeItem(Material.MAP, "&5ʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
 
-        // Collect All Drops (50)
         this.inv.setItem(50, makeItem(Material.CHEST, "&aᴄᴏʟʟᴇᴄᴛ ᴀʟʟ ᴅʀᴏᴘѕ",
                 List.of("&fClick to collect all delivered items", "&ffrom all of this player's orders.")));
 
-        // Drop All Loot (51)
         this.inv.setItem(51, makeItem(Material.DROPPER, "&aᴅʀᴏᴘ ᴀʟʟ ʟᴏᴏᴛ",
                 List.of("&fClick to drop all delivered items", "&ffrom all of this player's orders on the ground.")));
 
@@ -133,7 +128,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
 
         int slot = e.getSlot();
 
-        if (slot == 47) { // Delete All
+        if (slot == 47) {
             List<Order> playerOrders = this.module.orders().all().stream()
                     .filter(o -> o.owner.equals(target.getUniqueId()))
                     .filter(o -> !o.canceled && !o.completed)
@@ -149,7 +144,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 48) { // Refresh
+        if (slot == 48) {
             admin.playSound(admin.getLocation(), Sound.UI_TOAST_IN, 1.0f, 1.0f);
             open();
             return;
@@ -168,7 +163,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             }
         }
 
-        if (slot == 50) { // Collect All Drops
+        if (slot == 50) {
             List<Order> playerOrders = this.module.orders().all().stream()
                     .filter(o -> o.owner.equals(target.getUniqueId()))
                     .filter(o -> !o.canceled && !o.completed)
@@ -185,7 +180,6 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                 for (ItemStack item : items) {
                     HashMap<Integer, ItemStack> leftovers = admin.getInventory().addItem(item);
                     if (!leftovers.isEmpty()) {
-                        // Inventory full, drop leftovers at feet
                         for (ItemStack leftover : leftovers.values()) {
                             admin.getWorld().dropItem(admin.getLocation(), leftover);
                         }
@@ -205,7 +199,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             return;
         }
 
-        if (slot == 51) { // Drop All Loot
+        if (slot == 51) {
             List<Order> playerOrders = this.module.orders().all().stream()
                     .filter(o -> o.owner.equals(target.getUniqueId()))
                     .filter(o -> !o.canceled && !o.completed)
@@ -243,7 +237,6 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
     }
 
     public void cancelAndRefund(Order o) {
-        // Refund items to contributors
         com.prismcore.survival.auction.AuctionController auction = com.h2ph.PrismSurvival.getInstance()
                 .getAuctionController();
         if (auction != null) {
@@ -267,7 +260,6 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                             OfflinePlayer deliverer = Bukkit.getOfflinePlayer(delivererUuid);
                             String delivererName = deliverer.getName() != null ? deliverer.getName() : "Unknown";
 
-                            // Add refund-from tag for GUI lore
                             if (recipientName != null) {
                                 meta.getPersistentDataContainer().set(OrdersModule.REFUND_FROM_KEY,
                                         PersistentDataType.STRING,
@@ -275,14 +267,13 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                                 item.setItemMeta(meta);
                             }
 
-                            // Add to auction as expired item
                             com.prismcore.survival.auction.AuctionItem ai = new com.prismcore.survival.auction.AuctionItem(
                                     UUID.randomUUID(),
                                     delivererName,
                                     item,
                                     0.0,
-                                    0L, // listed long ago
-                                    0 // duration 0
+                                    0L,
+                                    0
                             );
                             auction.getAuctionManager().addItem(ai);
                         } catch (Exception ex) {
@@ -294,7 +285,6 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
             }
         }
 
-        // Original cancellation logic (money refund)
         this.module.orders().cancel(o);
     }
 }

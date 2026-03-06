@@ -31,7 +31,6 @@ public class CheckPlayersCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Get all online players
         List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
         
         if (onlinePlayers.isEmpty()) {
@@ -39,12 +38,10 @@ public class CheckPlayersCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Display header
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
         sender.sendMessage(ChatColor.RED + " Online Players: " + ChatColor.WHITE + onlinePlayers.size());
         sender.sendMessage("");
 
-        // Display each player and their world
         for (Player player : onlinePlayers) {
             String worldName = getWorldDisplayName(player.getWorld());
             sender.sendMessage(ChatColor.RED + " Player: " + ChatColor.WHITE + player.getName() + 
@@ -68,14 +65,12 @@ public class CheckPlayersCommand implements CommandExecutor, TabCompleter {
             case THE_END:
                 return "The End";
             default:
-                // Fallback for any custom world types
                 return world.getName();
         }
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        // No tab completion needed for this command as it takes no arguments
         return Collections.emptyList();
     }
 }

@@ -34,16 +34,13 @@ public class CheckTotemCommand implements CommandExecutor, TabCompleter {
 
         Player target = Bukkit.getPlayer(args[0]);
         if (target == null) {
-            // Check async if player exists (Folia-compatible)
             Bukkit.getAsyncScheduler().runNow(com.h2ph.PrismSurvival.getInstance(), (task) -> {
                 org.bukkit.OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[0]);
                 Bukkit.getGlobalRegionScheduler().run(com.h2ph.PrismSurvival.getInstance(), (globalTask) -> {
                     if (offlinePlayer.hasPlayedBefore()) {
-                        // Player exists but is not online
                         executor.spigot().sendMessage(ChatMessageType.ACTION_BAR, 
                             new TextComponent(ChatColor.translateAlternateColorCodes('&', "&cThat player is not online.")));
                     } else {
-                        // Player does not exist
                         executor.spigot().sendMessage(ChatMessageType.ACTION_BAR, 
                             new TextComponent(ChatColor.translateAlternateColorCodes('&', "&cThat player does not exist.")));
                     }
@@ -53,7 +50,6 @@ public class CheckTotemCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check if the target has a totem in their offhand
         ItemStack offhand = target.getInventory().getItemInOffHand();
         if (offhand == null || offhand.getType() != Material.TOTEM_OF_UNDYING || offhand.getAmount() == 0) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&7" + target.getName() + " does not have a totem in their offhand.");
@@ -62,7 +58,6 @@ public class CheckTotemCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Remove the totem from offhand
         target.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
 
         executor.playSound(executor.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1f, 1f);

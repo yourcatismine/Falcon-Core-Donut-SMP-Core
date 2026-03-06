@@ -13,14 +13,11 @@ public class RTPUpdateTask implements Runnable {
             if (player.getOpenInventory().getTitle().equals(RTPCommand.GUI_TITLE)) {
                 Inventory topInventory = player.getOpenInventory().getTopInventory();
 
-                // Distinguish between Main GUI and Sub-Menus based on contents
                 if (topInventory.getItem(13) != null
                         && topInventory.getItem(13).getType() == org.bukkit.Material.NETHERRACK) {
-                    // Main GUI
                     RTPCommand.updateItems(topInventory, player);
                 } else if (topInventory.getItem(10) != null
                         && topInventory.getItem(10).getType() == org.bukkit.Material.GRASS_BLOCK) {
-                    // Overworld Sub-Menu
                     RTPCommand.updateOverworldItems(topInventory, player);
                 }
             }

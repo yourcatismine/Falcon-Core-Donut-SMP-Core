@@ -20,7 +20,6 @@ public class PlayerLogsHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange t) throws IOException {
-        // CORS Preflight
         if ("OPTIONS".equalsIgnoreCase(t.getRequestMethod())) {
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             t.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");

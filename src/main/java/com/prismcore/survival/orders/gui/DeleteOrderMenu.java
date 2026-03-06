@@ -67,11 +67,9 @@ public class DeleteOrderMenu
             return;
         }
 
-        // Handle clicks in the GUI itself
         if (e.getClickedInventory().getHolder() == this) {
             e.setCancelled(true);
         } else {
-            // Player inventory click: block shift-clicking into the GUI
             if (e.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 e.setCancelled(true);
             }
@@ -94,8 +92,6 @@ public class DeleteOrderMenu
             com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
                     com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
                     "Clicked Confirm in Delete Order Menu");
-            // Real-time check to prevent deleting orders with pending items (co-op race
-            // condition)
             if (!this.order.storage.isEmpty()) {
                 this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                 this.p.sendMessage(com.prismcore.survival.orders.Utils

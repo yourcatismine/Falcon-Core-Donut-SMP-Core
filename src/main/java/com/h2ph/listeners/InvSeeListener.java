@@ -28,7 +28,6 @@ public class InvSeeListener implements Listener {
         if (!(e.getInventory().getHolder() instanceof InvSeeGUI.InvSeeHolder holder))
             return;
 
-        // Prevent clicking the separator slots (9-17)
         if (e.getRawSlot() >= 9 && e.getRawSlot() < 18) {
             e.setCancelled(true);
             return;
@@ -42,11 +41,6 @@ public class InvSeeListener implements Listener {
             return;
         }
 
-        // We want to sync the click to the target's inventory
-        // GUI Slots:
-        // 0-3: Armor (Head, Chest, Legs, Boots)
-        // 8: Offhand
-        // 18-53: Main Inventory (0-35)
 
         target.getScheduler().execute(plugin, () -> {
             updateTargetInventory(e.getInventory(), target);
@@ -55,10 +49,10 @@ public class InvSeeListener implements Listener {
 
     private void updateTargetInventory(Inventory gui, Player target) {
         ItemStack[] armor = new ItemStack[4];
-        armor[3] = gui.getItem(0); // Head
-        armor[2] = gui.getItem(1); // Chest
-        armor[1] = gui.getItem(2); // Legs
-        armor[0] = gui.getItem(3); // Boots
+        armor[3] = gui.getItem(0);
+        armor[2] = gui.getItem(1);
+        armor[1] = gui.getItem(2);
+        armor[0] = gui.getItem(3);
         target.getInventory().setArmorContents(armor);
 
         target.getInventory().setItemInOffHand(gui.getItem(8));
@@ -71,10 +65,6 @@ public class InvSeeListener implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent e) {
         if (e.getInventory().getHolder() instanceof InvSeeGUI.InvSeeHolder) {
-            // Task cancellation is handled by the "error throwing" hack in InvSeeGUI for
-            // now,
-            // or I could store task IDs. Let's stick to the current plan or improve if
-            // needed.
         }
     }
 }

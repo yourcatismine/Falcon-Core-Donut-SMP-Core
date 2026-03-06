@@ -46,12 +46,9 @@ public class RedstoneManager implements Listener {
     private final Map<UUID, Map<Long, Long>> lastNotificationTime = new ConcurrentHashMap<>();
     private final Map<UUID, Long> playerNotificationCooldown = new ConcurrentHashMap<>();
 
-    // Block placement tracking
-    private final Map<String, UUID> blockPlacements = new ConcurrentHashMap<>(); // "world,x,y,z" -> player UUID
-    private final Map<Long, Set<UUID>> chunkPlayers = new ConcurrentHashMap<>(); // chunkKey -> Set of player UUIDs who
-                                                                                 // placed redstone
+    private final Map<String, UUID> blockPlacements = new ConcurrentHashMap<>();
+    private final Map<Long, Set<UUID>> chunkPlayers = new ConcurrentHashMap<>();
 
-    // Persistence
     private final File dataFile;
     private FileConfiguration dataConfig;
 
@@ -87,13 +84,13 @@ public class RedstoneManager implements Listener {
         this.plugin = (PrismSurvival) plugin;
         this.dataFile = new File(plugin.getDataFolder(), "redstone_data.yml");
 
-        loadData(); // Load persisted data
+        loadData();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
         this.plugin.getSchedulerAdapter().runTaskTimer(this::checkThresholds, 20L, 20L);
         this.plugin.getSchedulerAdapter().runTaskTimer(this::updateLiveGUI, 20L, 20L);
-        this.plugin.getSchedulerAdapter().runTaskTimer(this::saveData, 6000L, 6000L); // Save every 5 minutes
+        this.plugin.getSchedulerAdapter().runTaskTimer(this::saveData, 6000L, 6000L);
     }
 
     /**
@@ -132,12 +129,10 @@ public class RedstoneManager implements Listener {
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 60);
 
-                            // Find accurate Y-coordinate of redstone
                             int blockX = x * 16 + 8;
                             int blockZ = z * 16 + 8;
                             int blockY = findAverageRedstoneY(world, x, z);
 
-                            // Get players who placed redstone in this chunk
                             Set<UUID> responsiblePlayers = chunkPlayers.getOrDefault(chunkKey, Collections.emptySet());
                             List<String> playerNames = new ArrayList<>();
                             for (UUID uuid : responsiblePlayers) {
@@ -147,7 +142,6 @@ public class RedstoneManager implements Listener {
                                 }
                             }
 
-                            // Fallback: if no placement data, use nearby players
                             if (playerNames.isEmpty()) {
                                 org.bukkit.Location center = new org.bukkit.Location(world, blockX, blockY, blockZ);
                                 for (Player p : Bukkit.getOnlinePlayers()) {
@@ -186,12 +180,10 @@ public class RedstoneManager implements Listener {
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 20);
 
-                            // Find accurate Y-coordinate of redstone
                             int blockX = x * 16 + 8;
                             int blockZ = z * 16 + 8;
                             int blockY = findAverageRedstoneY(world, x, z);
 
-                            // Get players who placed redstone in this chunk
                             Set<UUID> responsiblePlayers = chunkPlayers.getOrDefault(chunkKey, Collections.emptySet());
                             List<String> playerNames = new ArrayList<>();
                             for (UUID uuid : responsiblePlayers) {
@@ -201,7 +193,6 @@ public class RedstoneManager implements Listener {
                                 }
                             }
 
-                            // Fallback: if no placement data, use nearby players
                             if (playerNames.isEmpty()) {
                                 org.bukkit.Location center = new org.bukkit.Location(world, blockX, blockY, blockZ);
                                 for (Player p : Bukkit.getOnlinePlayers()) {
@@ -324,9 +315,9 @@ public class RedstoneManager implements Listener {
                 }
             }
 
-            return count > 0 ? totalY / count : 64; // Default to 64 if no redstone found
+            return count > 0 ? totalY / count : 64;
         } catch (Exception e) {
-            return 64; // Fallback to default
+            return 64;
         }
     }
 
@@ -342,7 +333,6 @@ public class RedstoneManager implements Listener {
         try {
             dataConfig = YamlConfiguration.loadConfiguration(dataFile);
 
-            // Load alert history
             if (dataConfig.contains("alerts")) {
                 ConfigurationSection alerts = dataConfig.getConfigurationSection("alerts");
                 if (alerts != null) {
@@ -368,7 +358,6 @@ public class RedstoneManager implements Listener {
                 plugin.getLogger().info("Loaded " + globalAlertHistory.size() + " redstone alerts");
             }
 
-            // Load block placements
             if (dataConfig.contains("placements")) {
                 ConfigurationSection placements = dataConfig.getConfigurationSection("placements");
                 if (placements != null) {
@@ -377,14 +366,12 @@ public class RedstoneManager implements Listener {
                             String uuidStr = placements.getString(key);
                             blockPlacements.put(key, UUID.fromString(uuidStr));
                         } catch (Exception e) {
-                            // Skip invalid entries
                         }
                     }
                 }
                 plugin.getLogger().info("Loaded " + blockPlacements.size() + " block placements");
             }
 
-            // Load chunk players
             if (dataConfig.contains("chunk-players")) {
                 ConfigurationSection chunks = dataConfig.getConfigurationSection("chunk-players");
                 if (chunks != null) {
@@ -398,7 +385,6 @@ public class RedstoneManager implements Listener {
                             }
                             chunkPlayers.put(chunkKey, players);
                         } catch (Exception e) {
-                            // Skip invalid entries
                         }
                     }
                 }
@@ -417,7 +403,6 @@ public class RedstoneManager implements Listener {
         try {
             dataConfig = new YamlConfiguration();
 
-            // Save alert history
             ConfigurationSection alerts = dataConfig.createSection("alerts");
             int index = 0;
             for (RedstoneAlert alert : globalAlertHistory) {
@@ -432,7 +417,6 @@ public class RedstoneManager implements Listener {
                 alerts.set(key + ".timestamp", alert.getTimestamp());
             }
 
-            // Save block placements (limit to recent 10000 to avoid excessive file size)
             ConfigurationSection placements = dataConfig.createSection("placements");
             int count = 0;
             for (Map.Entry<String, UUID> entry : blockPlacements.entrySet()) {
@@ -441,7 +425,6 @@ public class RedstoneManager implements Listener {
                 placements.set(entry.getKey(), entry.getValue().toString());
             }
 
-            // Save chunk players
             ConfigurationSection chunks = dataConfig.createSection("chunk-players");
             for (Map.Entry<Long, Set<UUID>> entry : chunkPlayers.entrySet()) {
                 List<String> uuidList = new ArrayList<>();

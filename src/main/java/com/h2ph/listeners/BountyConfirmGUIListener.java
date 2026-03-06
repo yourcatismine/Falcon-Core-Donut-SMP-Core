@@ -38,13 +38,11 @@ public class BountyConfirmGUIListener implements Listener {
                     .getHolder();
             int slot = e.getRawSlot();
 
-            // Cancel
             if (slot == 11) {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
                 player.closeInventory();
                 player.sendMessage(ChatColor.RED + "Bounty placement cancelled.");
             }
-            // Confirm
             else if (slot == 15) {
                 player.closeInventory();
                 executeBountyAdd(player, holder.getTargetId(), holder.getTargetName(), holder.getAmount());
@@ -80,11 +78,9 @@ public class BountyConfirmGUIListener implements Listener {
         String amountFormatted = formatNumber(amount);
         String senderMsg = color("&7You added &a$" + amountFormatted + " &7bounty to &4" + targetName + "&7.");
 
-        // Sender: Chat and Actionbar
         sender.sendMessage(senderMsg);
         sender.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(senderMsg));
 
-        // Target: Chat and Actionbar if online
         Player target = Bukkit.getPlayer(targetId);
         if (target != null && target.isOnline()) {
             String targetMsg = color("&d" + sender.getName() + "&7 added &a$" + amountFormatted + " &7to your bounty.");

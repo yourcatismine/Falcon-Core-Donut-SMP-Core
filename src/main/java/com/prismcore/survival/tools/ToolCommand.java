@@ -33,7 +33,6 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length >= 3 && args[0].equalsIgnoreCase("give")) {
-            // Syntax: /tools give <player> <tool> [time]
             Player target = Bukkit.getPlayerExact((String) args[1]);
             String type = args[2].toLowerCase();
             long overrideTimer = 0;
@@ -86,7 +85,6 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
         }
         boolean useCountdown = cfg.getBoolean("use-countdown", true);
         long timerSec = (overrideTimer > 0) ? overrideTimer : cfg.getLong("timer", 0L);
-        // NO Expiry calculation here. Just store raw seconds.
 
         try {
             mat = Material.valueOf((String) cfg.getString("material", "").toUpperCase());
@@ -129,7 +127,6 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
         if (meta instanceof Damageable) {
             ((Damageable) meta).setDamage(0);
         }
-        // Set Expiration Timestamp (timestamp-based system)
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
         item.setItemMeta(meta);
@@ -184,7 +181,6 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             meta.setLore(finalLore);
         }
         meta.getPersistentDataContainer().set(ToolsManager.MULTI_KEY, PersistentDataType.BYTE, (byte) 1);
-        // Set Expiration Timestamp (timestamp-based system)
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
         item.setItemMeta(meta);
@@ -238,7 +234,6 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             }).toList();
             meta.setLore(finalLore);
         }
-        // Set Expiration Timestamp (timestamp-based system)
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
         item.setItemMeta(meta);
@@ -260,10 +255,8 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Set potion to water bottle base
         meta.setBasePotionType(org.bukkit.potion.PotionType.WATER);
 
-        // Set custom color
         String colorHex = cfg.getString("potion-color", "8B5CF6");
         try {
             int rgb = Integer.parseInt(colorHex, 16);
@@ -284,7 +277,6 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
             meta.setLore(finalLore);
         }
 
-        // Mark as shard booster and store expiration timestamp
         meta.getPersistentDataContainer().set(ToolsManager.BOOSTER_KEY, PersistentDataType.BYTE, (byte) 1);
         long expiryTimestamp = System.currentTimeMillis() + (timerSec * 1000L);
         meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG, expiryTimestamp);
@@ -299,13 +291,11 @@ public class ToolCommand implements CommandExecutor, TabCompleter {
                     .collect(Collectors.toList());
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            // Arg 2 is Player
             return Bukkit.getOnlinePlayers().stream().map(Player::getName)
                     .filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            // Arg 3 is Tool type
             return List.of("drill", "axe", "shovel", "multitool", "bucket", "shardbooster").stream()
                     .filter(opt -> opt.startsWith(args[2].toLowerCase())).collect(Collectors.toList());
         }

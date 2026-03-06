@@ -47,12 +47,9 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
             Player target = Bukkit.getPlayer(targetName);
 
             if (target != null) {
-                // Online player found
                 retrieveAndSendBalance(sender, target.getUniqueId(), target.getName(), false);
             } else {
-                // Offline player lookup (Async)
                 plugin.getSchedulerAdapter().runTaskAsync(() -> {
-                    // This can block/network call
                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
 
                     if (!offlinePlayer.hasPlayedBefore() && !offlinePlayer.isOnline()) {
@@ -79,11 +76,8 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
 
     private void retrieveAndSendBalance(CommandSender sender, UUID targetId, String targetName,
             boolean isInternalCall) {
-        // Checks
         Player targetP = Bukkit.getPlayer(targetId);
         if (targetP != null && targetP.isOnline()) {
-            // Online: Data should be loaded.
-            // We can access on main thread.
             // If we are currently async (from offline lookup flow?), we need to sync back.
             if (!Bukkit.isPrimaryThread()) {
                 plugin.getSchedulerAdapter().runTask(() -> retrieveAndSendBalance(sender, targetId, targetName, false));
@@ -95,20 +89,16 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
             sendMessages(sender, targetName, balance,
                     (sender instanceof Player && ((Player) sender).getUniqueId().equals(targetId)));
         } else {
-            // Offline: Must load async.
             if (Bukkit.isPrimaryThread()) {
                 plugin.getSchedulerAdapter()
                         .runTaskAsync(() -> retrieveAndSendBalance(sender, targetId, targetName, false));
                 return;
             }
 
-            // We are async now.
-            // Use loadPlayer to avoid touching the main thread map
             PlayerData data = plugin.getPlayerDataManager().loadPlayer(targetId);
             double balance = (data != null) ? data.getMoney() : 0;
             String loadedName = (data != null && data.getName() != null) ? data.getName() : targetName;
 
-            // Send sync
             String finalName = loadedName;
             plugin.getSchedulerAdapter().runTask(() -> sendMessages(sender, finalName, balance,
                     (sender instanceof Player && ((Player) sender).getUniqueId().equals(targetId))));
@@ -146,11 +136,6 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
 
     private String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
-        // Truncate to 1 decimal place without rounding up?
-        // User example: 1.5k.
-        // 10.4t.
-        // It seems standard truncation/formatting.
-        // Math.floor(script * 10) / 10.0 provides 1 decimal place truncation.
         scaled = Math.floor(scaled * 10) / 10.0;
         return DF.format(scaled) + suffix;
     }
@@ -160,7 +145,6 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         }
         return Collections.emptyList();

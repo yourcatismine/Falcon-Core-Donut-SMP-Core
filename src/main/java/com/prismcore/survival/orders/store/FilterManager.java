@@ -21,13 +21,7 @@ public class FilterManager {
 
     public Set<Material> resolve(String category) {
         if (category == null || category.equalsIgnoreCase("All")) {
-            return Collections.emptySet(); // Empty set usually means 'all' in my logic, or I need to return ALL
-                                           // materials?
-            // In OrdersMainMenu/SelectItemMenu, if allow is empty/null it usually means no
-            // filter/accept all.
-            // Let's check usage.
-            // OrdersMainMenu: if (allow != null && !allow.isEmpty()) { list.removeIf... }
-            // So returning empty set means "Show All". Correct.
+            return Collections.emptySet();
         }
 
         Set<Material> results = new HashSet<>();
@@ -49,9 +43,6 @@ public class FilterManager {
                             || name.endsWith("_HOE") || name.equals("FISHING_ROD") || name.equals("SHEARS")
                             || name.equals("FLINT_AND_STEEL") || name.equals("COMPASS") || name.equals("CLOCK")
                             || name.equals("LEAD") || name.equals("NAME_TAG")) {
-                        // Some of these might be utilities, but user asked for Tools.
-                        // Actually, I have a Utilities category too.
-                        // Tools specifically:
                         if (name.endsWith("_AXE") || name.endsWith("_PICKAXE") || name.endsWith("_SHOVEL")
                                 || name.endsWith("_HOE"))
                             match = true;
@@ -78,7 +69,6 @@ public class FilterManager {
                             || m == Material.MAGMA_CREAM || m == Material.GLISTERING_MELON_SLICE
                             || m == Material.GOLDEN_CARROT || m == Material.RABBIT_FOOT || m == Material.GHAST_TEAR
                             || m == Material.PHANTOM_MEMBRANE) {
-                        // Includes brewing ingredients too? Maybe.
                         match = true;
                     } else if (m == Material.BREWING_STAND || m == Material.CAULDRON) {
                         match = true;
@@ -89,7 +79,6 @@ public class FilterManager {
                         match = true;
                     break;
                 case "ingredients":
-                    // Hard to define perfectly without recipe check, but simple heuristics:
                     String n3 = m.name();
                     if (n3.endsWith("_INGOT") || n3.endsWith("_DUST") || n3.endsWith("_NUGGET") || n3.endsWith("_GEM")
                             || n3.endsWith("_BALL") || n3.endsWith("_ROD") || n3.endsWith("_POWDER")
@@ -121,6 +110,5 @@ public class FilterManager {
     }
 
     public void reload() {
-        // No-op
     }
 }

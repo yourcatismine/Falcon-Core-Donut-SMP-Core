@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 public class PayCommand implements CommandExecutor, TabCompleter {
 
     private final PrismSurvival plugin;
-    // Reuse format from BalanceCommand for consistency if needed, but we need
-    // parsing here.
     private static final DecimalFormat DF = new DecimalFormat("#.#");
 
     public PayCommand(PrismSurvival plugin) {
@@ -52,7 +50,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         String targetName = args[0];
         String amountStr = args[1];
 
-        // Parse amount
         double amount;
         try {
             amount = parseAmount(amountStr);
@@ -66,14 +63,10 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Get Target (Async lookup if not online, but for pay command usually we
-        // require some validation)
-        // Check if online first
         Player target = Bukkit.getPlayer(targetName);
         if (target != null) {
             processPayment(player, target.getUniqueId(), target.getName(), amount);
         } else {
-            // Async lookup for offline player
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
                 if (!offlinePlayer.hasPlayedBefore() && !offlinePlayer.isOnline()) {
@@ -90,9 +83,7 @@ public class PayCommand implements CommandExecutor, TabCompleter {
     }
 
     private void processPayment(Player sender, UUID targetId, String targetName, double amount) {
-        // Ensure not paying self - prompt says "You cannot pay yourself."
         if (sender.getUniqueId().equals(targetId)) {
-            // Need to run on main thread if we are async
             if (!Bukkit.isPrimaryThread()) {
                 plugin.getSchedulerAdapter().runTask(() -> sendError(sender, "&cYou cannot pay yourself."));
             } else {
@@ -101,13 +92,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // We need to modify data. This must be thread-safe or on main thread if
-        // PlayerData is not thread-safe.
-        // PlayerDataManager looks like it loads/saves files. The cached map is HashMap
-        // (not thread safe).
-        // Best to run transaction on main thread or synchronized.
-        // Given we might have come from async, let's reschedule to main for the
-        // transaction part.
         if (!Bukkit.isPrimaryThread()) {
             plugin.getSchedulerAdapter().runTask(() -> processPayment(sender, targetId, targetName, amount));
             return;
@@ -115,7 +99,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
 
         PlayerData senderData = plugin.getPlayerDataManager().get(sender.getUniqueId());
         if (senderData == null) {
-            // This should rarely happen for an online player, but if it does, load it
             senderData = plugin.getPlayerDataManager().loadPlayer(sender.getUniqueId());
         }
 
@@ -128,7 +111,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
 
         final PlayerData finalSenderData = senderData;
 
-        // Finalize transaction asynchronously to avoid TPS drop from DB/File IO
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             PlayerData targetData = plugin.getPlayerDataManager().get(targetId);
             boolean targetWasLoaded = targetData != null;
@@ -143,33 +125,27 @@ public class PayCommand implements CommandExecutor, TabCompleter {
 
             final PlayerData finalTargetData = targetData;
 
-            // Check if target has disabled payments
             if (!finalTargetData.isPayments()) {
                 plugin.getSchedulerAdapter().runTask(() -> sendError(sender, "&cUser disabled payments."));
                 return;
             }
 
-            // Check if target has ignored the sender
             if (finalTargetData.isIgnoring(sender.getUniqueId())) {
                 plugin.getSchedulerAdapter().runTask(() -> sendError(sender, "&7You are ignored by this player."));
                 return;
             }
 
-            // Return to main thread for the actual economy modification to ensure safety
             plugin.getSchedulerAdapter().runTask(() -> {
-                // Transaction using global EconomyHandler (Vault-aware)
                 if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(sender, amount,
                         "Payment to " + targetName)) {
                     sendError(sender, "&cTransaction failed.");
                     return;
                 }
 
-                // Deposit to target (handles offline/Vault automatically)
                 com.prismcore.survival.auction.EconomyHandler.depositOfflinePlayer(Bukkit.getOfflinePlayer(targetId),
                         amount,
                         "Payment from " + sender.getName());
 
-                // Save data asynchronously
                 plugin.getSchedulerAdapter().runTaskAsync(() -> {
                     if (!com.prismcore.survival.auction.EconomyHandler.usingVault()) {
                         plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
@@ -181,7 +157,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
                     }
                 });
 
-                // Success Messages and Notifications
                 sendSuccess(sender, targetId, targetName, amount, finalTargetData);
             });
         });
@@ -243,8 +218,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         return result;
     }
 
-    // Formatting logic replicated from BalanceCommand for consistency in message
-    // display
     private String formatNumber(double number) {
         if (number >= 1_000_000_000_000.0) {
             return formatWithSuffix(number, 1_000_000_000_000.0, "t");
@@ -270,10 +243,8 @@ public class PayCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            // Use async player name cache to prevent TPS drops
             return plugin.getPlayerNameCache().getCompletions(args[0]);
         } else if (args.length == 2) {
-            // Suggest amounts?
             List<String> suggestions = new ArrayList<>();
             suggestions.add("100");
             suggestions.add("1k");

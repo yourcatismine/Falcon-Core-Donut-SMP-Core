@@ -22,7 +22,6 @@ public class NumberUtils {
 
     private static String formatWithSuffix(double number, double divisor, String suffix) {
         double scaled = number / divisor;
-        // Use Math.floor to match the behavior of BalanceCommand and avoid rounding discrepancies
         scaled = Math.floor(scaled * 10) / 10.0;
         return DF.format(scaled) + suffix;
     }

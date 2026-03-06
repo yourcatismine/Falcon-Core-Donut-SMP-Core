@@ -36,7 +36,6 @@ public class HistoryListener implements Listener {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         
-        // Record the block action in history
         recordBlockAction(player, block, "Destroy");
     }
 
@@ -47,7 +46,6 @@ public class HistoryListener implements Listener {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         
-        // Record the block action in history
         recordBlockAction(player, block, "Placed");
     }
 
@@ -59,28 +57,22 @@ public class HistoryListener implements Listener {
         Player player = event.getPlayer();
         Block block = event.getClickedBlock();
         
-        // Check if player has history checking enabled
         if (player.hasPermission("prism.admin.checkhistory")) {
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null && data.isCheckHistory()) {
-                // Cancel the interaction and show block history
                 event.setCancelled(true);
                 showBlockHistory(player, block);
                 return;
             }
         }
         
-        // Normal interaction - record potential replacements
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getItem() != null) {
             Material itemType = event.getItem().getType();
             
-            // Check for block replacement actions
             if (itemType == Material.WATER_BUCKET || itemType == Material.LAVA_BUCKET || 
                 itemType == Material.POWDER_SNOW_BUCKET || itemType.toString().contains("BUCKET") ||
                 itemType.toString().contains("_SEEDS") || itemType == Material.BONE_MEAL ||
                 itemType.toString().endsWith("_SPAWN_EGG")) {
-                // We'll record this after the event in a delayed task
-                // Capture block data while world is still valid
                 final Location location = block.getLocation().clone();
                 final String blockType = block.getType().toString();
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
@@ -91,12 +83,10 @@ public class HistoryListener implements Listener {
     }
 
     private void recordBlockAction(Player player, Location location, String blockType, String action) {
-        // Get player data on main thread before going async to avoid Folia issues  
         final String playerName = player.getName();
         final UUID playerUUID = player.getUniqueId();
         final long timestamp = System.currentTimeMillis();
         
-        // Store the block action in our history system
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             plugin.getDatabaseManager().recordBlockAction(
                 location, 
@@ -109,9 +99,7 @@ public class HistoryListener implements Listener {
         });
     }
 
-    // Overloaded method to maintain compatibility with direct calls
     private void recordBlockAction(Player player, Block block, String action) {
-        // Get all block data on main thread before going async to avoid Folia issues
         final Location location = block.getLocation().clone();
         final String blockType = block.getType().toString();
         
@@ -119,7 +107,6 @@ public class HistoryListener implements Listener {
     }
     
     private void showBlockHistory(Player player, Block block) {
-        // Get block data on main thread before going async  
         final Location location = block.getLocation().clone();
         final String currentBlockType = block.getType().toString();
         
@@ -128,7 +115,6 @@ public class HistoryListener implements Listener {
             
             plugin.getSchedulerAdapter().runTask(() -> {
                 if (history.isEmpty()) {
-                    // No history found - block is vanilla/natural
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm");
                     String timestamp = sdf.format(new Date());
                     
@@ -143,7 +129,6 @@ public class HistoryListener implements Listener {
                     player.sendMessage(
                         ChatColor.translateAlternateColorCodes('&', "&c&m---------------------------------"));
                 } else {
-                    // Show the most recent history entry
                     BlockHistoryEntry entry = history.get(0);
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm");
                     String timestamp = sdf.format(new Date(entry.timestamp));

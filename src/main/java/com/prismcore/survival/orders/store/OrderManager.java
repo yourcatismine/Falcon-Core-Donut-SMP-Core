@@ -51,12 +51,9 @@ public class OrderManager {
      * @return Fresh order from database or null if not found
      */
     public Order getOrder(UUID orderId) {
-        // First check cache for efficiency
         for (Order cached : this.orders.values()) {
             if (cached.id.equals(orderId)) {
-                // Return a fresh copy from database to avoid cache corruption
                 Order freshOrder = PrismSurvival.getInstance().getDatabaseManager().getOrderById(orderId);
-                // Update the cache with fresh data to keep it synchronized
                 if (freshOrder != null) {
                     this.orders.put(orderId, freshOrder);
                 }
@@ -113,20 +110,16 @@ public class OrderManager {
             return;
         }
         
-        // ANTI-DUPE: Synchronized block to prevent concurrent delivery processing
         synchronized (this) {
-            // ANTI-DUPE: Final database state check before applying delivery
             Order freshOrder = this.getOrder(o.id);
             if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
                 throw new IllegalStateException("Order " + o.id + " is no longer active or has been completed");
             }
             
-            // ANTI-DUPE: Check if this delivery would exceed the remaining amount
             if (freshOrder.delivered + acceptedAmount > freshOrder.requested) {
                 throw new IllegalStateException("Delivery amount exceeds remaining order quantity");
             }
             
-            // Update the order reference to use fresh state
             o.delivered = freshOrder.delivered;
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
@@ -148,7 +141,6 @@ public class OrderManager {
                 it.setItemMeta(meta);
             }
 
-            // Try to merge with existing items in storage
             boolean merged = false;
             synchronized (o.storage) {
                 for (ItemStack stored : o.storage) {
@@ -196,7 +188,6 @@ public class OrderManager {
         PrismSurvival.getInstance().getHazardManager().checkActivity(deliverer, "ORDER_DELIVER",
                 acceptedAmount + " " + o.key.displayName() + " to " + o.owner);
 
-        // Notifications
         String formattedAmount = Utils.abbr(acceptedAmount);
         String itemName = o.key.displayName();
         Player ownerPlayer = Bukkit.getPlayer(o.owner);
@@ -245,7 +236,6 @@ public class OrderManager {
             this.orders.put(o.id, o);
         }
 
-        // Migration logic
         if (ordersDir.exists() || legacyDir.exists()) {
             pl.getLogger().info("Checking for legacy order files to migrate...");
             if (ordersDir.exists())
@@ -253,7 +243,6 @@ public class OrderManager {
             if (legacyDir.exists())
                 loadDirectory(legacyDir, true);
 
-            // Cleanup legacy directories if empty
             cleanupLegacyDirs();
         }
     }
@@ -298,7 +287,6 @@ public class OrderManager {
             o.completed = cfg.getBoolean("completed");
             o.creationTime = cfg.getLong("creationTime", System.currentTimeMillis());
 
-            // Load storage
             List<?> raw = cfg.getList("storage");
             if (raw != null) {
                 for (Object ois : raw) {
@@ -317,10 +305,9 @@ public class OrderManager {
                 }
             }
 
-            // Save to DB and put in memory
             this.orders.put(o.id, o);
             PrismSurvival.getInstance().getDatabaseManager().saveOrder(o);
-            f.delete(); // Delete after successful migration
+            f.delete();
         } catch (Exception ex) {
             pl.getLogger().warning("Failed to migrate order file " + f.getName());
         }
@@ -373,7 +360,6 @@ public class OrderManager {
     }
 
     public void wipeOrders(java.util.UUID uuid) {
-        // Cancel all existing orders in memory
         java.util.List<Order> toRemove = new java.util.ArrayList<>();
         for (Order o : orders.values()) {
             if (o.getOwner().equals(uuid)) {
@@ -385,7 +371,6 @@ public class OrderManager {
             orders.remove(o.getId());
         }
 
-        // Delete from database asynchronously
         ((com.h2ph.PrismSurvival) pl).getSchedulerAdapter().runTaskAsynchronously(() -> {
             ((com.h2ph.PrismSurvival) pl).getDatabaseManager().wipeOrders(uuid);
         });

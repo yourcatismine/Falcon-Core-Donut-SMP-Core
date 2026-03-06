@@ -22,7 +22,6 @@ public class PlayerNameCache {
             return cache.get(uuid);
         }
 
-        // Check if online first (fast)
         org.bukkit.entity.Player p = Bukkit.getPlayer(uuid);
         if (p != null) {
             String name = p.getName();
@@ -30,15 +29,11 @@ public class PlayerNameCache {
             return name;
         }
 
-        // If not cached and not online, return null and trigger async fetch
-        // Caller should handle null (e.g. show "Loading...")
         fetchAsync(uuid);
         return null;
     }
 
     private void fetchAsync(UUID uuid) {
-        // Prevent duplicate fetches if already fetching?
-        // For simplicity, just run it. ConcurrentHashMap handles the put safety.
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
             String name = op.getName();

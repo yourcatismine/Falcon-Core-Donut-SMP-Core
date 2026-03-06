@@ -24,18 +24,14 @@ public class DuelQueueManager implements Listener {
     private final PrismSurvival plugin;
     private final DuelStatsManager statsManager;
     private final DuelArenaManager arenaManager;
-    private DuelRequestManager requestManager; // dependencies
+    private DuelRequestManager requestManager;
 
-    // Players currently in queue (UUID -> queue start time)
     private final Map<UUID, Long> queuedPlayers = new ConcurrentHashMap<>();
 
-    // Players with open queue GUI (UUID -> task for updates)
     private final Map<UUID, org.bukkit.scheduler.BukkitTask> guiUpdateTasks = new ConcurrentHashMap<>();
 
-    // Players searching (UUID -> action bar task)
     private final Map<UUID, org.bukkit.scheduler.BukkitTask> searchTasks = new ConcurrentHashMap<>();
 
-    // GUI title for queue
     public static final String QUEUE_GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&8ᴅᴜᴇʟ ǫᴜᴇᴜᴇ & ᴄᴏɴꜰɪʀᴍ");
 
     public DuelQueueManager(PrismSurvival plugin, DuelStatsManager statsManager, DuelArenaManager arenaManager) {
@@ -43,7 +39,6 @@ public class DuelQueueManager implements Listener {
         this.statsManager = statsManager;
         this.arenaManager = arenaManager;
 
-        // Register as listener
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -60,7 +55,6 @@ public class DuelQueueManager implements Listener {
 
         event.setCancelled(true);
 
-        // Only process clicks in the GUI (not player inventory)
         if (event.getRawSlot() >= event.getView().getTopInventory().getSize()) {
             return;
         }
@@ -70,7 +64,6 @@ public class DuelQueueManager implements Listener {
         }
         Player player = (Player) event.getWhoClicked();
 
-        // Play click sound for non-empty slot
         if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
             try {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.5f, 1.2f);
@@ -81,21 +74,16 @@ public class DuelQueueManager implements Listener {
         int slot = event.getRawSlot();
 
         if (slot == 10) {
-            // Cancel - Leave queue if in it, close GUI
             leaveQueue(player);
             player.closeInventory();
         } else if (slot == 16) {
-            // Toggle queue status
             if (isInQueue(player.getUniqueId())) {
-                // Leave queue
                 leaveQueue(player);
-                // Update GUI immediately - use the inventory from the event view
                 Inventory topInv = event.getView().getTopInventory();
                 if (topInv.getSize() >= 27) {
                     updateQueueGUI(topInv, player);
                 }
             } else {
-                // Join queue and close GUI
                 joinQueue(player);
                 player.closeInventory();
             }
@@ -120,12 +108,10 @@ public class DuelQueueManager implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        // Remove from queue if present
         if (queuedPlayers.remove(uuid) != null) {
             cancelSearchTask(uuid);
         }
 
-        // Cancel any GUI update tasks
         cancelGuiUpdates(uuid);
     }
 
@@ -135,18 +121,14 @@ public class DuelQueueManager implements Listener {
     public void openQueueGUI(Player player) {
         Inventory gui = Bukkit.createInventory(null, 27, QUEUE_GUI_TITLE);
 
-        // Initial population
         updateQueueGUI(gui, player);
 
         player.openInventory(gui);
 
-        // Start live update task (every 20 ticks = 1 second)
         org.bukkit.scheduler.BukkitTask task = plugin.getSchedulerAdapter().runEntityTaskTimer(player, () -> {
-            // Check if player still has the inventory open
             if (player.getOpenInventory().getTitle().equals(QUEUE_GUI_TITLE)) {
                 updateQueueGUI(player.getOpenInventory().getTopInventory(), player);
             } else {
-                // Player closed inventory, cancel task
                 cancelGuiUpdates(player.getUniqueId());
             }
         }, 20L, 20L);
@@ -167,34 +149,28 @@ public class DuelQueueManager implements Listener {
         String estimatedWait = calculateEstimatedWait(queuedCount);
         int ping = getPlayerPing(player);
 
-        // Slot 10 - Red Glass - Cancel
         ItemStack cancelItem = createItem(Material.RED_STAINED_GLASS_PANE, "&4ᴄᴀɴᴄᴇʟ",
                 "&fClick to cancel");
         gui.setItem(10, cancelItem);
 
-        // Slot 12 - Clock - Await Time (LIVE)
         ItemStack clockItem = createItem(Material.CLOCK, "&aᴡᴀɪᴛ ᴛɪᴍᴇ",
                 "&7Estimated Wait: &f" + estimatedWait,
                 "&7Currently queued: &f" + queuedCount);
         gui.setItem(12, clockItem);
 
-        // Slot 13 - Gray Dye - Statistics
         ItemStack statsItem = createItem(Material.GRAY_DYE, "&aѕᴛᴀᴛɪѕᴛɪᴄѕ",
                 "&7Wins: &f" + wins,
                 "&7Losses: &f" + losses,
                 "&7Streak: &f" + streak);
         gui.setItem(13, statsItem);
 
-        // Slot 14 - Feather - Region (LIVE ping)
         ItemStack regionItem = createItem(Material.FEATHER, "&aʀᴇɢɪᴏɴ",
                 "&7Europe (&5" + ping + "ms&7)");
         gui.setItem(14, regionItem);
 
-        // Slot 16 - Green Glass - Confirm
         boolean isInQueue = queuedPlayers.containsKey(uuid);
         ItemStack confirmItem;
         if (isInQueue) {
-            // Already in queue - show searching status
             long waitTime = (System.currentTimeMillis() - queuedPlayers.get(uuid)) / 1000;
             confirmItem = createItem(Material.LIME_STAINED_GLASS_PANE, "&aѕᴇᴀʀᴄʜɪɴɢ...",
                     "&7Searching for &f" + waitTime + "s",
@@ -228,7 +204,6 @@ public class DuelQueueManager implements Listener {
      */
     private int getPlayerPing(Player player) {
         try {
-            // Use Spigot API for ping
             return player.getPing();
         } catch (Exception e) {
             return 0;
@@ -239,7 +214,6 @@ public class DuelQueueManager implements Listener {
      * Adds a player to the queue.
      */
     public void joinQueue(Player player) {
-        // Cancel any pending requests first
         if (requestManager != null && requestManager.hasPendingRequest(player)) {
             requestManager.cancelRequest(player);
         }
@@ -248,10 +222,8 @@ public class DuelQueueManager implements Listener {
         queuedPlayers.put(player.getUniqueId(), startTime);
         player.sendMessage(ChatColor.GREEN + "You are now searching for a match...");
 
-        // Start repeating action bar task
         org.bukkit.scheduler.BukkitTask searchTask = plugin.getSchedulerAdapter().runEntityTaskTimer(player, () -> {
             if (!queuedPlayers.containsKey(player.getUniqueId())) {
-                // Player left queue, cancel task
                 cancelSearchTask(player.getUniqueId());
                 return;
             }
@@ -260,22 +232,18 @@ public class DuelQueueManager implements Listener {
             String actionBarMsg;
 
             if (elapsed >= 30) {
-                // After 30 seconds, show unable to find message then remove from queue
                 String failMsg = ChatColor.translateAlternateColorCodes('&', "&cUnable to find players to match");
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                         new net.md_5.bungee.api.chat.TextComponent(failMsg));
 
-                // Play villager no sound
                 try {
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 } catch (Exception ignored) {
                 }
 
-                // Remove from queue and stop task
                 leaveQueue(player);
                 return;
             } else {
-                // Show searching message with estimated time
                 String estimatedTime = calculateEstimatedWait(queuedPlayers.size());
                 actionBarMsg = ChatColor.translateAlternateColorCodes('&',
                         "&7Searching for a Casual Duel... Estimated Time:&5 " + estimatedTime);
@@ -283,11 +251,10 @@ public class DuelQueueManager implements Listener {
 
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(actionBarMsg));
-        }, 0L, 40L); // Every 2 seconds (40 ticks)
+        }, 0L, 40L);
 
         searchTasks.put(player.getUniqueId(), searchTask);
 
-        // Check for match
         tryMatchPlayers();
     }
 
@@ -345,7 +312,6 @@ public class DuelQueueManager implements Listener {
      */
     private void tryMatchPlayers() {
         if (queuedPlayers.size() >= 2) {
-            // Get two players from queue
             Iterator<UUID> iterator = queuedPlayers.keySet().iterator();
             UUID player1Uuid = iterator.next();
             UUID player2Uuid = iterator.next();
@@ -354,27 +320,21 @@ public class DuelQueueManager implements Listener {
             Player player2 = Bukkit.getPlayer(player2Uuid);
 
             if (player1 != null && player2 != null && player1.isOnline() && player2.isOnline()) {
-                // Try to start the duel with arena manager
                 boolean started = arenaManager.startDuel(player1, player2);
 
                 if (started) {
-                    // Successfully started, remove from queue
                     queuedPlayers.remove(player1Uuid);
                     queuedPlayers.remove(player2Uuid);
 
-                    // Stop search tasks immediately and clear action bar
                     cancelSearchTask(player1Uuid);
                     cancelSearchTask(player2Uuid);
 
-                    // Close their GUIs if open
                     cancelGuiUpdates(player1Uuid);
                     cancelGuiUpdates(player2Uuid);
 
-                    // Close inventories
                     player1.closeInventory();
                     player2.closeInventory();
                 } else {
-                    // No available arena, keep them in queue
                     plugin.getLogger().info(
                             "No available arena for queue match: " + player1.getName() + " vs " + player2.getName());
                 }

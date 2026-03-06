@@ -103,11 +103,9 @@ public class DuelArenaManager {
     public void loadConfig() {
         File configFile = new File(plugin.getDataFolder(), "survival/duels/config.yml");
         if (!configFile.exists()) {
-            // Ideally save default if resource exists, else create empty
             try {
                 plugin.saveResource("survival/duels/config.yml", false);
             } catch (Exception e) {
-                // Ignore if resource missing
             }
         }
         YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
@@ -171,7 +169,7 @@ public class DuelArenaManager {
     public boolean isCommandIgnored(String message) {
         if (message.isEmpty())
             return false;
-        String[] parts = message.substring(1).split(" "); // Remove /
+        String[] parts = message.substring(1).split(" ");
         String cmd = parts[0].toLowerCase();
         return ignoredCommands.contains(cmd);
     }
@@ -179,7 +177,7 @@ public class DuelArenaManager {
     public boolean isCommandBanned(String message) {
         if (message.isEmpty())
             return false;
-        String[] parts = message.substring(1).split(" "); // Remove /
+        String[] parts = message.substring(1).split(" ");
         String cmd = parts[0].toLowerCase();
         return bannedCommands.contains(cmd);
     }
@@ -209,17 +207,14 @@ public class DuelArenaManager {
             return;
         java.util.List<org.bukkit.block.BlockState> states = arenaChanges.remove(arenaName);
         if (states != null) {
-            // Reverse order to handle dependencies better (e.g. torch on block)
             java.util.Collections.reverse(states);
             for (org.bukkit.block.BlockState state : states) {
-                // Use SchedulerAdapter to run on the correct region thread (Folia support)
                 plugin.getSchedulerAdapter().runAtLocation(state.getLocation(), () -> {
                     state.update(true, false);
                 });
             }
         }
 
-        // Use cached arena region
         ArenaRegion region = arenaMap.get(arenaName);
         if (region == null)
             return;
@@ -235,13 +230,10 @@ public class DuelArenaManager {
         double maxY = region.maxY;
         double maxZ = region.maxZ;
 
-        // Get center location for scheduler
         Location center = new Location(world, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
 
         plugin.getSchedulerAdapter().runAtLocation(center, () -> {
-            // Clear all non-player entities
             for (org.bukkit.entity.Entity entity : world.getEntities()) {
-                // Skip players - only clear mobs, items, projectiles, etc.
                 if (entity instanceof org.bukkit.entity.Player) {
                     continue;
                 }
@@ -256,7 +248,6 @@ public class DuelArenaManager {
                 }
             }
 
-            // Clear all fire blocks in the arena
             int iMinX = (int) Math.floor(minX);
             int iMinY = (int) Math.floor(minY);
             int iMinZ = (int) Math.floor(minZ);
@@ -287,19 +278,14 @@ public class DuelArenaManager {
     }
 
     public boolean startDuel(Player player1, Player player2, int durationMinutes, String biome) {
-        // Cancel any pending looting tasks if they decided to duel again early
         cleanupPendings(player1);
         cleanupPendings(player2);
 
         ArenaRegion arenaRegion = getAvailableArena(biome);
         if (arenaRegion == null) {
-            // If specific biome failed, try random? Or strict fail?
-            // Usually strict fail if user requested specific. But "Random" is default pass.
-            // If user requested "Desert" and no Desert free, fail.
             if (!biome.equalsIgnoreCase("Random")) {
                 return false;
             }
-            // Try any
             arenaRegion = getAvailableArena("Random");
         }
 
@@ -312,22 +298,18 @@ public class DuelArenaManager {
         Location spawn1 = arenaRegion.spawn1;
         Location spawn2 = arenaRegion.spawn2;
 
-        // Extra safety check for null worlds
         if (spawn1.getWorld() == null || spawn2.getWorld() == null) {
             return false;
         }
 
-        // Teleport
         player1.teleportAsync(spawn1);
         player2.teleportAsync(spawn2);
 
-        // Track Duel
         activeDuels.put(player1.getUniqueId(), player2.getUniqueId());
         activeDuels.put(player2.getUniqueId(), player1.getUniqueId());
         playerArenas.put(player1.getUniqueId(), arenaRegion.name);
         playerArenas.put(player2.getUniqueId(), arenaRegion.name);
 
-        // UI Feedback
         String titleMain = ChatColor.translateAlternateColorCodes('&',
                 "&4" + DuelGUIManager.toSmallCaps("casual duel"));
         String titleSub = ChatColor.translateAlternateColorCodes('&', "&fFight players and steal their loot.");
@@ -335,7 +317,6 @@ public class DuelArenaManager {
         player1.sendTitle(titleMain, titleSub, 10, 60, 20);
         player2.sendTitle(titleMain, titleSub, 10, 60, 20);
 
-        // Show opponent win chances on actionbar
         String p1WinRate = statsManager.getWinRate(player1.getUniqueId());
         String p2WinRate = statsManager.getWinRate(player2.getUniqueId());
 
@@ -355,7 +336,6 @@ public class DuelArenaManager {
         } catch (Exception ignored) {
         }
 
-        // Start Match Timer
         startMatchTimer(player1, player2, durationMinutes * 60);
 
         return true;
@@ -381,7 +361,6 @@ public class DuelArenaManager {
     }
 
     private void startMatchTimer(Player p1, Player p2, int seconds) {
-        // Use AtomicReference for self-cancellation
         java.util.concurrent.atomic.AtomicReference<org.bukkit.scheduler.BukkitTask> taskRef = new java.util.concurrent.atomic.AtomicReference<>();
 
         org.bukkit.scheduler.BukkitTask task = plugin.getSchedulerAdapter().runEntityTaskTimer(p1, new Runnable() {
@@ -408,7 +387,6 @@ public class DuelArenaManager {
                     return;
                 }
 
-                // Notify every minute (chat only, to not override win chances actionbar)
                 if (remaining % 60 == 0) {
                     int minutes = remaining / 60;
                     String minStr = (minutes == 1) ? "minute" : "minutes";
@@ -435,22 +413,18 @@ public class DuelArenaManager {
     }
 
     public void endDuelInDraw(Player p1, Player p2) {
-        // Retrieve arena name BEFORE cleanup
         String arenaName = playerArenas.get(p1.getUniqueId());
 
-        // Cleanup
         cleanupDuelData(p1, p2);
         playerArenas.remove(p1.getUniqueId());
         playerArenas.remove(p2.getUniqueId());
 
-        // UI
         String title = ChatColor.translateAlternateColorCodes('&', "&7&l" + DuelGUIManager.toSmallCaps("draw"));
         String sub = ChatColor.translateAlternateColorCodes('&', "&fNo one lost");
 
         sendDrawUI(p1, title, sub);
         sendDrawUI(p2, title, sub);
 
-        // Teleport after 3s
         plugin.getSchedulerAdapter().runEntityTaskLater(p1, () -> {
             if (p1.isOnline())
                 teleportToSpawn(p1);
@@ -465,20 +439,12 @@ public class DuelArenaManager {
         if (p.isOnline()) {
             p.sendTitle(title, sub, 10, 60, 20);
             p.sendMessage(ChatColor.GRAY + "Time limit reached! It's a draw.");
-            // Disable PvP? They are teleporting freely...
-            // In a real system we might toggle a flag "isDueling" to false immediately,
-            // which prevents damage.
-            // Since activeDuels is cleared, listener damage check (if any) should naturally
-            // fail and allow/disallow based on region.
-            // If region allows PvP, they can still fight for 3s.
         }
     }
 
     private void cleanupDuelData(Player p1, Player p2) {
         activeDuels.remove(p1.getUniqueId());
         activeDuels.remove(p2.getUniqueId());
-        // playerArenas NOT removed here anymore to allow looting phase tracking
-        // Callers must handle removal explicitly
 
         if (matchTasks.containsKey(p1.getUniqueId())) {
             matchTasks.remove(p1.getUniqueId()).cancel();
@@ -493,29 +459,21 @@ public class DuelArenaManager {
     }
 
     public void endDuel(Player winner, Player loser, WinReason reason) {
-        // Clear pending forfeit if any
         pendingForfeit.remove(winner.getUniqueId());
         pendingForfeit.remove(loser.getUniqueId());
 
-        // Cache location for spectator respawn (only if not already cached by death
-        // event)
         if (!spectatingLosers.containsKey(loser.getUniqueId())) {
             spectatingLosers.put(loser.getUniqueId(), loser.getLocation());
         }
 
-        // Retrieve arena name BEFORE cleanup
         String arenaName = playerArenas.get(winner.getUniqueId());
 
-        // Cleanup tracking
         cleanupDuelData(winner, loser);
-        playerArenas.remove(loser.getUniqueId()); // Loser loses arena immediately
-        // Winner keeps arena in playerArenas for looting phase tracking
+        playerArenas.remove(loser.getUniqueId());
 
-        // Stats
         statsManager.addWin(winner.getUniqueId());
         statsManager.addLoss(loser.getUniqueId());
 
-        // Get Looting Time
         int lootingMinutes = 5;
         if (arenaName != null) {
             ArenaRegion region = arenaMap.get(arenaName);
@@ -524,7 +482,6 @@ public class DuelArenaManager {
             }
         }
 
-        // --- Winner Logic ---
         String winTitle;
         if (reason == WinReason.FORFEIT) {
             winTitle = ChatColor.translateAlternateColorCodes('&',
@@ -539,7 +496,6 @@ public class DuelArenaManager {
         } catch (Exception ignored) {
         }
 
-        // Schedule Winner Teleport
         int totalSeconds = lootingMinutes * 60;
         java.util.concurrent.atomic.AtomicInteger winnerSeconds = new java.util.concurrent.atomic.AtomicInteger(
                 totalSeconds);
@@ -558,7 +514,6 @@ public class DuelArenaManager {
 
             int remaining = winnerSeconds.get();
             if (remaining > 0) {
-                // ... logic
                 int mins = remaining / 60;
                 int secs = remaining % 60;
                 String actionMsg = ChatColor.translateAlternateColorCodes('&',
@@ -568,11 +523,9 @@ public class DuelArenaManager {
                 try {
                     winner.playSound(winner.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
                 } catch (NoSuchFieldError | IllegalArgumentException e) {
-                    // Fallback
                 }
                 winnerSeconds.decrementAndGet();
             } else {
-                // ... end logic
                 teleportToSpawn(winner);
                 winner.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
                 activeTasks.remove(winner.getUniqueId());
@@ -586,15 +539,11 @@ public class DuelArenaManager {
         winTaskRef.set(task);
         activeTasks.put(winner.getUniqueId(), task);
 
-        // --- Loser Logic ---
-        // Respawn/GameMode logic with aggressive fallbacks for respawnImmediately
         String loseTitle = ChatColor.translateAlternateColorCodes('&', "&4&l" + DuelGUIManager.toSmallCaps("you lose"));
         String loseSub = ChatColor.translateAlternateColorCodes('&', "&fBetter luck next time");
 
-        // Get cached spectator location
         org.bukkit.Location spectatorLoc = spectatingLosers.get(loser.getUniqueId());
 
-        // Helper to force spectator mode + teleport
         Runnable forceSpectator = () -> {
             if (loser.isOnline() && !loser.isDead()) {
                 loser.setGameMode(org.bukkit.GameMode.SPECTATOR);
@@ -605,20 +554,15 @@ public class DuelArenaManager {
         };
 
         if (!loser.isDead()) {
-            // Already respawned (respawnImmediately case) - set spectator immediately +
-            // fallbacks
             plugin.getSchedulerAdapter().runEntityTask(loser, forceSpectator);
-            // Multiple fallbacks at different ticks
             plugin.getSchedulerAdapter().runEntityTaskLater(loser, forceSpectator, 1L);
             plugin.getSchedulerAdapter().runEntityTaskLater(loser, forceSpectator, 5L);
             plugin.getSchedulerAdapter().runEntityTaskLater(loser, forceSpectator, 10L);
         } else {
-            // Still dead - force respawn then set spectator
             plugin.getSchedulerAdapter().runEntityTaskLater(loser, () -> {
                 if (loser.isOnline() && loser.isDead()) {
                     loser.spigot().respawn();
                 }
-                // Schedule spectator mode after respawn
                 plugin.getSchedulerAdapter().runEntityTaskLater(loser, forceSpectator, 1L);
                 plugin.getSchedulerAdapter().runEntityTaskLater(loser, forceSpectator, 5L);
                 plugin.getSchedulerAdapter().runEntityTaskLater(loser, forceSpectator, 10L);
@@ -631,7 +575,6 @@ public class DuelArenaManager {
         } catch (Exception ignored) {
         }
 
-        // Countdown Task for Loser
         final java.util.concurrent.atomic.AtomicInteger loserSeconds = new java.util.concurrent.atomic.AtomicInteger(5);
         final java.util.concurrent.atomic.AtomicReference<org.bukkit.scheduler.BukkitTask> loseTaskRef = new java.util.concurrent.atomic.AtomicReference<>();
 
@@ -700,17 +643,14 @@ public class DuelArenaManager {
                 task.cancel();
             }
 
-            // Clear looting timer action bar
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(""));
 
-            // Get arena name and restore before teleporting
             String arenaName = playerArenas.remove(uuid);
             if (arenaName != null) {
                 restoreArena(arenaName);
             }
 
-            // Teleport to spawn
             teleportToSpawn(player);
         }
     }
@@ -748,14 +688,12 @@ public class DuelArenaManager {
     }
 
     public void teleportToSpawn(Player player) {
-        // Use world-specific spawn logic
         String worldName = player.getWorld().getName();
         Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(worldName);
         
         if (spawn != null) {
             player.teleportAsync(spawn);
         } else {
-            // Fallback: World Spawn
             player.teleportAsync(org.bukkit.Bukkit.getWorlds().get(0).getSpawnLocation());
             player.sendMessage(ChatColor.RED + "No spawn set for this world, teleported to default world spawn.");
         }
@@ -765,17 +703,14 @@ public class DuelArenaManager {
         if (arenaMap.isEmpty())
             return null;
 
-        // Shuffle to ensure random if multiple
         java.util.List<ArenaRegion> regions = new java.util.ArrayList<>(arenaMap.values());
         java.util.Collections.shuffle(regions);
 
         for (ArenaRegion region : regions) {
-            // Check if actively used FIRST - skip if someone is still playing
             if (playerArenas.containsValue(region.name)) {
-                continue; // Arena is in use, don't touch it
+                continue;
             }
 
-            // World Validation & Recovery
             if (region.spawn1.getWorld() == null) {
                 org.bukkit.World w = org.bukkit.Bukkit.getWorld(region.spawn1WorldName);
                 if (w != null)
@@ -787,26 +722,23 @@ public class DuelArenaManager {
                     region.spawn2.setWorld(w);
             }
 
-            // If worlds are still null, skip this arena
             if (region.spawn1.getWorld() == null || region.spawn2.getWorld() == null) {
                 continue;
             }
 
-            // Only restore dirty arenas if they're NOT in use
             if (arenaChanges.containsKey(region.name)) {
                 restoreArena(region.name);
             }
 
-            // Biome Check
             if (biome != null && !biome.equals("Random")) {
                 if (region.biome == null || !region.biome.equalsIgnoreCase(biome)) {
-                    continue; // Skip if no match
+                    continue;
                 }
             }
 
             return region;
         }
-        return null; // All arenas full or no match
+        return null;
     }
 
     private ArenaRegion getAvailableArena() {

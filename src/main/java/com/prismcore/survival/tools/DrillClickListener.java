@@ -36,9 +36,6 @@ public class DrillClickListener implements Listener {
         }
         Player player = (Player) humanEntity;
 
-        // Delay by 1 tick so Bukkit finishes processing the click first.
-        // This ensures getItemOnCursor() reflects the actual post-click state
-        // and the dupe guard in ContainerScanner works correctly.
         plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
             manager.updatePlayerTools(player);
         }, 1L);

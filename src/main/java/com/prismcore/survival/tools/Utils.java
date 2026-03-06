@@ -23,7 +23,6 @@ public final class Utils {
             return null;
         }
 
-        // Handle &#RRGGBB
         Matcher m = HEX_PATTERN_AMP.matcher(input);
         StringBuffer buf = new StringBuffer(input.length() + 32);
         while (m.find()) {
@@ -37,7 +36,6 @@ public final class Utils {
         m.appendTail(buf);
         input = buf.toString();
 
-        // Handle #RRGGBB
         m = HEX_PATTERN_HASH.matcher(input);
         buf = new StringBuffer(input.length() + 32);
         while (m.find()) {
@@ -60,7 +58,7 @@ public final class Utils {
 
     public static String formatDuration(long remSec) {
         if (remSec < 0)
-            remSec = 0; // Prevent negative values
+            remSec = 0;
         long days = remSec / 86400L;
         long hrs = (remSec % 86400L) / 3600L;
         long mins = (remSec % 3600L) / 60L;
@@ -88,7 +86,7 @@ public final class Utils {
             switch (unit) {
                 case "y":
                     totalSeconds += val * 31536000L;
-                    break; // 365 days
+                    break;
                 case "w":
                     totalSeconds += val * 604800L;
                     break;

@@ -20,9 +20,9 @@ public class DuelRequestManager {
 
     private final PrismSurvival plugin;
     private final DuelArenaManager arenaManager;
-    private final Map<UUID, UUID> pendingRequests = new HashMap<>(); // Sender -> Target
-    private final Map<UUID, Long> requestTimestamps = new HashMap<>(); // Sender -> Timestamp
-    private final Map<UUID, Long> cooldowns = new HashMap<>(); // Sender -> Last Request Time
+    private final Map<UUID, UUID> pendingRequests = new HashMap<>();
+    private final Map<UUID, Long> requestTimestamps = new HashMap<>();
+    private final Map<UUID, Long> cooldowns = new HashMap<>();
 
     private int pendingTimeoutSeconds = 60;
     private int requestCooldownSeconds = 10;
@@ -33,17 +33,14 @@ public class DuelRequestManager {
         loadConfig();
     }
 
-    // ... (lines 34-156 skipped)
 
-    private final Map<UUID, Integer> requestDurations = new HashMap<>(); // Sender -> Duration (mins)
-    private final Map<UUID, String> requestBiomes = new HashMap<>(); // Sender -> Biome Name
+    private final Map<UUID, Integer> requestDurations = new HashMap<>();
+    private final Map<UUID, String> requestBiomes = new HashMap<>();
 
-    // ...
 
     public void acceptRequest(Player target, String senderName) {
         UUID targetId = target.getUniqueId();
 
-        // Find request
         UUID foundSender = findRequest(targetId, senderName);
 
         if (foundSender == null) {
@@ -59,21 +56,17 @@ public class DuelRequestManager {
             return;
         }
 
-        // Retrieve Settings
         int duration = requestDurations.getOrDefault(foundSender, 5);
         String biome = requestBiomes.getOrDefault(foundSender, "Random");
 
-        // Show searching message (chat only, to not override win chances)
         String searchingMsg = ChatColor.translateAlternateColorCodes('&', "&7Searching for regions...");
         sender.sendMessage(searchingMsg);
         target.sendMessage(searchingMsg);
 
-        // Chill sound (ambient cave or note block chime)
         try {
             sender.playSound(sender.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.5f, 1.0f);
             target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.5f, 1.0f);
         } catch (NoSuchFieldError | IllegalArgumentException e) {
-            // Fallback sound
             try {
                 sender.playSound(sender.getLocation(), Sound.BLOCK_NOTE_BLOCK_HARP, 0.5f, 1.0f);
                 target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_HARP, 0.5f, 1.0f);
@@ -81,21 +74,18 @@ public class DuelRequestManager {
             }
         }
 
-        // Cleanup pending request data first
         final UUID senderUUID = foundSender;
         pendingRequests.remove(senderUUID);
         requestTimestamps.remove(senderUUID);
         final int finalDuration = duration;
         final String finalBiome = biome;
 
-        // Async search with 30 second timeout (check every second)
         java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger(0);
         java.util.concurrent.atomic.AtomicReference<org.bukkit.scheduler.BukkitTask> taskRef = new java.util.concurrent.atomic.AtomicReference<>();
 
         org.bukkit.scheduler.BukkitTask searchTask = plugin.getSchedulerAdapter().runEntityTaskTimer(sender, () -> {
             int attempt = attempts.incrementAndGet();
 
-            // Check if players are still online
             if (!sender.isOnline() || !target.isOnline()) {
                 org.bukkit.scheduler.BukkitTask t = taskRef.get();
                 if (t != null)
@@ -105,11 +95,9 @@ public class DuelRequestManager {
                 return;
             }
 
-            // Try to start duel
             boolean success = arenaManager.startDuel(sender, target, finalDuration, finalBiome);
 
             if (success) {
-                // Duel started successfully
                 org.bukkit.scheduler.BukkitTask t = taskRef.get();
                 if (t != null)
                     t.cancel();
@@ -125,7 +113,6 @@ public class DuelRequestManager {
                 return;
             }
 
-            // Timeout after 30 attempts (30 seconds)
             if (attempt >= 30) {
                 org.bukkit.scheduler.BukkitTask t = taskRef.get();
                 if (t != null)
@@ -145,7 +132,7 @@ public class DuelRequestManager {
                 } catch (NoSuchFieldError | IllegalArgumentException ignored) {
                 }
             }
-        }, 0L, 20L); // Run every second (20 ticks)
+        }, 0L, 20L);
 
         taskRef.set(searchTask);
     }
@@ -159,7 +146,6 @@ public class DuelRequestManager {
         }
     }
 
-    // ...
 
     public void sendRequest(Player sender, Player target) {
         sendRequest(sender, target, 5, "Random");
@@ -169,7 +155,6 @@ public class DuelRequestManager {
         UUID senderId = sender.getUniqueId();
         UUID targetId = target.getUniqueId();
 
-        // Check for self-duel
         if (senderId.equals(targetId)) {
             String msg = ChatColor.RED + "You cannot duel yourself.";
             sender.sendMessage(msg);
@@ -177,7 +162,6 @@ public class DuelRequestManager {
             return;
         }
 
-        // Check if target is already in a duel or looting
         if (arenaManager.isInDuel(target) || arenaManager.isLooting(target)) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis player is currently on a duel.");
             sender.sendMessage(msg);
@@ -189,17 +173,11 @@ public class DuelRequestManager {
             return;
         }
 
-        // ... Cooldown Checks ...
         if (cooldowns.containsKey(senderId)) {
             long lastRequest = cooldowns.get(senderId);
             long elapsed = (System.currentTimeMillis() - lastRequest) / 1000;
             if (elapsed < requestCooldownSeconds) {
-                // If requesting SAME target, block
                 UUID existingTarget = pendingRequests.get(senderId);
-                // If existingTarget is null, maybe they processed it or it expired, but
-                // cooldown map implies recent activity
-                // But we only block "spamming" same person repeatedly or general spam?
-                // Let's block same person for sure.
                 if (existingTarget != null && existingTarget.equals(targetId)) {
                     long wait = requestCooldownSeconds - elapsed;
                     String msg = ChatColor.translateAlternateColorCodes('&',
@@ -211,7 +189,6 @@ public class DuelRequestManager {
             }
         }
 
-        // Send Request
         pendingRequests.put(senderId, targetId);
         requestTimestamps.put(senderId, System.currentTimeMillis());
         requestDurations.put(senderId, duration);
@@ -225,8 +202,6 @@ public class DuelRequestManager {
         target.sendMessage(ChatColor.translateAlternateColorCodes('&',
                 "&a" + sender.getName() + "&f has requested you to fight on a duel match."));
 
-        // Settings info to target?
-        // Maybe: "Settings: 10m, Desert"
 
         TextComponent msg = new TextComponent(ChatColor.translateAlternateColorCodes('&', "Type /duel accept or "));
         TextComponent click = new TextComponent(ChatColor.translateAlternateColorCodes('&', "&a[Click me]"));
@@ -263,7 +238,6 @@ public class DuelRequestManager {
     public void declineRequest(Player target, String senderName) {
         UUID targetId = target.getUniqueId();
 
-        // Find request
         UUID foundSender = findRequest(targetId, senderName);
 
         if (foundSender == null) {
@@ -273,11 +247,9 @@ public class DuelRequestManager {
             return;
         }
 
-        // Remove Request
         pendingRequests.remove(foundSender);
         requestTimestamps.remove(foundSender);
 
-        // Notify
         target.sendMessage(ChatColor.RED + "You declined the duel request.");
         playSound(target, Sound.UI_BUTTON_CLICK);
 
@@ -289,22 +261,15 @@ public class DuelRequestManager {
         }
     }
 
-    // Process request lookup
     private UUID findRequest(UUID targetId, String senderName) {
         for (Map.Entry<UUID, UUID> entry : pendingRequests.entrySet()) {
             if (entry.getValue().equals(targetId)) {
-                // If senderName is null, we take the first/any request (usually the only one).
-                // If senderName is provided, we check match.
 
                 UUID senderId = entry.getKey();
-                // Check expiry first
                 if (!isActiveRequest(senderId))
                     continue;
 
                 Player sender = Bukkit.getPlayer(senderId);
-                // If sender is null (offline), can we accept? requestManager normally checks
-                // isActive.
-                // If sender offline, we probably can't start duel.
                 if (sender == null)
                     continue;
 
@@ -316,7 +281,6 @@ public class DuelRequestManager {
         return null;
     }
 
-    // Determine if specific request is valid (time-wise)
     public boolean isActiveRequest(UUID senderId) {
         if (!pendingRequests.containsKey(senderId))
             return false;
@@ -325,7 +289,6 @@ public class DuelRequestManager {
         long elapsed = (System.currentTimeMillis() - timestamp) / 1000;
 
         if (elapsed > pendingTimeoutSeconds) {
-            // Expired
             pendingRequests.remove(senderId);
             requestTimestamps.remove(senderId);
             return false;

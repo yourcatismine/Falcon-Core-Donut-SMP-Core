@@ -27,17 +27,15 @@ public class HistoryListener implements Listener {
 
     private final PrismSurvival plugin;
     
-    // Batch processing for high-frequency block actions to prevent thread exhaustion
     private final ConcurrentLinkedQueue<BlockActionRecord> pendingActions = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean processingBatch = new AtomicBoolean(false);
-    private static final int BATCH_SIZE = 50; // Process up to 50 actions at once
-    private static final int BATCH_DELAY_TICKS = 5; // Process batches every 5 ticks (0.25s)
+    private static final int BATCH_SIZE = 50;
+    private static final int BATCH_DELAY_TICKS = 5;
 
     public HistoryListener(PrismSurvival plugin) {
         this.plugin = plugin;
     }
     
-    // Record holder for batched block actions
     private static class BlockActionRecord {
         final Location location;
         final String playerName; 
@@ -47,7 +45,7 @@ public class HistoryListener implements Listener {
         final long timestamp;
         
         BlockActionRecord(Location location, String playerName, UUID playerUUID, String action, String blockType, long timestamp) {
-            this.location = location.clone(); // Clone to prevent world unload issues
+            this.location = location.clone();
             this.playerName = playerName;
             this.playerUUID = playerUUID;
             this.action = action;
@@ -114,10 +112,8 @@ public class HistoryListener implements Listener {
         final UUID playerUUID = player.getUniqueId();
         final long timestamp = System.currentTimeMillis();
         
-        // Add to batch queue instead of creating immediate async task
         pendingActions.offer(new BlockActionRecord(location, playerName, playerUUID, action, blockType, timestamp));
         
-        // Schedule batch processing if not already running
         if (processingBatch.compareAndSet(false, true)) {
             plugin.getSchedulerAdapter().runTaskLater(this::processBatch, BATCH_DELAY_TICKS);
         }
@@ -129,7 +125,6 @@ public class HistoryListener implements Listener {
             return;
         }
         
-        // Collect batch of actions (up to BATCH_SIZE)
         List<BlockActionRecord> batch = new ArrayList<>();
         for (int i = 0; i < BATCH_SIZE && !pendingActions.isEmpty(); i++) {
             BlockActionRecord action = pendingActions.poll();
@@ -139,7 +134,6 @@ public class HistoryListener implements Listener {
         }
         
         if (!batch.isEmpty()) {
-            // Process the batch in a single async task instead of individual tasks
             plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
                 for (BlockActionRecord record : batch) {
                     try {
@@ -152,14 +146,12 @@ public class HistoryListener implements Listener {
                             record.timestamp
                         );
                     } catch (Exception e) {
-                        // Log error but continue processing other records
                         plugin.getLogger().warning("Failed to record block action: " + e.getMessage());
                     }
                 }
             });
         }
         
-        // Schedule next batch if more actions are pending
         if (!pendingActions.isEmpty()) {
             plugin.getSchedulerAdapter().runTaskLater(this::processBatch, BATCH_DELAY_TICKS);
         } else {

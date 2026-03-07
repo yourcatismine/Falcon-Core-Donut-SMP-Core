@@ -21,10 +21,9 @@ public class ChatFormatter implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         
-        // Skip formatting if player is disguised - DisguiseCommand handles it
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data.isDisguised()) {
-            return; // DisguiseCommand will handle the formatting
+            return;
         }
         
         String prefix = getPlayerPrefix(player);

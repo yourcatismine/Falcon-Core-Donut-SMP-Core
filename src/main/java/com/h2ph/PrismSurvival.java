@@ -84,7 +84,6 @@ public class PrismSurvival extends JavaPlugin {
         instance = this;
         saveAllResources();
 
-        // Register BungeeCord messaging channel for server transfers
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         loadSurvivalConfig();

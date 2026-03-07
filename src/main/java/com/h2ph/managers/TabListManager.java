@@ -126,12 +126,9 @@ public class TabListManager implements Listener {
         stopTask(player);
         UUID uuid = player.getUniqueId();
         
-        // Use real name for disconnect to prevent component encoding issues
         String realName = getRealPlayerName(player);
         if (realName != null && !realName.equals(player.getName())) {
-            // Temporarily restore real name for clean disconnect
             try {
-                // This helps prevent the component encoding crash during disconnect
                 plugin.getLogger().info("Using real name '" + realName + "' for disconnect of hidden player");
             } catch (Exception e) {
                 plugin.getLogger().warning("Error handling disconnect for player: " + e.getMessage());
@@ -212,7 +209,6 @@ public class TabListManager implements Listener {
     }
 
     private void updatePlayerDisplayNames(Player player) {
-        // Synchronize to prevent race conditions with packet filtering
         synchronized (this) {
             Map<UUID, String> playerNames = playerDisplayNames.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
 
@@ -225,7 +221,6 @@ public class TabListManager implements Listener {
                 sortedPlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
             }
 
-            // Clear previous display names to ensure clean state
             Set<UUID> currentPlayers = new HashSet<>();
             
             for (Player onlinePlayer : sortedPlayers) {
@@ -240,13 +235,11 @@ public class TabListManager implements Listener {
 
                 String prefix = LuckPermsUtils.getPrefix(onlinePlayer);
                 
-                // Get player data for disguise checking
                 com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(onlineUUID);
                 
-                // For disguised players, use their disguised prefix if available
                 boolean shouldShowDisguise = data.isDisguised() && 
-                    (player.getUniqueId().equals(onlineUUID) || // Always show disguise to themselves
-                     (player == null || !player.hasPermission("prism.disguise.see"))); // Show to others without permission
+                    (player.getUniqueId().equals(onlineUUID) ||
+                     (player == null || !player.hasPermission("prism.disguise.see")));
                 
                 if (shouldShowDisguise) {
                     String disguiseName = data.getDisguiseName();
@@ -270,20 +263,16 @@ public class TabListManager implements Listener {
                 }
 
                 String lastDisplayName = playerNames.get(onlineUUID);
-                // Always update to ensure proper ordering, even if name is same
                 if (lastDisplayName == null || !lastDisplayName.equals(displayName)) {
                     try {
-                        // Set display name for the viewing player's perspective
                         onlinePlayer.setPlayerListName(displayName);
                         playerNames.put(onlineUUID, displayName);
                     } catch (Exception e) {
-                        // Handle potential null pointer or concurrent modification
                         plugin.getLogger().warning("Failed to update display name for " + sanitizePlayerName(onlinePlayer.getName()) + ": " + e.getMessage());
                     }
                 }
             }
             
-            // Remove display names for players who are no longer online
             playerNames.keySet().retainAll(currentPlayers);
         }
     }
@@ -330,10 +319,8 @@ public class TabListManager implements Listener {
             return;
         }
         
-        // Clear all cached display names to force a complete refresh
         playerDisplayNames.clear();
         
-        // Update all players with proper synchronization
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateTabList(player);
         }
@@ -414,8 +401,6 @@ public class TabListManager implements Listener {
     private boolean filterAddEntries(List<PlayerData> entries, LinkedHashSet<UUID> visible, UUID viewerUuid) {
         boolean modified = false;
         
-        // Simplified filtering - only handle visibility limits, not ordering
-        // Let the scheduled task handle proper ordering via setPlayerListName
         Iterator<PlayerData> iterator = entries.iterator();
         while (iterator.hasNext()) {
             PlayerData data = iterator.next();
@@ -582,13 +567,10 @@ public class TabListManager implements Listener {
     public String getPlayerDisplayName(Player targetPlayer, Player observer) {
         if (targetPlayer == null) return "";
         
-        // Check if target player is disguised
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(targetPlayer.getUniqueId());
         if (data.isDisguised()) {
             String disguiseName = data.getDisguiseName();
             
-            // Always show disguise to the disguised player themselves
-            // For others, check permissions
             boolean shouldShowDisguise = (observer != null && observer.getUniqueId().equals(targetPlayer.getUniqueId())) || 
                                        (observer == null || !observer.hasPermission("prism.disguise.see"));
             
@@ -597,7 +579,6 @@ public class TabListManager implements Listener {
             }
         }
         
-        // Return real name (sanitized)
         return sanitizePlayerName(targetPlayer.getName());
     }
     
@@ -605,7 +586,6 @@ public class TabListManager implements Listener {
         if (playerName == null || playerName.isEmpty())
             return "";
         
-        // Remove any existing section symbols that could cause component encoding issues
         return playerName.replaceAll("§[0-9a-fk-or]", "");
     }
     

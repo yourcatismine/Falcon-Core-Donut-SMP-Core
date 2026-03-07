@@ -17,12 +17,11 @@ public class SchedulerAdapter {
     
     public SchedulerAdapter(PrismSurvival plugin) {
         this.plugin = plugin;
-        // Create bounded thread pool with max 8 threads to prevent exhaustion
         this.boundedExecutor = Executors.newFixedThreadPool(8, new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r, "PrismCore-BoundedAsync-" + threadCounter.incrementAndGet());
-                t.setDaemon(true); // Don't prevent JVM shutdown
+                t.setDaemon(true);
                 return t;
             }
         });
@@ -63,7 +62,6 @@ public class SchedulerAdapter {
      */
     public void runTaskAsync(Runnable task) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
-            // Fallback: run on current thread if plugin is shutting down
             if (task != null && plugin != null) {
                 try {
                     task.run();
@@ -74,7 +72,6 @@ public class SchedulerAdapter {
             return;
         }
         
-        // Use bounded executor instead of unbounded Folia scheduler
         if (boundedExecutor != null && !boundedExecutor.isShutdown()) {
             boundedExecutor.submit(() -> {
                 try {
@@ -84,9 +81,8 @@ public class SchedulerAdapter {
                 }
             });
         } else {
-            // Emergency fallback - but avoid creating new threads
             try {
-                task.run(); // Execute synchronously as last resort
+                task.run();
             } catch (Exception ex) {
                 plugin.getLogger().warning("Failed to execute emergency task: " + ex.getMessage());
             }

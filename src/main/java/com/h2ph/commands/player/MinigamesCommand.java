@@ -33,7 +33,6 @@ public class MinigamesCommand implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        // Read server name from settings.yml
         String serverName = getMinigameServerName();
         if (serverName == null) {
             player.sendMessage(ChatColor.RED + "Minigame server is not configured!");
@@ -41,11 +40,9 @@ public class MinigamesCommand implements CommandExecutor {
             return true;
         }
 
-        // Send transfer message
         player.sendMessage(ChatColor.GREEN + "Transferring you to the minigame server...");
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
 
-        // Transfer player to minigame server using BungeeCord/Velocity plugin messaging
         transferPlayerToServer(player, serverName);
 
         return true;
@@ -55,7 +52,6 @@ public class MinigamesCommand implements CommandExecutor {
         try {
             File settingsFile = new File(plugin.getDataFolder(), "servers/minigames/settings.yml");
             if (!settingsFile.exists()) {
-                // Create directories and copy resource file
                 settingsFile.getParentFile().mkdirs();
                 plugin.saveResource("servers/minigames/settings.yml", false);
             }
@@ -64,7 +60,6 @@ public class MinigamesCommand implements CommandExecutor {
             List<String> settings = config.getStringList("settings");
             
             if (settings != null && !settings.isEmpty()) {
-                // Return the first server name from the settings list
                 return settings.get(0);
             }
             
@@ -81,12 +76,10 @@ public class MinigamesCommand implements CommandExecutor {
             ByteArrayOutputStream b = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(b);
 
-            // Write the server name to connect to
             out.writeUTF("Connect");
             out.writeUTF(serverName);
             out.close();
 
-            // Send plugin message to BungeeCord/Velocity
             player.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
         } catch (IOException e) {
             plugin.getLogger().severe("Error sending player " + player.getName() + " to server " + serverName + ": " + e.getMessage());

@@ -100,9 +100,12 @@ public class TeamManager {
             return teamCache.get(id);
         }
 
-        loadTeam(id);
+        Team freshTeam = loadTeamFromDatabase(id);
+        if (freshTeam != null) {
+            teamCache.put(id, freshTeam);
+        }
 
-        return teamCache.get(id);
+        return freshTeam;
     }
 
     public Team getPlayerTeam(UUID uuid) {
@@ -118,6 +121,13 @@ public class TeamManager {
         if (teamCache.containsKey(id))
             return;
 
+        Team team = loadTeamFromDatabase(id);
+        if (team != null) {
+            teamCache.put(id, team);
+        }
+    }
+
+    private Team loadTeamFromDatabase(String id) {
         try (Connection conn = dbManager.getConnection()) {
             if (conn != null && !conn.isClosed()) {
                 try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM teams WHERE id = ?")) {
@@ -142,17 +152,20 @@ public class TeamManager {
                             }
                             team.setPvpEnabled(rs.getBoolean("pvp_enabled"));
 
-                            teamCache.put(id, team);
+                            return team;
                         }
                     }
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load team: " + id, e);
+            plugin.getLogger().log(Level.SEVERE, "Failed to load team from database: " + id, e);
         }
+        return null;
     }
 
     public void disbandTeam(String teamId) {
+        Team teamToDisband = teamCache.get(teamId);
+        
         teamCache.remove(teamId);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
@@ -181,13 +194,28 @@ public class TeamManager {
                     }
                 }
             } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to disband team: " + teamId, e);
+                plugin.getLogger().log(Level.SEVERE, "Failed to disband team: " + teamId + 
+                        ". Rolling back cache changes.", e);
+                if (teamToDisband != null) {
+                    teamCache.put(teamId, teamToDisband);
+                    for (Player online : Bukkit.getOnlinePlayers()) {
+                        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
+                        if (data != null && data.getTeamId() == null) {
+                            java.util.Set<UUID> memberUuids = getTeamMemberUuids(teamId);
+                            if (memberUuids.contains(online.getUniqueId())) {
+                                syncTeamId(online.getUniqueId(), teamId, "MEMBER");
+                                plugin.getScoreboardManager().reloadScoreboard(online);
+                            }
+                        }
+                    }
+                }
             }
         });
     }
 
     public void addMember(String teamId, UUID memberUuid, String role) {
         syncTeamId(memberUuid, teamId, role);
+        
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try (Connection conn = dbManager.getConnection()) {
                 if (conn != null && !conn.isClosed()) {
@@ -208,13 +236,20 @@ public class TeamManager {
                     }
                 }
             } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to add team member: " + memberUuid, e);
+                plugin.getLogger().log(Level.SEVERE, "Failed to add team member: " + memberUuid + 
+                        ". Rolling back cache changes.", e);
+                syncTeamId(memberUuid, null, null);
             }
         });
     }
 
     public void removeMember(String teamId, UUID memberUuid) {
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(memberUuid);
+        String previousTeamId = data != null ? data.getTeamId() : null;
+        String previousRole = data != null ? data.getTeamRole() : null;
+        
         syncTeamId(memberUuid, null, null);
+        
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try (Connection conn = dbManager.getConnection()) {
                 if (conn != null && !conn.isClosed()) {
@@ -231,7 +266,9 @@ public class TeamManager {
                     }
                 }
             } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to remove team member: " + memberUuid, e);
+                plugin.getLogger().log(Level.SEVERE, "Failed to remove team member: " + memberUuid + 
+                        ". Rolling back cache changes.", e);
+                syncTeamId(memberUuid, previousTeamId, previousRole);
             }
         });
     }
@@ -410,5 +447,45 @@ public class TeamManager {
 
     public void removeMemberFromCache(String teamId, UUID memberUuid) {
         removeMember(teamId, memberUuid);
+    }
+
+    /**
+     * Force refresh a team from database (clears cache and reloads)
+     * Use this to fix cache synchronization issues
+     */
+    public boolean refreshTeamFromDatabase(String teamId) {
+        if (teamId == null) return false;
+        
+        teamCache.remove(teamId);
+        
+        Team freshTeam = loadTeamFromDatabase(teamId);
+        if (freshTeam != null) {
+            teamCache.put(teamId, freshTeam);
+            plugin.getLogger().info("Refreshed team from database: " + teamId + " (" + freshTeam.getName() + ")");
+            return true;
+        } else {
+            plugin.getLogger().warning("Team not found in database during refresh: " + teamId);
+            return false;
+        }
+    }
+
+    /**
+     * Debug method to check cache vs database consistency
+     */
+    public void validateTeamConsistency(String teamId) {
+        Team cachedTeam = teamCache.get(teamId);
+        Team dbTeam = loadTeamFromDatabase(teamId);
+        
+        plugin.getLogger().info("Team consistency check for: " + teamId);
+        plugin.getLogger().info("  Cached: " + (cachedTeam != null ? cachedTeam.getName() : "NULL"));
+        plugin.getLogger().info("  Database: " + (dbTeam != null ? dbTeam.getName() : "NULL"));
+        
+        if (cachedTeam == null && dbTeam != null) {
+            plugin.getLogger().warning("  ISSUE: Team exists in DB but missing from cache!");
+            teamCache.put(teamId, dbTeam);
+            plugin.getLogger().info("  AUTO-FIXED: Loaded team into cache");
+        } else if (cachedTeam != null && dbTeam == null) {
+            plugin.getLogger().warning("  ISSUE: Team exists in cache but missing from DB!");
+        }
     }
 }

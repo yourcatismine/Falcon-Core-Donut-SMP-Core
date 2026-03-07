@@ -76,9 +76,8 @@ public class HideNameCommand implements CommandExecutor, Listener {
 
             String obf = ChatColor.MAGIC + p.getName();
             
-            // Ensure TabListManager knows the real name for safe disconnect handling
             if (plugin.getTabListManager() != null) {
-                plugin.getTabListManager().getRealPlayerName(p); // This will store the real name
+                plugin.getTabListManager().getRealPlayerName(p);
             }
 
             refreshPlayer(p, obf);

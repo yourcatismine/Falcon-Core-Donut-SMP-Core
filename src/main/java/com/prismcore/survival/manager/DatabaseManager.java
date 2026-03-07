@@ -1297,7 +1297,6 @@ public class DatabaseManager {
                 ps.setString(2, uuid.toString());
                 ps.executeUpdate();
             } catch (SQLException e) {
-                // Connection will be handled gracefully by the try-catch
             }
         });
     }
@@ -1317,7 +1316,6 @@ public class DatabaseManager {
                 ps.setString(7, uuid.toString());
                 ps.executeUpdate();
             } catch (SQLException e) {
-                // Connection will be handled gracefully by the try-catch
             }
         });
     }

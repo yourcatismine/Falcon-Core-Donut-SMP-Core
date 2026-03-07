@@ -58,27 +58,11 @@ public class SpawnListener implements Listener {
 
         if (data != null && data.isCombatLogged()) {
             plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
-                boolean hasBed = false;
-                try {
-                    hasBed = player.getBedSpawnLocation() != null;
-                } catch (Throwable e) {
-                    plugin.getLogger().warning("Could not check bed spawn for joining player " + player.getName()
-                            + " due to Folia threading restrictions.");
-                }
-
-                if (hasBed) {
-                    data.setCombatLogged(false);
-                    plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
-                    return;
-                }
-
                 Location spawn = plugin.getSpawnManager().getBestSpawnForWorld(player.getWorld().getName());
                 if (spawn != null) {
                     player.teleportAsync(spawn);
-                    if (data.isCombatLogged()) {
-                        data.setCombatLogged(false);
-                        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
-                    }
+                    data.setCombatLogged(false);
+                    plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
                 }
             }, 1L);
         }

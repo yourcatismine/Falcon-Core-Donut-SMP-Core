@@ -32,7 +32,6 @@ public class PlayerData {
     private String disguiseName = null;
     private String disguiseSkinTexture = null;
     private String disguiseSkinSignature = null;
-    // Original LuckPerms data for restoration
     private String originalPrimaryGroup = null;
     private java.util.List<String> originalGroups = null;
     private String originalPrefix = null;

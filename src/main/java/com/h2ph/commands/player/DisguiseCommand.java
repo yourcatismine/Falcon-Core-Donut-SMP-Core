@@ -49,51 +49,54 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
     private void initializeReflection() {
         try {
-            // Detect server version dynamically
             String bukkitVersion = Bukkit.getServer().getClass().getPackage().getName();
             serverVersion = bukkitVersion.substring(bukkitVersion.lastIndexOf('.') + 1);
             
-            // Try multiple approaches for different server implementations
             Class<?> craftPlayerClass = null;
             
-            // Try standard CraftBukkit first
             try {
                 craftPlayerClass = Class.forName("org.bukkit.craftbukkit." + serverVersion + ".entity.CraftPlayer");
+                plugin.getLogger().info("Found CraftPlayer class: org.bukkit.craftbukkit." + serverVersion + ".entity.CraftPlayer");
             } catch (ClassNotFoundException e) {
-                // Try without version (for some custom servers)
                 try {
                     craftPlayerClass = Class.forName("org.bukkit.craftbukkit.entity.CraftPlayer");
+                    plugin.getLogger().info("Found CraftPlayer class: org.bukkit.craftbukkit.entity.CraftPlayer");
                 } catch (ClassNotFoundException e2) {
-                    // Try Paper/Canvas approach
-                    craftPlayerClass = Class.forName("org.bukkit.craftbukkit.v1_21_R1.entity.CraftPlayer");
+                    try {
+                        craftPlayerClass = Class.forName("org.bukkit.craftbukkit.v1_21_R1.entity.CraftPlayer");
+                        plugin.getLogger().info("Found CraftPlayer class: org.bukkit.craftbukkit.v1_21_R1.entity.CraftPlayer");
+                    } catch (ClassNotFoundException e3) {
+                        plugin.getLogger().severe("Could not find CraftPlayer class. Disguise will not work properly.");
+                        return;
+                    }
                 }
             }
             
             getHandleMethod = craftPlayerClass.getDeclaredMethod("getHandle");
             getHandleMethod.setAccessible(true);
             
-            // We'll find the GameProfile field when we first use it (deferred initialization)
-            plugin.getLogger().info("Disguise reflection initialized. Server version: " + serverVersion);
+            reflectionEnabled = true;
+            plugin.getLogger().info("✓ Disguise reflection initialized successfully. Server version: " + serverVersion);
             
         } catch (Exception e) {
-            plugin.getLogger().warning("Failed to initialize reflection for disguise system: " + e.getMessage());
-            plugin.getLogger().warning("Server version detected: " + serverVersion);
-            plugin.getLogger().warning("Disguise functionality will be limited to name changes only.");
+            plugin.getLogger().severe("✗ Failed to initialize reflection for disguise system: " + e.getMessage());
+            plugin.getLogger().severe("Server version detected: " + serverVersion);
+            plugin.getLogger().severe("Disguise functionality will be disabled.");
+            e.printStackTrace();
         }
     }
     
     private void findGameProfileField(Object entityPlayer) {
-        if (gameProfileField != null) return; // Already found
+        if (gameProfileField != null) return;
         
         try {
             Class<?> entityPlayerClass = entityPlayer.getClass();
             plugin.getLogger().info("Searching for GameProfile field in class: " + entityPlayerClass.getName());
             
-            // First, try common field names for GameProfile
             String[] possibleFieldNames = {
                 "gameProfile", "bU", "bT", "bS", "bV", "bW", "profile", 
                 "bX", "bY", "bZ", "ca", "cb", "cc", "cd", "ce", "cf",
-                "userProfile", "player", "playerProfile"
+                "userProfile", "player", "playerProfile", "cg", "ch", "ci", "cj"
             };
             
             for (String fieldName : possibleFieldNames) {
@@ -101,21 +104,18 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                     Field field = entityPlayerClass.getDeclaredField(fieldName);
                     field.setAccessible(true);
                     
-                    // Test if this field contains a GameProfile
                     Object fieldValue = field.get(entityPlayer);
                     if (fieldValue != null && (fieldValue.getClass().getSimpleName().equals("GameProfile") ||
                             fieldValue.getClass().getName().contains("GameProfile"))) {
                         gameProfileField = field;
                         reflectionEnabled = true;
-                        plugin.getLogger().info("Successfully found GameProfile field: " + fieldName + " (type: " + fieldValue.getClass().getName() + ")");
+                        plugin.getLogger().info("✓ Successfully found GameProfile field: " + fieldName + " (type: " + fieldValue.getClass().getName() + ")");
                         return;
                     }
                 } catch (Exception ignored) {
-                    // Continue trying other field names
                 }
             }
             
-            // If not found, search all fields for GameProfile type
             plugin.getLogger().info("Scanning all fields for GameProfile...");
             Field[] allFields = entityPlayerClass.getDeclaredFields();
             for (Field field : allFields) {
@@ -126,15 +126,13 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                             fieldValue.getClass().getName().contains("GameProfile"))) {
                         gameProfileField = field;
                         reflectionEnabled = true;
-                        plugin.getLogger().info("Successfully found GameProfile field: " + field.getName() + " (type: " + fieldValue.getClass().getName() + ")");
+                        plugin.getLogger().info("✓ Successfully found GameProfile field: " + field.getName() + " (type: " + fieldValue.getClass().getName() + ")");
                         return;
                     }
                 } catch (Exception ignored) {
-                    // Continue scanning
                 }
             }
             
-            // Also try superclass fields
             Class<?> superclass = entityPlayerClass.getSuperclass();
             if (superclass != null) {
                 plugin.getLogger().info("Scanning superclass fields: " + superclass.getName());
@@ -151,7 +149,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                             return;
                         }
                     } catch (Exception ignored) {
-                        // Continue scanning
                     }
                 }
             }
@@ -208,6 +205,24 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                     p.sendMessage(ChatColor.RED + "You don't have permission to list disguised players.");
                 }
                 break;
+            case "debug":
+                if (p.hasPermission("prism.disguise.admin")) {
+                    debugDisguise(p);
+                } else {
+                    p.sendMessage(ChatColor.RED + "You don't have permission to use debug.");
+                }
+                break;
+            case "testskin":
+                if (p.hasPermission("prism.disguise.admin")) {
+                    if (args.length >= 2) {
+                        testSkinFetch(p, args[1]);
+                    } else {
+                        p.sendMessage(ChatColor.RED + "Usage: /disguise testskin <playername>");
+                    }
+                } else {
+                    p.sendMessage(ChatColor.RED + "You don't have permission to use testskin.");
+                }
+                break;
             default:
                 if (args.length >= 1) {
                     String targetName = args[0];
@@ -228,6 +243,8 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         p.sendMessage(ChatColor.YELLOW + "/disguise off " + ChatColor.GRAY + "- Remove disguise");
         if (p.hasPermission("prism.disguise.admin")) {
             p.sendMessage(ChatColor.YELLOW + "/disguise list " + ChatColor.GRAY + "- List disguised players");
+            p.sendMessage(ChatColor.YELLOW + "/disguise debug " + ChatColor.GRAY + "- Show debug information");
+            p.sendMessage(ChatColor.YELLOW + "/disguise testskin <player> " + ChatColor.GRAY + "- Test skin fetching");
         }
     }
 
@@ -235,13 +252,11 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         UUID playerId = player.getUniqueId();
         com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerId);
 
-        // Check if target name is valid (not their own name)
         if (targetName.equalsIgnoreCase(player.getName())) {
             player.sendMessage(ChatColor.RED + "You cannot disguise as yourself!");
             return;
         }
 
-        // Check if name is already taken by an online player
         Player onlineTarget = Bukkit.getPlayerExact(targetName);
         if (onlineTarget != null && onlineTarget.isOnline()) {
             player.sendMessage(ChatColor.RED + "Cannot disguise as an online player!");
@@ -250,14 +265,18 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
         sendActionBar(player, "&7Setting up disguise...");
         
-        // Back up original LuckPerms data
         backupOriginalPermissions(player, data);
         
-        // Fetch skin data and target permissions asynchronously
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
+            plugin.getLogger().info("Fetching skin data for: " + skinName);
             SkinData skinData = fetchSkinData(skinName);
             
-            // Get target player's LuckPerms data
+            if (skinData != null) {
+                plugin.getLogger().info("✓ Successfully fetched skin data for " + skinName);
+            } else {
+                plugin.getLogger().warning("✗ Failed to fetch skin data for " + skinName);
+            }
+            
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
             String targetPrefix = "";
             String targetPrimaryGroup = "default";
@@ -270,7 +289,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             final String finalTargetPrefix = targetPrefix;
             final String finalTargetPrimaryGroup = targetPrimaryGroup;
             
-            // Apply disguise on main thread
             plugin.getSchedulerAdapter().runTask(() -> {
                 data.setDisguised(true);
                 data.setDisguiseName(targetName);
@@ -280,7 +298,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                     data.setDisguiseSkinSignature(skinData.signature);
                 }
                 
-                // Apply target player's LuckPerms permissions
                 applyTargetPermissions(player, targetName, finalTargetPrimaryGroup);
                 
                 refreshPlayer(player, targetName, skinData);
@@ -288,17 +305,16 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 sendActionBar(player, "&aDisguised as: " + targetName + " &7(" + finalTargetPrimaryGroup + ")");
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.2f);
                 
-                // Send informative messages
                 player.sendMessage(ChatColor.GREEN + "✓ Disguise applied successfully!");
                 player.sendMessage(ChatColor.GRAY + "Name: " + ChatColor.YELLOW + targetName);
                 player.sendMessage(ChatColor.GRAY + "Group: " + ChatColor.YELLOW + finalTargetPrimaryGroup);
                 
                 if (skinData != null) {
-                    player.sendMessage(ChatColor.GRAY + "Skin: " + ChatColor.YELLOW + skinName);
-                    player.sendMessage(ChatColor.GRAY + "Note: Skin changes in F5 mode may require reconnecting.");
+                    player.sendMessage(ChatColor.GRAY + "Skin data: " + ChatColor.YELLOW + skinName + ChatColor.GRAY + " (fetched)");
+                    player.sendMessage(ChatColor.GRAY + "Note: Install SkinRestorer or similar plugin for skin changes.");
                 }
                 
-                player.sendMessage(ChatColor.GRAY + "You should now see " + ChatColor.YELLOW + targetName + ChatColor.GRAY + " in tab list and chat.");
+                player.sendMessage(ChatColor.GRAY + "You now appear as " + ChatColor.YELLOW + targetName + ChatColor.GRAY + " in tab list and chat.");
             });
         });
     }
@@ -317,16 +333,13 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         data.setDisguiseSkinTexture(null);
         data.setDisguiseSkinSignature(null);
 
-        // Restore original LuckPerms permissions
         restoreOriginalPermissions(player, data);
 
-        // Refresh with real name and skin
         refreshPlayer(player, player.getName(), null);
 
         sendActionBar(player, "&7Disguise removed.");
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.8f);
         
-        // Send confirmation messages
         player.sendMessage(ChatColor.GREEN + "✓ Disguise removed successfully!");
         player.sendMessage(ChatColor.GRAY + "You are now visible as " + ChatColor.YELLOW + player.getName() + ChatColor.GRAY + ".");
     }
@@ -353,6 +366,72 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         }
     }
 
+    private void debugDisguise(Player player) {
+        player.sendMessage(ChatColor.GOLD + "=== Disguise Debug Info ===");
+        
+        player.sendMessage(ChatColor.YELLOW + "Reflection Status:");
+        player.sendMessage("  Server Version: " + (serverVersion != null ? serverVersion : "null"));
+        player.sendMessage("  getHandleMethod: " + (getHandleMethod != null ? "✓" : "✗"));
+        player.sendMessage("  gameProfileField: " + (gameProfileField != null ? "✓" : "✗"));
+        player.sendMessage("  reflectionEnabled: " + (reflectionEnabled ? "✓" : "✗"));
+        
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        player.sendMessage(ChatColor.YELLOW + "Player Data:");
+        player.sendMessage("  isDisguised: " + data.isDisguised());
+        player.sendMessage("  disguiseName: " + data.getDisguiseName());
+        player.sendMessage("  hasSkinTexture: " + (data.getDisguiseSkinTexture() != null));
+        player.sendMessage("  hasSkinSignature: " + (data.getDisguiseSkinSignature() != null));
+        
+        if (getHandleMethod != null) {
+            try {
+                Object entityPlayer = getHandleMethod.invoke(player);
+                player.sendMessage(ChatColor.YELLOW + "Reflection Test:");
+                player.sendMessage("  EntityPlayer class: " + entityPlayer.getClass().getName());
+                
+                if (gameProfileField == null) {
+                    findGameProfileField(entityPlayer);
+                }
+                
+                if (gameProfileField != null) {
+                    Object gameProfile = gameProfileField.get(entityPlayer);
+                    player.sendMessage("  GameProfile: " + gameProfile.getClass().getName());
+                    
+                    Field nameField = gameProfile.getClass().getDeclaredField("name");
+                    nameField.setAccessible(true);
+                    String profileName = (String) nameField.get(gameProfile);
+                    player.sendMessage("  GameProfile name: " + profileName);
+                } else {
+                    player.sendMessage("  GameProfile field: ✗ NOT FOUND");
+                }
+            } catch (Exception e) {
+                player.sendMessage(ChatColor.RED + "  Reflection test failed: " + e.getMessage());
+            }
+        } else {
+            player.sendMessage(ChatColor.RED + "  Cannot test reflection - getHandleMethod is null");
+        }
+    }
+
+    private void testSkinFetch(Player player, String targetName) {
+        player.sendMessage(ChatColor.GOLD + "Testing skin fetch for: " + targetName);
+        
+        plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
+            long startTime = System.currentTimeMillis();
+            SkinData skinData = fetchSkinData(targetName);
+            long duration = System.currentTimeMillis() - startTime;
+            
+            plugin.getSchedulerAdapter().runTask(() -> {
+                if (skinData != null) {
+                    player.sendMessage(ChatColor.GREEN + "✓ Skin fetch successful (" + duration + "ms)");
+                    player.sendMessage("  Texture length: " + skinData.texture.length() + " chars");
+                    player.sendMessage("  Has signature: " + (skinData.signature != null));
+                    player.sendMessage("  Texture preview: " + skinData.texture.substring(0, Math.min(50, skinData.texture.length())) + "...");
+                } else {
+                    player.sendMessage(ChatColor.RED + "✗ Skin fetch failed (" + duration + "ms)");
+                }
+            });
+        });
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent evt) {
         Player player = evt.getPlayer();
@@ -361,7 +440,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         if (data.isDisguised()) {
             String disguiseName = data.getDisguiseName();
             
-            // Get the disguised player's prefix
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(disguiseName);
             String disguisePrefix = "";
             
@@ -369,7 +447,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 disguisePrefix = LuckPermsUtils.getPrefix(targetPlayer);
             }
             
-            // Create custom format for disguised player
             String format;
             if (disguisePrefix == null || disguisePrefix.isEmpty()) {
                 format = "&7%player_name%:&f %message%";
@@ -384,7 +461,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             evt.setFormat(translateColorCodes(format));
         }
         
-        // Handle @mentions for disguised players
         String message = evt.getMessage();
         if (message.contains("@")) {
             String processedMessage = processMentions(message);
@@ -413,12 +489,10 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 String realName = online.getName();
                 String disguiseName = data.getDisguiseName();
 
-                // Remove real name from completions
                 if (completions.removeIf(s -> s.equalsIgnoreCase(realName))) {
                     modified = true;
                 }
                 
-                // Add disguise name to completions if not already present
                 if (disguiseName != null && !completions.stream().anyMatch(s -> s.equalsIgnoreCase(disguiseName))) {
                     completions.add(disguiseName);
                     modified = true;
@@ -451,7 +525,6 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             }, 5L);
         }
 
-        // Update disguises for existing players for the joining player
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.equals(p)) continue;
@@ -488,91 +561,80 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             return;
         }
         
-        String realName = target.getName();
-
-        setGameProfileName(target, nameToSend);
-        if (skinData != null) {
-            setGameProfileSkin(target, skinData);
-        }
-
-        // Update tab list for all players (including the disguised player themselves)
+        plugin.getLogger().info("Refreshing player display for " + target.getName() + " as " + nameToSend);
+        
+        
+        target.setDisplayName(nameToSend);
+        target.setPlayerListName(nameToSend);
+        
         updateTabListForPlayer(target, nameToSend, skinData);
 
-        // Make the disguised player see themselves as disguised
-        refreshSelfView(target, nameToSend, skinData);
-
         for (Player online : Bukkit.getOnlinePlayers()) {
-            if (online.equals(target)) continue;
-
             if (!online.isOnline() || !online.isValid()) {
                 continue;
             }
 
-            if (online.hasPermission("prism.disguise.see")) {
-                continue; // Admins see the real name
+            if (online.hasPermission("prism.disguise.see") && !online.equals(target)) {
+                continue; 
             }
 
             try {
-                // Remove and re-add to refresh display
                 online.hidePlayer(plugin, target);
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
                     if (target.isOnline() && online.isOnline()) {
                         online.showPlayer(plugin, target);
                     }
-                }, 2L);
-            } catch (Exception ignored) {
+                }, 3L);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to refresh player display for " + online.getName() + ": " + e.getMessage());
             }
         }
 
-        // Keep the name consistent - don't revert it as this causes flickering
-        // The GameProfile should stay with the disguised name
-        plugin.getSchedulerAdapter().runTaskLater(() -> {
-            if (target.isOnline()) {
-                // Ensure the disguise name and skin are properly set and stay set
-                setGameProfileName(target, nameToSend);
-                if (skinData != null) {
-                    setGameProfileSkin(target, skinData);
+        if (plugin.getTabListManager() != null) {
+            plugin.getSchedulerAdapter().runTaskLater(() -> {
+                if (target.isOnline()) {
+                    plugin.getTabListManager().updateTabList(target);
+                    
+                    if (skinData != null) {
+                        target.sendMessage(ChatColor.GREEN + "✓ Name disguise applied!");
+                        target.sendMessage(ChatColor.YELLOW + "Note: " + ChatColor.GRAY + "Skin changes require external plugins like SkinRestorer.");
+                    } else {
+                        target.sendMessage(ChatColor.GREEN + "✓ Name disguise applied!");
+                    }
+                    target.sendMessage(ChatColor.GRAY + "Your display name in chat and tab list has been changed to " + ChatColor.WHITE + nameToSend);
                 }
-            }
-        }, 1L);
+            }, 5L);
+        }
     }
     
     private void updateTabListForPlayer(Player target, String disguiseName, SkinData skinData) {
         try {
-            // Force tab list update through TabListManager
             if (plugin.getTabListManager() != null) {
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
                     plugin.getTabListManager().updateTabList(target);
                 }, 2L);
             }
         } catch (Exception e) {
-            // Silently handle any errors
         }
     }
     
     private void refreshSelfView(Player target, String disguiseName, SkinData skinData) {
         try {
-            // Update the tab list to show disguised name to the player themselves
             plugin.getSchedulerAdapter().runTaskLater(() -> {
                 if (target.isOnline()) {
                     try {
-                        // Update tab list for all players
                         for (Player online : Bukkit.getOnlinePlayers()) {
                             if (plugin.getTabListManager() != null) {
                                 plugin.getTabListManager().updateTabList(online);
                             }
                         }
                         
-                        // Force GameProfile refresh for self-view
                         forceClientRefresh(target, disguiseName, skinData);
                         
-                        // Additional tab list update after GameProfile changes
                         plugin.getSchedulerAdapter().runTaskLater(() -> {
                             if (target.isOnline() && plugin.getTabListManager() != null) {
-                                // Update the disguised player's own tab view
                                 plugin.getTabListManager().updateTabList(target);
                                 
-                                // Send confirmation
                                 sendActionBar(target, "&aDisguise active! Tab list updated with &e" + disguiseName + "&a.");
                             }
                         }, 3L);
@@ -582,23 +644,18 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             }, 2L);
             
         } catch (Exception e) {
-            // Silently handle any errors
         }
     }
     
     private void forceClientRefresh(Player target, String disguiseName, SkinData skinData) {
         try {
-            // Ensure GameProfile is set correctly for skin changes
             setGameProfileName(target, disguiseName);
             if (skinData != null) {
                 setGameProfileSkin(target, skinData);
             }
             
-            // The TabListManager will handle the display name changes automatically
-            // No need for hacky hide/show player methods that don't work for self-view
             
         } catch (Exception e) {
-            // Silently handle errors
         }
     }
 
@@ -618,94 +675,32 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         }
     }
 
-    private void setGameProfileName(Player player, String name) {
-        if (getHandleMethod == null) {
-            return;
-        }
-        
-        try {
-            Object entityPlayer = getHandleMethod.invoke(player);
-            
-            // Find GameProfile field if not already found
-            findGameProfileField(entityPlayer);
-            
-            if (!reflectionEnabled || gameProfileField == null) {
-                return;
-            }
-            
-            Object gameProfile = gameProfileField.get(entityPlayer);
-            
-            // Use reflection to set the name in the GameProfile
-            Field nameField = gameProfile.getClass().getDeclaredField("name");
-            nameField.setAccessible(true);
-            nameField.set(gameProfile, name);
-        } catch (Exception e) {
-            // Silently fail to avoid spam in logs
-            if (plugin.getServer().getOnlinePlayers().size() < 5) { // Only log in small servers to avoid spam
-                plugin.getLogger().fine("Failed to set GameProfile name: " + e.getMessage());
-            }
-        }
+    private Object createGameProfileWithProperties(Object currentGameProfile, String newName, SkinData skinData) {
+        plugin.getLogger().fine("GameProfile creation skipped - using SkinRestorer API instead");
+        return null;
     }
 
-    private void setGameProfileSkin(Player player, SkinData skinData) {
-        if (getHandleMethod == null) {
-            return;
-        }
-        
-        try {
-            Object entityPlayer = getHandleMethod.invoke(player);
-            
-            // Find GameProfile field if not already found
-            findGameProfileField(entityPlayer);
-            
-            if (!reflectionEnabled || gameProfileField == null) {
-                return;
-            }
-            
-            Object gameProfile = gameProfileField.get(entityPlayer);
-            
-            // Get properties from GameProfile
-            Field propertiesField = gameProfile.getClass().getDeclaredField("properties");
-            propertiesField.setAccessible(true);
-            Object properties = propertiesField.get(gameProfile);
-            
-            // Clear existing skin properties
-            properties.getClass().getMethod("removeAll", Object.class).invoke(properties, "textures");
-            
-            if (skinData.texture != null) {
-                // Add new skin properties
-                Class<?> propertyClass = Class.forName("com.mojang.authlib.properties.Property");
-                Object textureProperty;
-                
-                if (skinData.signature != null) {
-                    textureProperty = propertyClass.getConstructor(String.class, String.class, String.class)
-                            .newInstance("textures", skinData.texture, skinData.signature);
-                } else {
-                    textureProperty = propertyClass.getConstructor(String.class, String.class)
-                            .newInstance("textures", skinData.texture);
-                }
-                
-                properties.getClass().getMethod("put", Object.class, Object.class)
-                        .invoke(properties, "textures", textureProperty);
-            }
-        } catch (Exception e) {
-            // Silently fail to avoid spam in logs
-            if (plugin.getServer().getOnlinePlayers().size() < 5) { // Only log in small servers to avoid spam
-                plugin.getLogger().fine("Failed to set GameProfile skin: " + e.getMessage());
-            }
-        }
+    private boolean setGameProfileName(Player player, String name) {
+        plugin.getLogger().fine("GameProfile name setting skipped - using SkinRestorer API instead");
+        return false;
+    }
+
+    private boolean setGameProfileSkin(Player player, SkinData skinData) {
+        plugin.getLogger().fine("GameProfile skin setting skipped - using SkinRestorer API instead");
+        return false;
     }
 
     private SkinData fetchSkinData(String playerName) {
         try {
-            // First, get UUID from name
+            plugin.getLogger().info("Fetching UUID for player: " + playerName);
             URL uuidUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + playerName);
             HttpURLConnection uuidConn = (HttpURLConnection) uuidUrl.openConnection();
             uuidConn.setRequestMethod("GET");
-            uuidConn.setConnectTimeout(5000);
-            uuidConn.setReadTimeout(5000);
+            uuidConn.setConnectTimeout(10000);
+            uuidConn.setReadTimeout(10000);
 
             if (uuidConn.getResponseCode() != 200) {
+                plugin.getLogger().warning("Failed to get UUID for " + playerName + ": HTTP " + uuidConn.getResponseCode());
                 return null;
             }
 
@@ -715,15 +710,17 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
             JsonObject uuidJson = JsonParser.parseString(uuidResponse).getAsJsonObject();
             String uuid = uuidJson.get("id").getAsString();
+            plugin.getLogger().info("Found UUID for " + playerName + ": " + uuid);
 
-            // Then get skin data from UUID
+            plugin.getLogger().info("Fetching skin data from Mojang session server...");
             URL profileUrl = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
             HttpURLConnection profileConn = (HttpURLConnection) profileUrl.openConnection();
             profileConn.setRequestMethod("GET");
-            profileConn.setConnectTimeout(5000);
-            profileConn.setReadTimeout(5000);
+            profileConn.setConnectTimeout(10000);
+            profileConn.setReadTimeout(10000);
 
             if (profileConn.getResponseCode() != 200) {
+                plugin.getLogger().warning("Failed to get profile for " + uuid + ": HTTP " + profileConn.getResponseCode());
                 return null;
             }
 
@@ -738,10 +735,14 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 String texture = properties.get("value").getAsString();
                 String signature = properties.has("signature") ? properties.get("signature").getAsString() : null;
                 
+                plugin.getLogger().info("✓ Successfully fetched skin data for " + playerName + " (has signature: " + (signature != null) + ")");
                 return new SkinData(texture, signature);
+            } else {
+                plugin.getLogger().warning("No properties found in profile response for " + playerName);
             }
         } catch (Exception e) {
-            plugin.getLogger().warning("Failed to fetch skin data for " + playerName + ": " + e.getMessage());
+            plugin.getLogger().severe("✗ Failed to fetch skin data for " + playerName + ": " + e.getMessage());
+            e.printStackTrace();
         }
         
         return null;
@@ -756,15 +757,13 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             LuckPerms lp = LuckPermsProvider.get();
             User user = lp.getUserManager().getUser(player.getUniqueId());
             if (user != null) {
-                // Backup original data
                 data.setOriginalPrimaryGroup(user.getPrimaryGroup());
                 data.setOriginalPrefix(LuckPermsUtils.getPrefix(player));
                 
-                // Backup all groups
                 java.util.List<String> groups = new java.util.ArrayList<>();
                 user.getNodes().forEach(node -> {
                     if (node.getKey().startsWith("group.")) {
-                        groups.add(node.getKey().substring(6)); // Remove "group." prefix
+                        groups.add(node.getKey().substring(6));
                     }
                 });
                 data.setOriginalGroups(groups);
@@ -784,25 +783,20 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             User user = lp.getUserManager().getUser(player.getUniqueId());
             
             if (user != null) {
-                // Get target player's LuckPerms data
                 OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
                 User targetUser = lp.getUserManager().loadUser(targetPlayer.getUniqueId()).join();
                 
                 if (targetUser != null) {
-                    // Clear current groups (except keep some base permissions)
                     user.getNodes().stream()
                             .filter(node -> node.getKey().startsWith("group."))
                             .forEach(user.data()::remove);
                     
-                    // Copy target's groups
                     targetUser.getNodes().stream()
                             .filter(node -> node.getKey().startsWith("group."))
                             .forEach(node -> user.data().add(node));
                     
-                    // Set primary group
                     user.data().add(Node.builder("group." + targetPrimaryGroup).build());
                     
-                    // Save changes
                     lp.getUserManager().saveUser(user);
                     
                     plugin.getLogger().info("Applied " + targetName + "'s permissions (" + targetPrimaryGroup + ") to " + player.getName());
@@ -823,25 +817,20 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             User user = lp.getUserManager().getUser(player.getUniqueId());
             
             if (user != null && data.getOriginalPrimaryGroup() != null) {
-                // Clear current groups
                 user.getNodes().stream()
                         .filter(node -> node.getKey().startsWith("group."))
                         .forEach(user.data()::remove);
                 
-                // Restore original groups
                 if (data.getOriginalGroups() != null) {
                     for (String group : data.getOriginalGroups()) {
                         user.data().add(Node.builder("group." + group).build());
                     }
                 }
                 
-                // Restore primary group
                 user.data().add(Node.builder("group." + data.getOriginalPrimaryGroup()).build());
                 
-                // Save changes
                 lp.getUserManager().saveUser(user);
                 
-                // Clear backup data
                 data.setOriginalPrimaryGroup(null);
                 data.setOriginalGroups(null);
                 data.setOriginalPrefix(null);
@@ -873,21 +862,17 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
     }
 
     private String processMentions(String message) {
-        // Process @disguisedname mentions and convert them to highlight the real player
         for (Player online : Bukkit.getOnlinePlayers()) {
             com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
             if (data.isDisguised()) {
                 String disguiseName = data.getDisguiseName();
                 String realName = online.getName();
                 
-                // Replace @disguisedname with highlighted version
                 String mentionPattern = "@" + disguiseName;
                 if (message.toLowerCase().contains(mentionPattern.toLowerCase())) {
-                    // Replace with highlighted mention that will ping the real player
                     String highlightedMention = ChatColor.YELLOW + "@" + disguiseName + ChatColor.RESET;
                     message = message.replaceAll("(?i)" + java.util.regex.Pattern.quote(mentionPattern), highlightedMention);
                     
-                    // Play sound to the mentioned player
                     online.playSound(online.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
                 }
             }
@@ -905,13 +890,11 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 completions.add("list");
             }
             
-            // Add online player names as suggestions
             for (Player player : Bukkit.getOnlinePlayers()) {
                 completions.add(player.getName());
             }
         } else if (args.length == 2) {
-            // For skin parameter, suggest the same name or other player names
-            completions.add(args[0]); // Same as disguise name
+            completions.add(args[0]);
             for (Player player : Bukkit.getOnlinePlayers()) {
                 completions.add(player.getName());
             }

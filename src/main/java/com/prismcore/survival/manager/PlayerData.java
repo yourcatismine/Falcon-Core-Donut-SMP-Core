@@ -28,6 +28,14 @@ public class PlayerData {
     private boolean teamChat = false;
     private String pendingKickTeamName = null;
     private boolean nameHidden = false;
+    private boolean disguised = false;
+    private String disguiseName = null;
+    private String disguiseSkinTexture = null;
+    private String disguiseSkinSignature = null;
+    // Original LuckPerms data for restoration
+    private String originalPrimaryGroup = null;
+    private java.util.List<String> originalGroups = null;
+    private String originalPrefix = null;
     private String ip;
     private boolean unloading = false;
 
@@ -577,6 +585,62 @@ public class PlayerData {
 
     public void setNameHidden(boolean nameHidden) {
         this.nameHidden = nameHidden;
+    }
+
+    public boolean isDisguised() {
+        return disguised;
+    }
+
+    public void setDisguised(boolean disguised) {
+        this.disguised = disguised;
+    }
+
+    public String getDisguiseName() {
+        return disguiseName;
+    }
+
+    public void setDisguiseName(String disguiseName) {
+        this.disguiseName = disguiseName;
+    }
+
+    public String getDisguiseSkinTexture() {
+        return disguiseSkinTexture;
+    }
+
+    public void setDisguiseSkinTexture(String disguiseSkinTexture) {
+        this.disguiseSkinTexture = disguiseSkinTexture;
+    }
+
+    public String getDisguiseSkinSignature() {
+        return disguiseSkinSignature;
+    }
+
+    public void setDisguiseSkinSignature(String disguiseSkinSignature) {
+        this.disguiseSkinSignature = disguiseSkinSignature;
+    }
+
+    public String getOriginalPrimaryGroup() {
+        return originalPrimaryGroup;
+    }
+
+    public void setOriginalPrimaryGroup(String originalPrimaryGroup) {
+        this.originalPrimaryGroup = originalPrimaryGroup;
+    }
+
+    public java.util.List<String> getOriginalGroups() {
+        return originalGroups;
+    }
+
+    public void setOriginalGroups(java.util.List<String> originalGroups) {
+        this.originalGroups = originalGroups;
+    }
+
+    public String getOriginalPrefix() {
+        return originalPrefix;
+    }
+
+    public void setOriginalPrefix(String originalPrefix) {
+        this.originalPrefix = originalPrefix;
     }
 
     public boolean isUnloading() {

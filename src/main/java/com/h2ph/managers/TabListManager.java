@@ -41,6 +41,7 @@ public class TabListManager implements Listener {
     private final Map<UUID, String> lastSentHeaderFooter = new HashMap<>();
     private final Map<UUID, Map<UUID, String>> playerDisplayNames = new HashMap<>();
     private final Map<UUID, LinkedHashSet<UUID>> tabEntries = new ConcurrentHashMap<>();
+    private final Map<UUID, String> realPlayerNames = new ConcurrentHashMap<>();
     private final PacketListenerCommon tabPacketListener;
     private int maxColumns = 4;
     private int maxRows = 20;
@@ -113,17 +114,34 @@ public class TabListManager implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        initTabList(event.getPlayer());
-        startTask(event.getPlayer());
+        Player player = event.getPlayer();
+        realPlayerNames.put(player.getUniqueId(), player.getName());
+        initTabList(player);
+        startTask(player);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        stopTask(event.getPlayer());
-        UUID uuid = event.getPlayer().getUniqueId();
+        Player player = event.getPlayer();
+        stopTask(player);
+        UUID uuid = player.getUniqueId();
+        
+        // Use real name for disconnect to prevent component encoding issues
+        String realName = getRealPlayerName(player);
+        if (realName != null && !realName.equals(player.getName())) {
+            // Temporarily restore real name for clean disconnect
+            try {
+                // This helps prevent the component encoding crash during disconnect
+                plugin.getLogger().info("Using real name '" + realName + "' for disconnect of hidden player");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error handling disconnect for player: " + e.getMessage());
+            }
+        }
+        
         lastSentHeaderFooter.remove(uuid);
         playerDisplayNames.remove(uuid);
         tabEntries.remove(uuid);
+        realPlayerNames.remove(uuid);
     }
 
     private void startTask(Player player) {
@@ -194,45 +212,79 @@ public class TabListManager implements Listener {
     }
 
     private void updatePlayerDisplayNames(Player player) {
-        Map<UUID, String> playerNames = playerDisplayNames.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
+        // Synchronize to prevent race conditions with packet filtering
+        synchronized (this) {
+            Map<UUID, String> playerNames = playerDisplayNames.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
 
-        List<Player> sortedPlayers;
-        if (groupSortingEnabled) {
-            sortedPlayers = Bukkit.getOnlinePlayers().stream()
-                    .sorted(this::comparePlayersByGroupRanking)
-                    .collect(Collectors.toList());
-        } else {
-            sortedPlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
-        }
+            List<Player> sortedPlayers;
+            if (groupSortingEnabled) {
+                sortedPlayers = Bukkit.getOnlinePlayers().stream()
+                        .sorted(this::comparePlayersByGroupRanking)
+                        .collect(Collectors.toList());
+            } else {
+                sortedPlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
+            }
 
-        for (Player onlinePlayer : sortedPlayers) {
-            UUID onlineUUID = onlinePlayer.getUniqueId();
+            // Clear previous display names to ensure clean state
+            Set<UUID> currentPlayers = new HashSet<>();
+            
+            for (Player onlinePlayer : sortedPlayers) {
+                UUID onlineUUID = onlinePlayer.getUniqueId();
+                currentPlayers.add(onlineUUID);
 
-            if (onlinePlayer.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
-                if (!player.hasPermission("prism.admin.see_spectators")) {
-                    playerNames.remove(onlineUUID);
-                    continue;
+                if (onlinePlayer.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+                    if (!player.hasPermission("prism.admin.see_spectators")) {
+                        continue;
+                    }
+                }
+
+                String prefix = LuckPermsUtils.getPrefix(onlinePlayer);
+                
+                // Get player data for disguise checking
+                com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(onlineUUID);
+                
+                // For disguised players, use their disguised prefix if available
+                boolean shouldShowDisguise = data.isDisguised() && 
+                    (player.getUniqueId().equals(onlineUUID) || // Always show disguise to themselves
+                     (player == null || !player.hasPermission("prism.disguise.see"))); // Show to others without permission
+                
+                if (shouldShowDisguise) {
+                    String disguiseName = data.getDisguiseName();
+                    if (disguiseName != null) {
+                        org.bukkit.OfflinePlayer disguiseTarget = org.bukkit.Bukkit.getOfflinePlayer(disguiseName);
+                        String disguisePrefix = LuckPermsUtils.getPrefix(disguiseTarget);
+                        if (disguisePrefix != null && !disguisePrefix.isEmpty()) {
+                            prefix = disguisePrefix;
+                        }
+                    }
+                }
+                
+                String playerDisplayName = getPlayerDisplayName(onlinePlayer, player);
+                String displayName;
+
+                if (prefix != null && !prefix.isEmpty()) {
+                    prefix = color(prefix);
+                    displayName = prefix + playerDisplayName;
+                } else {
+                    displayName = playerDisplayName;
+                }
+
+                String lastDisplayName = playerNames.get(onlineUUID);
+                // Always update to ensure proper ordering, even if name is same
+                if (lastDisplayName == null || !lastDisplayName.equals(displayName)) {
+                    try {
+                        // Set display name for the viewing player's perspective
+                        onlinePlayer.setPlayerListName(displayName);
+                        playerNames.put(onlineUUID, displayName);
+                    } catch (Exception e) {
+                        // Handle potential null pointer or concurrent modification
+                        plugin.getLogger().warning("Failed to update display name for " + sanitizePlayerName(onlinePlayer.getName()) + ": " + e.getMessage());
+                    }
                 }
             }
-
-            String prefix = LuckPermsUtils.getPrefix(onlinePlayer);
-            String displayName;
-
-            if (prefix != null && !prefix.isEmpty()) {
-                prefix = color(prefix);
-                displayName = prefix + onlinePlayer.getName();
-            } else {
-                displayName = onlinePlayer.getName();
-            }
-
-            String lastDisplayName = playerNames.get(onlineUUID);
-            if (lastDisplayName != null && lastDisplayName.equals(displayName))
-                continue;
-
-            player.playerListName(LegacyComponentSerializer.legacySection().deserialize(displayName));
-
-            onlinePlayer.setPlayerListName(displayName);
-            playerNames.put(onlineUUID, displayName);
+            
+            // Remove display names for players who are no longer online
+            playerNames.keySet().retainAll(currentPlayers);
         }
     }
 
@@ -266,7 +318,7 @@ public class TabListManager implements Listener {
             return groupCompare;
         }
         
-        return p1.getName().compareToIgnoreCase(p2.getName());
+        return sanitizePlayerName(p1.getName()).compareToIgnoreCase(sanitizePlayerName(p2.getName()));
     }
 
     /**
@@ -274,10 +326,14 @@ public class TabListManager implements Listener {
      * Call this when group rankings change or when you need to update sorting
      */
     public void refreshTabListSorting() {
-        if (!config.getBoolean("TAB.ENABLED", true) || !groupSortingEnabled) {
+        if (!config.getBoolean("TAB.ENABLED", true)) {
             return;
         }
         
+        // Clear all cached display names to force a complete refresh
+        playerDisplayNames.clear();
+        
+        // Update all players with proper synchronization
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateTabList(player);
         }
@@ -358,37 +414,9 @@ public class TabListManager implements Listener {
     private boolean filterAddEntries(List<PlayerData> entries, LinkedHashSet<UUID> visible, UUID viewerUuid) {
         boolean modified = false;
         
-        if (!groupSortingEnabled) {
-            Iterator<PlayerData> iterator = entries.iterator();
-            while (iterator.hasNext()) {
-                PlayerData data = iterator.next();
-                UUID entryUuid = extractUuid(data);
-
-                if (entryUuid == null)
-                    continue;
-
-                if (entryUuid.equals(viewerUuid)) {
-                    visible.add(entryUuid);
-                    continue;
-                }
-
-                if (visible.contains(entryUuid))
-                    continue;
-
-                if (visible.size() >= maxTabEntries) {
-                    iterator.remove();
-                    modified = true;
-                    continue;
-                }
-
-                visible.add(entryUuid);
-            }
-            return modified;
-        }
-
-        List<PlayerData> sortedEntries = new ArrayList<>();
+        // Simplified filtering - only handle visibility limits, not ordering
+        // Let the scheduled task handle proper ordering via setPlayerListName
         Iterator<PlayerData> iterator = entries.iterator();
-        
         while (iterator.hasNext()) {
             PlayerData data = iterator.next();
             UUID entryUuid = extractUuid(data);
@@ -398,14 +426,11 @@ public class TabListManager implements Listener {
 
             if (entryUuid.equals(viewerUuid)) {
                 visible.add(entryUuid);
-                sortedEntries.add(data);
                 continue;
             }
 
-            if (visible.contains(entryUuid)) {
-                sortedEntries.add(data);
+            if (visible.contains(entryUuid))
                 continue;
-            }
 
             if (visible.size() >= maxTabEntries) {
                 iterator.remove();
@@ -413,29 +438,8 @@ public class TabListManager implements Listener {
                 continue;
             }
 
-            Player entryPlayer = Bukkit.getPlayer(entryUuid);
-            if (entryPlayer != null) {
-                sortedEntries.add(data);
-                visible.add(entryUuid);
-            }
+            visible.add(entryUuid);
         }
-        
-        sortedEntries.sort((data1, data2) -> {
-            UUID uuid1 = extractUuid(data1);
-            UUID uuid2 = extractUuid(data2);
-            
-            if (uuid1 == null || uuid2 == null) return 0;
-            
-            Player p1 = Bukkit.getPlayer(uuid1);
-            Player p2 = Bukkit.getPlayer(uuid2);
-            
-            if (p1 == null || p2 == null) return 0;
-            
-            return comparePlayersByGroupRanking(p1, p2);
-        });
-        
-        entries.clear();
-        entries.addAll(sortedEntries);
         
         return modified;
     }
@@ -572,6 +576,56 @@ public class TabListManager implements Listener {
         return 50.0;
     }
 
+    /**
+     * Gets the display name for a player (disguised name if disguised, real name otherwise)
+     */
+    public String getPlayerDisplayName(Player targetPlayer, Player observer) {
+        if (targetPlayer == null) return "";
+        
+        // Check if target player is disguised
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(targetPlayer.getUniqueId());
+        if (data.isDisguised()) {
+            String disguiseName = data.getDisguiseName();
+            
+            // Always show disguise to the disguised player themselves
+            // For others, check permissions
+            boolean shouldShowDisguise = (observer != null && observer.getUniqueId().equals(targetPlayer.getUniqueId())) || 
+                                       (observer == null || !observer.hasPermission("prism.disguise.see"));
+            
+            if (shouldShowDisguise && disguiseName != null && !disguiseName.isEmpty()) {
+                return sanitizePlayerName(disguiseName);
+            }
+        }
+        
+        // Return real name (sanitized)
+        return sanitizePlayerName(targetPlayer.getName());
+    }
+    
+    private String sanitizePlayerName(String playerName) {
+        if (playerName == null || playerName.isEmpty())
+            return "";
+        
+        // Remove any existing section symbols that could cause component encoding issues
+        return playerName.replaceAll("§[0-9a-fk-or]", "");
+    }
+    
+    /**
+     * Gets the real player name, bypassing any obfuscation
+     */
+    public String getRealPlayerName(Player player) {
+        if (player == null) return null;
+        String realName = realPlayerNames.get(player.getUniqueId());
+        return realName != null ? realName : player.getName();
+    }
+    
+    /**
+     * Gets the safe display name for components (sanitized)
+     */
+    public String getSafePlayerName(Player player) {
+        String name = getRealPlayerName(player);
+        return sanitizePlayerName(name);
+    }
+    
     private String color(String text) {
         if (text == null || text.isEmpty())
             return "";

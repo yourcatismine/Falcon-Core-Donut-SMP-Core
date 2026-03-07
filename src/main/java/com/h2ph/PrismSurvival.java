@@ -552,6 +552,10 @@ public class PrismSurvival extends JavaPlugin {
 
         getCommand("hide").setExecutor(new com.h2ph.commands.player.HideNameCommand(this));
 
+        com.h2ph.commands.player.DisguiseCommand disguiseCommand = new com.h2ph.commands.player.DisguiseCommand(this);
+        getCommand("disguise").setExecutor(disguiseCommand);
+        getCommand("disguise").setTabCompleter(disguiseCommand);
+
         getCommand("ignore").setExecutor(new com.h2ph.commands.player.IgnoreCommand(this));
         getCommand("unignore").setExecutor(new com.h2ph.commands.player.UnignoreCommand(this));
         com.h2ph.commands.admin.moderations.InvSeeCommand invSeeCmd = new com.h2ph.commands.admin.moderations.InvSeeCommand(
@@ -666,6 +670,10 @@ public class PrismSurvival extends JavaPlugin {
 
         if (this.databaseManager != null) {
             this.databaseManager.shutdown();
+        }
+
+        if (this.schedulerAdapter != null) {
+            this.schedulerAdapter.shutdown();
         }
 
         getLogger().info("PrismCore has been disabled!");

@@ -209,7 +209,7 @@ public class PlayerDataManager {
             try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
                 if (conn != null && !conn.isClosed()) {
                     try (PreparedStatement stmt = conn.prepareStatement(
-                            "SELECT ps.team, ps.name_hidden, tm.role FROM player_stats ps " +
+                            "SELECT ps.team, ps.name_hidden, ps.disguised, ps.disguise_name, ps.disguise_skin_texture, ps.disguise_skin_signature, tm.role FROM player_stats ps " +
                                     "LEFT JOIN team_members tm ON ps.uuid = tm.uuid AND ps.team = tm.team_id " +
                                     "WHERE ps.uuid = ?")) {
                         stmt.setString(1, uuid.toString());
@@ -218,6 +218,10 @@ public class PlayerDataManager {
                                 data.setTeamId(rs.getString("team"));
                                 data.setTeamRole(rs.getString("role"));
                                 data.setNameHidden(rs.getBoolean("name_hidden"));
+                                data.setDisguised(rs.getBoolean("disguised"));
+                                data.setDisguiseName(rs.getString("disguise_name"));
+                                data.setDisguiseSkinTexture(rs.getString("disguise_skin_texture"));
+                                data.setDisguiseSkinSignature(rs.getString("disguise_skin_signature"));
                             }
                         }
                     }
@@ -347,6 +351,13 @@ public class PlayerDataManager {
 
         if (plugin.getPrismSell().getDatabaseManager().isConnected()) {
             plugin.getPrismSell().getDatabaseManager().updateNameHidden(uuid, data.isNameHidden());
+            plugin.getPrismSell().getDatabaseManager().updateDisguiseStatus(uuid, data.isDisguised());
+            if (data.isDisguised()) {
+                plugin.getPrismSell().getDatabaseManager().updateDisguiseInfo(uuid, 
+                    data.getDisguiseName(), 
+                    data.getDisguiseSkinTexture(), 
+                    data.getDisguiseSkinSignature());
+            }
         }
     }
 
@@ -356,7 +367,7 @@ public class PlayerDataManager {
      * without waiting for the full savePlayer() on logout.
      */
     public void saveMoneyAsync(UUID uuid, PlayerData data) {
-        java.util.concurrent.CompletableFuture.runAsync(() -> {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
             plugin.getDatabaseManager().savePlayerStats(uuid, data);
             plugin.getDatabaseManager().savePlayerName(uuid, data.getName());
         });

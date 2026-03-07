@@ -11,12 +11,22 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class ChatFormatter implements Listener {
 
+    private final PrismSurvival plugin;
+
     public ChatFormatter(PrismSurvival plugin) {
+        this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
+        
+        // Skip formatting if player is disguised - DisguiseCommand handles it
+        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data.isDisguised()) {
+            return; // DisguiseCommand will handle the formatting
+        }
+        
         String prefix = getPlayerPrefix(player);
 
         String format;

@@ -221,6 +221,68 @@ public class DatabaseManager {
         return false;
     }
 
+    public void updateDisguiseStatus(java.util.UUID uuid, boolean disguised) {
+        if (!isConnected())
+            return;
+        String query = "UPDATE player_stats SET disguised = ? WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setBoolean(1, disguised);
+            ps.setString(2, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+        }
+    }
+
+    public void updateDisguiseInfo(java.util.UUID uuid, String disguiseName, String skinTexture, String skinSignature) {
+        if (!isConnected())
+            return;
+        String query = "UPDATE player_stats SET disguise_name = ?, disguise_skin_texture = ?, disguise_skin_signature = ? WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, disguiseName);
+            ps.setString(2, skinTexture);
+            ps.setString(3, skinSignature);
+            ps.setString(4, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+        }
+    }
+
+    public boolean isDisguised(java.util.UUID uuid) {
+        if (!isConnected())
+            return false;
+        String query = "SELECT disguised FROM player_stats WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("disguised");
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return false;
+    }
+
+    public String[] getDisguiseInfo(java.util.UUID uuid) {
+        if (!isConnected())
+            return new String[]{null, null, null};
+        String query = "SELECT disguise_name, disguise_skin_texture, disguise_skin_signature FROM player_stats WHERE uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, uuid.toString());
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new String[]{
+                        rs.getString("disguise_name"),
+                        rs.getString("disguise_skin_texture"), 
+                        rs.getString("disguise_skin_signature")
+                    };
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return new String[]{null, null, null};
+    }
+
     public void saveSellHistoryAsync(java.util.UUID uuid, java.util.Map<String, double[]> history) {
         if (!isConnected() || history == null || history.isEmpty())
             return;

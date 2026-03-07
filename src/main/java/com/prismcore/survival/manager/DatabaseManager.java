@@ -178,6 +178,10 @@ public class DatabaseManager {
                     "last_yaw FLOAT DEFAULT 0," +
                     "last_pitch FLOAT DEFAULT 0," +
                     "ip VARCHAR(45) DEFAULT NULL," +
+                    "disguised BOOLEAN DEFAULT FALSE," +
+                    "disguise_name VARCHAR(16) DEFAULT NULL," +
+                    "disguise_skin_texture TEXT DEFAULT NULL," +
+                    "disguise_skin_signature TEXT DEFAULT NULL," +
                     "last_updated BIGINT" +
                     ")";
             s.execute(statsTable);
@@ -205,7 +209,11 @@ public class DatabaseManager {
                     "last_z DOUBLE DEFAULT 0",
                     "last_yaw FLOAT DEFAULT 0",
                     "last_pitch FLOAT DEFAULT 0",
-                    "ip VARCHAR(45) DEFAULT NULL"
+                    "ip VARCHAR(45) DEFAULT NULL",
+                    "disguised BOOLEAN DEFAULT FALSE",
+                    "disguise_name VARCHAR(16) DEFAULT NULL",
+                    "disguise_skin_texture TEXT DEFAULT NULL",
+                    "disguise_skin_signature TEXT DEFAULT NULL"
             };
 
             for (String columnDef : statsColumns) {
@@ -1251,7 +1259,7 @@ public class DatabaseManager {
     }
 
     public void saveAuctionItemAsync(com.prismcore.survival.auction.AuctionItem item) {
-        CompletableFuture.runAsync(() -> saveAuctionItem(item));
+        plugin.getSchedulerAdapter().runTaskAsync(() -> saveAuctionItem(item));
     }
 
     public void deleteAuctionItem(UUID itemId) {
@@ -1266,39 +1274,38 @@ public class DatabaseManager {
     }
 
     public void deleteAuctionItemAsync(UUID itemId) {
-        CompletableFuture.runAsync(() -> deleteAuctionItem(itemId));
+        plugin.getSchedulerAdapter().runTaskAsync(() -> deleteAuctionItem(itemId));
     }
 
     public void savePlayerNameAsync(UUID uuid, String name) {
-        CompletableFuture.runAsync(() -> savePlayerName(uuid, name));
+        plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayerName(uuid, name));
     }
 
     public void addAuctionTransactionAsync(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
-        CompletableFuture.runAsync(() -> addAuctionTransaction(playerUuid, tx));
+        plugin.getSchedulerAdapter().runTaskAsync(() -> addAuctionTransaction(playerUuid, tx));
     }
 
     public void deleteAuctionTransactionAsync(UUID playerUuid, long timestamp, double price) {
-        CompletableFuture.runAsync(() -> deleteAuctionTransaction(playerUuid, timestamp, price));
+        plugin.getSchedulerAdapter().runTaskAsync(() -> deleteAuctionTransaction(playerUuid, timestamp, price));
     }
 
     public void updateStatusAsync(UUID uuid, String status) {
-        if (!isConnected())
-            return;
-        CompletableFuture.runAsync(() -> {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String query = "UPDATE player_stats SET status = ? WHERE uuid = ?";
             try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, status);
                 ps.setString(2, uuid.toString());
                 ps.executeUpdate();
             } catch (SQLException e) {
+                // Connection will be handled gracefully by the try-catch
             }
         });
     }
 
     public void saveLastLocationAsync(UUID uuid, org.bukkit.Location loc) {
-        if (!isConnected() || loc == null || loc.getWorld() == null)
+        if (loc == null || loc.getWorld() == null)
             return;
-        CompletableFuture.runAsync(() -> {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String query = "UPDATE player_stats SET last_world = ?, last_x = ?, last_y = ?, last_z = ?, last_yaw = ?, last_pitch = ? WHERE uuid = ?";
             try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, loc.getWorld().getName());
@@ -1310,6 +1317,7 @@ public class DatabaseManager {
                 ps.setString(7, uuid.toString());
                 ps.executeUpdate();
             } catch (SQLException e) {
+                // Connection will be handled gracefully by the try-catch
             }
         });
     }

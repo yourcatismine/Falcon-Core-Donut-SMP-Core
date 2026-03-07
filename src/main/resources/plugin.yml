@@ -303,6 +303,12 @@ commands:
     usage: /hide
     permission: prism.hidename
 
+  disguise:
+    description: Disguise as another player with custom name and skin
+    usage: /disguise <playername> [skin] | /disguise off | /disguise list
+    permission: prism.disguise
+    aliases: [dis]
+
   bounty:
     description: Manage player bounties
     usage: /bounty [add <player> <amount>]

@@ -3,13 +3,42 @@ package com.prismcore.survival.scheduler;
 import com.h2ph.PrismSurvival;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
 public class SchedulerAdapter {
 
     private final PrismSurvival plugin;
-
+    private final ExecutorService boundedExecutor;
+    private final AtomicInteger threadCounter = new AtomicInteger(0);
+    
     public SchedulerAdapter(PrismSurvival plugin) {
         this.plugin = plugin;
+        // Create bounded thread pool with max 8 threads to prevent exhaustion
+        this.boundedExecutor = Executors.newFixedThreadPool(8, new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r, "PrismCore-BoundedAsync-" + threadCounter.incrementAndGet());
+                t.setDaemon(true); // Don't prevent JVM shutdown
+                return t;
+            }
+        });
+    }
+    
+    public void shutdown() {
+        if (boundedExecutor != null && !boundedExecutor.isShutdown()) {
+            boundedExecutor.shutdown();
+            try {
+                if (!boundedExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    boundedExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                boundedExecutor.shutdownNow();
+            }
+        }
     }
 
     /**
@@ -30,19 +59,37 @@ public class SchedulerAdapter {
     }
 
     /**
-     * Run a task async
+     * Run a task async using bounded thread pool
      */
     public void runTaskAsync(Runnable task) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
-            if (task != null) {
-                task.run();
+            // Fallback: run on current thread if plugin is shutting down
+            if (task != null && plugin != null) {
+                try {
+                    task.run();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Error executing fallback task: " + e.getMessage());
+                }
             }
             return;
         }
-        try {
-            Bukkit.getAsyncScheduler().runNow(plugin, scheduledTask -> task.run());
-        } catch (NoSuchMethodError | NoClassDefFoundError e) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, task);
+        
+        // Use bounded executor instead of unbounded Folia scheduler
+        if (boundedExecutor != null && !boundedExecutor.isShutdown()) {
+            boundedExecutor.submit(() -> {
+                try {
+                    task.run();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Error in bounded async task: " + e.getMessage());
+                }
+            });
+        } else {
+            // Emergency fallback - but avoid creating new threads
+            try {
+                task.run(); // Execute synchronously as last resort
+            } catch (Exception ex) {
+                plugin.getLogger().warning("Failed to execute emergency task: " + ex.getMessage());
+            }
         }
     }
 

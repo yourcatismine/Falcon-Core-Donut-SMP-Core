@@ -23,9 +23,13 @@ public class ToolsManager {
     public static NamespacedKey BOOSTER_KEY;
     public static NamespacedKey AUCTION_PAUSED_KEY;
     public static NamespacedKey LAST_UPDATE_KEY;
+    public static NamespacedKey ORDERS_PAUSED_KEY;
+    public static NamespacedKey SHOP_PAUSED_KEY;
+    public static NamespacedKey STORAGE_PAUSED_KEY;
 
     private static ToolsManager instance;
     private ContainerScanner containerScanner;
+    private AmethystTimerManager timerManager;
 
     public ToolsManager(PrismSurvival plugin) {
         this.plugin = plugin;
@@ -36,8 +40,12 @@ public class ToolsManager {
         BOOSTER_KEY = new NamespacedKey(plugin, "is-shardbooster");
         AUCTION_PAUSED_KEY = new NamespacedKey(plugin, "auction-paused");
         LAST_UPDATE_KEY = new NamespacedKey(plugin, "last-lore-update");
+        ORDERS_PAUSED_KEY = new NamespacedKey(plugin, "orders-paused");
+        SHOP_PAUSED_KEY = new NamespacedKey(plugin, "shop-paused");
+        STORAGE_PAUSED_KEY = new NamespacedKey(plugin, "storage-paused");
         loadConfig();
         this.containerScanner = new ContainerScanner(plugin, this);
+        this.timerManager = new AmethystTimerManager(this);
         registerListeners();
         startUpdateTask();
     }
@@ -457,5 +465,74 @@ public class ToolsManager {
         item.setItemMeta(meta);
         player.getInventory().addItem(item);
         player.sendMessage(Utils.formatColors("&aGiven Sell Axe to &f" + player.getName()));
+    }
+    
+    /**
+     * Pauses amethyst tool timers for items going into orders storage.
+     * Call this when items are stored in the orders system.
+     * 
+     * @param item The item to pause timers for
+     */
+    public void pauseOrdersTimers(org.bukkit.inventory.ItemStack item) {
+        timerManager.pauseAmethystTimers(item, System.currentTimeMillis(), ORDERS_PAUSED_KEY);
+    }
+    
+    /**
+     * Resumes amethyst tool timers for items coming out of orders storage.
+     * Call this when items are retrieved from the orders system.
+     * 
+     * @param item The item to resume timers for
+     */
+    public void resumeOrdersTimers(org.bukkit.inventory.ItemStack item) {
+        timerManager.resumeAmethystTimers(item, ORDERS_PAUSED_KEY);
+    }
+    
+    /**
+     * Pauses amethyst tool timers for items going into shop/selling systems.
+     * Call this when items are sold through shops.
+     * 
+     * @param item The item to pause timers for
+     */
+    public void pauseShopTimers(org.bukkit.inventory.ItemStack item) {
+        timerManager.pauseAmethystTimers(item, System.currentTimeMillis(), SHOP_PAUSED_KEY);
+    }
+    
+    /**
+     * Resumes amethyst tool timers for items coming out of shop/selling systems.
+     * Call this when items are retrieved from shops.
+     * 
+     * @param item The item to resume timers for
+     */
+    public void resumeShopTimers(org.bukkit.inventory.ItemStack item) {
+        timerManager.resumeAmethystTimers(item, SHOP_PAUSED_KEY);
+    }
+    
+    /**
+     * Pauses amethyst tool timers for items going into generic storage.
+     * Call this when items are put into any storage system.
+     * 
+     * @param item The item to pause timers for
+     */
+    public void pauseStorageTimers(org.bukkit.inventory.ItemStack item) {
+        timerManager.pauseAmethystTimers(item, System.currentTimeMillis(), STORAGE_PAUSED_KEY);
+    }
+    
+    /**
+     * Resumes amethyst tool timers for items coming out of generic storage.
+     * Call this when items are retrieved from any storage system.
+     * 
+     * @param item The item to resume timers for
+     */
+    public void resumeStorageTimers(org.bukkit.inventory.ItemStack item) {
+        timerManager.resumeAmethystTimers(item, STORAGE_PAUSED_KEY);
+    }
+    
+    /**
+     * Gets the timer manager instance for advanced operations.
+     * 
+     * @return The AmethystTimerManager instance
+     */
+    public AmethystTimerManager getTimerManager() {
+        return timerManager;
     }
 }

@@ -91,6 +91,23 @@ public class OrderManager {
     }
 
     public void cancel(Order o) {
+        // ANTI-DUPE FIX: Get fresh order data from database to prevent stale refund calculations
+        synchronized (this) {
+            Order freshOrder = this.getOrder(o.id);
+            if (freshOrder == null) {
+                throw new IllegalStateException("Order " + o.id + " not found in database");
+            }
+            if (freshOrder.canceled) {
+                throw new IllegalStateException("Order " + o.id + " is already canceled");
+            }
+            
+            // Update the order object with fresh data to ensure accurate refund calculation
+            o.delivered = freshOrder.delivered;
+            o.completed = freshOrder.completed;
+            o.canceled = freshOrder.canceled;
+            o.requested = freshOrder.requested;
+        }
+        
         o.canceled = true;
         int remaining = o.remainingAmount();
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
@@ -102,7 +119,7 @@ public class OrderManager {
         this.saveOrder(o);
 
         PrismSurvival.getInstance().getActivityLogger().log(o.owner, ActivityLogger.LogType.ORDER,
-                "Cancelled this order (" + o.key.displayName() + ")");
+                "Cancelled this order (" + o.key.displayName() + ") - Refunded: $" + String.format("%.2f", refund));
     }
 
     public void applyDelivery(Order o, List<ItemStack> accepted, int acceptedAmount, UUID deliverer) {
@@ -148,6 +165,12 @@ public class OrderManager {
                         int canAdd = stored.getMaxStackSize() - stored.getAmount();
                         if (canAdd > 0) {
                             int toAdd = Math.min(canAdd, it.getAmount());
+                            // Pause amethyst tool timers when adding to existing storage stacks
+                            if (toAdd > 0) {
+                                ItemStack toAddStack = it.clone();
+                                toAddStack.setAmount(toAdd);
+                                com.prismcore.survival.tools.ToolsManager.getInstance().pauseOrdersTimers(toAddStack);
+                            }
                             stored.setAmount(stored.getAmount() + toAdd);
                             it.setAmount(it.getAmount() - toAdd);
                             if (it.getAmount() <= 0) {
@@ -158,6 +181,8 @@ public class OrderManager {
                     }
                 }
                 if (!merged && it.getAmount() > 0) {
+                    // Pause amethyst tool timers when storing items in orders
+                    com.prismcore.survival.tools.ToolsManager.getInstance().pauseOrdersTimers(it);
                     o.storage.add(it);
                 }
             }

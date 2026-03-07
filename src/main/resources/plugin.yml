@@ -1,4 +1,4 @@
-name: PrismCore
+name: Sphynx
 version: '1.0.0'
 main: com.h2ph.PrismSurvival
 api-version: '1.21'

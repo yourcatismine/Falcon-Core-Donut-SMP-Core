@@ -268,6 +268,9 @@ public class CollectItemsMenu
                         int initialAmount = toAdd.getAmount();
 
                         if (action == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                            // Resume amethyst tool timers before moving to inventory
+                            com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(toAdd);
+                            
                             HashMap<Integer, ItemStack> leftovers = this.p.getInventory().addItem(toAdd);
                             int rem = leftovers.isEmpty() ? 0 : leftovers.get(0).getAmount();
                             if (rem < initialAmount) {
@@ -295,8 +298,10 @@ public class CollectItemsMenu
                                 }
 
                                 ItemStack taking = toAdd.clone();
-                                taking.setAmount(toTake);
-                                e.getView().setCursor(taking);
+                                taking.setAmount(toTake);                                
+                                // Resume amethyst tool timers when retrieving items
+                                com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(taking);
+                                                                e.getView().setCursor(taking);
 
                                 if (toTake >= initialAmount) {
                                     this.order.storage.remove(index);
@@ -313,6 +318,14 @@ public class CollectItemsMenu
                                     int canTake = cursor.getMaxStackSize() - cursor.getAmount();
                                     if (canTake > 0) {
                                         int toTake = Math.min(canTake, initialAmount);
+                                        
+                                        // Resume amethyst tool timers for the amount being taken
+                                        if (toTake > 0) {
+                                            ItemStack takenStack = item.clone();
+                                            takenStack.setAmount(toTake);
+                                            com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(takenStack);
+                                        }
+                                        
                                         cursor.setAmount(cursor.getAmount() + toTake);
 
                                         if (toTake >= initialAmount) {

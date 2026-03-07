@@ -178,6 +178,8 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                 o.storage.clear();
 
                 for (ItemStack item : items) {
+                    // Resume amethyst tool timers when collecting items from orders
+                    com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(item);
                     HashMap<Integer, ItemStack> leftovers = admin.getInventory().addItem(item);
                     if (!leftovers.isEmpty()) {
                         for (ItemStack leftover : leftovers.values()) {
@@ -215,6 +217,8 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                 o.storage.clear();
 
                 for (ItemStack item : items) {
+                    // Resume amethyst tool timers when dropping items from orders
+                    com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(item);
                     admin.getWorld().dropItem(loc, item);
                     droppedCount++;
                 }
@@ -266,6 +270,9 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
                                         recipientName);
                                 item.setItemMeta(meta);
                             }
+
+                            // Resume amethyst tool timers when refunding items to auction
+                            com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(item);
 
                             com.prismcore.survival.auction.AuctionItem ai = new com.prismcore.survival.auction.AuctionItem(
                                     UUID.randomUUID(),

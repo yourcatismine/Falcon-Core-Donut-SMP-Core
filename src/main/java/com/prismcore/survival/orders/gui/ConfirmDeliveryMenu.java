@@ -163,10 +163,14 @@ public class ConfirmDeliveryMenu
             this.finalized = true;
 
             for (ItemStack shulker : this.originalShulkers) {
+                // Resume amethyst tool timers when cancelling delivery
+                com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(shulker);
                 this.giveBackOrDrop(shulker);
             }
 
             for (ItemStack directItem : this.acceptedDirect) {
+                // Resume amethyst tool timers when cancelling delivery
+                com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(directItem);
                 this.giveBackOrDrop(directItem);
             }
 
@@ -224,6 +228,8 @@ public class ConfirmDeliveryMenu
                 }
 
                 for (ItemStack processedShulker : this.processedShulkers) {
+                    // Resume amethyst tool timers when returning processed shulkers
+                    com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(processedShulker);
                     this.giveBackOrDrop(processedShulker);
                 }
 
@@ -263,9 +269,13 @@ public class ConfirmDeliveryMenu
         }
         if (!this.finalized) {
             for (ItemStack shulker : this.originalShulkers) {
+                // Resume amethyst tool timers when returning original shulkers
+                com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(shulker);
                 this.giveBackOrDrop(shulker);
             }
             for (ItemStack directItem : this.acceptedDirect) {
+                // Resume amethyst tool timers when returning direct items
+                com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(directItem);
                 this.giveBackOrDrop(directItem);
             }
             TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,

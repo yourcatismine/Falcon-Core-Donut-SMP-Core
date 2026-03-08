@@ -119,7 +119,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         String name = args[1];
         if (!name.contains("&") && !name.contains("§") && !name.contains("#")) {
-            name = "&d" + name;
+            name = "&6" + name;
         }
 
         if (name.length() < 3 || name.length() > 32) {
@@ -159,20 +159,24 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-        if (!target.hasPlayedBefore() && !target.isOnline()) {
-            sendAlert(player, "&cThat player does not exist.", Sound.ENTITY_VILLAGER_NO);
+        final String targetName = args[1];
+        Player onlineTarget = Bukkit.getPlayerExact(targetName);
+
+        if (onlineTarget == null) {
+            // Player is not online - do blocking getOfflinePlayer lookup async to avoid TPS impact
+            plugin.getSchedulerAdapter().runTaskAsync(() -> {
+                OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
+                boolean exists = offlineTarget.hasPlayedBefore();
+                plugin.getSchedulerAdapter().runTask(() -> {
+                    if (exists) {
+                        sendAlert(player, "&cThat player is not online.", Sound.ENTITY_VILLAGER_NO);
+                    } else {
+                        sendAlert(player, "&cThat player does not exist.", Sound.ENTITY_VILLAGER_NO);
+                    }
+                });
+            });
             return;
         }
-
-        if (!target.isOnline()) {
-            sendAlert(player, "&cThat player is not online.", Sound.ENTITY_VILLAGER_NO);
-            return;
-        }
-
-        Player onlineTarget = target.getPlayer();
-        if (onlineTarget == null)
-            return;
 
         if (onlineTarget.getUniqueId().equals(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You cannot invite yourself!");
@@ -191,7 +195,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         plugin.getTeamInviteManager().sendInvite(onlineTarget.getUniqueId(), player.getName(), team.getName(),
                 team.getId());
-        sendAlert(player, "&7You invited &d" + onlineTarget.getName() + "&7 to your team.",
+        sendAlert(player, "&7You invited &6" + onlineTarget.getName() + "&7 to your team.",
                 Sound.BLOCK_NOTE_BLOCK_IRON_XYLOPHONE);
     }
 
@@ -322,7 +326,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         plugin.getTeamInviteManager().sendKick(target.getUniqueId(), player.getName(), team.getName(), team.getId());
 
         sendAlert(player,
-                "&7You kicked &d" + (target.getName() != null ? target.getName() : targetName) + "&7 to your team.",
+                "&7You kicked &6" + (target.getName() != null ? target.getName() : targetName) + "&7 to your team.",
                 null);
     }
 
@@ -359,21 +363,21 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(Player player) {
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         player.sendMessage(Utils.formatColors("&8&m----------------------------------------"));
-        player.sendMessage(Utils.formatColors("&d&lTEAM COMMANDS"));
+        player.sendMessage(Utils.formatColors("&6&lTEAM COMMANDS"));
 
         if (data.getTeamId() == null) {
-            player.sendMessage(Utils.formatColors("&d/team create <name> &7- Create a team"));
-            player.sendMessage(Utils.formatColors("&d/team join <player> &7- Join a team"));
+            player.sendMessage(Utils.formatColors("&6/team create <name> &7- Create a team"));
+            player.sendMessage(Utils.formatColors("&6/team join <player> &7- Join a team"));
         } else {
             if ("OWNER".equals(data.getTeamRole())) {
-                player.sendMessage(Utils.formatColors("&d/team invite <player> &7- Invite a player"));
+                player.sendMessage(Utils.formatColors("&6/team invite <player> &7- Invite a player"));
             }
-            player.sendMessage(Utils.formatColors("&d/team leave &7- Leave current team"));
+            player.sendMessage(Utils.formatColors("&6/team leave &7- Leave current team"));
             if ("OWNER".equals(data.getTeamRole())) {
-                player.sendMessage(Utils.formatColors("&d/team kick <player> &7- Kick a member"));
-                player.sendMessage(Utils.formatColors("&d/team disband &7- Disband the team"));
+                player.sendMessage(Utils.formatColors("&6/team kick <player> &7- Kick a member"));
+                player.sendMessage(Utils.formatColors("&6/team disband &7- Disband the team"));
             }
-            player.sendMessage(Utils.formatColors("&d/team chat &7- Toggle team chat"));
+            player.sendMessage(Utils.formatColors("&6/team chat &7- Toggle team chat"));
         }
         player.sendMessage(Utils.formatColors("&8&m----------------------------------------"));
     }

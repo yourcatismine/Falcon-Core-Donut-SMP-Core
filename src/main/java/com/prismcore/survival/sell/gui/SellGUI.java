@@ -297,6 +297,8 @@ public class SellGUI
 
             PlayerData sellData = this.plugin.getPlayerDataManager().getPlayerData(player.getUniqueId());
             sellData.setSellMade(sellData.getSellMade() + totalSold);
+            // Invalidate sell leaderboard cache
+            this.plugin.getPlugin().getPlayerDataManager().invalidateSellLeaderboard();
             this.plugin.getPlayerDataManager().savePlayerDataAsync(player.getUniqueId());
 
             String formattedAmount = MessageUtil.formatMoney(totalSold);

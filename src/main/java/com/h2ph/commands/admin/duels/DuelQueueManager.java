@@ -165,7 +165,7 @@ public class DuelQueueManager implements Listener {
         gui.setItem(13, statsItem);
 
         ItemStack regionItem = createItem(Material.FEATHER, "&aʀᴇɢɪᴏɴ",
-                "&7Europe (&5" + ping + "ms&7)");
+                "&7Europe (&#A9833D" + ping + "ms&7)");
         gui.setItem(14, regionItem);
 
         boolean isInQueue = queuedPlayers.containsKey(uuid);
@@ -246,7 +246,7 @@ public class DuelQueueManager implements Listener {
             } else {
                 String estimatedTime = calculateEstimatedWait(queuedPlayers.size());
                 actionBarMsg = ChatColor.translateAlternateColorCodes('&',
-                        "&7Searching for a Casual Duel... Estimated Time:&5 " + estimatedTime);
+                        "&7Searching for a Casual Duel... Estimated Time:&#A9833D " + estimatedTime);
             }
 
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,

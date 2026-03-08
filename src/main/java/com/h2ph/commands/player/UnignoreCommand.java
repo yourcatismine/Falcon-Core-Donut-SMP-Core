@@ -94,7 +94,7 @@ public class UnignoreCommand implements CommandExecutor, TabCompleter {
         playerData.removeIgnoredPlayer(targetUuid);
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
-        String confirmMsg = ChatColor.translateAlternateColorCodes('&', "&7You unignored&d " + targetName + "&7.");
+        String confirmMsg = ChatColor.translateAlternateColorCodes('&', "&7You unignored &6" + targetName + "&7.");
         player.sendMessage(confirmMsg);
         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(confirmMsg));

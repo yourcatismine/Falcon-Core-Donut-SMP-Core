@@ -10,10 +10,10 @@ kill-reward:
 # Messages
 messages:
   passive:
-    chat: "&7You have received &5{shard} prisms."
-    actionbar: "&7You have received &5{shard} prisms."
+    chat: "&7You have received &6{shard} prisms."
+    actionbar: "&7You have received &6{shard} prisms."
   active:
-    actionbar: "&5+{shards} prisms&7 for killing &f{PLAYER}"
+    actionbar: "&6+{shards} prisms&7 for killing &f{PLAYER}"
 
 # Sounds
 sounds:

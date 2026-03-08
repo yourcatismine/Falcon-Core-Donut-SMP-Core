@@ -298,6 +298,23 @@ public class DatabaseManager {
                     ")";
             s.execute(blockHistoryTable);
 
+            String pvpSafeZonesTable = "CREATE TABLE IF NOT EXISTS pvp_safe_zones (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "name VARCHAR(64) NOT NULL UNIQUE," +
+                    "world VARCHAR(64) NOT NULL," +
+                    "min_x DOUBLE NOT NULL," +
+                    "min_y DOUBLE NOT NULL," +
+                    "min_z DOUBLE NOT NULL," +
+                    "max_x DOUBLE NOT NULL," +
+                    "max_y DOUBLE NOT NULL," +
+                    "max_z DOUBLE NOT NULL," +
+                    "created_by VARCHAR(36) NOT NULL," +
+                    "created_at BIGINT NOT NULL," +
+                    "INDEX name_idx (name)," +
+                    "INDEX world_idx (world)" +
+                    ")";
+            s.execute(pvpSafeZonesTable);
+
             String chunkVisitsTable = "CREATE TABLE IF NOT EXISTS player_chunk_visits (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "world VARCHAR(64) NOT NULL," +
@@ -314,6 +331,20 @@ public class DatabaseManager {
                     "INDEX timestamp_idx (last_visit)" +
                     ")";
             s.execute(chunkVisitsTable);
+
+            String temporaryBlocksTable = "CREATE TABLE IF NOT EXISTS temporary_blocks (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "world VARCHAR(64) NOT NULL," +
+                    "x INT NOT NULL," +
+                    "y INT NOT NULL," +
+                    "z INT NOT NULL," +
+                    "original_material VARCHAR(50) NOT NULL," +
+                    "original_data TEXT," +
+                    "placed_time BIGINT NOT NULL," +
+                    "INDEX world_idx (world)," +
+                    "INDEX time_idx (placed_time)" +
+                    ")";
+            s.execute(temporaryBlocksTable);
 
         } catch (SQLException e) {
         }

@@ -229,7 +229,7 @@ public class OrderManager {
 
         if (delivererPlayer != null) {
             String msg = Utils.formatColors(
-                    "&7You have delivered &a" + formattedAmount + "&7 of &a" + itemName + "&7 to &5" + ownerName);
+                    "&7You have delivered &a" + formattedAmount + "&7 of &a" + itemName + "&7 to &#A9833D" + ownerName);
             delivererPlayer.sendMessage(msg);
             delivererPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
             delivererPlayer.playSound(delivererPlayer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
@@ -238,7 +238,7 @@ public class OrderManager {
 
         if (ownerPlayer != null) {
             String msg = Utils
-                    .formatColors("&5" + delivererName + "&7 delivered you &a" + formattedAmount + " &a" + itemName);
+                    .formatColors("&#A9833D" + delivererName + "&7 delivered you &a" + formattedAmount + " &a" + itemName);
             ownerPlayer.sendMessage(msg);
             ownerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
             ownerPlayer.playSound(ownerPlayer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);

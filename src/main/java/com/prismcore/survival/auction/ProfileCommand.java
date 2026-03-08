@@ -92,7 +92,7 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         ItemStack homesBed = new ItemStack(Material.PURPLE_BED);
         ItemMeta homesMeta = homesBed.getItemMeta();
         if (homesMeta != null) {
-            homesMeta.setDisplayName(Utils.formatColors("&dʜᴏᴍᴇѕ"));
+            homesMeta.setDisplayName(Utils.formatColors("&6ʜᴏᴍᴇѕ"));
             homesMeta.setLore(List.of(Utils.formatColors("&fClick to view homes")));
             homesBed.setItemMeta(homesMeta);
         }
@@ -101,7 +101,7 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         ItemStack enderchest = new ItemStack(Material.ENDER_CHEST);
         ItemMeta echestMeta = enderchest.getItemMeta();
         if (echestMeta != null) {
-            echestMeta.setDisplayName(Utils.formatColors("&dᴇɴᴅᴇʀᴄʜᴇѕᴛ"));
+            echestMeta.setDisplayName(Utils.formatColors("&6ᴇɴᴅᴇʀᴄʜᴇѕᴛ"));
             echestMeta.setLore(List.of(Utils.formatColors("&fClick to view enderchest")));
             enderchest.setItemMeta(echestMeta);
         }
@@ -110,7 +110,7 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
         ItemStack chest = new ItemStack(Material.CHEST);
         ItemMeta chestMeta = chest.getItemMeta();
         if (chestMeta != null) {
-            chestMeta.setDisplayName(Utils.formatColors("&dɪɴᴠᴇɴᴛᴏʀʏ"));
+            chestMeta.setDisplayName(Utils.formatColors("&6ɪɴᴠᴇɴᴛᴏʀʏ"));
             chestMeta.setLore(List.of(Utils.formatColors("&fClick to view inventory")));
             chest.setItemMeta(chestMeta);
         }

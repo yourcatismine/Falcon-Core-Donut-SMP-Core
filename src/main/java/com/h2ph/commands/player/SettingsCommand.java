@@ -180,7 +180,7 @@ public class SettingsCommand implements CommandExecutor {
             lore.add(ChatColor.translateAlternateColorCodes('&', "&fCurrently: " + status));
             lore.add("");
             if (!hasPerm) {
-                lore.add(ChatColor.translateAlternateColorCodes('&', "&5ᴘʀɪѕᴍᴘʟᴜѕ &7- &7ᴀᴄᴄᴇѕѕ ᴏɴʟʏ"));
+                lore.add(ChatColor.translateAlternateColorCodes('&', "&#A9833Dᴘʀɪѕᴍᴘʟᴜѕ &7- &7ᴀᴄᴄᴇѕѕ ᴏɴʟʏ"));
                 lore.add(ChatColor.translateAlternateColorCodes('&', "&4ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ"));
             }
 

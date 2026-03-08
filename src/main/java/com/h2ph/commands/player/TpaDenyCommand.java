@@ -41,7 +41,7 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
                 }
                 p.sendMessage(msg);
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
-                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                 return true;
             }
         } else {
@@ -52,7 +52,7 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
             p.sendMessage(msg);
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
@@ -65,10 +65,10 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
         String feedback;
         if (request.getType() == TpaRequestManager.RequestType.TPA_HERE) {
             feedback = ChatColor.translateAlternateColorCodes('&',
-                    "&7You denied &5" + smallCapsSender + "&7 teleport here request.");
+                    "&7You denied &#A9833D" + smallCapsSender + "&7 teleport here request.");
         } else {
             feedback = ChatColor.translateAlternateColorCodes('&',
-                    "&7You denied &5" + smallCapsSender + "&7 teleport request.");
+                    "&7You denied &#A9833D" + smallCapsSender + "&7 teleport request.");
         }
 
         p.sendMessage(feedback);

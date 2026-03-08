@@ -140,14 +140,14 @@ shardbooster:
   material: POTION
   timer: 86400  # 24 hours in seconds
   multiplier: 4  # 4x shard production
-  display-name: "&5ѕʜᴀʀᴅ ʙᴏᴏѕᴛᴇʀ"
+  display-name: "&6ѕʜᴀʀᴅ ʙᴏᴏѕᴛᴇʀ"
   lore:
     - "&f4x Shard Production for 24 hours"
     - "&8Self Destruct:"
     - "&8%countdown%"
   potion-color: "8B5CF6"  # Purple hex color
   activation-sound: ENTITY_PLAYER_LEVELUP
-  activation-message: "&aYou have activated your &5Shard Booster&a for 24h."
+  activation-message: "&aYou have activated your &6Shard Booster&a for 24h."
 
 
 multitool:

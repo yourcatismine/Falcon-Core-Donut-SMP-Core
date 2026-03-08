@@ -403,6 +403,14 @@ public class PlayerDataManager {
     private List<LeaderboardEntry> cachedShardsTop = null;
     private long lastMoneyUpdate = 0;
     private List<LeaderboardEntry> cachedMoneyTop = null;
+    private long lastKillsUpdate = 0;
+    private List<LeaderboardEntry> cachedKillsTop = null;
+    private long lastDeathsUpdate = 0;
+    private List<LeaderboardEntry> cachedDeathsTop = null;
+    private long lastPlaytimeUpdate = 0;
+    private List<LeaderboardEntry> cachedPlaytimeTop = null;
+    private long lastSellUpdate = 0;
+    private List<LeaderboardEntry> cachedSellTop = null;
     private static final long CACHE_DURATION = 60 * 1000;
 
     public static class LeaderboardEntry {
@@ -458,6 +466,10 @@ public class PlayerDataManager {
     }
 
     private boolean isUpdatingMoney = false;
+    private boolean isUpdatingKills = false;
+    private boolean isUpdatingDeaths = false;
+    private boolean isUpdatingPlaytime = false;
+    private boolean isUpdatingSell = false;
 
     public List<LeaderboardEntry> getTopMoney(int limit) {
         if (cachedMoneyTop != null && !cachedMoneyTop.isEmpty()) {
@@ -495,5 +507,200 @@ public class PlayerDataManager {
                 isUpdatingMoney = false;
             }
         });
+    }
+
+    public List<LeaderboardEntry> getTopKills(int limit) {
+        if (cachedKillsTop != null && (System.currentTimeMillis() - lastKillsUpdate < CACHE_DURATION)) {
+            return cachedKillsTop.size() > limit ? cachedKillsTop.subList(0, limit) : cachedKillsTop;
+        }
+        
+        if (!isUpdatingKills) {
+            triggerKillsUpdateAsync();
+        }
+        
+        return cachedKillsTop != null ? 
+            (cachedKillsTop.size() > limit ? cachedKillsTop.subList(0, limit) : cachedKillsTop) : 
+            new ArrayList<>();
+    }
+
+    public List<LeaderboardEntry> getTopDeaths(int limit) {
+        if (cachedDeathsTop != null && (System.currentTimeMillis() - lastDeathsUpdate < CACHE_DURATION)) {
+            return cachedDeathsTop.size() > limit ? cachedDeathsTop.subList(0, limit) : cachedDeathsTop;
+        }
+        
+        if (!isUpdatingDeaths) {
+            triggerDeathsUpdateAsync();
+        }
+        
+        return cachedDeathsTop != null ? 
+            (cachedDeathsTop.size() > limit ? cachedDeathsTop.subList(0, limit) : cachedDeathsTop) : 
+            new ArrayList<>();
+    }
+
+    public List<LeaderboardEntry> getTopPlaytime(int limit) {
+        if (cachedPlaytimeTop != null && (System.currentTimeMillis() - lastPlaytimeUpdate < CACHE_DURATION)) {
+            return cachedPlaytimeTop.size() > limit ? cachedPlaytimeTop.subList(0, limit) : cachedPlaytimeTop;
+        }
+        
+        if (!isUpdatingPlaytime) {
+            triggerPlaytimeUpdateAsync();
+        }
+        
+        return cachedPlaytimeTop != null ? 
+            (cachedPlaytimeTop.size() > limit ? cachedPlaytimeTop.subList(0, limit) : cachedPlaytimeTop) : 
+            new ArrayList<>();
+    }
+
+    public List<LeaderboardEntry> getTopSell(int limit) {
+        if (cachedSellTop != null && (System.currentTimeMillis() - lastSellUpdate < CACHE_DURATION)) {
+            return cachedSellTop.size() > limit ? cachedSellTop.subList(0, limit) : cachedSellTop;
+        }
+        
+        if (!isUpdatingSell) {
+            triggerSellUpdateAsync();
+        }
+        
+        return cachedSellTop != null ? 
+            (cachedSellTop.size() > limit ? cachedSellTop.subList(0, limit) : cachedSellTop) : 
+            new ArrayList<>();
+    }
+
+    private void triggerKillsUpdateAsync() {
+        isUpdatingKills = true;
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                List<LeaderboardEntry> entries = new ArrayList<>();
+                for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
+                    if (p.getName() == null) continue;
+                    try {
+                        int kills = p.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
+                        if (kills > 0) {
+                            entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) kills));
+                        }
+                    } catch (Exception ignored) {}
+                }
+                entries.sort((a, b) -> Double.compare(b.value, a.value));
+                cachedKillsTop = entries;
+                lastKillsUpdate = System.currentTimeMillis();
+            } finally {
+                isUpdatingKills = false;
+            }
+        });
+    }
+
+    private void triggerDeathsUpdateAsync() {
+        isUpdatingDeaths = true;
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                List<LeaderboardEntry> entries = new ArrayList<>();
+                for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
+                    if (p.getName() == null) continue;
+                    try {
+                        int deaths = p.getStatistic(org.bukkit.Statistic.DEATHS);
+                        if (deaths > 0) {
+                            entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) deaths));
+                        }
+                    } catch (Exception ignored) {}
+                }
+                entries.sort((a, b) -> Double.compare(b.value, a.value));
+                cachedDeathsTop = entries;
+                lastDeathsUpdate = System.currentTimeMillis();
+            } finally {
+                isUpdatingDeaths = false;
+            }
+        });
+    }
+
+    private void triggerPlaytimeUpdateAsync() {
+        isUpdatingPlaytime = true;
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                List<LeaderboardEntry> entries = new ArrayList<>();
+                for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
+                    if (p.getName() == null) continue;
+                    try {
+                        int ticks = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
+                        if (ticks > 0) {
+                            long seconds = ticks / 20L;
+                            entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) seconds));
+                        }
+                    } catch (Exception ignored) {}
+                }
+                entries.sort((a, b) -> Double.compare(b.value, a.value));
+                cachedPlaytimeTop = entries;
+                lastPlaytimeUpdate = System.currentTimeMillis();
+            } finally {
+                isUpdatingPlaytime = false;
+            }
+        });
+    }
+
+    private void triggerSellUpdateAsync() {
+        isUpdatingSell = true;
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                List<LeaderboardEntry> entries = new ArrayList<>();
+                if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
+                    for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
+                        if (p.getName() == null) continue;
+                        try {
+                            com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell()
+                                .getPlayerDataManager().getPlayerData(p.getUniqueId());
+                            if (sellPd != null) {
+                                double sellMade = sellPd.getSellMade();
+                                if (sellMade > 0) {
+                                    entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), sellMade));
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+                entries.sort((a, b) -> Double.compare(b.value, a.value));
+                cachedSellTop = entries;
+                lastSellUpdate = System.currentTimeMillis();
+            } finally {
+                isUpdatingSell = false;
+            }
+        });
+    }
+
+    // Cache invalidation methods - call these when player data changes
+    public void invalidateMoneyLeaderboard() {
+        cachedMoneyTop = null;
+        lastMoneyUpdate = 0;
+    }
+
+    public void invalidateShardsLeaderboard() {
+        cachedShardsTop = null;
+        lastShardsUpdate = 0;
+    }
+
+    public void invalidateKillsLeaderboard() {
+        cachedKillsTop = null;
+        lastKillsUpdate = 0;
+    }
+
+    public void invalidateDeathsLeaderboard() {
+        cachedDeathsTop = null;
+        lastDeathsUpdate = 0;
+    }
+
+    public void invalidatePlaytimeLeaderboard() {
+        cachedPlaytimeTop = null;
+        lastPlaytimeUpdate = 0;
+    }
+
+    public void invalidateSellLeaderboard() {
+        cachedSellTop = null;
+        lastSellUpdate = 0;
+    }
+
+    public void invalidateAllLeaderboards() {
+        invalidateMoneyLeaderboard();
+        invalidateShardsLeaderboard();
+        invalidateKillsLeaderboard();
+        invalidateDeathsLeaderboard();
+        invalidatePlaytimeLeaderboard();
+        invalidateSellLeaderboard();
     }
 }

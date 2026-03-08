@@ -115,10 +115,10 @@ public class HomeGUIListener implements Listener {
                 if (dest != null) {
                     player.closeInventory();
                     String successMsg = "&fYou were teleported to your home.";
-                    plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &5%s", successMsg);
+                    plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &6%s", successMsg);
                 }
             } else if (clickedMat == Material.RED_BED) {
-                String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
+                String storeMsg = HomeGUI.color("&fBuy&6 \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
                 player.sendMessage(storeMsg);
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
@@ -152,7 +152,7 @@ public class HomeGUIListener implements Listener {
 
                 refreshGUI(player);
             } else if (clickedMat == Material.RED_DYE) {
-                String storeMsg = HomeGUI.color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
+                String storeMsg = HomeGUI.color("&fBuy&6 \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes");
                 player.sendMessage(storeMsg);
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
@@ -190,7 +190,7 @@ public class HomeGUIListener implements Listener {
                 if (dest != null) {
                     player.closeInventory();
                     String successMsg = "&fYou were teleported to your team home.";
-                    plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &5%s", successMsg);
+                    plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &6%s", successMsg);
                 } else {
                     player.sendMessage(HomeGUI.color("&cYour team does not have a home."));
                     player.sendActionBar(LegacyComponentSerializer.legacyAmpersand()

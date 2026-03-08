@@ -76,12 +76,12 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
 
 
         if (this.page > 0) {
-            this.inv.setItem(18, makeItem(Material.ARROW, "&5ʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
+            this.inv.setItem(18, makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
 
         if (this.page < maxPage) {
-            this.inv.setItem(26, makeItem(Material.ARROW, "&5ɴᴇхᴛ", List.of("&fClick to go to the next page")));
+            this.inv.setItem(26, makeItem(Material.ARROW, "&#A9833Dɴᴇхᴛ", List.of("&fClick to go to the next page")));
         }
 
         this.p.openInventory(this.inv);

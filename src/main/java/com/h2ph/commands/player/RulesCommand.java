@@ -67,7 +67,7 @@ public class RulesCommand implements CommandExecutor, Listener {
                 String path = "gui.items." + key;
                 int slot = config.getInt(path + ".slot");
                 String materialName = config.getString(path + ".material", "BOOK");
-                String name = config.getString(path + ".name", "&5Server Rules");
+                String name = config.getString(path + ".name", "&#A9833DServer Rules");
                 List<String> lore = config.getStringList(path + ".lore");
 
                 Material material = Material.matchMaterial(materialName);

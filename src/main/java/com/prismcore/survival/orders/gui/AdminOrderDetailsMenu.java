@@ -64,7 +64,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
         this.inv.setItem(47, makeItem(Material.BARRIER, "&cᴅᴇʟᴇᴛᴇ ᴀʟʟ ᴏʀᴅᴇʀѕ",
                 List.of("&fClick to cancel and refund all", "&factive orders for this player.")));
 
-        this.inv.setItem(48, makeItem(Material.MAP, "&5ʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
+        this.inv.setItem(48, makeItem(Material.MAP, "&#A9833Dʀᴇꜰʀᴇꜱʜ", List.of("&fClick to refresh items")));
 
         this.inv.setItem(50, makeItem(Material.CHEST, "&aᴄᴏʟʟᴇᴄᴛ ᴀʟʟ ᴅʀᴏᴘѕ",
                 List.of("&fClick to collect all delivered items", "&ffrom all of this player's orders.")));

@@ -138,7 +138,7 @@ public class RTPQueueManager {
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
                     java.util.Set<java.util.UUID> players = playersInQueue.get(name);
                     if (players != null && !players.isEmpty()) {
-                        String titleText = ChatColor.translateAlternateColorCodes('&', "&dʀᴛᴘ ᴢᴏɴᴇ");
+                        String titleText = ChatColor.translateAlternateColorCodes('&', "&6ʀᴛᴘ ᴢᴏɴᴇ");
                         String subtitleText;
                         boolean playTickSound = false;
 
@@ -225,7 +225,7 @@ public class RTPQueueManager {
             Player player = plugin.getServer().getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 int current = globalCountdowns.getOrDefault(regionKey, 20);
-                String titleText = ChatColor.translateAlternateColorCodes('&', "&dʀᴛᴘ ᴢᴏɴᴇ");
+                String titleText = ChatColor.translateAlternateColorCodes('&', "&6ʀᴛᴘ ᴢᴏɴᴇ");
                 String subtitleText = ChatColor.translateAlternateColorCodes('&', "&fTeleporting in " + current);
                 player.sendTitle(titleText, subtitleText, 10, 40, 10);
             }
@@ -244,7 +244,7 @@ public class RTPQueueManager {
         if (player != null && player.isOnline()) {
             int current = globalCountdowns.getOrDefault(name, 20);
 
-            String titleText = ChatColor.translateAlternateColorCodes('&', "&dʀᴛᴘ ᴢᴏɴᴇ");
+            String titleText = ChatColor.translateAlternateColorCodes('&', "&6ʀᴛᴘ ᴢᴏɴᴇ");
             String subtitleText;
 
             if (current <= 5) {

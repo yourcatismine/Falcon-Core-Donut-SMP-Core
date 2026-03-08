@@ -42,7 +42,7 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
 
                 p.sendMessage(msg);
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
-                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                 return true;
             }
         } else {
@@ -53,7 +53,7 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cThis teleport request does not exist.");
             p.sendMessage(msg);
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 

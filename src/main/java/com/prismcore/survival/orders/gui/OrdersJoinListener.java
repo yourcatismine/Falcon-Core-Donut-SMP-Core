@@ -32,7 +32,7 @@ public class OrdersJoinListener implements Listener {
 
         if (records.size() == 1) {
             OfflineNotificationManager.DeliveryRecord record = records.get(0);
-            String message = Utils.formatColors("&5" + record.getDelivererName() + "&7 delivered you &a"
+            String message = Utils.formatColors("&#A9833D" + record.getDelivererName() + "&7 delivered you &a"
                     + Utils.abbr(record.getAmount()) + " &a" + record.getItemName() + "&7 while you were away");
 
             player.sendMessage(message);

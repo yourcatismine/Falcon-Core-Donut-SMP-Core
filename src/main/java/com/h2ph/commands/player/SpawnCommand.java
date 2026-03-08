@@ -120,7 +120,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.e
                 p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
             } catch (Throwable ignored) {
             }
-            String complete = ChatColor.GRAY + "You teleport to &5ѕᴘᴀᴡɴ " + spawnId;
+            String complete = ChatColor.GRAY + "You teleport to &#A9833Dѕᴘᴀᴡɴ " + spawnId;
             try {
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(complete));
             } catch (Throwable ignored) {

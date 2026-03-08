@@ -38,11 +38,11 @@ public class TpaConfirmGUIListener implements Listener {
                 if (slot == 3) {
                     p.closeInventory();
                     p.performCommand("tpaccept");
-                    p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+                    p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 } else if (slot == 5) {
                     p.closeInventory();
                     p.performCommand("tpadeny");
-                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                 }
             } else {
                 if (e.isShiftClick()) {

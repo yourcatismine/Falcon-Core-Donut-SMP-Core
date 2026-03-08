@@ -43,7 +43,7 @@ public class TeamChatListener implements Listener {
         }
 
         String message = event.getMessage();
-        String format = Utils.formatColors("&d[TEAM]&7 " + player.getName() + ":&f " + message);
+        String format = Utils.formatColors("&6[TEAM]&7 " + player.getName() + ":&f " + message);
 
         Set<UUID> members = teamManager.getTeamMemberUuids(team.getId());
 

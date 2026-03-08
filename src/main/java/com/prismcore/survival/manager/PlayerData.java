@@ -72,6 +72,8 @@ public class PlayerData {
         double old = this.shards;
         this.shards = shards;
         logEconomyChange(shards - old, "SHARDS", source);
+        // Invalidate shards leaderboard cache
+        plugin.getPlayerDataManager().invalidateShardsLeaderboard();
     }
 
     public synchronized void addShards(double amount) {
@@ -81,6 +83,8 @@ public class PlayerData {
     public synchronized void addShards(double amount, String source) {
         this.shards += amount;
         logEconomyChange(amount, "SHARDS", source);
+        // Invalidate shards leaderboard cache
+        plugin.getPlayerDataManager().invalidateShardsLeaderboard();
     }
 
     public synchronized void removeShards(double amount) {
@@ -90,6 +94,8 @@ public class PlayerData {
     public synchronized void removeShards(double amount, String source) {
         this.shards -= amount;
         logEconomyChange(-amount, "SHARDS", source);
+        // Invalidate shards leaderboard cache
+        plugin.getPlayerDataManager().invalidateShardsLeaderboard();
     }
 
     public synchronized double getMoney() {
@@ -106,6 +112,8 @@ public class PlayerData {
         double old = this.money;
         this.money = money;
         logEconomyChange(money - old, "MONEY", source);
+        // Invalidate money leaderboard cache
+        plugin.getPlayerDataManager().invalidateMoneyLeaderboard();
     }
 
     public synchronized void addMoney(double amount) {
@@ -117,6 +125,8 @@ public class PlayerData {
             return;
         this.money += amount;
         logEconomyChange(amount, "MONEY", source);
+        // Invalidate money leaderboard cache
+        plugin.getPlayerDataManager().invalidateMoneyLeaderboard();
     }
 
     public synchronized void removeMoney(double amount) {
@@ -128,6 +138,8 @@ public class PlayerData {
             return;
         this.money -= amount;
         logEconomyChange(-amount, "MONEY", source);
+        // Invalidate money leaderboard cache
+        plugin.getPlayerDataManager().invalidateMoneyLeaderboard();
     }
 
     private void logEconomyChange(double change, String type, String source) {

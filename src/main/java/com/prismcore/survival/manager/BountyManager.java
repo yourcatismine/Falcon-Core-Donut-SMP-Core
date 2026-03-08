@@ -67,13 +67,14 @@ public class BountyManager {
         double newAmount = current.getAmount() + amount;
         activeBounties.put(target, new BountyEntry(newAmount, System.currentTimeMillis()));
 
-        plugin.getDatabaseManager().saveBounty(target, newAmount);
+        final double finalAmount = newAmount;
+        plugin.getSchedulerAdapter().runTaskAsync(() -> plugin.getDatabaseManager().saveBounty(target, finalAmount));
     }
 
     public void removeBounty(UUID target) {
         activeBounties.remove(target);
 
-        plugin.getDatabaseManager().deleteBounty(target);
+        plugin.getSchedulerAdapter().runTaskAsync(() -> plugin.getDatabaseManager().deleteBounty(target));
     }
 
     public double getBounty(UUID target) {

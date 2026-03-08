@@ -80,7 +80,7 @@ public class ProfileHomesGUI {
             
             if (homes.containsKey(homeNumber)) {
                 String homeName = homeManager.getHomeName(targetUUID, homeNumber);
-                String baseName = Utils.formatColors("&dʜᴏᴍᴇ " + homeNumber);
+                String baseName = Utils.formatColors("&6ʜᴏᴍᴇ " + homeNumber);
                 String displayName = (homeName != null && !homeName.isEmpty()) ? baseName + " " + homeName : baseName;
                 
                 ItemStack bed = make(Material.PURPLE_BED,

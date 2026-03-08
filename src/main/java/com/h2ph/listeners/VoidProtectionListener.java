@@ -68,7 +68,7 @@ public class VoidProtectionListener implements Listener {
             p.teleportAsync(finalSpawnLoc).thenAccept(success -> {
                 if (success) {
                     p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
-                    String msg = ChatColor.translateAlternateColorCodes('&', "&7You fell into the &dVoid&7!");
+                    String msg = ChatColor.translateAlternateColorCodes('&', "&7You fell into the &6Void&7!");
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
                 }
             });

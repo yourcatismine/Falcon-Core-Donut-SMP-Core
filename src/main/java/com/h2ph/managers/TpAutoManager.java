@@ -17,7 +17,7 @@ public class TpAutoManager implements Listener {
                 PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                 if (data != null && data.isTpAuto()) {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(
-                            ChatColor.translateAlternateColorCodes('&', "&5You have tpauto on.")));
+                            ChatColor.translateAlternateColorCodes('&', "&6You have tpauto on.")));
                 }
             }
         }, 0L, 40L);

@@ -60,7 +60,7 @@ public class BountyListener implements Listener {
             String amountFormatted = formatNumber(amount);
 
             killer.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You claimed a bounty of &a$"
-                    + amountFormatted + " &7for killing &5" + victim.getName() + "&7!"));
+                    + amountFormatted + " &7for killing &#A9833D" + victim.getName() + "&7!"));
         }
     }
 

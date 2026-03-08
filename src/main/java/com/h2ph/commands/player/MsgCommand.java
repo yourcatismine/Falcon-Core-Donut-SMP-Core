@@ -111,9 +111,9 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
         }
 
         String senderFormat = ChatColor.translateAlternateColorCodes('&',
-                "&dyou -> " + target.getName() + ":&f " + message);
+                "&6you -> " + target.getName() + ":&f " + message);
         String receiverFormat = ChatColor.translateAlternateColorCodes('&',
-                "&d" + player.getName() + " -> you:&f " + message);
+                "&6" + player.getName() + " -> you:&f " + message);
 
         player.sendMessage(senderFormat);
         target.sendMessage(receiverFormat);

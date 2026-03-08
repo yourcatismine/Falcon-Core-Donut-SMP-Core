@@ -43,10 +43,10 @@ public class HomeDeleteConfirmGUI {
         if (homeIndex == 0) {
             com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
             displayName = HomeGUI.color(
-                    "&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07" + (team != null ? " " + team.getName() : ""));
+                    "&6\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07" + (team != null ? " " + team.getName() : ""));
         } else {
             String homeName = manager.getHomeName(player.getUniqueId(), homeIndex);
-            String baseName = HomeGUI.color("&d\u029c\u1d0f\u1d0d\u1d07 " + homeIndex);
+            String baseName = HomeGUI.color("&6\u029c\u1d0f\u1d0d\u1d07 " + homeIndex);
             displayName = (homeName != null && !homeName.isEmpty()) ? baseName + " " + homeName : baseName;
         }
 

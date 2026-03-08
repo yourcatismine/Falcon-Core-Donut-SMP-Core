@@ -382,7 +382,7 @@ public class GUIHandler {
                 }
 
                 if (refundFrom != null) {
-                    finalLore.add(Utils.formatColors("&cRefunded from &d" + refundFrom));
+                    finalLore.add(Utils.formatColors("&cRefunded from &6" + refundFrom));
                 } else {
                     if (!baseLore.isEmpty() && !auctionLore.isEmpty()) {
                         finalLore.add("");

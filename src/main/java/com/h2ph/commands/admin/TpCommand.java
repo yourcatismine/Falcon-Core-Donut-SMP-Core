@@ -41,14 +41,14 @@ public class TpCommand implements CommandExecutor, TabCompleter {
 
         if (target != null && p.canSee(target)) {
             String teleportingMsg = ChatColor.translateAlternateColorCodes('&',
-                    "&7Teleporting to &d" + target.getName());
+                    "&7Teleporting to &6" + target.getName());
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(teleportingMsg));
             p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
 
             p.teleportAsync(target.getLocation()).thenAccept(success -> {
                 if (success && p.isOnline()) {
                     String teleportedMsg = ChatColor.translateAlternateColorCodes('&',
-                            "&7Teleported to &d" + target.getName());
+                            "&7Teleported to &6" + target.getName());
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(teleportedMsg));
                     p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
                 }

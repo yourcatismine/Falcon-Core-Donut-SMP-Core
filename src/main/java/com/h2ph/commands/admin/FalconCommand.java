@@ -42,7 +42,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             sender.sendMessage(
-                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor> [args]");
+                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor|pvpsafe> [args]");
             return true;
         }
 
@@ -382,8 +382,12 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return handleAnchor(player, args);
         }
 
+        if (sub.equals("pvpsafe")) {
+            return handlePvPSafe(player, args);
+        }
+
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, or anchor.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, anchor, or pvpsafe.");
         return true;
     }
 
@@ -649,7 +653,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             return Arrays
                     .asList("auction", "order", "rtpqueue", "speed", "tools", "void", "respawngear", "limiter",
-                            "crate", "crystal", "anchor")
+                            "crate", "crystal", "anchor", "pvpsafe")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -695,6 +699,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return Arrays.asList("normal", "0", "1", "2", "3", "4", "5", "6", "10", "20").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("pvpsafe")) {
+                return Arrays.asList("setup", "delete").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
             }
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("rtpqueue")) {
@@ -710,6 +718,13 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             } else if (args[0].equalsIgnoreCase("tools")) {
                 return Bukkit.getOnlinePlayers().stream().map(Player::getName)
                         .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("pvpsafe") && args[1].equalsIgnoreCase("setup")) {
+                return Arrays.asList("[zone_name]");
+            } else if (args[0].equalsIgnoreCase("pvpsafe") && args[1].equalsIgnoreCase("delete")) {
+                // Return available zone names for deletion
+                return plugin.getPvPSafeZoneManager().getAllZoneNames().stream()
+                        .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("crate")) {
                 if (args[1].equalsIgnoreCase("effects")) {
@@ -873,6 +888,83 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return true;
         } catch (NumberFormatException ignored) {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            return true;
+        }
+    }
+
+    private boolean handlePvPSafe(Player player, String[] args) {
+        if (!player.hasPermission("falcon.pvpsafe")) {
+            player.sendMessage("§cYou do not have permission to use this command.");
+            return true;
+        }
+
+        if (args.length < 2) {
+            player.sendMessage("§cUsage: /falcon pvpsafe <setup|delete> [name]");
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+
+        if (action.equals("setup")) {
+            if (args.length < 3) {
+                player.sendMessage("§cUsage: /falcon pvpsafe setup <name>");
+                return true;
+            }
+
+            String name = args[2];
+            try {
+                com.sk89q.worldedit.entity.Player worldEditPlayer = com.sk89q.worldedit.bukkit.BukkitAdapter
+                        .adapt(player);
+                com.sk89q.worldedit.LocalSession session = com.sk89q.worldedit.WorldEdit.getInstance()
+                        .getSessionManager().get(worldEditPlayer);
+                com.sk89q.worldedit.regions.Region worldEditRegion = session
+                        .getSelection(worldEditPlayer.getWorld());
+
+                if (worldEditRegion == null) {
+                    player.sendMessage("§cPlease make a selection with WorldEdit first.");
+                    return true;
+                }
+
+                com.sk89q.worldedit.math.BlockVector3 min = worldEditRegion.getMinimumPoint();
+                com.sk89q.worldedit.math.BlockVector3 max = worldEditRegion.getMaximumPoint();
+                String worldName = player.getWorld().getName();
+
+                boolean success = plugin.getPvPSafeZoneManager().addZone(name, worldName, min.x(), min.y(), min.z(), 
+                        max.x(), max.y(), max.z(), player.getUniqueId().toString());
+                        
+                if (success) {
+                    player.sendMessage("§aPvP safe zone '" + name + "' has been created!");
+                    player.sendMessage("§7Players entering this zone will see safe mode messages.");
+                } else {
+                    player.sendMessage("§cFailed to create PvP safe zone. A zone with that name may already exist.");
+                }
+
+            } catch (com.sk89q.worldedit.IncompleteRegionException e) {
+                player.sendMessage("§cPlease make a complete selection (pos1 and pos2) first.");
+            } catch (Exception e) {
+                player.sendMessage("§cError accessing WorldEdit selection: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return true;
+        } else if (action.equals("delete")) {
+            if (args.length < 3) {
+                player.sendMessage("§cUsage: /falcon pvpsafe delete <name>");
+                return true;
+            }
+            
+            String zoneName = args[2];
+            
+            boolean success = plugin.getPvPSafeZoneManager().removeZone(zoneName);
+            
+            if (success) {
+                player.sendMessage("§aPvP safe zone '" + zoneName + "' has been deleted!");
+            } else {
+                player.sendMessage("§cFailed to delete PvP safe zone. Zone '" + zoneName + "' may not exist.");
+            }
+            
+            return true;
+        } else {
+            player.sendMessage("§cUsage: /falcon pvpsafe <setup|delete> <name>");
             return true;
         }
     }

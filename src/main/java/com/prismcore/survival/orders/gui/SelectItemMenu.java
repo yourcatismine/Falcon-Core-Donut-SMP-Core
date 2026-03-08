@@ -146,7 +146,7 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
         }
 
         if (this.page > 0) {
-            this.inv.setItem(45, makeItem(Material.ARROW, "&5ʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
+            this.inv.setItem(45, makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
         List<String> sortOptions = List.of("Most Paid", "Most Delivered", "Recently Listed", "Most Money Per Item");
@@ -155,7 +155,7 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             String prefix = (i == this.sortIndex) ? "&a• " : "&f• ";
             sortLore.add(prefix + sortOptions.get(i));
         }
-        this.inv.setItem(48, makeItem(Material.CAULDRON, "&5ѕᴏʀᴛ", sortLore));
+        this.inv.setItem(48, makeItem(Material.CAULDRON, "&#A9833Dѕᴏʀᴛ", sortLore));
 
         PlayerStateManager.ItemView v = this.module.state().items(this.p.getUniqueId());
         List<String> categories = List.of("All", "Blocks", "Tools", "Food", "Combat", "Potions", "Books", "Ingredients",
@@ -165,12 +165,12 @@ public class SelectItemMenu implements InventoryHolder, MenuOwner {
             String prefix = cat.equalsIgnoreCase(v.filter) ? "&a• " : "&f• ";
             filterLore.add(prefix + cat);
         }
-        this.inv.setItem(49, makeItem(Material.HOPPER, "&5ꜰɪʟᴛᴇʀ", filterLore));
+        this.inv.setItem(49, makeItem(Material.HOPPER, "&#A9833Dꜰɪʟᴛᴇʀ", filterLore));
 
-        this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&5ѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
+        this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&#A9833Dѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
 
         if (this.page < maxPage) {
-            this.inv.setItem(53, makeItem(Material.ARROW, "&5ɴᴇхᴛ", List.of("&fClick to go to the next page")));
+            this.inv.setItem(53, makeItem(Material.ARROW, "&#A9833Dɴᴇхᴛ", List.of("&fClick to go to the next page")));
         }
 
         this.p.openInventory(this.inv);

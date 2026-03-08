@@ -45,7 +45,7 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(cooldownMsg);
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(cooldownMsg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
@@ -65,12 +65,12 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(msg);
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
         if (target.getUniqueId().equals(p.getUniqueId())) {
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
@@ -80,7 +80,16 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(msg);
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return true;
+        }
+
+        if (com.h2ph.managers.TpaRequestManager.getInstance().isOnTargetCooldown(p.getUniqueId(), target.getUniqueId())) {
+            String cooldownMsg = ChatColor.translateAlternateColorCodes('&', "&cYou must wait before sending another request to this player.");
+            p.sendMessage(cooldownMsg);
+            p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    new net.md_5.bungee.api.chat.TextComponent(cooldownMsg));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
@@ -91,7 +100,7 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(msg);
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
@@ -99,7 +108,7 @@ public class TpaHereCommand implements CommandExecutor, TabCompleter {
             String msg = ChatColor.translateAlternateColorCodes('&', "&7You are ignored by this player.");
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
-            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 

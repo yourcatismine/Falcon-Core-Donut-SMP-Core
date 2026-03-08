@@ -55,8 +55,17 @@ public class DeathMessageListener implements Listener {
         }
 
         if (deathManager.isRadiusEnabled()) {
+            org.bukkit.Location victimLoc = victim.getLocation();
+            org.bukkit.World victimWorld = victimLoc.getWorld();
+            int victimChunkX = victimLoc.getBlockX() >> 4;
+            int victimChunkZ = victimLoc.getBlockZ() >> 4;
+            int radius = deathManager.getChunkRadius();
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (deathManager.shouldReceiveMessage(onlinePlayer, victim)) {
+                org.bukkit.Location receiverLoc = onlinePlayer.getLocation();
+                if (!victimWorld.equals(receiverLoc.getWorld())) continue;
+                int dx = Math.abs(victimChunkX - (receiverLoc.getBlockX() >> 4));
+                int dz = Math.abs(victimChunkZ - (receiverLoc.getBlockZ() >> 4));
+                if (Math.max(dx, dz) <= radius) {
                     onlinePlayer.sendMessage(customMessage);
                 }
             }

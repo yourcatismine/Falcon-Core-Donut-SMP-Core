@@ -41,7 +41,7 @@ public class TpaGUIListener implements Listener {
                 return;
             }
 
-            p.playSound(p.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
+            p.playSound(p.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1.0f, 1.0f);
 
             int slot = e.getSlot();
 

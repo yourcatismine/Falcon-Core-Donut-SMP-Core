@@ -34,7 +34,7 @@ public class TeamInviteManager {
                 target.playSound(target.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1f);
 
                 String msg = com.prismcore.survival.orders.Utils
-                        .formatColors("&d" + inviterName + "&7 has been invited you to " + teamName + ".");
+                        .formatColors("&6" + inviterName + "&7 has been invited you to " + teamName + ".");
                 target.sendMessage(msg);
                 target.sendActionBar(net.kyori.adventure.text.Component.text(msg));
 

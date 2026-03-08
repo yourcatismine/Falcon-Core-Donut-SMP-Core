@@ -91,14 +91,14 @@ public class OtpCommand implements CommandExecutor, TabCompleter {
                         return;
 
                     String teleportingMsg = ChatColor.translateAlternateColorCodes('&',
-                            "&7Teleporting to &d" + targetName);
+                            "&7Teleporting to &6" + targetName);
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(teleportingMsg));
                     p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
 
                     p.teleportAsync(loc).thenAccept(success -> {
                         if (success && p.isOnline()) {
                             String teleportedMsg = ChatColor.translateAlternateColorCodes('&',
-                                    "&7Teleported to &d" + targetName);
+                                    "&7Teleported to &6" + targetName);
                             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(teleportedMsg));
                             p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
                         }

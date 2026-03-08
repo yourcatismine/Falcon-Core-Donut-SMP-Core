@@ -81,11 +81,11 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
 
 
         if (st.page > 0) {
-            this.inv.setItem(45, makeItem(Material.ARROW, "&5ʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
+            this.inv.setItem(45, makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
         if (st.page < maxPage) {
-            this.inv.setItem(53, makeItem(Material.ARROW, "&5ɴᴇхᴛ", List.of("&fClick to go to the next page")));
+            this.inv.setItem(53, makeItem(Material.ARROW, "&#A9833Dɴᴇхᴛ", List.of("&fClick to go to the next page")));
         }
 
         List<String> sortLore = new ArrayList<>();
@@ -93,7 +93,7 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         sortLore.add(isSort(st.sort, SortType.MOST_DELIVERED) + "Most Delivered");
         sortLore.add(isSort(st.sort, SortType.RECENTLY_LISTED) + "Recently Listed");
         sortLore.add(isSort(st.sort, SortType.MOST_MONEY_PER_ITEM) + "Most Money Per Item");
-        this.inv.setItem(47, makeItem(Material.CAULDRON, "&5ѕᴏʀᴛ", sortLore));
+        this.inv.setItem(47, makeItem(Material.CAULDRON, "&#A9833Dѕᴏʀᴛ", sortLore));
 
         List<String> filterLore = new ArrayList<>();
         List<String> cats = new ArrayList<>();
@@ -102,13 +102,13 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         for (String c : cats) {
             filterLore.add(isFilter(st.filter, c) + c);
         }
-        this.inv.setItem(48, makeItem(Material.HOPPER, "&5ꜰɪʟᴛᴇʀ", filterLore));
+        this.inv.setItem(48, makeItem(Material.HOPPER, "&#A9833Dꜰɪʟᴛᴇʀ", filterLore));
 
-        this.inv.setItem(49, makeItem(Material.MAP, "&5ᴏʀᴅᴇʀѕ", List.of("&fClick to refresh")));
+        this.inv.setItem(49, makeItem(Material.MAP, "&#A9833Dᴏʀᴅᴇʀꜱ", List.of("&fClick to refresh")));
 
-        this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&5ѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
+        this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&#A9833Dѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
 
-        this.inv.setItem(51, makeItem(Material.CHEST, "&5ʏᴏᴜʀ ᴏʀᴅᴇʀѕ", List.of("&fClick to view your orders")));
+        this.inv.setItem(51, makeItem(Material.CHEST, "&#A9833Dʏᴏᴜʀ ᴏʀᴅᴇʀꜱ", List.of("&fClick to view your orders")));
 
         int from = st.page * perPage;
         int to = Math.min(from + perPage, list.size());

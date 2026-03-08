@@ -99,7 +99,7 @@ public class IgnoreCommand implements CommandExecutor, TabCompleter {
         playerData.addIgnoredPlayer(targetUuid);
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
-        String confirmMsg = ChatColor.translateAlternateColorCodes('&', "&7You ignored&d " + targetName + "&7.");
+        String confirmMsg = ChatColor.translateAlternateColorCodes('&', "&7You ignored&6 " + targetName + "&7.");
         player.sendMessage(confirmMsg);
         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(confirmMsg));

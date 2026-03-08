@@ -77,7 +77,7 @@ items:
   witch_spawner:
     material: SPAWNER
     spawner: "witch_spawner"
-    name: "&5ᴡɪᴛᴄʜ ꜱᴘᴀᴡɴᴇʀ"
+    name: "&#A9833Dᴡɪᴛᴄʜ ꜱᴘᴀᴡɴᴇʀ"
     slot: 17
     command: "smartspawner give spawner {gamertag} witch 1"
     price: 1250
@@ -146,7 +146,7 @@ items:
 
   amethyst_key:
     material: TRIPWIRE_HOOK
-    name: "&5ᴀᴍᴇᴛʜʏꜱᴛ ᴋᴇʏ"
+    name: "&#A9833Dᴀᴍᴇᴛʜʏꜱᴛ ᴋᴇʏ"
     slot: 14
     command: "keys give {gamertag} amethyst 1"
     price: 8000

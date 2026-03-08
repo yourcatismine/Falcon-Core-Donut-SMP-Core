@@ -45,26 +45,26 @@ public class HomeGUI {
 
         if (team == null) {
             inv.setItem(10, make(Material.GRAY_BANNER,
-                    color("&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
+                    color("&6\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                     List.of(color("&cYou are not in a team."))));
         } else if (!team.hasHome()) {
             inv.setItem(10, make(Material.GRAY_BANNER,
-                    color("&dYour team does not have a home"),
+                    color("&6Your team does not have a home"),
                     List.of(color("&fNo team home"))));
 
             if (isOwner) {
                 inv.setItem(19, make(Material.GRAY_DYE,
-                        color("&dYour team does not have a home"),
+                        color("&6Your team does not have a home"),
                         List.of(color("&fNo team home"))));
             }
         } else {
             inv.setItem(10, make(Material.PURPLE_BANNER,
-                    color("&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
+                    color("&6\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                     List.of(color("&fCick to teleport to team home"))));
 
             if (isOwner) {
                 inv.setItem(19, make(Material.PURPLE_DYE,
-                        color("&d\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
+                        color("&6\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                         List.of(color("&fClick to delete " + ChatColor.stripColor(team.getName()) + " home"))));
             }
         }
@@ -83,7 +83,7 @@ public class HomeGUI {
 
             if (homeNumber >= 3 && !player.hasPermission("prismcore.home." + homeNumber) && !player.hasPermission("prismcore.home.all")) {
                 List<String> lockedLore = List.of(
-                        color("&fBuy&d \u1d18\u0280\u026a\u0455\u1d0d+&f in /store for more homes"));
+                        color("&fBuy&6ѕᴘʜʏɴх&f in /store for more homes"));
                 inv.setItem(bedSlot, make(Material.RED_BED,
                         color("&4\u0274\u1d0f \u1d18\u1d07\u0280\u1d0d\u026a\u0455\u0455\u26a4\u1d0f\u0274"),
                         lockedLore));
@@ -95,15 +95,15 @@ public class HomeGUI {
 
             if (manager.hasHome(player.getUniqueId(), homeNumber)) {
                 String homeName = manager.getHomeName(player.getUniqueId(), homeNumber);
-                String baseName = color("&d\u029c\u1d0f\u1d0d\u1d07 " + homeNumber);
+                String baseName = color("&6\u029c\u1d0f\u1d0d\u1d07 " + homeNumber);
                 String displayName = (homeName != null && !homeName.isEmpty()) ? baseName + " " + homeName : baseName;
 
-                ItemStack bed = make(Material.PURPLE_BED,
+                ItemStack bed = make(Material.ORANGE_BED,
                         displayName,
                         List.of(color("&fClick to teleport to your home")));
                 inv.setItem(bedSlot, bed);
 
-                ItemStack dye = make(Material.PURPLE_DYE,
+                ItemStack dye = make(Material.ORANGE_DYE,
                         displayName,
                         List.of(color("&fClick to delete " + ChatColor.stripColor(displayName))));
                 inv.setItem(dyeSlot, dye);

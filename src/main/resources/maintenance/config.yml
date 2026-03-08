@@ -1,9 +1,9 @@
 ping-message:
-  - "&5&lᴘʀɪѕᴍsᴍᴘ"
+  - "&6&lᴘʀɪѕᴍsᴍᴘ"
   - "&4&lᴜɴᴅᴇʀ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ"
 
 disconnect-message:
-  - "&5&lᴘʀɪѕᴍsᴍᴘ"
+  - "&6&lᴘʀɪѕᴍsᴍᴘ"
   - ""
   - "&fThe server is currently undergoing maintenance."
   - "&7We are pushing updates to improve your experience."

@@ -122,6 +122,116 @@ public class PrismPlaceholders extends PlaceholderExpansion {
             return "0";
         }
 
+        // Leaderboard placeholders
+        if (params.toLowerCase().startsWith("balance_number_")) {
+            try {
+                int position = Integer.parseInt(params.substring(15));
+                return getLeaderboardPlayer("balance", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("shards_number_")) {
+            try {
+                int position = Integer.parseInt(params.substring(14));
+                return getLeaderboardPlayer("shards", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("kills_number_")) {
+            try {
+                int position = Integer.parseInt(params.substring(13));
+                return getLeaderboardPlayer("kills", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("deaths_number_")) {
+            try {
+                int position = Integer.parseInt(params.substring(14));
+                return getLeaderboardPlayer("deaths", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("playtime_number_")) {
+            try {
+                int position = Integer.parseInt(params.substring(16));
+                return getLeaderboardPlayer("playtime", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("sell_number_")) {
+            try {
+                int position = Integer.parseInt(params.substring(12));
+                return getLeaderboardPlayer("sell", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        // Formatted value placeholders
+        if (params.toLowerCase().startsWith("balance_formatted_")) {
+            try {
+                int position = Integer.parseInt(params.substring(18));
+                return getLeaderboardValue("balance", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("shards_formatted_")) {
+            try {
+                int position = Integer.parseInt(params.substring(17));
+                return getLeaderboardValue("shards", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("kills_formatted_")) {
+            try {
+                int position = Integer.parseInt(params.substring(16));
+                return getLeaderboardValue("kills", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("deaths_formatted_")) {
+            try {
+                int position = Integer.parseInt(params.substring(17));
+                return getLeaderboardValue("deaths", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("playtime_formatted_")) {
+            try {
+                int position = Integer.parseInt(params.substring(19));
+                return getLeaderboardValue("playtime", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
+        if (params.toLowerCase().startsWith("sell_formatted_")) {
+            try {
+                int position = Integer.parseInt(params.substring(15));
+                return getLeaderboardValue("sell", position);
+            } catch (NumberFormatException e) {
+                return "None";
+            }
+        }
+
         return null;
     }
 
@@ -143,5 +253,108 @@ public class PrismPlaceholders extends PlaceholderExpansion {
             return minutes + "m " + seconds + "s";
         }
         return seconds + "s";
+    }
+
+    private String getLeaderboardPlayer(String type, int position) {
+        if (position <= 0) {
+            return "None";
+        }
+        
+        try {
+            java.util.List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> entries = null;
+            
+            switch (type.toLowerCase()) {
+                case "balance":
+                    entries = plugin.getPlayerDataManager().getTopMoney(position);
+                    break;
+                case "shards":
+                    entries = plugin.getPlayerDataManager().getTopShards(position);
+                    break;
+                case "kills":
+                    entries = plugin.getPlayerDataManager().getTopKills(position);
+                    break;
+                case "deaths":
+                    entries = plugin.getPlayerDataManager().getTopDeaths(position);
+                    break;
+                case "playtime":
+                    entries = plugin.getPlayerDataManager().getTopPlaytime(position);
+                    break;
+                case "sell":
+                    entries = plugin.getPlayerDataManager().getTopSell(position);
+                    break;
+                default:
+                    return "None";
+            }
+            
+            if (entries != null && entries.size() >= position) {
+                com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = entries.get(position - 1);
+                return entry.name != null ? entry.name : "None";
+            }
+        } catch (Exception e) {
+            // Handle any potential errors silently
+        }
+        
+        return "None";
+    }
+
+    private String getLeaderboardValue(String type, int position) {
+        if (position <= 0) {
+            return "None";
+        }
+        
+        try {
+            java.util.List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> entries = null;
+            
+            switch (type.toLowerCase()) {
+                case "balance":
+                    entries = plugin.getPlayerDataManager().getTopMoney(position);
+                    break;
+                case "shards":
+                    entries = plugin.getPlayerDataManager().getTopShards(position);
+                    break;
+                case "kills":
+                    entries = plugin.getPlayerDataManager().getTopKills(position);
+                    break;
+                case "deaths":
+                    entries = plugin.getPlayerDataManager().getTopDeaths(position);
+                    break;
+                case "playtime":
+                    entries = plugin.getPlayerDataManager().getTopPlaytime(position);
+                    break;
+                case "sell":
+                    entries = plugin.getPlayerDataManager().getTopSell(position);
+                    break;
+                default:
+                    return "None";
+            }
+            
+            if (entries != null && entries.size() >= position) {
+                com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = entries.get(position - 1);
+                return formatLeaderboardValue(type, entry.value);
+            }
+        } catch (Exception e) {
+            // Handle any potential errors silently
+        }
+        
+        return "None";
+    }
+
+    private String formatLeaderboardValue(String type, double value) {
+        switch (type.toLowerCase()) {
+            case "balance":
+                return com.prismcore.survival.utils.NumberUtils.formatMoney(value);
+            case "shards":
+                return com.prismcore.survival.utils.NumberUtils.format(value);
+            case "kills":
+                return com.prismcore.survival.utils.NumberUtils.format((int) value);
+            case "deaths":
+                return com.prismcore.survival.utils.NumberUtils.format((int) value);
+            case "playtime":
+                return formatPlaytime((long) value);
+            case "sell":
+                return com.prismcore.survival.utils.NumberUtils.formatMoney(value);
+            default:
+                return String.valueOf(value);
+        }
     }
 }

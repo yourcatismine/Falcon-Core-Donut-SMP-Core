@@ -98,7 +98,7 @@ public class SettingsGUIListener implements Listener {
                     if (!p.hasPermission("prismsmp.quick.auction")) {
                         p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         p.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                                "&cYou do not have permission to use Quick Auction Buy. &5PrismPlus &conly!"));
+                                "&cYou do not have permission to use Quick Auction Buy. &#A9833DPrismPlus &conly!"));
                         return;
                     }
 

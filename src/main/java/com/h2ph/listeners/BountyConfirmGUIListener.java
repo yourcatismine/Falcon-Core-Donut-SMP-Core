@@ -83,7 +83,7 @@ public class BountyConfirmGUIListener implements Listener {
 
         Player target = Bukkit.getPlayer(targetId);
         if (target != null && target.isOnline()) {
-            String targetMsg = color("&d" + sender.getName() + "&7 added &a$" + amountFormatted + " &7to your bounty.");
+            String targetMsg = color("&6" + sender.getName() + "&7 added &a$" + amountFormatted + " &7to your bounty.");
             target.sendMessage(targetMsg);
             target.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(targetMsg));
         }

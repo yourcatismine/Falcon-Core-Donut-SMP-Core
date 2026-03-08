@@ -68,7 +68,7 @@ public class MediaCommand implements CommandExecutor, Listener {
                 String path = "gui.items." + key;
                 int slot = config.getInt(path + ".slot");
                 String materialName = config.getString(path + ".material", "PAPER");
-                String name = config.getString(path + ".name", "&5ᴍᴇᴅɪᴀ ʀᴀɴᴋ");
+                String name = config.getString(path + ".name", "&#A9833Dᴍᴇᴅɪᴀ ʀᴀɴᴋ");
                 List<String> lore = config.getStringList(path + ".lore");
 
                 Material material = Material.matchMaterial(materialName);

@@ -271,7 +271,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                         lore.add(color("&fBuy price: &a$" + priceStr));
                     } else {
                         int shardPrice = items.getInt(key + ".shard_price", items.getInt(key + ".price", 0));
-                        lore.add(color("&fBuy price: &5" + shardPrice + "x &lShards"));
+                        lore.add(color("&fBuy price: &#A9833D" + shardPrice + "x &lShards"));
                     }
                     meta.setLore(lore);
 
@@ -333,7 +333,7 @@ public class ShopCommand implements CommandExecutor, Listener {
 
         List<String> lore = new ArrayList<>();
         if (session.currency.equals("SHARDS")) {
-            lore.add(color("&fBuy price: &5" + totalStr + "x &lShards"));
+            lore.add(color("&fBuy price: &#A9833D" + totalStr + "x &lShards"));
         } else {
             lore.add(color("&fBuy price: &a$" + totalStr));
         }
@@ -895,7 +895,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             String priceStr = String.format("%,.0f", session.price);
             previewLore.add(color("&fBuy price: &a$" + priceStr));
         } else {
-            previewLore.add(color("&fBuy price: &5" + (int) session.price + "x &lShards"));
+            previewLore.add(color("&fBuy price: &#A9833D" + (int) session.price + "x &lShards"));
         }
         previewMeta.setLore(previewLore);
         preview.setItemMeta(previewMeta);

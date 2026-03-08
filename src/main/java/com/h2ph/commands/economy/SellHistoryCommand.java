@@ -105,7 +105,7 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
                 if (finalPage > 1) {
                     ItemStack prev = new ItemStack(Material.ARROW);
                     ItemMeta pm = prev.getItemMeta();
-                    pm.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dʙᴀᴄᴋ"));
+                    pm.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6ʙᴀᴄᴋ"));
                     pm.setLore(Collections
                             .singletonList(
                                     ChatColor.translateAlternateColorCodes('&', "&fClick to go to previous page")));
@@ -115,7 +115,7 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
 
                 ItemStack anvil = new ItemStack(Material.ANVIL);
                 ItemMeta am = anvil.getItemMeta();
-                am.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dѕᴇʟʟ ʜɪѕᴛᴏʀʏ"));
+                am.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6ѕᴇʟʟ ʜɪѕᴛᴏʀʏ"));
                 String modeText = byName ? "&7(By name)" : "&7(Amount)";
                 am.setLore(Arrays.asList(
                         ChatColor.translateAlternateColorCodes('&', "&fClick to sort"),
@@ -127,7 +127,7 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
                 if (finalPage < totalPages) {
                     ItemStack next = new ItemStack(Material.ARROW);
                     ItemMeta nm = next.getItemMeta();
-                    nm.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dɴᴇхᴛ"));
+                    nm.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6ɴᴇхᴛ"));
                     nm.setLore(Collections
                             .singletonList(
                                     ChatColor.translateAlternateColorCodes('&', "&fClick to go to the next page")));

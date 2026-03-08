@@ -90,11 +90,11 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
             }
 
             if (page > 0) {
-                this.inv.setItem(45, makeItem(Material.ARROW, "&5ᴘʀᴇᴠɪᴏᴜѕ ᴘᴀɢᴇ", List.of("&fGo to page " + page)));
+                this.inv.setItem(45, makeItem(Material.ARROW, "&#A9833Dᴘʀᴇᴠɪᴏᴜꜱ ᴘᴀɢᴇ", List.of("&fGo to page " + page)));
             }
 
             if ((page + 1) * 45 < order.storage.size()) {
-                this.inv.setItem(53, makeItem(Material.ARROW, "&5ɴᴇхᴛ ᴘᴀɢᴇ", List.of("&fGo to page " + (page + 2))));
+                this.inv.setItem(53, makeItem(Material.ARROW, "&#A9833Dɴᴇхᴛ ᴘᴀɢᴇ", List.of("&fGo to page " + (page + 2))));
             }
         }
 

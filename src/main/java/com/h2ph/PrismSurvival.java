@@ -60,6 +60,8 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.managers.ScoreboardManager scoreboardManager;
     private com.h2ph.managers.TabListManager tabListManager;
     private com.prismcore.survival.manager.VoidManager voidManager;
+    private com.prismcore.survival.manager.PvPSafeZoneManager pvpSafeZoneManager;
+    private com.prismcore.survival.manager.BlockRestorationManager blockRestorationManager;
     private com.h2ph.managers.VanishManager vanishManager;
     private com.h2ph.managers.DeathMessageManager deathMessageManager;
     private com.h2ph.managers.RespawnGearManager respawnGearManager;
@@ -538,6 +540,12 @@ public class PrismSurvival extends JavaPlugin {
         this.voidManager = new com.prismcore.survival.manager.VoidManager(this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.VoidProtectionListener(this), this);
 
+        this.pvpSafeZoneManager = new com.prismcore.survival.manager.PvPSafeZoneManager(this, databaseManager);
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PvPSafeZoneListener(this), this);
+
+        this.blockRestorationManager = new com.prismcore.survival.manager.BlockRestorationManager(this, databaseManager, pvpSafeZoneManager);
+        getServer().getPluginManager().registerEvents(blockRestorationManager, this);
+
         this.limiterConfig = new com.prismcore.survival.limiter.LimiterConfig(this);
         this.limiterManager = new com.prismcore.survival.limiter.LimiterManager(this, this.limiterConfig);
         this.limiterManager.start();
@@ -775,6 +783,14 @@ public class PrismSurvival extends JavaPlugin {
         return voidManager;
     }
 
+    public com.prismcore.survival.manager.PvPSafeZoneManager getPvPSafeZoneManager() {
+        return pvpSafeZoneManager;
+    }
+
+    public com.prismcore.survival.manager.BlockRestorationManager getBlockRestorationManager() {
+        return blockRestorationManager;
+    }
+
     public com.h2ph.managers.VanishManager getVanishManager() {
         return vanishManager;
     }
@@ -873,7 +889,7 @@ public class PrismSurvival extends JavaPlugin {
                 if (data != null && data.isTeamChat() && data.getTeamId() != null) {
                     player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             new net.md_5.bungee.api.chat.TextComponent(
-                                    com.prismcore.survival.orders.Utils.formatColors("&dYou have team chat on.")));
+                                    com.prismcore.survival.orders.Utils.formatColors("&6You have team chat on.")));
                 }
             }
         }, 40L, 40L);

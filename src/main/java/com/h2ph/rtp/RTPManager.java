@@ -116,7 +116,7 @@ public class RTPManager {
             int currentCount = count.get();
             if (currentCount > 0) {
                 String msg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                        "&7Teleporting in &5" + currentCount + "s");
+                        "&7Teleporting in &6" + currentCount + "s");
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
 
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 2f);

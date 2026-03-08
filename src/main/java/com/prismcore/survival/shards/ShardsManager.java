@@ -66,7 +66,7 @@ public class ShardsManager implements Listener {
         killRewardCooldown = config.getInt("kill-reward.cooldown", 300);
 
         activeActionbarMessage = config.getString("messages.active.actionbar",
-                "&5+{shards} shards&7 for killing &f{PLAYER}");
+                "&#A9833D+{shards} shards&7 for killing &f{PLAYER}");
     }
 
     public void reloadConfig() {
@@ -120,7 +120,7 @@ public class ShardsManager implements Listener {
         data.addShards(amount, "Passive Reward");
 
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&d+" + amount + " prism")));
+                TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&6+" + amount + " prism")));
     }
 
     @EventHandler

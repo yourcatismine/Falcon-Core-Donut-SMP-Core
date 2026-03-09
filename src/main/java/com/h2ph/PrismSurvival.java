@@ -683,7 +683,7 @@ public class PrismSurvival extends JavaPlugin {
             this.schedulerAdapter.shutdown();
         }
 
-        getLogger().info("PrismCore has been disabled!");
+        getLogger().info("Falcon has been disabled!");
         instance = null;
     }
 
@@ -1136,19 +1136,20 @@ public class PrismSurvival extends JavaPlugin {
         org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
         String version = getDescription().getVersion();
 
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l   ___       _                &3&l  ___                "));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l  / _ \\ _ __(_)___ _ __ ___   &3&l / __\\___  _ __ ___  "));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l / /_)/ '__| / __| '_ ` _ \\  &3&l/ /  / _ \\| '__/ _ \\ "));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l/ ___/| |  | \\__ \\ | | | | | &3&l/ /__| (_) | | |  __/ "));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l\\/    |_|  |_|___/_| |_| |_| &3&l\\____/\\___/|_|  \\___| "));
         console.sendMessage("");
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&7        Running &bPrismCore &7v" + version + " by &bh2ph"));
+                "&b&l  _____   _    _      ____    ___    _   _ "));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&b&l |  ___|  / \\  | |    / ___|  / _ \\  | \\ | |"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&b&l | |_    / _ \\ | |   | |     | | | | |  \\| |"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&b&l |  _|  / ___ \\| |   | |___  | |_| | | |\\  |"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&b&l |_|   /_/   \\_\\_|    \\____|  \\___/  |_| \\_|"));
+        console.sendMessage("");
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                "&7          Running &b&lFalcon &r&7v" + version + " by &bh2ph"));
         console.sendMessage("");
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                 "&8&m--------------------------------------------------"));
@@ -1197,7 +1198,7 @@ public class PrismSurvival extends JavaPlugin {
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                 "&8&m--------------------------------------------------"));
         console.sendMessage(
-                org.bukkit.ChatColor.translateAlternateColorCodes('&', "&a&l  PRISM CORE SUCCESSFULLY INITALIZED"));
+                org.bukkit.ChatColor.translateAlternateColorCodes('&', "&a&l  FALCON SUCCESSFULLY INITIALIZED"));
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                 "&8&m--------------------------------------------------"));
     }

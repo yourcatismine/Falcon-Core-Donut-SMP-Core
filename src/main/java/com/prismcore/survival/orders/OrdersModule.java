@@ -1,7 +1,6 @@
 package com.prismcore.survival.orders;
 
 import com.h2ph.PrismSurvival;
-import com.prismcore.survival.orders.cmd.PrismOrderCommand;
 import com.prismcore.survival.orders.cmd.OrdersCommand;
 import com.prismcore.survival.orders.gui.MenuListener;
 import com.prismcore.survival.orders.input.ChatInputManager;
@@ -72,10 +71,6 @@ public class OrdersModule {
         Bukkit.getPluginManager().registerEvents(new OrdersJoinListener(this), plugin);
 
         plugin.getCommand("orders").setExecutor(new OrdersCommand(plugin));
-
-        PrismOrderCommand adminCmd = new PrismOrderCommand(plugin);
-        plugin.getCommand("prismorder").setExecutor(adminCmd);
-        plugin.getCommand("prismorder").setTabCompleter(adminCmd);
 
         plugin.getLogger().info("Orders Module enabled.");
     }

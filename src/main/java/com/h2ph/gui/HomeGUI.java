@@ -58,12 +58,12 @@ public class HomeGUI {
                         List.of(color("&fNo team home"))));
             }
         } else {
-            inv.setItem(10, make(Material.PURPLE_BANNER,
+            inv.setItem(10, make(Material.ORANGE_BANNER,
                     color("&6\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                     List.of(color("&fCick to teleport to team home"))));
 
             if (isOwner) {
-                inv.setItem(19, make(Material.PURPLE_DYE,
+                inv.setItem(19, make(Material.ORANGE_DYE,
                         color("&6\u1d1b\u1d07\u1d00\u1d0d \u029c\u1d0f\u1d0d\u1d07"),
                         List.of(color("&fClick to delete " + ChatColor.stripColor(team.getName()) + " home"))));
             }
@@ -83,7 +83,7 @@ public class HomeGUI {
 
             if (homeNumber >= 3 && !player.hasPermission("prismcore.home." + homeNumber) && !player.hasPermission("prismcore.home.all")) {
                 List<String> lockedLore = List.of(
-                        color("&fBuy&6ѕᴘʜʏɴх&f in /store for more homes"));
+                        color("&fBuy &6ѕᴘʜʏɴх&f in /store for more homes"));
                 inv.setItem(bedSlot, make(Material.RED_BED,
                         color("&4\u0274\u1d0f \u1d18\u1d07\u0280\u1d0d\u026a\u0455\u0455\u26a4\u1d0f\u0274"),
                         lockedLore));

@@ -237,12 +237,6 @@ commands:
     usage: /order
     aliases: [orders]
 
-  prismorder:
-    description: Admin commands for the orders system
-    usage: /prismorder <reload>
-    permission: prism.admin.orders
-    permission-message: You do not have permission to use this command.
-  
   falcon:
     description: Falcon admin and utility commands
     usage: /falcon <auction|order> [player]
@@ -329,11 +323,6 @@ commands:
     usage: /worth
     aliases: []
  
-  prismsell:
-    description: Admin commands for the sell module
-    usage: /prismsell
-    aliases: []
-
   echest:
     description: Open your personal ender chest
     usage: /echest

@@ -1,7 +1,6 @@
 package com.prismcore.survival.sell;
 
 import com.h2ph.PrismSurvival;
-import com.prismcore.survival.sell.commands.PrismSellCommand;
 import com.prismcore.survival.sell.commands.SellCommand;
 import com.prismcore.survival.sell.data.PlayerDataManagerDB;
 import com.prismcore.survival.sell.database.DatabaseManager;
@@ -122,9 +121,6 @@ public class PrismSell {
         this.progressGUI = new ProgressGUI(this);
 
         plugin.getCommand("sell").setExecutor(new SellCommand(this));
-
-        PrismSellCommand adminCmd = new PrismSellCommand(this);
-        plugin.getCommand("prismsell").setExecutor(adminCmd);
 
         plugin.getServer().getPluginManager().registerEvents(this.sellGUI, plugin);
         plugin.getServer().getPluginManager().registerEvents(this.progressGUI, plugin);

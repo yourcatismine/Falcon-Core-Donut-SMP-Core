@@ -100,7 +100,7 @@ public class HomeGUIListener implements Listener {
 
             Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
 
-            if (clickedMat == Material.PURPLE_BED) {
+            if (clickedMat == Material.ORANGE_BED) {
                 if (event.getClick().isRightClick()) {
                     manager.startRenaming(player.getUniqueId(), homeNumber);
                     player.closeInventory();
@@ -138,7 +138,7 @@ public class HomeGUIListener implements Listener {
 
             Material clickedMat = event.getCurrentItem() != null ? event.getCurrentItem().getType() : Material.AIR;
 
-            if (clickedMat == Material.PURPLE_DYE) {
+            if (clickedMat == Material.ORANGE_DYE) {
                 com.h2ph.gui.HomeDeleteConfirmGUI.open(player, plugin, homeNumber);
 
             } else if (clickedMat == Material.GRAY_DYE) {
@@ -185,7 +185,7 @@ public class HomeGUIListener implements Listener {
                 player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize("&7Team home set"));
                 refreshGUI(player);
 
-            } else if (clickedMat == Material.PURPLE_BANNER) {
+            } else if (clickedMat == Material.ORANGE_BANNER) {
                 Location dest = plugin.getTeamManager().getTeamHomeLocation(team.getId());
                 if (dest != null) {
                     player.closeInventory();
@@ -198,7 +198,7 @@ public class HomeGUIListener implements Listener {
                     player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 }
 
-            } else if (clickedMat == Material.PURPLE_DYE) {
+            } else if (clickedMat == Material.ORANGE_DYE) {
                 if (!isOwner) {
                     player.sendMessage(HomeGUI.color("&cOnly the team owner can delete the team home."));
                     return;

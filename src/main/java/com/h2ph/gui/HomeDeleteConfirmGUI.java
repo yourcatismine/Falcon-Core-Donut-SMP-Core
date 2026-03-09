@@ -61,7 +61,7 @@ public class HomeDeleteConfirmGUI {
                 List.of(HomeGUI.color("&fClick to cancel"))));
 
         inv.setItem(13,
-                HomeGUI.make(homeIndex == 0 ? Material.PURPLE_BANNER : Material.PURPLE_BED, displayName, List.of()));
+                HomeGUI.make(homeIndex == 0 ? Material.ORANGE_BANNER : Material.ORANGE_BED, displayName, List.of()));
 
         inv.setItem(15, HomeGUI.make(Material.GREEN_STAINED_GLASS_PANE,
                 HomeGUI.color("&a\u1d04\u1d0f\u0274\u043c\u026a\u0280\u1d0d"),

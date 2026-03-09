@@ -22,7 +22,7 @@ public class DatabaseManager {
     }
 
     public void connect() {
-        FileConfiguration dataConfig = plugin.getPlugin().getConfig();
+        FileConfiguration dataConfig = plugin.getPlugin().getSurvivalConfig();
 
         String host = dataConfig.getString("database.host", "localhost");
         int port = dataConfig.getInt("database.port", 3306);
@@ -53,7 +53,7 @@ public class DatabaseManager {
             this.dataSource = new HikariDataSource(hikariConfig);
             this.createTables();
         } catch (Exception e) {
-            this.plugin.getLogger().warning("Failed to connect to MySQL database with HikariCP!");
+            this.plugin.getLogger().severe("Failed to connect to MySQL database with HikariCP: " + e.getMessage());
         }
     }
 

@@ -40,6 +40,12 @@ public class ChatFormatter implements Listener {
                 .replace("%message%", "%2$s");
 
         event.setFormat(translateColorCodes(format));
+
+        // Discord webhook — send raw message text
+        plugin.getDiscordWebhookManager().sendChatMessage(
+                player.getName(),
+                player.getUniqueId().toString(),
+                event.getMessage());
     }
 
     private String translateColorCodes(String message) {

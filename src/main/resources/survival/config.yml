@@ -1,6 +1,24 @@
 region: 
   - "EU"
 
+discord-webhooks:
+  bot-token: "your-bot-token-here"
+
+  chat-log:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+    channel-id: "CHANNEL_ID"
+
+  death-log:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+    channel-id: "CHANNEL_ID"
+
+  join-leave:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+    channel-id: "CHANNEL_ID"
+
 database:
   host: "45.92.16.152"
   port: 1024

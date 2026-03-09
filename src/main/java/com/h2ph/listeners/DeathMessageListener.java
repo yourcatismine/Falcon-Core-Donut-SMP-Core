@@ -75,6 +75,12 @@ public class DeathMessageListener implements Listener {
 
         String cleanMessage = customMessage.replaceAll("§[0-9a-fk-or]", "");
         plugin.getLogger().info("Death: " + cleanMessage);
+
+        // Discord webhook
+        plugin.getDiscordWebhookManager().sendDeathMessage(
+                victim.getName(),
+                victim.getUniqueId().toString(),
+                customMessage);
     }
 
     /**

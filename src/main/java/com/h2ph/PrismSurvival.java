@@ -75,6 +75,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.limiter.LimiterManager limiterManager;
     private com.prismcore.survival.survival.ChatFilter chatFilter;
     private com.h2ph.listeners.CommandHideListener commandHideListener;
+    private com.prismcore.survival.manager.DiscordWebhookManager discordWebhookManager;
 
     @Override
     public void onLoad() {
@@ -89,6 +90,8 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         loadSurvivalConfig();
+
+        this.discordWebhookManager = new com.prismcore.survival.manager.DiscordWebhookManager(this);
 
         this.commandHideListener = new com.h2ph.listeners.CommandHideListener(this);
         getServer().getPluginManager().registerEvents(commandHideListener, this);
@@ -841,6 +844,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.prismcore.survival.survival.ChatFilter getChatFilter() {
         return chatFilter;
+    }
+
+    public com.prismcore.survival.manager.DiscordWebhookManager getDiscordWebhookManager() {
+        return discordWebhookManager;
     }
 
     public com.h2ph.listeners.CommandHideListener getCommandHideListener() {

@@ -56,6 +56,11 @@ public class BlockRestorationManager implements Listener {
         Material originalMaterial = event.getBlockReplacedState().getType();
         BlockData originalBlockData = event.getBlockReplacedState().getBlockData();
 
+        // Only restore in worlds that have a PvP safe zone configured
+        if (!pvpSafeZoneManager.hasZonesInWorld(location.getWorld().getName())) {
+            return;
+        }
+
         // Check if player is in PvP safe zone (sync check)
         boolean inSafeZone = pvpSafeZoneManager.isInSafeZone(location);
         
@@ -80,6 +85,11 @@ public class BlockRestorationManager implements Listener {
             return;
         }
 
+        // Only restore in worlds that have a PvP safe zone configured
+        if (!pvpSafeZoneManager.hasZonesInWorld(location.getWorld().getName())) {
+            return;
+        }
+
         // Check if player is in PvP safe zone (sync check)
         boolean inSafeZone = pvpSafeZoneManager.isInSafeZone(location);
         
@@ -99,6 +109,11 @@ public class BlockRestorationManager implements Listener {
             
             // Skip AIR blocks
             if (blockMaterial == Material.AIR) {
+                continue;
+            }
+
+            // Only restore in worlds that have a PvP safe zone configured
+            if (!pvpSafeZoneManager.hasZonesInWorld(location.getWorld().getName())) {
                 continue;
             }
             
@@ -194,12 +209,18 @@ public class BlockRestorationManager implements Listener {
                         idsToDelete.add(id);
                     }
                     
-                    // Restore all blocks for each world
+                    // Restore all blocks for each world (only worlds that still have a PvP safe zone setup).
+                    // Worlds without zones: entries are still deleted from DB below to clean up.
                     if (!blocksByWorld.isEmpty()) {
                         plugin.getSchedulerAdapter().runTask(() -> {
                             for (Map.Entry<String, List<BlockRestoration>> entry : blocksByWorld.entrySet()) {
                                 String worldName = entry.getKey();
                                 List<BlockRestoration> blocks = entry.getValue();
+                                // Skip restoration if the setup was deleted for this world
+                                if (!pvpSafeZoneManager.hasZonesInWorld(worldName)) {
+                                    plugin.getLogger().fine("Skipping restoration for world '" + worldName + "' — no PvP safe zones configured.");
+                                    continue;
+                                }
                                 restoreBlocksBatch(worldName, blocks);
                             }
                         });

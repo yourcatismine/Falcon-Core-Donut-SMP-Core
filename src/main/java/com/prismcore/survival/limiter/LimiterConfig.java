@@ -31,6 +31,8 @@ public class LimiterConfig {
     private Set<EntityType> ignoredEntityTypes = EnumSet.noneOf(EntityType.class);
     private Set<Material> ignoredItems = EnumSet.noneOf(Material.class);
     private Map<EntityType, Integer> customEntityLimits = new HashMap<>();
+    private int namedEntityDefaultLimit;
+    private Map<EntityType, Integer> namedEntityCustomLimits = new HashMap<>();
 
     private boolean protectNamedEntities;
     private boolean protectLeashedEntities;
@@ -103,6 +105,20 @@ public class LimiterConfig {
             }
         }
 
+        namedEntityDefaultLimit = config.getInt("named-entity-limits.default-limit", 20);
+        namedEntityCustomLimits.clear();
+        ConfigurationSection namedLimitsSection = config.getConfigurationSection("named-entity-limits.custom-limits");
+        if (namedLimitsSection != null) {
+            for (String key : namedLimitsSection.getKeys(false)) {
+                try {
+                    EntityType type = EntityType.valueOf(key.toUpperCase());
+                    namedEntityCustomLimits.put(type, namedLimitsSection.getInt(key));
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Invalid named entity type in limiter config: " + key);
+                }
+            }
+        }
+
         protectNamedEntities = config.getBoolean("protection.protect-named-entities", true);
         protectLeashedEntities = config.getBoolean("protection.protect-leashed-entities", true);
         protectTamedAnimals = config.getBoolean("protection.protect-tamed-animals", true);
@@ -159,6 +175,14 @@ public class LimiterConfig {
 
     public Map<EntityType, Integer> getCustomEntityLimits() {
         return customEntityLimits;
+    }
+
+    public int getNamedEntityDefaultLimit() {
+        return namedEntityDefaultLimit;
+    }
+
+    public Map<EntityType, Integer> getNamedEntityCustomLimits() {
+        return namedEntityCustomLimits;
     }
 
     public boolean isProtectNamedEntities() {

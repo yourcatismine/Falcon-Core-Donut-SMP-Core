@@ -41,7 +41,8 @@ public class RTPManager {
     }
 
     public static void teleport(Player player, String worldType) {
-        teleport(player, "europe", worldType);
+        PrismSurvival main = JavaPlugin.getPlugin(PrismSurvival.class);
+        teleport(player, main.getRTPRegionName(), worldType);
     }
 
     public static void teleport(Player player, String region, String worldType) {

@@ -32,6 +32,24 @@ entity-limits:
     CREEPER: 24
     SQUID: 8
     GLOW_SQUID: 8
+    ARMOR_STAND: 30
+    MINECART: 30
+    CHEST_MINECART: 15
+    HOPPER_MINECART: 10
+    FURNACE_MINECART: 10
+    TNT_MINECART: 5
+
+# Separate limit for entities that have a nametag (custom name).
+# Players cannot bypass entity limits by naming entities because named
+# entities are tracked in their own bucket and removed when this limit
+# is exceeded, regardless of the protect-named-entities setting.
+named-entity-limits:
+  default-limit: 20
+  custom-limits:
+    ARMOR_STAND: 10
+    MINECART: 15
+    CHEST_MINECART: 8
+    HOPPER_MINECART: 5
     
 protection:
   protect-named-entities: true

@@ -25,17 +25,17 @@ public class RTPListener implements Listener {
                                 com.h2ph.commands.player.RTPCommand.openOverworldGUI(player);
                             }
                             else if (event.getSlot() == 13) {
-                                com.h2ph.rtp.RTPManager.teleport(player, "europe", "nether");
+                                com.h2ph.rtp.RTPManager.teleport(player, "nether");
                             }
                             else if (event.getSlot() == 15) {
-                                com.h2ph.rtp.RTPManager.teleport(player, "europe", "end");
+                                com.h2ph.rtp.RTPManager.teleport(player, "end");
                             }
                         }
                         else if (event.getClickedInventory().getItem(10) != null
                                 && event.getClickedInventory().getItem(10)
                                         .getType() == org.bukkit.Material.GRASS_BLOCK) {
                             if (event.getSlot() == 10) {
-                                com.h2ph.rtp.RTPManager.teleport(player, "europe", "overworld");
+                                com.h2ph.rtp.RTPManager.teleport(player, "overworld");
                             }
                         }
                     }

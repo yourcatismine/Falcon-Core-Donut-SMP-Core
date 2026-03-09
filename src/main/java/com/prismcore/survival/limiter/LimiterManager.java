@@ -109,6 +109,7 @@ public class LimiterManager {
 
     private void processRegionLimiter(World world, List<Long> chunks) {
         Map<EntityType, List<Entity>> entityGroups = new HashMap<>();
+        Map<EntityType, List<Entity>> namedEntityGroups = new HashMap<>();
         List<Item> items = new ArrayList<>();
 
         for (Long chunkKey : chunks) {
@@ -134,6 +135,13 @@ public class LimiterManager {
 
                 if (config.getIgnoredEntityTypes().contains(entity.getType()))
                     continue;
+
+                // Named entities go into their own separate bucket to prevent
+                // players abusing nametags to bypass the regular entity limit.
+                if (entity.getCustomName() != null) {
+                    namedEntityGroups.computeIfAbsent(entity.getType(), k -> new ArrayList<>()).add(entity);
+                    continue;
+                }
 
                 if (isProtected(entity)) {
                     if (!config.isCleanProtectedIfOverLimit()) {
@@ -178,6 +186,32 @@ public class LimiterManager {
                                 + e.getLocation().getBlockY() + ", " + e.getLocation().getBlockZ());
                     }
 
+                    e.remove();
+                }
+            }
+        }
+
+        // Enforce named entity limits — applied regardless of protect-named-entities
+        // to prevent players from using nametags to bypass the regular entity limit.
+        for (Map.Entry<EntityType, List<Entity>> entry : namedEntityGroups.entrySet()) {
+            EntityType type = entry.getKey();
+            List<Entity> namedEntities = entry.getValue();
+
+            int baseLimit = config.getNamedEntityCustomLimits().getOrDefault(type, config.getNamedEntityDefaultLimit());
+            int limit = (int) (baseLimit * config.getRegionEntityMultiplier() * chunks.size());
+
+            if (namedEntities.size() > limit) {
+                int toRemove = namedEntities.size() - limit;
+
+                namedEntities.sort(Comparator.comparingInt(Entity::getTicksLived));
+
+                for (int i = 0; i < toRemove; i++) {
+                    Entity e = namedEntities.get(i);
+                    if (config.isDebugRemovals()) {
+                        broadcastDebug("Removed named " + type.name() + " \"" + e.getCustomName() + "\" at "
+                                + e.getLocation().getBlockX() + ", " + e.getLocation().getBlockY() + ", "
+                                + e.getLocation().getBlockZ());
+                    }
                     e.remove();
                 }
             }

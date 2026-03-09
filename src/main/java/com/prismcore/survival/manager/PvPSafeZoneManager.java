@@ -185,6 +185,19 @@ public class PvPSafeZoneManager {
     }
 
     /**
+     * Check if a world has any PvP safe zones configured.
+     * The Restorer only operates in worlds that return true here.
+     */
+    public boolean hasZonesInWorld(String worldName) {
+        for (PvPSafeZone zone : safeZones) {
+            if (zone.worldName.equals(worldName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Represents a PvP safe zone
      */
     public static class PvPSafeZone {

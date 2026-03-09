@@ -875,8 +875,6 @@ public class PrismSurvival extends JavaPlugin {
         saveResourceSafely("survival/death/config.yml");
         saveResourceSafely("survival/death/messages.yml");
         saveResourceSafely("economy/config.yml");
-        saveResourceSafely("rtp/europe/config.yml");
-        saveResourceSafely("rtp/europe/config.yml");
         saveResourceSafely("rtp/config.yml");
         saveResourceSafely("crates/keys/config.yml");
         saveResourceSafely("scoreboard/config.yml");
@@ -1087,11 +1085,14 @@ public class PrismSurvival extends JavaPlugin {
 
     private org.bukkit.configuration.file.FileConfiguration rtpConfig;
 
+    public String getRTPRegionName() {
+        java.io.File apiFile = new java.io.File(getDataFolder(), "survival/api/config.yml");
+        org.bukkit.configuration.file.YamlConfiguration apiCfg = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(apiFile);
+        return apiCfg.getString("region", "europe").toLowerCase();
+    }
+
     public void loadRTPConfig() {
-        java.io.File file = new java.io.File(getDataFolder(), "rtp/europe/config.yml");
-        if (!file.exists()) {
-            saveResourceSafely("rtp/europe/config.yml");
-        }
+        java.io.File file = new java.io.File(getDataFolder(), "rtp/" + getRTPRegionName() + "/config.yml");
         rtpConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
     }
 

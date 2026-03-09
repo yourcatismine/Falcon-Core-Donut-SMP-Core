@@ -25,11 +25,19 @@ TAB:
       ENABLED: true
       # Higher numbers = higher priority (appear first in TAB)
       RANKINGS:
-        owner: 100
-        dev: 90
-        manager: 80
-        vip: 70
-        default: 10
+        owner: 1000
+        co-owner: 999
+        headmanager: 998
+        manager: 997
+        dev: 996
+        sradmin: 995
+        admin: 994
+        srmod: 993
+        mod: 992
+        tmod: 991
+        favourite: 990
+        sphynx+: 100
+        default: 1
     TITLE:
       header:
       - '&6ѕᴘʜʏɴхѕᴍᴘ'

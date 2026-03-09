@@ -285,13 +285,15 @@ public class TabListManager implements Listener {
         if (!groupSortingEnabled) {
             return 0;
         }
-        
-        String primaryGroup = LuckPermsUtils.getPrimaryGroup(player);
-        if (primaryGroup == null) {
-            return groupRankings.getOrDefault("default", 0);
+
+        int best = groupRankings.getOrDefault("default", 0);
+        for (String group : LuckPermsUtils.getGroups(player)) {
+            int r = groupRankings.getOrDefault(group.toLowerCase(), -1);
+            if (r > best) {
+                best = r;
+            }
         }
-        
-        return groupRankings.getOrDefault(primaryGroup.toLowerCase(), 0);
+        return best;
     }
     
     /**

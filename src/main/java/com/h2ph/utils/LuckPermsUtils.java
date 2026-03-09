@@ -5,19 +5,15 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import java.util.List;
 
 public class LuckPermsUtils {
 
-    private static final String[] GROUP_HIERARCHY = {
-            "owner", "co-owner", "manager", "dev", "sradmin", "admin",
-            "srmod", "mod", "srhelper", "helper", "media", "donut+", "booster", "default"
-    };
-
     /**
-     * Gets the most significant group of a player based on a predefined hierarchy.
-     * 
+     * Gets the primary group of a player as set in LuckPerms.
+     *
      * @param player The player to check.
-     * @return The highest group name found, or "default" if not found.
+     * @return The player's primary group, or "default" if not found.
      */
     public static String getPrimaryGroup(OfflinePlayer player) {
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
@@ -31,27 +27,39 @@ public class LuckPermsUtils {
             }
             if (user != null) {
                 String primary = user.getPrimaryGroup();
-
-                for (String group : GROUP_HIERARCHY) {
-                    if (primary.equalsIgnoreCase(group)) {
-                        return group;
-                    }
-                }
-
-                for (String group : GROUP_HIERARCHY) {
-                    if (user.getNodes().stream().anyMatch(node -> {
-                        String key = node.getKey().toLowerCase();
-                        return key.equals("group." + group.toLowerCase()) || key.equals(group.toLowerCase());
-                    })) {
-                        return group;
-                    }
-                }
-
-                return primary;
+                return primary != null ? primary : "default";
             }
         } catch (Exception e) {
         }
         return "default";
+    }
+
+    /**
+     * Gets all groups a player belongs to.
+     *
+     * @param player The player to check.
+     * @return A list of group names the player is in.
+     */
+    public static List<String> getGroups(OfflinePlayer player) {
+        if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
+            return java.util.Collections.singletonList("default");
+        }
+        try {
+            LuckPerms lp = LuckPermsProvider.get();
+            User user = lp.getUserManager().getUser(player.getUniqueId());
+            if (user == null) {
+                user = lp.getUserManager().loadUser(player.getUniqueId()).join();
+            }
+            if (user != null) {
+                List<String> groups = new java.util.ArrayList<>();
+                user.getNodes().stream()
+                        .filter(node -> node.getKey().startsWith("group."))
+                        .forEach(node -> groups.add(node.getKey().substring(6)));
+                return groups;
+            }
+        } catch (Exception e) {
+        }
+        return java.util.Collections.singletonList("default");
     }
 
     /**

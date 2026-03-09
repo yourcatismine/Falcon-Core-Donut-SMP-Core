@@ -201,16 +201,6 @@ public class ProfileGUIListener implements Listener {
     private void handleProfileHomesClick(InventoryClickEvent event, Player player) {
         int slot = event.getRawSlot();
 
-        if (slot == 1) {
-            ProfileHomesGUI.ProfileHomesHolder holder = (ProfileHomesGUI.ProfileHomesHolder) event.getView().getTopInventory().getHolder();
-            OfflinePlayer targetPlayer = holder.getTargetPlayer();
-
-            if (targetPlayer != null) {
-                ProfileCommand.openProfileGUI(player, targetPlayer);
-            }
-            return;
-        }
-
         if ((slot >= ProfileHomesGUI.BED_START && slot < ProfileHomesGUI.BED_START + 5) ||
             (slot >= ProfileHomesGUI.BED_START_2 && slot < ProfileHomesGUI.BED_START_2 + 5)) {
             

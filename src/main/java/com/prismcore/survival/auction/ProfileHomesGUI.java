@@ -56,15 +56,6 @@ public class ProfileHomesGUI {
             inv.setItem(i, placeholder);
         }
         
-        ItemStack backButton = new ItemStack(Material.BARRIER);
-        ItemMeta backMeta = backButton.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(Utils.formatColors("&c« ʙᴀᴄᴋ"));
-            backMeta.setLore(List.of(Utils.formatColors("&fClick to go back")));
-            backButton.setItemMeta(backMeta);
-        }
-        inv.setItem(1, backButton);
-        
         java.util.UUID targetUUID = targetPlayer.getUniqueId();
         java.util.Map<Integer, HomeManager.HomeEntry> homes = homeManager.getHomes(targetUUID);
         

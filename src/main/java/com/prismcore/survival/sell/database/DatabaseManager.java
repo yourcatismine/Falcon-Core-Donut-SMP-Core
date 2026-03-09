@@ -2,9 +2,7 @@ package com.prismcore.survival.sell.database;
 
 import com.prismcore.survival.sell.PrismSell;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import com.zaxxer.hikari.HikariConfig;
@@ -24,14 +22,13 @@ public class DatabaseManager {
     }
 
     public void connect() {
-        File dataFile = new File(plugin.getDataFolder(), "data/data.yml");
-        FileConfiguration dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+        FileConfiguration dataConfig = plugin.getPlugin().getConfig();
 
-        String host = dataConfig.getString("mysql.host", "localhost");
-        int port = dataConfig.getInt("mysql.port", 3306);
-        String database = dataConfig.getString("mysql.database", "falcon_europe");
-        String username = dataConfig.getString("mysql.username", "root");
-        String password = dataConfig.getString("mysql.password", "");
+        String host = dataConfig.getString("database.host", "localhost");
+        int port = dataConfig.getInt("database.port", 3306);
+        String database = dataConfig.getString("database.database", "falcon_europe");
+        String username = dataConfig.getString("database.username", "root");
+        String password = dataConfig.getString("database.password", "");
 
         try {
             HikariConfig hikariConfig = new HikariConfig();

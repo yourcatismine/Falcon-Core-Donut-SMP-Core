@@ -48,6 +48,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.orders.OrdersModule ordersModule;
     private com.prismcore.survival.sell.PrismSell prismSell;
     private com.h2ph.managers.RedstoneManager redstoneManager;
+
     private com.h2ph.managers.PrivateMessageManager privateMessageManager;
     private com.prismcore.survival.manager.BountyManager bountyManager;
     private com.h2ph.utils.SignInput signInput;
@@ -142,8 +143,6 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventorySyncListener(this), this);
-
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.ChunkTrackingListener(this), this);
 
         getSchedulerAdapter().runTaskTimer(() -> {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
@@ -287,7 +286,6 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("unmute").setTabCompleter(new com.h2ph.commands.admin.moderations.UnmuteCommand(this));
         getCommand("checkmute").setExecutor(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
         getCommand("checkmute").setTabCompleter(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
-
 
         this.duelStatsManager = new com.h2ph.commands.admin.duels.DuelStatsManager(this);
         this.duelArenaManager = new com.h2ph.commands.admin.duels.DuelArenaManager(this, duelStatsManager);

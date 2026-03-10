@@ -119,6 +119,7 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.disable_mob_spawns")) {
                 data.setDisableMobSpawns(cratesConfig.getBoolean("settings.disable_mob_spawns"));
             }
+
             if (cratesConfig.contains("settings.sound_notifications")) {
                 data.setSoundNotifications(cratesConfig.getBoolean("settings.sound_notifications"));
             }
@@ -305,6 +306,7 @@ public class PlayerDataManager {
         cratesConfig.set("settings.pay_alerts", data.isPayAlerts());
         cratesConfig.set("settings.quick_auction_buy", data.isQuickAuctionBuy());
         cratesConfig.set("settings.disable_mob_spawns", data.isDisableMobSpawns());
+
         cratesConfig.set("settings.sound_notifications", data.isSoundNotifications());
         cratesConfig.set("settings.tpa_confirm_menus", data.isTpaConfirmMenus());
         cratesConfig.set("settings.duel_requests", data.isDuelRequests());

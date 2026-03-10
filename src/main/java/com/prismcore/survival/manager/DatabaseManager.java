@@ -2,6 +2,7 @@ package com.prismcore.survival.manager;
 
 import com.h2ph.PrismSurvival;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -92,6 +93,14 @@ public class DatabaseManager {
                     ")";
             s.execute(offensesTable);
 
+            String ipLogsTable = "CREATE TABLE IF NOT EXISTS ip_logs (" +
+                    "uuid VARCHAR(36) NOT NULL," +
+                    "ip VARCHAR(45) NOT NULL," +
+                    "last_seen BIGINT," +
+                    "PRIMARY KEY (uuid, ip)" +
+                    ")";
+            s.execute(ipLogsTable);
+
             String mutesTable = "CREATE TABLE IF NOT EXISTS mutes (" +
                     "uuid VARCHAR(36) NOT NULL," +
                     "player_name VARCHAR(16)," +
@@ -128,6 +137,20 @@ public class DatabaseManager {
                     "PRIMARY KEY (uuid)" +
                     ")";
             s.execute(inventoryTable);
+
+            String transactionsTable = "CREATE TABLE IF NOT EXISTS auction_transactions (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "player_uuid VARCHAR(36) NOT NULL," +
+                    "item_data LONGTEXT NOT NULL," +
+                    "price DOUBLE NOT NULL," +
+                    "buyer_name VARCHAR(16) NOT NULL," +
+                    "seller_name VARCHAR(16) NOT NULL," +
+                    "timestamp BIGINT NOT NULL," +
+                    "is_sale TINYINT(1) NOT NULL," +
+                    "INDEX (player_uuid)," +
+                    "INDEX (timestamp)" +
+                    ")";
+            s.execute(transactionsTable);
 
             String statsTable = "CREATE TABLE IF NOT EXISTS player_stats (" +
                     "uuid VARCHAR(36) NOT NULL PRIMARY KEY," +
@@ -258,6 +281,22 @@ public class DatabaseManager {
                     ")";
             s.execute(serverConfigTable);
 
+            String blockHistoryTable = "CREATE TABLE IF NOT EXISTS block_history (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "world VARCHAR(64) NOT NULL," +
+                    "x INT NOT NULL," +
+                    "y INT NOT NULL," +
+                    "z INT NOT NULL," +
+                    "player_uuid VARCHAR(36) NOT NULL," +
+                    "player_name VARCHAR(16) NOT NULL," +
+                    "action VARCHAR(20) NOT NULL," +
+                    "block_type VARCHAR(50) NOT NULL," +
+                    "timestamp BIGINT NOT NULL," +
+                    "INDEX location_idx (world, x, y, z)," +
+                    "INDEX timestamp_idx (timestamp)" +
+                    ")";
+            s.execute(blockHistoryTable);
+
             String pvpSafeZonesTable = "CREATE TABLE IF NOT EXISTS pvp_safe_zones (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "name VARCHAR(64) NOT NULL UNIQUE," +
@@ -274,6 +313,23 @@ public class DatabaseManager {
                     "INDEX world_idx (world)" +
                     ")";
             s.execute(pvpSafeZonesTable);
+
+            String chunkVisitsTable = "CREATE TABLE IF NOT EXISTS player_chunk_visits (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "world VARCHAR(64) NOT NULL," +
+                    "chunk_x INT NOT NULL," +
+                    "chunk_z INT NOT NULL," +
+                    "player_uuid VARCHAR(36) NOT NULL," +
+                    "player_name VARCHAR(16) NOT NULL," +
+                    "visit_count INT DEFAULT 1," +
+                    "first_visit BIGINT NOT NULL," +
+                    "last_visit BIGINT NOT NULL," +
+                    "UNIQUE KEY unique_player_chunk (world, chunk_x, chunk_z, player_uuid)," +
+                    "INDEX chunk_idx (world, chunk_x, chunk_z)," +
+                    "INDEX player_idx (player_uuid)," +
+                    "INDEX timestamp_idx (last_visit)" +
+                    ")";
+            s.execute(chunkVisitsTable);
 
             String temporaryBlocksTable = "CREATE TABLE IF NOT EXISTS temporary_blocks (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
@@ -490,11 +546,11 @@ public class DatabaseManager {
     public void logIP(UUID uuid, String ip) {
         if (!isConnected())
             return;
-        String query = "UPDATE player_stats SET ip = ?, last_updated = ? WHERE uuid = ?";
+        String query = "REPLACE INTO ip_logs (uuid, ip, last_seen) VALUES (?, ?, ?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, ip);
-            ps.setLong(2, System.currentTimeMillis());
-            ps.setString(3, uuid.toString());
+            ps.setString(1, uuid.toString());
+            ps.setString(2, ip);
+            ps.setLong(3, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
         }
@@ -503,7 +559,7 @@ public class DatabaseManager {
     public String getLastIP(UUID uuid) {
         if (!isConnected())
             return null;
-        String query = "SELECT ip FROM player_stats WHERE uuid = ?";
+        String query = "SELECT ip FROM ip_logs WHERE uuid = ? ORDER BY last_seen DESC LIMIT 1";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
@@ -520,13 +576,19 @@ public class DatabaseManager {
         if (!isConnected() || ip == null)
             return new ArrayList<>();
         List<String> alts = new ArrayList<>();
-        String query = "SELECT DISTINCT pn.cached_name FROM player_stats ps JOIN player_names pn ON ps.uuid = pn.uuid WHERE ps.ip = ? AND ps.uuid != ?";
+        String query = "SELECT DISTINCT uuid FROM ip_logs WHERE ip = ? AND uuid != ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, ip);
             ps.setString(2, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    alts.add(rs.getString("cached_name"));
+                    String altUuid = rs.getString("uuid");
+                    OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(altUuid));
+                    if (op.getName() != null) {
+                        alts.add(op.getName());
+                    } else {
+                        alts.add(altUuid);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -806,6 +868,66 @@ public class DatabaseManager {
         } catch (SQLException e) {
         }
         return null;
+    }
+
+    public void addAuctionTransaction(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
+        if (!isConnected())
+            return;
+        String query = "INSERT INTO auction_transactions (player_uuid, item_data, price, buyer_name, seller_name, timestamp, is_sale) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            String itemData = com.prismcore.survival.utils.ItemSerializationManager
+                    .itemStackArrayToBase64(new org.bukkit.inventory.ItemStack[] { tx.getItem() });
+            ps.setString(2, itemData);
+            ps.setDouble(3, tx.getPrice());
+            ps.setString(4, tx.getBuyer());
+            ps.setString(5, tx.getSeller());
+            ps.setLong(6, tx.getTimestamp());
+            ps.setBoolean(7, tx.isSale());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+        }
+    }
+
+    public List<com.prismcore.survival.auction.Transaction> getAuctionTransactions(UUID playerUuid) {
+        List<com.prismcore.survival.auction.Transaction> list = new ArrayList<>();
+        if (!isConnected())
+            return list;
+        String query = "SELECT * FROM auction_transactions WHERE player_uuid = ? ORDER BY timestamp DESC LIMIT 50";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String itemData = rs.getString("item_data");
+                    org.bukkit.inventory.ItemStack[] items = com.prismcore.survival.utils.ItemSerializationManager
+                            .itemStackArrayFromBase64(itemData);
+                    if (items.length > 0) {
+                        list.add(new com.prismcore.survival.auction.Transaction(
+                                items[0],
+                                rs.getDouble("price"),
+                                rs.getString("buyer_name"),
+                                rs.getString("seller_name"),
+                                rs.getLong("timestamp"),
+                                rs.getBoolean("is_sale")));
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return list;
+    }
+
+    public void deleteAuctionTransaction(UUID playerUuid, long timestamp, double price) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM auction_transactions WHERE player_uuid = ? AND timestamp = ? AND price = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            ps.setLong(2, timestamp);
+            ps.setDouble(3, price);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+        }
     }
 
     public void savePlayerStats(UUID uuid, PlayerData data) {
@@ -1180,6 +1302,14 @@ public class DatabaseManager {
         plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayerName(uuid, name));
     }
 
+    public void addAuctionTransactionAsync(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> addAuctionTransaction(playerUuid, tx));
+    }
+
+    public void deleteAuctionTransactionAsync(UUID playerUuid, long timestamp, double price) {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> deleteAuctionTransaction(playerUuid, timestamp, price));
+    }
+
     public void updateStatusAsync(UUID uuid, String status) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             String query = "UPDATE player_stats SET status = ? WHERE uuid = ?";
@@ -1291,6 +1421,17 @@ public class DatabaseManager {
         }).thenAccept(callback);
     }
 
+    public void wipeAuctionTransactions(UUID playerUuid) {
+        if (!isConnected())
+            return;
+        String query = "DELETE FROM auction_transactions WHERE player_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, playerUuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+        }
+    }
+
     public void wipeOrders(UUID playerUuid) {
         if (!isConnected())
             return;
@@ -1378,8 +1519,33 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Get chunk history for a 5x5 area centered on the specified chunk
+     * 
+     * @param world        The world name
+     * @param centerChunkX The center chunk X coordinate
+     * @param centerChunkZ The center chunk Z coordinate
+     * @return List of ChunkHistoryEntry objects representing player activity in the
+     *         area
+     */
+
+    /**
+     * Ensure the player_chunk_visits table exists (creates if doesn't exist)
+     */
+
+    /**
+     * Record a player's visit to a chunk (for movement tracking)
+     */
+
+    /**
+     * Get chunk visit history for a single chunk
+     */
+
+    /**
+     * Get chunk visit history for a 5x5 area centered on the specified chunk
+     */
+
     public void setServerConfigDouble(String key, double value) {
         setServerConfig(key, String.valueOf(value));
     }
-
 }

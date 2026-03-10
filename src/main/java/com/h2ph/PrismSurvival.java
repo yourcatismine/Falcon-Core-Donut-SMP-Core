@@ -368,6 +368,10 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("checkplayers").setExecutor(checkPlayersCmd);
         getCommand("checkplayers").setTabCompleter(checkPlayersCmd);
 
+        com.h2ph.commands.admin.AnnounceCommand announceCmd = new com.h2ph.commands.admin.AnnounceCommand(this);
+        getCommand("announce").setExecutor(announceCmd);
+        getCommand("announce").setTabCompleter(announceCmd);
+
         com.h2ph.commands.player.CheckTotemCommand checkTotemCmd = new com.h2ph.commands.player.CheckTotemCommand();
         getCommand("checktotem").setExecutor(checkTotemCmd);
         getCommand("checktotem").setTabCompleter(checkTotemCmd);

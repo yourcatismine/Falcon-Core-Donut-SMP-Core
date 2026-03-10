@@ -248,6 +248,11 @@ commands:
     permission: falcon.use
     permission-message: You do not have permission to use this command.
 
+  announce:
+    description: Broadcast an announcement to all players
+    usage: /announce <message> [repeat <count>]
+    permission: falcon.announce
+
   tpa:
     description: Request to teleport to another player
     usage: /tpa <player>

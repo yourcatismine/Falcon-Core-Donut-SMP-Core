@@ -213,8 +213,8 @@ public class DatabaseManager {
                     "disguised BOOLEAN DEFAULT FALSE",
                     "disguise_name VARCHAR(16) DEFAULT NULL",
                     "disguise_skin_texture TEXT DEFAULT NULL",
-                    "disguise_skin_signature TEXT DEFAULT NULL," +
-                            "history LONGTEXT"
+                    "disguise_skin_signature TEXT DEFAULT NULL",
+                    "history LONGTEXT"
             };
 
             for (String columnDef : statsColumns) {
@@ -963,21 +963,53 @@ public class DatabaseManager {
         }
     }
 
-    public PlayerDataStats loadPlayerStats(UUID uuid) {
+    public static class LoadResult<T> {
+        private final T data;
+        private final boolean error;
+        private final String errorMessage;
+
+        public LoadResult(T data, boolean error, String errorMessage) {
+            this.data = data;
+            this.error = error;
+            this.errorMessage = errorMessage;
+        }
+
+        public T getData() {
+            return data;
+        }
+
+        public boolean isError() {
+            return error;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public boolean found() {
+            return data != null;
+        }
+    }
+
+    public LoadResult<PlayerDataStats> loadPlayerStats(UUID uuid) {
         if (!isConnected())
-            return null;
+            return new LoadResult<>(null, true, "Database not connected");
         String query = "SELECT money, shards, shop_spent, ip, history FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new PlayerDataStats(rs.getDouble("money"), rs.getDouble("shards"),
+                    PlayerDataStats stats = new PlayerDataStats(rs.getDouble("money"), rs.getDouble("shards"),
                             rs.getDouble("shop_spent"), rs.getString("ip"), rs.getString("history"));
+                    return new LoadResult<>(stats, false, null);
                 }
+                return new LoadResult<>(null, false, null); // Not found, but no error
             }
         } catch (SQLException e) {
+            // Error logged silently to avoid console spam, safety flags will still kick the
+            // player
+            return new LoadResult<>(null, true, e.getMessage());
         }
-        return null;
     }
 
     public static class PlayerDataStats {

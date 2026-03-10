@@ -58,10 +58,19 @@ public class PlayerDataManager {
     public PlayerData loadPlayer(UUID uuid) {
         PlayerData data = new PlayerData(plugin, uuid);
 
-        DatabaseManager.PlayerDataStats stats = null;
+        DatabaseManager.LoadResult<DatabaseManager.PlayerDataStats> result = null;
         if (plugin.getDatabaseManager().isConnected()) {
-            stats = plugin.getDatabaseManager().loadPlayerStats(uuid);
+            result = plugin.getDatabaseManager().loadPlayerStats(uuid);
         }
+
+        if (result != null && result.isError()) {
+            data.setLoadingFailed(true);
+            // plugin.getLogger().severe("CRITICAL: Failed to load data for " + uuid + " due
+            // to DB error: " + result.getErrorMessage());
+            return data; // Return early with the flag set
+        }
+
+        DatabaseManager.PlayerDataStats stats = (result != null) ? result.getData() : null;
         boolean migratedFromYml = false;
 
         if (stats != null) {
@@ -287,6 +296,11 @@ public class PlayerDataManager {
     }
 
     public void savePlayer(UUID uuid, PlayerData data) {
+        if (data.isLoadingFailed()) {
+            plugin.getLogger().warning("SKIPPING SAVE for " + uuid + " (UUID: " + uuid
+                    + ") because data failed to load correctly. Preventing potential data wipe.");
+            return;
+        }
 
         plugin.getDatabaseManager().savePlayerStats(uuid, data);
 
@@ -367,6 +381,8 @@ public class PlayerDataManager {
      * without waiting for the full savePlayer() on logout.
      */
     public void saveMoneyAsync(UUID uuid, PlayerData data) {
+        if (data.isLoadingFailed())
+            return;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             plugin.getDatabaseManager().savePlayerStats(uuid, data);
             plugin.getDatabaseManager().savePlayerName(uuid, data.getName());

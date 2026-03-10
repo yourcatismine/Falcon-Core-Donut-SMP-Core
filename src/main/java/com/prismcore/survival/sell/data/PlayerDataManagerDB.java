@@ -94,15 +94,16 @@ public class PlayerDataManagerDB {
 
             data.resetDirty();
         } catch (SQLException e) {
-            this.plugin.getLogger().severe("Failed to load player data for " + uuid);
-            e.printStackTrace();
+            // this.plugin.getLogger().severe("Failed to load player data for " + uuid);
+            // e.printStackTrace();
+            data.setLoadingFailed(true);
         }
         return data;
     }
 
     public void savePlayerData(UUID uuid) {
         PlayerData data = this.cache.get(uuid);
-        if (data == null || !data.isDirty()) {
+        if (data == null || !data.isDirty() || data.isLoadingFailed()) {
             return;
         }
         this.savePlayerDataSync(uuid, data);
@@ -110,7 +111,7 @@ public class PlayerDataManagerDB {
 
     public void savePlayerDataAsync(UUID uuid) {
         PlayerData data = this.cache.get(uuid);
-        if (data != null && data.isDirty()) {
+        if (data != null && data.isDirty() && !data.isLoadingFailed()) {
             CompletableFuture.runAsync(() -> this.savePlayerDataSync(uuid, data));
         }
     }

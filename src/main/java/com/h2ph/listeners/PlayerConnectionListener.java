@@ -33,6 +33,13 @@ public class PlayerConnectionListener implements Listener {
 
         PlayerData data = plugin.getPlayerDataManager().get(event.getUniqueId());
 
+        if (data != null && data.isLoadingFailed()) {
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
+                    Utils.formatColors(
+                            "&c[Error] Failed to load your data reliably.\n&7Please try again in 1 minute to prevent data loss."));
+            return;
+        }
+
         if (data != null && data.getTeamId() != null) {
             plugin.getTeamManager().getTeam(data.getTeamId());
         }

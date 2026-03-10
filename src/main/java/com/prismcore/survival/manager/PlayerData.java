@@ -42,6 +42,7 @@ public class PlayerData {
     private String ip;
     private String history = "";
     private boolean unloading = false;
+    private boolean loadingFailed = false;
 
     public PlayerData(PrismSurvival plugin, UUID uuid) {
         this.plugin = plugin;
@@ -658,6 +659,14 @@ public class PlayerData {
 
     public void setUnloading(boolean unloading) {
         this.unloading = unloading;
+    }
+
+    public boolean isLoadingFailed() {
+        return loadingFailed;
+    }
+
+    public void setLoadingFailed(boolean loadingFailed) {
+        this.loadingFailed = loadingFailed;
     }
 
     public String getIp() {

@@ -51,13 +51,13 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
         String targetName = args[0];
 
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
-            DatabaseManager.PlayerDataStats stats = null;
+            DatabaseManager.LoadResult<DatabaseManager.PlayerDataStats> result = null;
             UUID targetUuid = null;
 
             Player online = Bukkit.getPlayer(targetName);
             if (online != null) {
                 targetUuid = online.getUniqueId();
-                stats = plugin.getDatabaseManager().loadPlayerStats(targetUuid);
+                result = plugin.getDatabaseManager().loadPlayerStats(targetUuid);
             } else {
                 String queryUuid = "SELECT uuid FROM player_names WHERE cached_name LIKE ? LIMIT 1";
                 try (Connection conn = plugin.getDatabaseManager().getConnection();
@@ -66,12 +66,14 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             targetUuid = UUID.fromString(rs.getString("uuid"));
-                            stats = plugin.getDatabaseManager().loadPlayerStats(targetUuid);
+                            result = plugin.getDatabaseManager().loadPlayerStats(targetUuid);
                         }
                     }
                 } catch (SQLException e) {
                 }
             }
+
+            DatabaseManager.PlayerDataStats stats = (result != null) ? result.getData() : null;
 
             if (stats == null || stats.ip == null) {
                 plugin.getSchedulerAdapter().runTask(() -> {

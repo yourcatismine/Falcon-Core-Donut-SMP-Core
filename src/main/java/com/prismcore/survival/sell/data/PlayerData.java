@@ -175,4 +175,14 @@ public class PlayerData {
         this.dirty = false;
     }
 
+    private boolean loadingFailed = false;
+
+    public boolean isLoadingFailed() {
+        return loadingFailed;
+    }
+
+    public void setLoadingFailed(boolean loadingFailed) {
+        this.loadingFailed = loadingFailed;
+    }
+
 }

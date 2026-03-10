@@ -42,7 +42,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             sender.sendMessage(
-                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor|pvpsafe> [args]");
+                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor|pvpsafe|warps> [args]");
             return true;
         }
 
@@ -386,8 +386,57 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return handlePvPSafe(player, args);
         }
 
+        if (sub.equals("warps")) {
+            if (!player.hasPermission("prism.admin.warps")) {
+                player.sendMessage("§cYou do not have permission to use this command.");
+                return true;
+            }
+
+            if (args.length < 2) {
+                player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
+                return true;
+            }
+
+            String action = args[1].toLowerCase();
+
+            if (action.equals("set")) {
+                if (args.length < 3) {
+                    player.sendMessage("§cUsage: /falcon warps set <name>");
+                    return true;
+                }
+                String name = args[2];
+                plugin.getWarpManager().setWarp(name, player.getLocation());
+                player.sendMessage("§aWarp §f'" + name + "' §ahas been set at your current location.");
+                return true;
+            } else if (action.equals("delete") || action.equals("del")) {
+                if (args.length < 3) {
+                    player.sendMessage("§cUsage: /falcon warps delete <name>");
+                    return true;
+                }
+                String name = args[2];
+                boolean deleted = plugin.getWarpManager().deleteWarp(name);
+                if (deleted) {
+                    player.sendMessage("§aWarp §f'" + name + "' §ahas been deleted.");
+                } else {
+                    player.sendMessage("§cWarp '" + name + "' not found.");
+                }
+                return true;
+            } else if (action.equals("list")) {
+                java.util.List<String> warps = plugin.getWarpManager().listWarps();
+                if (warps.isEmpty()) {
+                    player.sendMessage("§7No warps have been set.");
+                } else {
+                    player.sendMessage("§6Warps: §f" + String.join("§7, §f", warps));
+                }
+                return true;
+            } else {
+                player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
+                return true;
+            }
+        }
+
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, anchor, or pvpsafe.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, anchor, pvpsafe, or warps.");
         return true;
     }
 
@@ -653,7 +702,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             return Arrays
                     .asList("auction", "order", "rtpqueue", "speed", "tools", "void", "respawngear", "limiter",
-                            "crate", "crystal", "anchor", "pvpsafe")
+                            "crate", "crystal", "anchor", "pvpsafe", "warps")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -703,6 +752,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return Arrays.asList("setup", "delete").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("warps")) {
+                return Arrays.asList("set", "delete", "list").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
             }
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("rtpqueue")) {
@@ -725,6 +778,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 // Return available zone names for deletion
                 return plugin.getPvPSafeZoneManager().getAllZoneNames().stream()
                         .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("warps") && args[1].equalsIgnoreCase("delete")) {
+                return plugin.getWarpManager().listWarps().stream()
+                        .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("crate")) {
                 if (args[1].equalsIgnoreCase("effects")) {

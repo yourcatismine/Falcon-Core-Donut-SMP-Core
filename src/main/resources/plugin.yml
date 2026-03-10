@@ -48,6 +48,11 @@ commands:
     usage: /spawn [name]
     aliases: []
 
+  warp:
+    description: Teleport to a warp point
+    usage: /warp <name>
+    default: true
+
   economy:
     description: Manage player balances
     usage: /economy <give|set|remove> <player> <amount>
@@ -489,4 +494,10 @@ permissions:
     default: op
   prismcore.teleport:
     description: Allows use of the custom /tp command
+    default: op
+  prism.warp:
+    description: Permission to use /warp
+    default: true
+  prism.admin.warps:
+    description: Permission to manage warps via /falcon warps
     default: op

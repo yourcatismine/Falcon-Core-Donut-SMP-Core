@@ -57,6 +57,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.utils.SignInput signInput;
     private com.h2ph.managers.EnderChestManager enderChestManager;
     private com.h2ph.managers.HomeManager homeManager;
+    private com.prismcore.survival.manager.WarpManager warpManager;
     private com.h2ph.managers.ScoreboardManager scoreboardManager;
     private com.h2ph.managers.TabListManager tabListManager;
     private com.prismcore.survival.manager.VoidManager voidManager;
@@ -481,6 +482,8 @@ public class PrismSurvival extends JavaPlugin {
         this.prismSell = new com.prismcore.survival.sell.PrismSell(this);
         this.prismSell.onEnable();
 
+        this.warpManager = new com.prismcore.survival.manager.WarpManager(this);
+
         this.enderChestManager = new com.h2ph.managers.EnderChestManager(this);
 
         getCommand("echest").setExecutor(new com.h2ph.commands.player.EnderChestCommand(this));
@@ -498,6 +501,10 @@ public class PrismSurvival extends JavaPlugin {
         com.h2ph.commands.player.WhereAmICommand whereAmICmd = new com.h2ph.commands.player.WhereAmICommand(this);
         getCommand("whereami").setExecutor(whereAmICmd);
         getCommand("whereami").setTabCompleter(whereAmICmd);
+
+        com.h2ph.commands.player.WarpCommand warpCmd = new com.h2ph.commands.player.WarpCommand(this);
+        getCommand("warp").setExecutor(warpCmd);
+        getCommand("warp").setTabCompleter(warpCmd);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HomeChatListener(this), this);
 
@@ -772,6 +779,10 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.managers.HomeManager getHomeManager() {
         return homeManager;
+    }
+
+    public com.prismcore.survival.manager.WarpManager getWarpManager() {
+        return warpManager;
     }
 
     public com.h2ph.managers.ScoreboardManager getScoreboardManager() {

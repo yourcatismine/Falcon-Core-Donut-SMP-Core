@@ -234,12 +234,6 @@ public class ConfirmDeliveryMenu
 
                 this.p.removeMetadata("prismorder.deliveryStartTime", this.module.getPlugin());
 
-                Order finalOrder = this.module.orders().getOrder(this.order.id);
-                if (finalOrder != null) {
-                    this.order.delivered = finalOrder.delivered;
-                    this.order.completed = finalOrder.completed;
-                }
-
                 if (this.order.remainingAmount() > 0) {
                     TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
                             () -> new DeliverItemsMenu(this.module, this.p, this.order).open(), 1L);

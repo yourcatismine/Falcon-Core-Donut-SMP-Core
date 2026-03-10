@@ -89,12 +89,17 @@ public class OrderManager {
         // ANTI-DUPE FIX: Get fresh order data from database to prevent stale refund
         // calculations
         synchronized (this) {
+            if (o.canceled) {
+                return;
+            }
+
             Order freshOrder = this.getOrder(o.id);
             if (freshOrder == null) {
-                throw new IllegalStateException("Order " + o.id + " not found in database");
+                return;
             }
             if (freshOrder.canceled) {
-                throw new IllegalStateException("Order " + o.id + " is already canceled");
+                o.canceled = true;
+                return;
             }
 
             // Update the order object with fresh data to ensure accurate refund calculation
@@ -102,17 +107,19 @@ public class OrderManager {
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
             o.requested = freshOrder.requested;
+
+            o.canceled = true;
+            o.completed = true;
+            o.requested = o.delivered;
         }
 
-        o.canceled = true;
         int remaining = o.remainingAmount();
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
         double refund = (double) remaining * price;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(o.owner);
         OrdersModule.getInstance().vault().give(owner, refund);
-        o.requested = o.delivered;
-        o.completed = true;
-        this.saveOrder(o);
+
+        this.saveOrder(o, false);
 
     }
 
@@ -202,7 +209,7 @@ public class OrderManager {
             o.completed = true;
         }
         o.paid = (double) o.delivered * o.priceEach;
-        this.saveOrder(o);
+        this.saveOrder(o, false);
 
         String formattedAmount = Utils.abbr(acceptedAmount);
         String itemName = o.key.displayName();

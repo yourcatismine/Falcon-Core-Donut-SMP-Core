@@ -33,6 +33,7 @@ public class DeleteOrderMenu
     private final Player p;
     private final Order order;
     private Inventory inv;
+    private boolean processing = false;
 
     public DeleteOrderMenu(OrdersModule module, Player p, Order order) {
         this.module = module;
@@ -84,6 +85,9 @@ public class DeleteOrderMenu
             return;
         }
         if (slot == confirm) {
+            if (this.processing) {
+                return;
+            }
             if (!this.order.storage.isEmpty()) {
                 this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                 this.p.sendMessage(com.prismcore.survival.orders.Utils
@@ -92,6 +96,7 @@ public class DeleteOrderMenu
                 return;
             }
 
+            this.processing = true;
             this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
             this.module.orders().cancel(this.order);
             new YourOrdersMenu(this.module, this.p).open();

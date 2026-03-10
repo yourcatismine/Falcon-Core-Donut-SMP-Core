@@ -47,11 +47,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.maintenance.MaintenanceManager maintenanceManager;
     private com.prismcore.survival.orders.OrdersModule ordersModule;
     private com.prismcore.survival.sell.PrismSell prismSell;
-    private com.prismcore.survival.manager.ActivityLogger activityLogger;
-    private com.prismcore.survival.manager.InventoryLogManager inventoryLogManager;
     private com.h2ph.managers.RedstoneManager redstoneManager;
-    private com.prismcore.survival.manager.HazardManager hazardManager;
-    private com.prismcore.survival.manager.BalanceLogger balanceLogger;
     private com.h2ph.managers.PrivateMessageManager privateMessageManager;
     private com.prismcore.survival.manager.BountyManager bountyManager;
     private com.h2ph.utils.SignInput signInput;
@@ -134,7 +130,7 @@ public class PrismSurvival extends JavaPlugin {
         this.teleportManager = new com.prismcore.survival.manager.TeleportManager(this);
         this.privateMessageManager = new com.h2ph.managers.PrivateMessageManager();
         this.bountyManager = new com.prismcore.survival.manager.BountyManager(this);
-        
+
         this.deathMessageManager = new com.h2ph.managers.DeathMessageManager(this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
@@ -146,8 +142,6 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventorySyncListener(this), this);
-
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.HistoryListener(this), this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.ChunkTrackingListener(this), this);
 
@@ -173,17 +167,10 @@ public class PrismSurvival extends JavaPlugin {
             }
         }, 12000L, 12000L);
 
-        this.activityLogger = new com.prismcore.survival.manager.ActivityLogger(this);
-        this.inventoryLogManager = new com.prismcore.survival.manager.InventoryLogManager(this);
-
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventoryLogListener(this), this);
-
-        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
+        getServer().getPluginManager()
+                .registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
 
         this.redstoneManager = new com.h2ph.managers.RedstoneManager(this);
-        this.hazardManager = new com.prismcore.survival.manager.HazardManager(this);
-        this.balanceLogger = new com.prismcore.survival.manager.BalanceLogger(this);
-        this.balanceLogger.start();
 
         this.shopCommand = new ShopCommand(this);
         getCommand("shop").setExecutor(shopCommand);
@@ -301,8 +288,6 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("checkmute").setExecutor(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
         getCommand("checkmute").setTabCompleter(new com.h2ph.commands.admin.moderations.CheckMuteCommand(this));
 
-        getCommand("checkhistory").setExecutor(new com.h2ph.commands.admin.moderations.CheckHistoryCommand(this));
-        getCommand("whowashere").setExecutor(new com.h2ph.commands.admin.moderations.WhoWasHereCommand(this));
 
         this.duelStatsManager = new com.h2ph.commands.admin.duels.DuelStatsManager(this);
         this.duelArenaManager = new com.h2ph.commands.admin.duels.DuelArenaManager(this, duelStatsManager);
@@ -551,9 +536,11 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.VoidProtectionListener(this), this);
 
         this.pvpSafeZoneManager = new com.prismcore.survival.manager.PvPSafeZoneManager(this, databaseManager);
-        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PvPSafeZoneListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PvPSafeZoneListener(this),
+                this);
 
-        this.blockRestorationManager = new com.prismcore.survival.manager.BlockRestorationManager(this, databaseManager, pvpSafeZoneManager);
+        this.blockRestorationManager = new com.prismcore.survival.manager.BlockRestorationManager(this, databaseManager,
+                pvpSafeZoneManager);
         getServer().getPluginManager().registerEvents(blockRestorationManager, this);
 
         this.limiterConfig = new com.prismcore.survival.limiter.LimiterConfig(this);
@@ -612,8 +599,9 @@ public class PrismSurvival extends JavaPlugin {
         printStartupBanner(vaultEnabled);
 
         this.playerNameCache.initialize();
-        
-        getServer().getPluginManager().registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
+
+        getServer().getPluginManager()
+                .registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
 
         try {
             org.apache.logging.log4j.core.Logger rootLogger = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager
@@ -675,10 +663,6 @@ public class PrismSurvival extends JavaPlugin {
 
         if (this.tabListManager != null) {
             this.tabListManager.shutdown();
-        }
-
-        if (this.activityLogger != null) {
-            this.activityLogger.shutdown();
         }
 
         if (this.bountyManager != null) {
@@ -747,18 +731,6 @@ public class PrismSurvival extends JavaPlugin {
 
     public com.h2ph.managers.RedstoneManager getRedstoneManager() {
         return redstoneManager;
-    }
-
-    public com.prismcore.survival.manager.HazardManager getHazardManager() {
-        return hazardManager;
-    }
-
-    public com.prismcore.survival.manager.ActivityLogger getActivityLogger() {
-        return activityLogger;
-    }
-
-    public com.prismcore.survival.manager.InventoryLogManager getInventoryLogManager() {
-        return inventoryLogManager;
     }
 
     public com.h2ph.managers.PrivateMessageManager getPrivateMessageManager() {
@@ -936,7 +908,6 @@ public class PrismSurvival extends JavaPlugin {
         return survivalConfig;
     }
 
-
     private final java.util.Set<java.util.UUID> updateWriters = new java.util.HashSet<>();
     private java.util.List<String> activeUpdatePages = new java.util.ArrayList<>();
     private long activeUpdateVersion = 0;
@@ -995,7 +966,6 @@ public class PrismSurvival extends JavaPlugin {
             this.activeUpdateVersion = eConfig.getLong("version", 0);
         }
     }
-
 
     private final java.util.Set<java.util.UUID> advisorWriters = new java.util.HashSet<>();
     private java.util.List<String> activeAdvisorPages = new java.util.ArrayList<>();
@@ -1105,7 +1075,8 @@ public class PrismSurvival extends JavaPlugin {
 
     public String getRTPRegionName() {
         java.io.File apiFile = new java.io.File(getDataFolder(), "survival/api/config.yml");
-        org.bukkit.configuration.file.YamlConfiguration apiCfg = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(apiFile);
+        org.bukkit.configuration.file.YamlConfiguration apiCfg = org.bukkit.configuration.file.YamlConfiguration
+                .loadConfiguration(apiFile);
         return apiCfg.getString("region", "europe").toLowerCase();
     }
 

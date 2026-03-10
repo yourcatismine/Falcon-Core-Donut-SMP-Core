@@ -37,9 +37,10 @@ import org.bukkit.plugin.Plugin;
 public class ConfirmDeliveryMenu
         implements InventoryHolder,
         MenuOwner {
-    
-    private static final java.util.Set<java.util.UUID> processingOrders = java.util.concurrent.ConcurrentHashMap.newKeySet();
-    
+
+    private static final java.util.Set<java.util.UUID> processingOrders = java.util.concurrent.ConcurrentHashMap
+            .newKeySet();
+
     private final OrdersModule module;
     private final Player p;
     private final Order order;
@@ -157,9 +158,6 @@ public class ConfirmDeliveryMenu
         }
         int slot = e.getSlot();
         if (slot == 11) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Clicked Cancel in Confirm Delivery Menu");
             this.finalized = true;
 
             for (ItemStack shulker : this.originalShulkers) {
@@ -184,7 +182,7 @@ public class ConfirmDeliveryMenu
                 this.p.sendMessage(Utils.formatColors("&cDelivery already in progress! Please wait."));
                 return;
             }
-            
+
             try {
                 this.finalized = true;
 
@@ -211,18 +209,19 @@ public class ConfirmDeliveryMenu
                 allAccepted.addAll(this.acceptedFromShulkers);
 
                 try {
-                    this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount, this.p.getUniqueId());
+                    this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount,
+                            this.p.getUniqueId());
                 } catch (IllegalStateException ex) {
                     this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                     this.p.sendMessage(Utils.formatColors("&cDelivery failed: " + ex.getMessage()));
-                    
+
                     for (ItemStack shulker : this.originalShulkers) {
                         this.giveBackOrDrop(shulker);
                     }
                     for (ItemStack directItem : this.acceptedDirect) {
                         this.giveBackOrDrop(directItem);
                     }
-                    
+
                     this.p.closeInventory();
                     return;
                 }
@@ -233,14 +232,6 @@ public class ConfirmDeliveryMenu
                     this.giveBackOrDrop(processedShulker);
                 }
 
-                long startTime = this.p.hasMetadata("prismorder.deliveryStartTime")
-                        ? this.p.getMetadata("prismorder.deliveryStartTime").get(0).asLong()
-                        : System.currentTimeMillis();
-                double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Clicked Confirm and delivered " + acceptedAmount + " items in " + String.format("%.1f", seconds)
-                                + "s");
                 this.p.removeMetadata("prismorder.deliveryStartTime", this.module.getPlugin());
 
                 Order finalOrder = this.module.orders().getOrder(this.order.id);

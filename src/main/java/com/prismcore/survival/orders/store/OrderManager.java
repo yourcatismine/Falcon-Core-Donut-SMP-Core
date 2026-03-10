@@ -23,7 +23,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.ActivityLogger;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -44,9 +43,10 @@ public class OrderManager {
     public Collection<Order> all() {
         return this.orders.values();
     }
-    
+
     /**
      * ANTI-DUPE: Get fresh order data from database by ID
+     * 
      * @param orderId The order ID to fetch
      * @return Fresh order from database or null if not found
      */
@@ -82,16 +82,12 @@ public class OrderManager {
         this.orders.put(o.id, o);
         this.saveOrder(o);
 
-        PrismSurvival.getInstance().getHazardManager().checkActivity(owner, "ORDER_CREATE",
-                amount + " " + key.displayName());
-        PrismSurvival.getInstance().getActivityLogger().log(owner, ActivityLogger.LogType.ORDER,
-                "Created order for " + amount + " " + key.displayName() + " ($" + priceEach + "/ea)");
-
         return o;
     }
 
     public void cancel(Order o) {
-        // ANTI-DUPE FIX: Get fresh order data from database to prevent stale refund calculations
+        // ANTI-DUPE FIX: Get fresh order data from database to prevent stale refund
+        // calculations
         synchronized (this) {
             Order freshOrder = this.getOrder(o.id);
             if (freshOrder == null) {
@@ -100,14 +96,14 @@ public class OrderManager {
             if (freshOrder.canceled) {
                 throw new IllegalStateException("Order " + o.id + " is already canceled");
             }
-            
+
             // Update the order object with fresh data to ensure accurate refund calculation
             o.delivered = freshOrder.delivered;
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
             o.requested = freshOrder.requested;
         }
-        
+
         o.canceled = true;
         int remaining = o.remainingAmount();
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
@@ -118,30 +114,28 @@ public class OrderManager {
         o.completed = true;
         this.saveOrder(o);
 
-        PrismSurvival.getInstance().getActivityLogger().log(o.owner, ActivityLogger.LogType.ORDER,
-                "Cancelled this order (" + o.key.displayName() + ") - Refunded: $" + String.format("%.2f", refund));
     }
 
     public void applyDelivery(Order o, List<ItemStack> accepted, int acceptedAmount, UUID deliverer) {
         if (acceptedAmount <= 0) {
             return;
         }
-        
+
         synchronized (this) {
             Order freshOrder = this.getOrder(o.id);
             if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
                 throw new IllegalStateException("Order " + o.id + " is no longer active or has been completed");
             }
-            
+
             if (freshOrder.delivered + acceptedAmount > freshOrder.requested) {
                 throw new IllegalStateException("Delivery amount exceeds remaining order quantity");
             }
-            
+
             o.delivered = freshOrder.delivered;
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
         }
-        
+
         OfflinePlayer recipientOp = Bukkit.getOfflinePlayer(o.owner);
         String recipientName = recipientOp.getName() != null ? recipientOp.getName() : "Unknown";
 
@@ -210,9 +204,6 @@ public class OrderManager {
         o.paid = (double) o.delivered * o.priceEach;
         this.saveOrder(o);
 
-        PrismSurvival.getInstance().getHazardManager().checkActivity(deliverer, "ORDER_DELIVER",
-                acceptedAmount + " " + o.key.displayName() + " to " + o.owner);
-
         String formattedAmount = Utils.abbr(acceptedAmount);
         String itemName = o.key.displayName();
         Player ownerPlayer = Bukkit.getPlayer(o.owner);
@@ -221,11 +212,6 @@ public class OrderManager {
         if (ownerOp != null && ownerOp.getName() != null) {
             ownerName = ownerOp.getName();
         }
-
-        PrismSurvival.getInstance().getActivityLogger().log(o.owner, ActivityLogger.LogType.ORDER,
-                delivererName + " delivered you " + acceptedAmount + " " + o.key.displayName());
-        PrismSurvival.getInstance().getActivityLogger().log(deliverer, ActivityLogger.LogType.ORDER,
-                "You delivered " + acceptedAmount + " " + o.key.displayName() + " to " + ownerName);
 
         if (delivererPlayer != null) {
             String msg = Utils.formatColors(
@@ -238,7 +224,8 @@ public class OrderManager {
 
         if (ownerPlayer != null) {
             String msg = Utils
-                    .formatColors("&#A9833D" + delivererName + "&7 delivered you &a" + formattedAmount + " &a" + itemName);
+                    .formatColors(
+                            "&#A9833D" + delivererName + "&7 delivered you &a" + formattedAmount + " &a" + itemName);
             ownerPlayer.sendMessage(msg);
             ownerPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
             ownerPlayer.playSound(ownerPlayer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);

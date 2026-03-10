@@ -2,7 +2,6 @@ package com.prismcore.survival.manager;
 
 import com.h2ph.PrismSurvival;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -85,7 +84,6 @@ public class DatabaseManager {
                     ")";
             s.execute(bansTable);
 
-
             String offensesTable = "CREATE TABLE IF NOT EXISTS offenses (" +
                     "uuid VARCHAR(36) NOT NULL," +
                     "reason_key VARCHAR(50) NOT NULL," +
@@ -93,14 +91,6 @@ public class DatabaseManager {
                     "PRIMARY KEY (uuid, reason_key)" +
                     ")";
             s.execute(offensesTable);
-
-            String ipLogsTable = "CREATE TABLE IF NOT EXISTS ip_logs (" +
-                    "uuid VARCHAR(36) NOT NULL," +
-                    "ip VARCHAR(45) NOT NULL," +
-                    "last_seen BIGINT," +
-                    "PRIMARY KEY (uuid, ip)" +
-                    ")";
-            s.execute(ipLogsTable);
 
             String mutesTable = "CREATE TABLE IF NOT EXISTS mutes (" +
                     "uuid VARCHAR(36) NOT NULL," +
@@ -138,20 +128,6 @@ public class DatabaseManager {
                     "PRIMARY KEY (uuid)" +
                     ")";
             s.execute(inventoryTable);
-
-            String transactionsTable = "CREATE TABLE IF NOT EXISTS auction_transactions (" +
-                    "id INT AUTO_INCREMENT PRIMARY KEY," +
-                    "player_uuid VARCHAR(36) NOT NULL," +
-                    "item_data LONGTEXT NOT NULL," +
-                    "price DOUBLE NOT NULL," +
-                    "buyer_name VARCHAR(16) NOT NULL," +
-                    "seller_name VARCHAR(16) NOT NULL," +
-                    "timestamp BIGINT NOT NULL," +
-                    "is_sale TINYINT(1) NOT NULL," +
-                    "INDEX (player_uuid)," +
-                    "INDEX (timestamp)" +
-                    ")";
-            s.execute(transactionsTable);
 
             String statsTable = "CREATE TABLE IF NOT EXISTS player_stats (" +
                     "uuid VARCHAR(36) NOT NULL PRIMARY KEY," +
@@ -282,22 +258,6 @@ public class DatabaseManager {
                     ")";
             s.execute(serverConfigTable);
 
-            String blockHistoryTable = "CREATE TABLE IF NOT EXISTS block_history (" +
-                    "id INT AUTO_INCREMENT PRIMARY KEY," +
-                    "world VARCHAR(64) NOT NULL," +
-                    "x INT NOT NULL," +
-                    "y INT NOT NULL," +
-                    "z INT NOT NULL," +
-                    "player_uuid VARCHAR(36) NOT NULL," +
-                    "player_name VARCHAR(16) NOT NULL," +
-                    "action VARCHAR(20) NOT NULL," +
-                    "block_type VARCHAR(50) NOT NULL," +
-                    "timestamp BIGINT NOT NULL," +
-                    "INDEX location_idx (world, x, y, z)," +
-                    "INDEX timestamp_idx (timestamp)" +
-                    ")";
-            s.execute(blockHistoryTable);
-
             String pvpSafeZonesTable = "CREATE TABLE IF NOT EXISTS pvp_safe_zones (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "name VARCHAR(64) NOT NULL UNIQUE," +
@@ -314,23 +274,6 @@ public class DatabaseManager {
                     "INDEX world_idx (world)" +
                     ")";
             s.execute(pvpSafeZonesTable);
-
-            String chunkVisitsTable = "CREATE TABLE IF NOT EXISTS player_chunk_visits (" +
-                    "id INT AUTO_INCREMENT PRIMARY KEY," +
-                    "world VARCHAR(64) NOT NULL," +
-                    "chunk_x INT NOT NULL," +
-                    "chunk_z INT NOT NULL," +
-                    "player_uuid VARCHAR(36) NOT NULL," +
-                    "player_name VARCHAR(16) NOT NULL," +
-                    "visit_count INT DEFAULT 1," +
-                    "first_visit BIGINT NOT NULL," +
-                    "last_visit BIGINT NOT NULL," +
-                    "UNIQUE KEY unique_player_chunk (world, chunk_x, chunk_z, player_uuid)," +
-                    "INDEX chunk_idx (world, chunk_x, chunk_z)," +
-                    "INDEX player_idx (player_uuid)," +
-                    "INDEX timestamp_idx (last_visit)" +
-                    ")";
-            s.execute(chunkVisitsTable);
 
             String temporaryBlocksTable = "CREATE TABLE IF NOT EXISTS temporary_blocks (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
@@ -381,7 +324,6 @@ public class DatabaseManager {
     public boolean isRedisEnabled() {
         return false;
     }
-
 
     public List<String> getBannedPlayerNames() {
         List<String> names = new ArrayList<>();
@@ -515,7 +457,6 @@ public class DatabaseManager {
     public void resetOffenseCount(UUID uuid, String reasonKey) {
         setOffenseCount(uuid, reasonKey, 1);
 
-
         setOffenseCount(uuid, reasonKey, 0);
     }
 
@@ -549,11 +490,11 @@ public class DatabaseManager {
     public void logIP(UUID uuid, String ip) {
         if (!isConnected())
             return;
-        String query = "REPLACE INTO ip_logs (uuid, ip, last_seen) VALUES (?, ?, ?)";
+        String query = "UPDATE player_stats SET ip = ?, last_updated = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, uuid.toString());
-            ps.setString(2, ip);
-            ps.setLong(3, System.currentTimeMillis());
+            ps.setString(1, ip);
+            ps.setLong(2, System.currentTimeMillis());
+            ps.setString(3, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
         }
@@ -562,7 +503,7 @@ public class DatabaseManager {
     public String getLastIP(UUID uuid) {
         if (!isConnected())
             return null;
-        String query = "SELECT ip FROM ip_logs WHERE uuid = ? ORDER BY last_seen DESC LIMIT 1";
+        String query = "SELECT ip FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
@@ -579,19 +520,13 @@ public class DatabaseManager {
         if (!isConnected() || ip == null)
             return new ArrayList<>();
         List<String> alts = new ArrayList<>();
-        String query = "SELECT DISTINCT uuid FROM ip_logs WHERE ip = ? AND uuid != ?";
+        String query = "SELECT DISTINCT pn.cached_name FROM player_stats ps JOIN player_names pn ON ps.uuid = pn.uuid WHERE ps.ip = ? AND ps.uuid != ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, ip);
             ps.setString(2, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String altUuid = rs.getString("uuid");
-                    OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(altUuid));
-                    if (op.getName() != null) {
-                        alts.add(op.getName());
-                    } else {
-                        alts.add(altUuid);
-                    }
+                    alts.add(rs.getString("cached_name"));
                 }
             }
         } catch (SQLException e) {
@@ -602,7 +537,6 @@ public class DatabaseManager {
     public boolean isBanned(UUID uuid) {
         return getBanInfo(uuid) != null;
     }
-
 
     public void addMute(UUID uuid, String playerName, String muteId, String reason, long date, long expiry,
             String mutedBy) {
@@ -732,7 +666,6 @@ public class DatabaseManager {
         public String mutedBy;
     }
 
-
     public void addAllowedOperator(String playerName) {
         if (!isConnected())
             return;
@@ -845,7 +778,6 @@ public class DatabaseManager {
         return sales.stream().mapToDouble(s -> s.price).sum();
     }
 
-
     public void saveInventory(UUID uuid, String inventoryBase64, String armorBase64) {
         if (!isConnected())
             return;
@@ -875,68 +807,6 @@ public class DatabaseManager {
         }
         return null;
     }
-
-
-    public void addAuctionTransaction(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
-        if (!isConnected())
-            return;
-        String query = "INSERT INTO auction_transactions (player_uuid, item_data, price, buyer_name, seller_name, timestamp, is_sale) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerUuid.toString());
-            String itemData = com.prismcore.survival.utils.ItemSerializationManager
-                    .itemStackArrayToBase64(new org.bukkit.inventory.ItemStack[] { tx.getItem() });
-            ps.setString(2, itemData);
-            ps.setDouble(3, tx.getPrice());
-            ps.setString(4, tx.getBuyer());
-            ps.setString(5, tx.getSeller());
-            ps.setLong(6, tx.getTimestamp());
-            ps.setBoolean(7, tx.isSale());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
-    public List<com.prismcore.survival.auction.Transaction> getAuctionTransactions(UUID playerUuid) {
-        List<com.prismcore.survival.auction.Transaction> list = new ArrayList<>();
-        if (!isConnected())
-            return list;
-        String query = "SELECT * FROM auction_transactions WHERE player_uuid = ? ORDER BY timestamp DESC LIMIT 50";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerUuid.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String itemData = rs.getString("item_data");
-                    org.bukkit.inventory.ItemStack[] items = com.prismcore.survival.utils.ItemSerializationManager
-                            .itemStackArrayFromBase64(itemData);
-                    if (items.length > 0) {
-                        list.add(new com.prismcore.survival.auction.Transaction(
-                                items[0],
-                                rs.getDouble("price"),
-                                rs.getString("buyer_name"),
-                                rs.getString("seller_name"),
-                                rs.getLong("timestamp"),
-                                rs.getBoolean("is_sale")));
-                    }
-                }
-            }
-        } catch (Exception e) {
-        }
-        return list;
-    }
-
-    public void deleteAuctionTransaction(UUID playerUuid, long timestamp, double price) {
-        if (!isConnected())
-            return;
-        String query = "DELETE FROM auction_transactions WHERE player_uuid = ? AND timestamp = ? AND price = ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerUuid.toString());
-            ps.setLong(2, timestamp);
-            ps.setDouble(3, price);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
 
     public void savePlayerStats(UUID uuid, PlayerData data) {
         if (!isConnected())
@@ -1070,7 +940,6 @@ public class DatabaseManager {
         }
     }
 
-
     public java.util.Map<UUID, Double> loadAllBounties() {
         java.util.Map<UUID, Double> bounties = new java.util.HashMap<>();
         if (!isConnected())
@@ -1110,7 +979,6 @@ public class DatabaseManager {
         } catch (SQLException e) {
         }
     }
-
 
     public java.util.List<com.prismcore.survival.orders.data.Order> loadAllOrders() {
         java.util.List<com.prismcore.survival.orders.data.Order> orders = new java.util.ArrayList<>();
@@ -1184,6 +1052,7 @@ public class DatabaseManager {
 
     /**
      * ANTI-DUPE: Fetch a single order by ID from database for validation
+     * 
      * @param orderId The UUID of the order to fetch
      * @return Order object or null if not found
      */
@@ -1238,7 +1107,6 @@ public class DatabaseManager {
         } catch (SQLException e) {
         }
     }
-
 
     public java.util.List<com.prismcore.survival.auction.AuctionItem> loadAllAuctionItems() {
         java.util.List<com.prismcore.survival.auction.AuctionItem> items = new java.util.ArrayList<>();
@@ -1310,14 +1178,6 @@ public class DatabaseManager {
 
     public void savePlayerNameAsync(UUID uuid, String name) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayerName(uuid, name));
-    }
-
-    public void addAuctionTransactionAsync(UUID playerUuid, com.prismcore.survival.auction.Transaction tx) {
-        plugin.getSchedulerAdapter().runTaskAsync(() -> addAuctionTransaction(playerUuid, tx));
-    }
-
-    public void deleteAuctionTransactionAsync(UUID playerUuid, long timestamp, double price) {
-        plugin.getSchedulerAdapter().runTaskAsync(() -> deleteAuctionTransaction(playerUuid, timestamp, price));
     }
 
     public void updateStatusAsync(UUID uuid, String status) {
@@ -1431,17 +1291,6 @@ public class DatabaseManager {
         }).thenAccept(callback);
     }
 
-    public void wipeAuctionTransactions(UUID playerUuid) {
-        if (!isConnected())
-            return;
-        String query = "DELETE FROM auction_transactions WHERE player_uuid = ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerUuid.toString());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
     public void wipeOrders(UUID playerUuid) {
         if (!isConnected())
             return;
@@ -1489,7 +1338,6 @@ public class DatabaseManager {
         }
     }
 
-
     public void setServerConfig(String key, String value) {
         if (!isConnected())
             return;
@@ -1530,290 +1378,8 @@ public class DatabaseManager {
         }
     }
 
-
-    public void recordBlockAction(org.bukkit.Location location, String playerName, UUID playerUuid, String action, String blockType, long timestamp) {
-        if (!isConnected()) return;
-        
-        String query = "INSERT INTO block_history (world, x, y, z, player_uuid, player_name, action, block_type, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, location.getWorld().getName());
-            ps.setInt(2, location.getBlockX());
-            ps.setInt(3, location.getBlockY());
-            ps.setInt(4, location.getBlockZ());
-            ps.setString(5, playerUuid.toString());
-            ps.setString(6, playerName);
-            ps.setString(7, action);
-            ps.setString(8, blockType);
-            ps.setLong(9, timestamp);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
-    public List<com.h2ph.listeners.HistoryListener.BlockHistoryEntry> getBlockHistory(org.bukkit.Location location) {
-        List<com.h2ph.listeners.HistoryListener.BlockHistoryEntry> history = new ArrayList<>();
-        if (!isConnected()) return history;
-        
-        String query = "SELECT player_name, action, block_type, timestamp FROM block_history WHERE world = ? AND x = ? AND y = ? AND z = ? ORDER BY timestamp DESC LIMIT 10";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, location.getWorld().getName());
-            ps.setInt(2, location.getBlockX());
-            ps.setInt(3, location.getBlockY());
-            ps.setInt(4, location.getBlockZ());
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    history.add(new com.h2ph.listeners.HistoryListener.BlockHistoryEntry(
-                        rs.getString("player_name"),
-                        rs.getString("action"),
-                        rs.getString("block_type"),
-                        rs.getLong("timestamp")
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-        }
-        return history;
-    }
-
-    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkHistory(String world, int chunkX, int chunkZ) {
-        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
-        if (!isConnected()) return history;
-        
-        int minX = chunkX * 16;
-        int maxX = minX + 15;
-        int minZ = chunkZ * 16;
-        int maxZ = minZ + 15;
-        
-        String query = "SELECT player_name, COUNT(*) as action_count, MAX(timestamp) as last_activity " +
-                       "FROM block_history " +
-                       "WHERE world = ? AND x >= ? AND x <= ? AND z >= ? AND z <= ? " +
-                       "GROUP BY player_name " +
-                       "ORDER BY action_count DESC, last_activity DESC";
-        
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, world);
-            ps.setInt(2, minX);
-            ps.setInt(3, maxX);
-            ps.setInt(4, minZ);
-            ps.setInt(5, maxZ);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String playerName = rs.getString("player_name");
-                    int actionCount = rs.getInt("action_count");
-                    long lastActivity = rs.getLong("last_activity");
-                    
-                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
-                        playerName, actionCount, lastActivity));
-                }
-            }
-        } catch (SQLException e) {
-        }
-        
-        return history;
-    }
-
-    /**
-     * Get chunk history for a 5x5 area centered on the specified chunk
-     * @param world The world name
-     * @param centerChunkX The center chunk X coordinate
-     * @param centerChunkZ The center chunk Z coordinate
-     * @return List of ChunkHistoryEntry objects representing player activity in the area
-     */
-    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkAreaHistory(String world, int centerChunkX, int centerChunkZ) {
-        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
-        if (!isConnected()) return history;
-        
-        int radius = 2;
-        int minChunkX = centerChunkX - radius;
-        int maxChunkX = centerChunkX + radius;
-        int minChunkZ = centerChunkZ - radius;
-        int maxChunkZ = centerChunkZ + radius;
-        
-        int minX = minChunkX * 16;
-        int maxX = (maxChunkX * 16) + 15;
-        int minZ = minChunkZ * 16;
-        int maxZ = (maxChunkZ * 16) + 15;
-        
-        String query = "SELECT player_name, COUNT(*) as action_count, MAX(timestamp) as last_activity " +
-                       "FROM block_history " +
-                       "WHERE world = ? AND x >= ? AND x <= ? AND z >= ? AND z <= ? " +
-                       "GROUP BY player_name " +
-                       "ORDER BY action_count DESC, last_activity DESC";
-        
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, world);
-            ps.setInt(2, minX);
-            ps.setInt(3, maxX);
-            ps.setInt(4, minZ);
-            ps.setInt(5, maxZ);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String playerName = rs.getString("player_name");
-                    int actionCount = rs.getInt("action_count");
-                    long lastActivity = rs.getLong("last_activity");
-                    
-                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
-                        playerName, actionCount, lastActivity));
-                }
-            }
-        } catch (SQLException e) {
-        }
-        
-        return history;
-    }
-
-    /**
-     * Ensure the player_chunk_visits table exists (creates if doesn't exist)
-     */
-    private void ensureChunkVisitsTableExists() {
-        if (!isConnected()) return;
-        
-        String createTable = "CREATE TABLE IF NOT EXISTS player_chunk_visits (" +
-                "id INT AUTO_INCREMENT PRIMARY KEY," +
-                "world VARCHAR(64) NOT NULL," +
-                "chunk_x INT NOT NULL," +
-                "chunk_z INT NOT NULL," +
-                "player_uuid VARCHAR(36) NOT NULL," +
-                "player_name VARCHAR(16) NOT NULL," +
-                "visit_count INT DEFAULT 1," +
-                "first_visit BIGINT NOT NULL," +
-                "last_visit BIGINT NOT NULL," +
-                "UNIQUE KEY unique_player_chunk (world, chunk_x, chunk_z, player_uuid)," +
-                "INDEX chunk_idx (world, chunk_x, chunk_z)," +
-                "INDEX player_idx (player_uuid)," +
-                "INDEX timestamp_idx (last_visit)" +
-                ")";
-        
-        try (Connection conn = getConnection(); Statement s = conn.createStatement()) {
-            s.execute(createTable);
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Failed to create player_chunk_visits table: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Record a player's visit to a chunk (for movement tracking)
-     */
-    public void recordChunkVisit(String world, int chunkX, int chunkZ, UUID playerUuid, String playerName) {
-        if (!isConnected()) return;
-        
-        ensureChunkVisitsTableExists();
-        
-        String query = "INSERT INTO player_chunk_visits (world, chunk_x, chunk_z, player_uuid, player_name, first_visit, last_visit) " +
-                       "VALUES (?, ?, ?, ?, ?, ?, ?) " +
-                       "ON DUPLICATE KEY UPDATE " +
-                       "visit_count = visit_count + 1, " +
-                       "last_visit = VALUES(last_visit), " +
-                       "player_name = VALUES(player_name)";
-        
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            long now = System.currentTimeMillis();
-            ps.setString(1, world);
-            ps.setInt(2, chunkX);
-            ps.setInt(3, chunkZ);
-            ps.setString(4, playerUuid.toString());
-            ps.setString(5, playerName);
-            ps.setLong(6, now);
-            ps.setLong(7, now);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
-    /**
-     * Get chunk visit history for a single chunk
-     */
-    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkVisitHistory(String world, int chunkX, int chunkZ) {
-        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
-        if (!isConnected()) return history;
-        
-        ensureChunkVisitsTableExists();
-        
-        String query = "SELECT player_name, visit_count, last_visit " +
-                       "FROM player_chunk_visits " +
-                       "WHERE world = ? AND chunk_x = ? AND chunk_z = ? " +
-                       "ORDER BY visit_count DESC, last_visit DESC";
-        
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, world);
-            ps.setInt(2, chunkX);
-            ps.setInt(3, chunkZ);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String playerName = rs.getString("player_name");
-                    int visitCount = rs.getInt("visit_count");
-                    long lastVisit = rs.getLong("last_visit");
-                    
-                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
-                        playerName, visitCount, lastVisit));
-                }
-            }
-        } catch (SQLException e) {
-        }
-        
-        return history;
-    }
-
-    /**
-     * Get chunk visit history for a 5x5 area centered on the specified chunk
-     */
-    public List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> getChunkAreaVisitHistory(String world, int centerChunkX, int centerChunkZ) {
-        List<com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry> history = new ArrayList<>();
-        if (!isConnected()) return history;
-        
-        ensureChunkVisitsTableExists();
-        
-        int radius = 2;
-        int minChunkX = centerChunkX - radius;
-        int maxChunkX = centerChunkX + radius;
-        int minChunkZ = centerChunkZ - radius;
-        int maxChunkZ = centerChunkZ + radius;
-        
-        String query = "SELECT player_name, SUM(visit_count) as total_visits, MAX(last_visit) as last_activity " +
-                       "FROM player_chunk_visits " +
-                       "WHERE world = ? AND chunk_x >= ? AND chunk_x <= ? AND chunk_z >= ? AND chunk_z <= ? " +
-                       "GROUP BY player_name " +
-                       "ORDER BY total_visits DESC, last_activity DESC";
-        
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, world);
-            ps.setInt(2, minChunkX);
-            ps.setInt(3, maxChunkX);
-            ps.setInt(4, minChunkZ);
-            ps.setInt(5, maxChunkZ);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String playerName = rs.getString("player_name");
-                    int totalVisits = rs.getInt("total_visits");
-                    long lastActivity = rs.getLong("last_activity");
-                    
-                    history.add(new com.h2ph.commands.admin.moderations.WhoWasHereCommand.ChunkHistoryEntry(
-                        playerName, totalVisits, lastActivity));
-                }
-            }
-        } catch (SQLException e) {
-        }
-        
-        return history;
-    }
-
-    public void cleanupOldBlockHistory(long daysToKeep) {
-        if (!isConnected()) return;
-        
-        long cutoffTime = System.currentTimeMillis() - (daysToKeep * 24 * 60 * 60 * 1000);
-        String query = "DELETE FROM block_history WHERE timestamp < ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setLong(1, cutoffTime);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
     public void setServerConfigDouble(String key, double value) {
         setServerConfig(key, String.valueOf(value));
     }
+
 }

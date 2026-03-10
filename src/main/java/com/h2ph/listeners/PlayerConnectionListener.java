@@ -1,7 +1,6 @@
 package com.h2ph.listeners;
 
 import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.ActivityLogger;
 import com.prismcore.survival.manager.PlayerData;
 import com.prismcore.survival.orders.Utils;
 import org.bukkit.Sound;
@@ -56,9 +55,6 @@ public class PlayerConnectionListener implements Listener {
         data.setLastSeenUpdate(System.currentTimeMillis());
         plugin.getDatabaseManager().updateStatusAsync(event.getPlayer().getUniqueId(), "Online");
 
-        plugin.getActivityLogger().log(event.getPlayer().getUniqueId(), ActivityLogger.LogType.GENERAL,
-                "Joined the server");
-
         plugin.getTeleportManager().cancelActiveTask(event.getPlayer().getUniqueId());
 
         if (data.getPendingKickTeamName() != null) {
@@ -82,8 +78,6 @@ public class PlayerConnectionListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.getPlayerDataManager().get(event.getPlayer().getUniqueId())
                 .setLastSeenUpdate(System.currentTimeMillis());
-        plugin.getActivityLogger().log(event.getPlayer().getUniqueId(), ActivityLogger.LogType.GENERAL,
-                "Left the server");
         plugin.getDatabaseManager().updateStatusAsync(event.getPlayer().getUniqueId(), "Offline");
         plugin.getDatabaseManager().saveLastLocationAsync(event.getPlayer().getUniqueId(),
                 event.getPlayer().getLocation());

@@ -21,7 +21,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
-import org.bukkit.plugin.Plugin;
 
 public class NewOrderMenu implements InventoryHolder, MenuOwner {
     private static final String META_SUPPRESS_CLOSE = "prismorder.suppressClose";
@@ -155,9 +154,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
         }
 
         if (slot == 12) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Clicked 'Choose Item' in New Order Menu");
             this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
             this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             this.module.state().resetItems(this.p.getUniqueId());
@@ -191,9 +187,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                         this.module.cfg().message(this.p, "&cInvalid amount.");
                     } else {
                         int finalVal = (int) val;
-                        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                                com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                                "Set amount to " + finalVal + " for this order");
                         this.amount = finalVal;
                     }
                 } catch (Exception ex) {
@@ -217,9 +210,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
                     if (Double.isNaN(val) || !Double.isFinite(val) || val <= 0) {
                         this.module.cfg().message(this.p, "&cInvalid price.");
                     } else {
-                        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                                com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                                "Set price to " + val + " for this order");
                         this.price = val;
                     }
                 } catch (Exception ex) {
@@ -260,14 +250,6 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
 
             this.module.orders().create(this.p.getUniqueId(), this.selected, this.amount, this.price);
 
-            long startTime = this.p.hasMetadata("prismorder.startTime")
-                    ? this.p.getMetadata("prismorder.startTime").get(0).asLong()
-                    : System.currentTimeMillis();
-            double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Clicked Confirm and created order for " + selected.displayName() + " in "
-                            + String.format("%.1f", seconds) + "s");
             this.p.removeMetadata("prismorder.startTime", this.module.getPlugin());
 
             this.p.playSound(this.p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f);

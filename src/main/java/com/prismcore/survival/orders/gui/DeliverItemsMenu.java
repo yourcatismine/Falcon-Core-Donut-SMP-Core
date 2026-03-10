@@ -24,13 +24,9 @@ import java.util.HashMap;
 import com.prismcore.survival.orders.OrdersModule;
 import com.prismcore.survival.orders.data.ItemKey;
 import com.prismcore.survival.orders.data.Order;
-import com.prismcore.survival.orders.gui.ConfirmDeliveryMenu;
-import com.prismcore.survival.orders.gui.MenuOwner;
-import com.prismcore.survival.orders.gui.OrdersMainMenu;
 import com.prismcore.survival.orders.util.TaskUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -40,7 +36,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 public class DeliverItemsMenu
@@ -118,7 +113,6 @@ public class DeliverItemsMenu
             if (DeliverItemsMenu.isShulker(it)) {
                 ItemStack originalShulker = it.clone();
 
-                ItemStack[] cont;
                 BlockStateMeta meta = (BlockStateMeta) it.getItemMeta();
                 ShulkerBox box = (ShulkerBox) meta.getBlockState();
 
@@ -177,17 +171,11 @@ public class DeliverItemsMenu
             this.giveBackOrDrop(this.p, r);
         }
         if (acceptedAmount <= 0) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Closed Deliver Items Menu (No items selected)");
             TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
                     () -> new OrdersMainMenu(this.module, this.p).open(),
                     1L);
             return;
         }
-        com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                "Selected " + acceptedAmount + " " + key.displayName() + " for delivery");
         int acceptedAmountFinal = acceptedAmount;
         ArrayList<ItemStack> acceptedDirectFinal = new ArrayList<>(acceptedDirect);
         ArrayList<ItemStack> acceptedFromShulkersFinal = new ArrayList<>(acceptedFromShulkers);

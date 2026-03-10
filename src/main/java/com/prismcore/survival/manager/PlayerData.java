@@ -146,22 +146,6 @@ public class PlayerData {
         if (Math.abs(change) < 0.001)
             return;
 
-        String prefix = change >= 0 ? "+" : "";
-        String symbol = type.equals("MONEY") ? "$" : "";
-        String suffix = type.equals("SHARDS") ? "x Shards" : "";
-
-        String formattedChange = prefix + symbol + String.format("%,.2f", change) + suffix;
-        double currentBalance = type.equals("MONEY") ? this.money : this.shards;
-        String formattedBalance = symbol + String.format("%,.2f", currentBalance) + suffix;
-
-        String content = formattedChange + " (" + source + ") | Bal: " + formattedBalance;
-
-        ActivityLogger.LogType logType = type.equals("MONEY") ? ActivityLogger.LogType.MONEY
-                : ActivityLogger.LogType.SHARDS;
-
-        if (plugin.getActivityLogger() != null && source != null && !source.equals("Database Load")) {
-            plugin.getActivityLogger().log(uuid, logType, content);
-        }
     }
 
     public double getShopSpent() {
@@ -274,7 +258,6 @@ public class PlayerData {
 
     private boolean quickAuctionBuy = false;
     private boolean disableMobSpawns = false;
-    private boolean checkHistory = false;
 
     public boolean isDisableMobSpawns() {
         return disableMobSpawns;
@@ -282,14 +265,6 @@ public class PlayerData {
 
     public void setDisableMobSpawns(boolean disableMobSpawns) {
         this.disableMobSpawns = disableMobSpawns;
-    }
-
-    public boolean isCheckHistory() {
-        return checkHistory;
-    }
-
-    public void setCheckHistory(boolean checkHistory) {
-        this.checkHistory = checkHistory;
     }
 
     public boolean isQuickAuctionBuy() {

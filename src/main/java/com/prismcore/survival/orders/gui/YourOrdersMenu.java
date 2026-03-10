@@ -3,7 +3,6 @@ package com.prismcore.survival.orders.gui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import com.prismcore.survival.orders.OrdersModule;
 import com.prismcore.survival.orders.Utils;
@@ -21,7 +20,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.plugin.Plugin;
 
 public class YourOrdersMenu implements InventoryHolder, MenuOwner {
     private static final String META_SUPPRESS_CLOSE = "prismorder.suppressClose";
@@ -74,11 +72,10 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
             slot++;
         }
 
-
         if (this.page > 0) {
-            this.inv.setItem(18, makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
+            this.inv.setItem(18,
+                    makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
-
 
         if (this.page < maxPage) {
             this.inv.setItem(26, makeItem(Material.ARROW, "&#A9833Dɴᴇхᴛ", List.of("&fClick to go to the next page")));
@@ -174,18 +171,12 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
             int index = this.page * perPage + slot;
 
             if (index == list.size()) {
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Opened New Order Menu");
                 this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 new NewOrderMenu(this.module, this.p).open();
                 return;
             } else if (index < list.size()) {
                 Order target = list.get(index);
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Selected Order to Edit: " + target.key.displayName());
                 this.p.setMetadata(META_SUPPRESS_CLOSE, new FixedMetadataValue(this.module.getPlugin(), true));
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 new EditOrderMenu(this.module, this.p, target).open();
@@ -193,11 +184,7 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
             }
         } else if (slot == 18) {
             if (this.page > 0) {
-                int oldPage = this.page + 1;
                 this.page--;
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Navigated: Your Orders (Page " + oldPage + " -> " + (this.page + 1) + ")");
                 this.internalPageSwitch = true;
                 this.open();
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -213,11 +200,7 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
             int maxPage = Math.max(0, (totalItems - 1) / perPage);
 
             if (this.page < maxPage) {
-                int oldPage = this.page + 1;
                 this.page++;
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Navigated: Your Orders (Page " + oldPage + " -> " + (this.page + 1) + ")");
                 this.internalPageSwitch = true;
                 this.open();
                 this.p.playSound(this.p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);

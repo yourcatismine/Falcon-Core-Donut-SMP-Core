@@ -19,22 +19,14 @@
 package com.prismcore.survival.orders.gui;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import com.prismcore.survival.orders.OrdersModule;
 import com.prismcore.survival.orders.Utils;
 import com.prismcore.survival.orders.data.Order;
-import com.prismcore.survival.orders.gui.CollectItemsMenu;
-import com.prismcore.survival.orders.gui.DeleteOrderMenu;
-import com.prismcore.survival.orders.gui.GuiVariant;
-import com.prismcore.survival.orders.gui.MenuOwner;
-import com.prismcore.survival.orders.gui.YourOrdersMenu;
 import com.prismcore.survival.orders.util.TaskUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -174,9 +166,6 @@ public class EditOrderMenu
 
         if (slot == 13) {
             if (!hasItemsToCollect) {
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Clicked Cancel in Edit Order Menu");
                 this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
                 this.p.setMetadata(META_SUPPRESS_CLOSE,
                         (MetadataValue) new FixedMetadataValue((Plugin) this.module.getPlugin(), (Object) true));
@@ -189,8 +178,6 @@ public class EditOrderMenu
         }
 
         if (slot == 15) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER, "Clicked Collect in Edit Order Menu");
             this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
             this.p.setMetadata(META_SUPPRESS_CLOSE,
                     (MetadataValue) new FixedMetadataValue((Plugin) this.module.getPlugin(), (Object) true));

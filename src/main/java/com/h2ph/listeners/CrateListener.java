@@ -313,9 +313,7 @@ public class CrateListener implements Listener {
             }
             player.getInventory().addItem(toGive);
 
-            plugin.getActivityLogger().log(player.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
-                    "Claimed " + reward.getType() + " x" + reward.getAmount() + " from " + crateName + " crate");
+            player.getInventory().addItem(toGive);
 
             player.closeInventory();
         } else {
@@ -332,8 +330,7 @@ public class CrateListener implements Listener {
             String crateName = ChatColor.stripColor(title).replace("Editing: ", "");
             saveCrateContents(crateName, event.getInventory());
             event.getPlayer().sendMessage(ChatColor.GREEN + "Crate contents saved for " + crateName + "!");
-        }
-        else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ"))) {
+        } else if (title.equals(ChatColor.translateAlternateColorCodes('&', "&8ᴄʟɪᴄᴋ ѕᴛᴀʀᴛ ᴛᴏ ѕᴘɪɴ"))) {
             plugin.getCarouselManager().handleClose((Player) event.getPlayer());
         }
 

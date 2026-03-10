@@ -119,9 +119,6 @@ public class PlayerDataManager {
             if (cratesConfig.contains("settings.disable_mob_spawns")) {
                 data.setDisableMobSpawns(cratesConfig.getBoolean("settings.disable_mob_spawns"));
             }
-            if (cratesConfig.contains("settings.check_history")) {
-                data.setCheckHistory(cratesConfig.getBoolean("settings.check_history"));
-            }
             if (cratesConfig.contains("settings.sound_notifications")) {
                 data.setSoundNotifications(cratesConfig.getBoolean("settings.sound_notifications"));
             }
@@ -209,7 +206,8 @@ public class PlayerDataManager {
             try (Connection conn = plugin.getPrismSell().getDatabaseManager().getConnection()) {
                 if (conn != null && !conn.isClosed()) {
                     try (PreparedStatement stmt = conn.prepareStatement(
-                            "SELECT ps.team, ps.name_hidden, ps.disguised, ps.disguise_name, ps.disguise_skin_texture, ps.disguise_skin_signature, tm.role FROM player_stats ps " +
+                            "SELECT ps.team, ps.name_hidden, ps.disguised, ps.disguise_name, ps.disguise_skin_texture, ps.disguise_skin_signature, tm.role FROM player_stats ps "
+                                    +
                                     "LEFT JOIN team_members tm ON ps.uuid = tm.uuid AND ps.team = tm.team_id " +
                                     "WHERE ps.uuid = ?")) {
                         stmt.setString(1, uuid.toString());
@@ -307,7 +305,6 @@ public class PlayerDataManager {
         cratesConfig.set("settings.pay_alerts", data.isPayAlerts());
         cratesConfig.set("settings.quick_auction_buy", data.isQuickAuctionBuy());
         cratesConfig.set("settings.disable_mob_spawns", data.isDisableMobSpawns());
-        cratesConfig.set("settings.check_history", data.isCheckHistory());
         cratesConfig.set("settings.sound_notifications", data.isSoundNotifications());
         cratesConfig.set("settings.tpa_confirm_menus", data.isTpaConfirmMenus());
         cratesConfig.set("settings.duel_requests", data.isDuelRequests());
@@ -353,10 +350,10 @@ public class PlayerDataManager {
             plugin.getPrismSell().getDatabaseManager().updateNameHidden(uuid, data.isNameHidden());
             plugin.getPrismSell().getDatabaseManager().updateDisguiseStatus(uuid, data.isDisguised());
             if (data.isDisguised()) {
-                plugin.getPrismSell().getDatabaseManager().updateDisguiseInfo(uuid, 
-                    data.getDisguiseName(), 
-                    data.getDisguiseSkinTexture(), 
-                    data.getDisguiseSkinSignature());
+                plugin.getPrismSell().getDatabaseManager().updateDisguiseInfo(uuid,
+                        data.getDisguiseName(),
+                        data.getDisguiseSkinTexture(),
+                        data.getDisguiseSkinSignature());
             }
         }
     }
@@ -397,7 +394,6 @@ public class PlayerDataManager {
             });
         }
     }
-
 
     private long lastShardsUpdate = 0;
     private List<LeaderboardEntry> cachedShardsTop = null;
@@ -513,56 +509,55 @@ public class PlayerDataManager {
         if (cachedKillsTop != null && (System.currentTimeMillis() - lastKillsUpdate < CACHE_DURATION)) {
             return cachedKillsTop.size() > limit ? cachedKillsTop.subList(0, limit) : cachedKillsTop;
         }
-        
+
         if (!isUpdatingKills) {
             triggerKillsUpdateAsync();
         }
-        
-        return cachedKillsTop != null ? 
-            (cachedKillsTop.size() > limit ? cachedKillsTop.subList(0, limit) : cachedKillsTop) : 
-            new ArrayList<>();
+
+        return cachedKillsTop != null
+                ? (cachedKillsTop.size() > limit ? cachedKillsTop.subList(0, limit) : cachedKillsTop)
+                : new ArrayList<>();
     }
 
     public List<LeaderboardEntry> getTopDeaths(int limit) {
         if (cachedDeathsTop != null && (System.currentTimeMillis() - lastDeathsUpdate < CACHE_DURATION)) {
             return cachedDeathsTop.size() > limit ? cachedDeathsTop.subList(0, limit) : cachedDeathsTop;
         }
-        
+
         if (!isUpdatingDeaths) {
             triggerDeathsUpdateAsync();
         }
-        
-        return cachedDeathsTop != null ? 
-            (cachedDeathsTop.size() > limit ? cachedDeathsTop.subList(0, limit) : cachedDeathsTop) : 
-            new ArrayList<>();
+
+        return cachedDeathsTop != null
+                ? (cachedDeathsTop.size() > limit ? cachedDeathsTop.subList(0, limit) : cachedDeathsTop)
+                : new ArrayList<>();
     }
 
     public List<LeaderboardEntry> getTopPlaytime(int limit) {
         if (cachedPlaytimeTop != null && (System.currentTimeMillis() - lastPlaytimeUpdate < CACHE_DURATION)) {
             return cachedPlaytimeTop.size() > limit ? cachedPlaytimeTop.subList(0, limit) : cachedPlaytimeTop;
         }
-        
+
         if (!isUpdatingPlaytime) {
             triggerPlaytimeUpdateAsync();
         }
-        
-        return cachedPlaytimeTop != null ? 
-            (cachedPlaytimeTop.size() > limit ? cachedPlaytimeTop.subList(0, limit) : cachedPlaytimeTop) : 
-            new ArrayList<>();
+
+        return cachedPlaytimeTop != null
+                ? (cachedPlaytimeTop.size() > limit ? cachedPlaytimeTop.subList(0, limit) : cachedPlaytimeTop)
+                : new ArrayList<>();
     }
 
     public List<LeaderboardEntry> getTopSell(int limit) {
         if (cachedSellTop != null && (System.currentTimeMillis() - lastSellUpdate < CACHE_DURATION)) {
             return cachedSellTop.size() > limit ? cachedSellTop.subList(0, limit) : cachedSellTop;
         }
-        
+
         if (!isUpdatingSell) {
             triggerSellUpdateAsync();
         }
-        
-        return cachedSellTop != null ? 
-            (cachedSellTop.size() > limit ? cachedSellTop.subList(0, limit) : cachedSellTop) : 
-            new ArrayList<>();
+
+        return cachedSellTop != null ? (cachedSellTop.size() > limit ? cachedSellTop.subList(0, limit) : cachedSellTop)
+                : new ArrayList<>();
     }
 
     private void triggerKillsUpdateAsync() {
@@ -571,13 +566,15 @@ public class PlayerDataManager {
             try {
                 List<LeaderboardEntry> entries = new ArrayList<>();
                 for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                    if (p.getName() == null) continue;
+                    if (p.getName() == null)
+                        continue;
                     try {
                         int kills = p.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
                         if (kills > 0) {
                             entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) kills));
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
                 entries.sort((a, b) -> Double.compare(b.value, a.value));
                 cachedKillsTop = entries;
@@ -594,13 +591,15 @@ public class PlayerDataManager {
             try {
                 List<LeaderboardEntry> entries = new ArrayList<>();
                 for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                    if (p.getName() == null) continue;
+                    if (p.getName() == null)
+                        continue;
                     try {
                         int deaths = p.getStatistic(org.bukkit.Statistic.DEATHS);
                         if (deaths > 0) {
                             entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) deaths));
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
                 entries.sort((a, b) -> Double.compare(b.value, a.value));
                 cachedDeathsTop = entries;
@@ -617,14 +616,16 @@ public class PlayerDataManager {
             try {
                 List<LeaderboardEntry> entries = new ArrayList<>();
                 for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                    if (p.getName() == null) continue;
+                    if (p.getName() == null)
+                        continue;
                     try {
                         int ticks = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
                         if (ticks > 0) {
                             long seconds = ticks / 20L;
                             entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) seconds));
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
                 entries.sort((a, b) -> Double.compare(b.value, a.value));
                 cachedPlaytimeTop = entries;
@@ -642,17 +643,19 @@ public class PlayerDataManager {
                 List<LeaderboardEntry> entries = new ArrayList<>();
                 if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
                     for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                        if (p.getName() == null) continue;
+                        if (p.getName() == null)
+                            continue;
                         try {
                             com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell()
-                                .getPlayerDataManager().getPlayerData(p.getUniqueId());
+                                    .getPlayerDataManager().getPlayerData(p.getUniqueId());
                             if (sellPd != null) {
                                 double sellMade = sellPd.getSellMade();
                                 if (sellMade > 0) {
                                     entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), sellMade));
                                 }
                             }
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
                 entries.sort((a, b) -> Double.compare(b.value, a.value));

@@ -40,11 +40,8 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0) {
-            sender.sendMessage(
-                    "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor|pvpsafe|warps> [args]");
-            return true;
-        }
+        sender.sendMessage(
+                "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor|pvpsafe|warps> [args]");
 
         String sub = args[0].toLowerCase();
 
@@ -986,9 +983,9 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 com.sk89q.worldedit.math.BlockVector3 max = worldEditRegion.getMaximumPoint();
                 String worldName = player.getWorld().getName();
 
-                boolean success = plugin.getPvPSafeZoneManager().addZone(name, worldName, min.x(), min.y(), min.z(), 
+                boolean success = plugin.getPvPSafeZoneManager().addZone(name, worldName, min.x(), min.y(), min.z(),
                         max.x(), max.y(), max.z(), player.getUniqueId().toString());
-                        
+
                 if (success) {
                     player.sendMessage("§aPvP safe zone '" + name + "' has been created!");
                     player.sendMessage("§7Players entering this zone will see safe mode messages.");
@@ -1008,17 +1005,17 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage("§cUsage: /falcon pvpsafe delete <name>");
                 return true;
             }
-            
+
             String zoneName = args[2];
-            
+
             boolean success = plugin.getPvPSafeZoneManager().removeZone(zoneName);
-            
+
             if (success) {
                 player.sendMessage("§aPvP safe zone '" + zoneName + "' has been deleted!");
             } else {
                 player.sendMessage("§cFailed to delete PvP safe zone. Zone '" + zoneName + "' may not exist.");
             }
-            
+
             return true;
         } else {
             player.sendMessage("§cUsage: /falcon pvpsafe <setup|delete> <name>");
@@ -1026,4 +1023,3 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
     }
 }
-

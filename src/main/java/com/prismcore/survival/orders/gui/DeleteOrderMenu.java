@@ -16,9 +16,6 @@ package com.prismcore.survival.orders.gui;
 import java.util.List;
 import com.prismcore.survival.orders.OrdersModule;
 import com.prismcore.survival.orders.data.Order;
-import com.prismcore.survival.orders.gui.EditOrderMenu;
-import com.prismcore.survival.orders.gui.MenuOwner;
-import com.prismcore.survival.orders.gui.YourOrdersMenu;
 import com.prismcore.survival.orders.util.TaskUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -82,16 +79,11 @@ public class DeleteOrderMenu
         int back = this.module.cfg().slot("gui.delete.items.back", 10);
         int confirm = this.module.cfg().slot("gui.delete.items.confirm", 16);
         if (slot == back) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER, "Clicked Back in Delete Order Menu");
             this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
             new EditOrderMenu(this.module, this.p, this.order).open();
             return;
         }
         if (slot == confirm) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Clicked Confirm in Delete Order Menu");
             if (!this.order.storage.isEmpty()) {
                 this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
                 this.p.sendMessage(com.prismcore.survival.orders.Utils

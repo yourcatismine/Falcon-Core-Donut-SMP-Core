@@ -80,9 +80,6 @@ public class GUIListener
                 String nextMode = this
                         .getNextSortMode(this.controller.getAuctionManager().getPlayerSort(p.getUniqueId()));
                 this.controller.getAuctionManager().setPlayerSort(p.getUniqueId(), nextMode);
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                        "Changed sort mode to " + nextMode);
                 GUIHandler.openMainGUI(p, page, this.controller, perPage);
                 return;
             }
@@ -94,9 +91,6 @@ public class GUIListener
                     String term = input.trim().toLowerCase();
                     p.setMetadata("ah-filter", new FixedMetadataValue(this.controller.getPlugin(), term));
                     this.controller.getAuctionManager().setPlayerFilter(p.getUniqueId(), term);
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "Searched for '" + term + "' in Auction House");
                     GUIHandler.openMainGUI(p, 1, this.controller, perPage);
                 });
                 return;
@@ -109,16 +103,11 @@ public class GUIListener
                 p.setMetadata("ah-cat",
                         (MetadataValue) new FixedMetadataValue((Plugin) this.controller.getPlugin(), (Object) nextCat));
                 this.controller.getAuctionManager().setPlayerCategory(p.getUniqueId(), nextCat);
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                        "Changed category to " + nextCat);
                 GUIHandler.openMainGUI(p, page, this.controller, perPage);
                 return;
             }
             if (slot == cfg.getInt("main-gui.items.refresh.slot")) {
                 p.playSound(p.getLocation(), refresh, 1.0f, 1.0f);
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION, "Refreshed Auction House");
                 GUIHandler.openMainGUI(p, page, this.controller, perPage);
                 return;
             }
@@ -140,49 +129,51 @@ public class GUIListener
                 if (clickedItem == null || !clickedItem.hasItemMeta()) {
                     return;
                 }
-                
+
                 ItemMeta clickedMeta = clickedItem.getItemMeta();
                 org.bukkit.persistence.PersistentDataContainer pdc = clickedMeta.getPersistentDataContainer();
-                org.bukkit.NamespacedKey itemIdKey = new org.bukkit.NamespacedKey(this.controller.getPlugin(), "auction-item-id");
-                
+                org.bukkit.NamespacedKey itemIdKey = new org.bukkit.NamespacedKey(this.controller.getPlugin(),
+                        "auction-item-id");
+
                 if (!pdc.has(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING)) {
                     return;
                 }
-                
+
                 String auctionItemId = pdc.get(itemIdKey, org.bukkit.persistence.PersistentDataType.STRING);
-                
+
                 Optional<AuctionItem> optionalItem = this.controller.getAuctionManager().getActiveItems().stream()
                         .filter(ai -> ai.getId().toString().equals(auctionItemId))
                         .findFirst();
-                        
+
                 if (!optionalItem.isPresent()) {
-                    p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available", "&cThis item is no longer available!")));
+                    p.sendMessage(Utils.formatColors(this.controller.getConfig()
+                            .getString("messages.item-not-available", "&cThis item is no longer available!")));
                     p.playSound(p.getLocation(), no, 1.0f, 1.0f);
                     GUIHandler.openMainGUI(p, page, this.controller, perPage);
                     return;
                 }
-                
+
                 p.playSound(p.getLocation(), def, 1.0f, 1.0f);
                 AuctionItem ai2 = optionalItem.get();
-                    if (p.hasMetadata("ah-admin-view")) {
-                        GUIHandler.openAdminPlayerDetailsGUI(p, ai2.getSeller(), this.controller);
-                        return;
-                    }
-                    if (ai2.getSeller().equals(p.getName())) {
-                        p.playSound(p.getLocation(), no, 1.0f, 1.0f);
-                    } else {
-                        com.h2ph.PrismSurvival plugin = (com.h2ph.PrismSurvival) this.controller.getPlugin();
-                        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager()
-                                .get(p.getUniqueId());
-                        boolean quickBuy = data != null && data.isQuickAuctionBuy();
-                        boolean hasPerm = p.hasPermission("prismsmp.quick.auction");
+                if (p.hasMetadata("ah-admin-view")) {
+                    GUIHandler.openAdminPlayerDetailsGUI(p, ai2.getSeller(), this.controller);
+                    return;
+                }
+                if (ai2.getSeller().equals(p.getName())) {
+                    p.playSound(p.getLocation(), no, 1.0f, 1.0f);
+                } else {
+                    com.h2ph.PrismSurvival plugin = (com.h2ph.PrismSurvival) this.controller.getPlugin();
+                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager()
+                            .get(p.getUniqueId());
+                    boolean quickBuy = data != null && data.isQuickAuctionBuy();
+                    boolean hasPerm = p.hasPermission("prismsmp.quick.auction");
 
-                        if (quickBuy && hasPerm) {
-                            purchaseItem(p, ai2);
-                        } else {
-                            GUIHandler.openBuyConfirm(p, ai2, this.controller);
-                        }
+                    if (quickBuy && hasPerm) {
+                        purchaseItem(p, ai2);
+                    } else {
+                        GUIHandler.openBuyConfirm(p, ai2, this.controller);
                     }
+                }
             }
             return;
         }
@@ -253,9 +244,6 @@ public class GUIListener
                 this.controller.getAuctionManager().addItem(auctionItem);
 
                 String itemName = Utils.prettifyMaterialName(held.getType());
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                        "Listed " + itemName + " for $" + Utils.formatNumber(price));
                 p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.listed-item",
                         "&#34ee80Your item has been listed on the auction house!")
                         .replace("{item}", itemName)
@@ -410,10 +398,6 @@ public class GUIListener
                     this.controller.getAuctionManager().removeItem(ai5);
                     ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(ai5);
                     p.getInventory().addItem(new ItemStack[] { finalItem });
-                    String itemName = Utils.prettifyMaterialName(finalItem.getType());
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "Returned listed item: " + itemName);
                     p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.returned-item")));
                     GUIHandler.openYourItemsGUI(p, this.controller);
                 }
@@ -446,8 +430,6 @@ public class GUIListener
                 p.playSound(p.getLocation(), refresh, 1.0f, 1.0f);
                 p.removeMetadata("tx-filter", (Plugin) this.controller.getPlugin());
                 p.removeMetadata("awaiting-tx-search", (Plugin) this.controller.getPlugin());
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION, "Refreshed Transaction History");
                 GUIHandler.openTransactionsGUI(p, 1, this.controller);
                 return;
             }
@@ -458,9 +440,6 @@ public class GUIListener
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getSignInput().getSearchInput(p, (input) -> {
                     String term = input.trim().toLowerCase();
                     p.setMetadata("tx-filter", new FixedMetadataValue(this.controller.getPlugin(), term));
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "Searched for '" + term + "' in Transaction History");
                     GUIHandler.openTransactionsGUI(p, 1, this.controller);
                 });
                 return;
@@ -513,9 +492,6 @@ public class GUIListener
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getSignInput().getSearchInput(p, (input) -> {
                     String term = input.trim().toLowerCase();
                     p.setMetadata("ah-filter", new FixedMetadataValue(this.controller.getPlugin(), term));
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "[Admin] Searched for '" + term + "' in auction list");
                     GUIHandler.openMainGUI(p, 1, this.controller, GUIHandler.ITEMS_PER_PAGE);
                 });
                 return;
@@ -563,18 +539,12 @@ public class GUIListener
                 ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getSignInput().getSearchInput(p, (input) -> {
                     String term = input.trim().toLowerCase();
                     p.setMetadata("ah-admin-player-filter", new FixedMetadataValue(this.controller.getPlugin(), term));
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "[Admin] Searched for player '" + term + "' in AH admin list");
                     GUIHandler.openAdminPlayerListGUI(p, 1, this.controller);
                 });
                 return;
             }
             if (slot == 49) {
                 p.playSound(p.getLocation(), refresh, 1.0f, 1.0f);
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                        "[Admin] Refreshed AH player list");
                 GUIHandler.openAdminPlayerListGUI(p, page, this.controller);
                 return;
             }
@@ -595,9 +565,6 @@ public class GUIListener
                 if (pdc.has(key, org.bukkit.persistence.PersistentDataType.STRING)) {
                     String target = pdc.get(key, org.bukkit.persistence.PersistentDataType.STRING);
                     p.playSound(p.getLocation(), def, 1.0f, 1.0f);
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "[Admin] Viewing auction details for player: " + target);
                     GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
                 }
             }
@@ -798,9 +765,6 @@ public class GUIListener
                         try {
                             UUID auctionId = UUID.fromString(idStr);
                             this.controller.getAuctionManager().updatePrice(auctionId, newPrice);
-                            ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(
-                                    p.getUniqueId(), com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                                    "[Admin] Updated auction price to " + Utils.formatNumber(newPrice));
                             p.sendMessage(Utils.formatColors("&#34ee80Price updated!"));
                         } catch (Exception e) {
                         }
@@ -829,10 +793,6 @@ public class GUIListener
                     this.controller.getAuctionManager().removeItem(item);
                     ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(item);
                     p.getInventory().addItem(finalItem);
-                    String itemName = Utils.prettifyMaterialName(finalItem.getType());
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "[Admin] Took auction item: " + itemName + " (ID: " + itemId + ")");
                     p.sendMessage(Utils.formatColors("&#34ee80Item taken from auction!"));
                     p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
                 }
@@ -857,10 +817,6 @@ public class GUIListener
                     }
                     ItemStack finalItem = this.controller.getAuctionManager().getFinalItem(item);
                     p.getInventory().addItem(finalItem);
-                    String itemName = Utils.prettifyMaterialName(finalItem.getType());
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "[Admin] Copied auction item: " + itemName + " (ID: " + itemId + ")");
                     p.sendMessage(Utils.formatColors("&#34ee80Item copied from auction!"));
                     p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
                 }
@@ -878,11 +834,7 @@ public class GUIListener
                         .filter(ai -> ai.getId().toString().equals(itemId)).findFirst();
                 if (opt.isPresent()) {
                     AuctionItem item = opt.get();
-                    String itemName = Utils.prettifyMaterialName(item.getItemStack().getType());
                     this.controller.getAuctionManager().removeItem(item);
-                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                            com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                            "[Admin] Deleted auction item: " + itemName + " (ID: " + itemId + ")");
                     try {
                         p.playSound(p.getLocation(), Sound.UI_STONECUTTER_TAKE_RESULT, 1.0f, 1.0f);
                     } catch (Exception e) {
@@ -922,9 +874,6 @@ public class GUIListener
             }
             if (slot == 15) {
                 this.controller.getAuctionManager().removeAllItems(target);
-                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getActivityLogger().log(p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.AUCTION,
-                        "[Admin] Deleted ALL auction items for player: " + target);
                 try {
                     p.playSound(p.getLocation(), Sound.UI_STONECUTTER_TAKE_RESULT, 1.0f, 1.0f);
                 } catch (Exception e) {

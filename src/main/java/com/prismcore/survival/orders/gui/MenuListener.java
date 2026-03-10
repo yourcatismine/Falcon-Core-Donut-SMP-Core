@@ -12,7 +12,6 @@
 package com.prismcore.survival.orders.gui;
 
 import com.h2ph.PrismSurvival;
-import com.prismcore.survival.orders.gui.MenuOwner;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -22,10 +21,10 @@ import org.bukkit.inventory.InventoryHolder;
 
 public class MenuListener
         implements Listener {
-    
+
     private static final java.util.Map<java.util.UUID, Long> lastDeliveryClickTimes = new java.util.concurrent.ConcurrentHashMap<>();
     private static final long DELIVERY_MIN_CLICK_INTERVAL = 100;
-    
+
     private final PrismSurvival plugin;
 
     public MenuListener(PrismSurvival pl) {
@@ -38,26 +37,23 @@ public class MenuListener
         if (!(inventoryHolder instanceof MenuOwner)) {
             return;
         }
-        
+
         if (inventoryHolder instanceof com.prismcore.survival.orders.gui.ConfirmDeliveryMenu) {
             if (e.getWhoClicked() instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) e.getWhoClicked();
                 java.util.UUID playerId = player.getUniqueId();
                 long currentTime = System.currentTimeMillis();
                 Long lastTime = lastDeliveryClickTimes.get(playerId);
-                
+
                 if (lastTime != null && (currentTime - lastTime) < DELIVERY_MIN_CLICK_INTERVAL) {
                     e.setCancelled(true);
-                    com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(playerId,
-                            com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                            "Rapid clicking detected in delivery confirmation (interval: " + (currentTime - lastTime) + "ms)");
                     return;
                 }
-                
+
                 lastDeliveryClickTimes.put(playerId, currentTime);
             }
         }
-        
+
         MenuOwner owner = (MenuOwner) inventoryHolder;
         owner.onClick(e);
     }

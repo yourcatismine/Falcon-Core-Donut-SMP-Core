@@ -11,7 +11,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import com.prismcore.survival.manager.ActivityLogger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,7 +85,8 @@ public class ChatFilter implements Listener {
             int maxLength = config.getInt("chat-filter.max-length", 256);
             if (message.length() > maxLength) {
                 event.setCancelled(true);
-                player.sendMessage(ChatColor.RED + "Your message is too long! Maximum length is " + maxLength + " characters. Your message was " + message.length() + " characters.");
+                player.sendMessage(ChatColor.RED + "Your message is too long! Maximum length is " + maxLength
+                        + " characters. Your message was " + message.length() + " characters.");
                 return;
             }
 
@@ -128,8 +128,6 @@ public class ChatFilter implements Listener {
 
         chatCooldowns.put(uuid, currentTime);
         lastMessages.put(uuid, message);
-
-        plugin.getActivityLogger().log(uuid, ActivityLogger.LogType.MESSAGE, "Chat: " + message);
 
         java.util.Iterator<Player> iterator = event.getRecipients().iterator();
         while (iterator.hasNext()) {

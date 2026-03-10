@@ -152,7 +152,7 @@ public class PlayerListHandler implements HttpHandler {
         map.put("group", LuckPermsUtils.getPrimaryGroup(p));
         map.put("money", getBalance(p));
         map.put("shards", getShards(p));
-        map.put("hazardCount", plugin.getHazardManager().getHazardCount(p.getUniqueId()));
+        map.put("hazardCount", 0);
         map.put("lastPlayed", p.getLastPlayed());
         map.put("avatarUrl", "https://crafatar.com/avatars/" + p.getUniqueId() + "?size=64");
         return map;

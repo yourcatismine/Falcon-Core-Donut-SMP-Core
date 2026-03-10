@@ -567,7 +567,6 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 if (mainDb != null && mainDb.isConnected()) {
                     mainDb.wipeInventory(uuid);
                     mainDb.wipePlayerStats(uuid);
-                    mainDb.wipeAuctionTransactions(uuid);
                     mainDb.wipeAuctionPendingPayments(uuid);
                     mainDb.wipeOrders(uuid);
                 }

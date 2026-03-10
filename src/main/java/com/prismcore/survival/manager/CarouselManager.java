@@ -228,9 +228,6 @@ public class CarouselManager {
                 toolsManager.refreshExpiryForReward(reward);
             }
             player.getInventory().addItem(reward);
-            plugin.getActivityLogger().log(player.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
-                    "Won " + reward.getType() + " x" + reward.getAmount() + " from carousel spin");
         }
         pendingRewards.remove(player.getUniqueId());
 
@@ -290,10 +287,6 @@ public class CarouselManager {
                 }
                 player.getInventory().addItem(reward);
                 player.sendMessage(ChatColor.GREEN + "You received your crate reward!");
-                plugin.getActivityLogger().log(player.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ITEM,
-                        "Received pending reward " + reward.getType() + " x" + reward.getAmount()
-                                + " upon closing carousel");
             }
         }
     }

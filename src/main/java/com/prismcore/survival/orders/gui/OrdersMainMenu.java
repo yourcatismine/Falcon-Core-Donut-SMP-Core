@@ -16,7 +16,6 @@
 package com.prismcore.survival.orders.gui;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +30,6 @@ import com.prismcore.survival.orders.store.PlayerStateManager;
 import com.prismcore.survival.orders.util.SignInputUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -79,9 +77,9 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             st.page = maxPage;
         }
 
-
         if (st.page > 0) {
-            this.inv.setItem(45, makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
+            this.inv.setItem(45,
+                    makeItem(Material.ARROW, "&#A9833Dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
         if (st.page < maxPage) {
@@ -170,7 +168,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         long remaining = Math.max(0, expiryTime - System.currentTimeMillis());
         String countdown = Utils.formatDuration(remaining);
 
-
         List<String> lore = new ArrayList<>();
         lore.add(Utils.formatColors("&f" + o.key.displayName()));
         List<String> enchantLore = o.key.enchantLoreLines("&7");
@@ -234,23 +231,17 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
 
         if (slot == 45) {
             if (st.page > 0) {
-                int oldPage = st.page + 1;
                 st.page--;
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Navigated: Orders Main Menu (Page " + oldPage + " -> " + (st.page + 1) + ")");
                 playSound(Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
                 open();
             }
             return;
         }
 
-        if (slot == 53) {
-            int oldPage = st.page + 1;
+        if (slot == 53)
+
+        {
             st.page++;
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Navigated: Orders Main Menu (Page " + oldPage + " -> " + (st.page + 1) + ")");
             playSound(Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
             open();
             return;
@@ -258,9 +249,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
 
         if (slot == 47) {
             st.sort = nextSort(st.sort);
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Sorted Orders: " + st.sort.name());
 
             playSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             st.page = 0;
@@ -274,9 +262,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
             cats.addAll(this.module.filters().categoryNames());
             int i = Math.max(0, cats.indexOf(st.filter));
             st.filter = cats.get((i + 1) % cats.size());
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Filtered Orders: " + st.filter);
 
             playSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             st.page = 0;
@@ -287,9 +272,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         if (slot == 49) {
             st.search = null;
             st.page = 0;
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Refreshed Orders List");
 
             playSound(Sound.UI_TOAST_IN, 1.0f, 1.0f);
             open();
@@ -308,19 +290,12 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
                 st2.search = trimmed.isEmpty() ? null : trimmed;
                 st2.page = 0;
 
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Opened Search: '" + (st2.search == null ? "None" : st2.search) + "' applied");
-
                 new OrdersMainMenu(this.module, this.p).open();
             });
             return;
         }
 
         if (slot == 51) {
-            com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                    com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                    "Viewed Your Orders");
             playSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             new YourOrdersMenu(this.module, this.p).open();
             return;
@@ -340,9 +315,6 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
                 if (ownerName == null)
                     ownerName = "Loading...";
 
-                com.h2ph.PrismSurvival.getInstance().getActivityLogger().log(this.p.getUniqueId(),
-                        com.prismcore.survival.manager.ActivityLogger.LogType.ORDER,
-                        "Selected Order to Deliver: " + ownerName + "'s " + target.key.displayName());
                 playSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 new DeliverItemsMenu(this.module, this.p, target).open();
             }

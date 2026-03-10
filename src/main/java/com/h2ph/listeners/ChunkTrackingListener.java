@@ -17,51 +17,43 @@ import java.util.UUID;
  * Tracks player movement between chunks to record who has walked where
  */
 public class ChunkTrackingListener implements Listener {
-    
+
     private final PrismSurvival plugin;
-    
+
     private final Map<UUID, String> lastChunk = new HashMap<>();
-    
+
     public ChunkTrackingListener(PrismSurvival plugin) {
         this.plugin = plugin;
     }
-    
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         Location from = event.getFrom();
         Location to = event.getTo();
-        
-        if (to == null) return;
-        
-        if (from.getBlockX() == to.getBlockX() && 
-            from.getBlockZ() == to.getBlockZ()) {
+
+        if (to == null)
+            return;
+
+        if (from.getBlockX() == to.getBlockX() &&
+                from.getBlockZ() == to.getBlockZ()) {
             return;
         }
-        
+
         Player player = event.getPlayer();
         UUID playerId = player.getUniqueId();
-        
+
         Chunk toChunk = to.getChunk();
         String currentChunk = toChunk.getWorld().getName() + ":" + toChunk.getX() + ":" + toChunk.getZ();
-        
+
         String previousChunk = lastChunk.get(playerId);
         if (currentChunk.equals(previousChunk)) {
             return;
         }
-        
+
         lastChunk.put(playerId, currentChunk);
-        
-        plugin.getSchedulerAdapter().runTaskAsync(() -> {
-            plugin.getDatabaseManager().recordChunkVisit(
-                toChunk.getWorld().getName(),
-                toChunk.getX(),
-                toChunk.getZ(),
-                playerId,
-                player.getName()
-            );
-        });
+
     }
-    
+
     /**
      * Clean up tracking when player leaves
      */

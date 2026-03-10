@@ -132,9 +132,6 @@ public class PlayerDetailHandler implements HttpHandler {
         economy.put("vaults", vaults);
         data.put("economy", economy);
 
-        data.put("hazardCount", plugin.getHazardManager().getHazardCount(uuid));
-        data.put("hazards", plugin.getHazardManager().getHazards(uuid));
-
         t.getResponseHeaders().set("Content-Type", "application/json");
         t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         sendResponse(t, 200, toJson(data));

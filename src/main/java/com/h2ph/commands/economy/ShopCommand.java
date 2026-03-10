@@ -213,7 +213,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         return true;
     }
 
-
     private void openMainMenu(Player player) {
         buyingSessions.remove(player.getUniqueId());
         String title = color(mainConfig.getString("gui-title", "&8ѕʜᴏᴘ"));
@@ -373,7 +372,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         player.openInventory(gui);
     }
 
-
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         String title = event.getView().getTitle();
@@ -433,7 +431,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         }
 
         int slot = event.getSlot();
-
 
         if (title.equals(cachedMainTitle)) {
             if (mainMenuSlots.containsKey(slot)) {
@@ -524,8 +521,7 @@ public class ShopCommand implements CommandExecutor, Listener {
                     if (session.quantity - val >= 1) {
                         session.quantity -= val;
                         openBuyingMenu(player, session);
-                    }
-                    else if (session.quantity == maxStack && val == maxStack && maxStack > 1) {
+                    } else if (session.quantity == maxStack && val == maxStack && maxStack > 1) {
                         session.quantity = 1;
                         openBuyingMenu(player, session);
                     }
@@ -555,7 +551,6 @@ public class ShopCommand implements CommandExecutor, Listener {
     public void onClose(InventoryCloseEvent event) {
     }
 
-
     private void processPurchase(Player player, BuyingSession session) {
         int spaceAvailable = getSpaceFor(player.getInventory(), session.baseItem);
 
@@ -574,31 +569,31 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
-        Economy econ = null;
-        if (session.currency.equals("MONEY")) {
-            econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
+        com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (pd == null) {
+            player.sendMessage(ChatColor.RED + "Error loading your data!");
+            return;
         }
 
         double totalCost = session.unitPrice * buyAmount;
+        String itemName = session.displayName != null ? session.displayName : formatName(session.baseItem);
 
         if (session.currency.equals("MONEY")) {
-            if (econ == null || !econ.has(player, totalCost)) {
+            if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(player, totalCost, "Shop: " + itemName)) {
                 player.sendMessage(ChatColor.RED + "You do not have enough money!");
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
                 return;
             }
-            econ.withdrawPlayer(player, totalCost);
         } else {
-            com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
-            if (pd == null || pd.getShards() < totalCost) {
+            if (pd.getShards() < totalCost) {
                 player.sendMessage(ChatColor.RED + "You do not have enough shards!");
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
                 return;
             }
-            pd.removeShards(totalCost,
-                    "Shop: " + (session.displayName != null ? session.displayName : session.baseItem.getType().name()));
-            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
+            pd.removeShards(totalCost, "Shop: " + itemName);
         }
+
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
         if (session.command != null && !session.command.isEmpty()) {
             String cmd = session.command
@@ -608,7 +603,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                     .replace("{value}", String.valueOf(buyAmount));
             plugin.getSchedulerAdapter().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
         } else if (session.keyType != null) {
-            com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
             String normalizedKey = plugin.normalizeKeyName(session.keyType);
             for (int k = 0; k < buyAmount; k++)
                 pd.addKey(normalizedKey);
@@ -652,12 +646,8 @@ public class ShopCommand implements CommandExecutor, Listener {
 
         playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
 
-        com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
-        if (pd != null) {
-            pd.addShopSpent(totalCost);
-            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
-        }
-
+        pd.addShopSpent(totalCost);
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
     }
 
     private void sendInventoryFull(Player player) {
@@ -800,9 +790,11 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
+        String itemName = !session.displayName.isEmpty() ? session.displayName : session.displayMaterial.name();
+
         if (session.currency.equals("MONEY")) {
-            Economy econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
-            if (!econ.has(player, session.price)) {
+            if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(player, session.price,
+                    "Shop: " + itemName)) {
                 String errorMsg = ChatColor.RED + "You don't have enough money!";
                 player.sendMessage(errorMsg);
                 player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
@@ -815,7 +807,6 @@ public class ShopCommand implements CommandExecutor, Listener {
                 }, 1L);
                 return;
             }
-            econ.withdrawPlayer(player, session.price);
         } else {
             double currentShards = pd.getShards();
             if (currentShards < session.price) {
@@ -831,9 +822,10 @@ public class ShopCommand implements CommandExecutor, Listener {
                 }, 1L);
                 return;
             }
-            pd.removeShards(session.price, "Shop: " + session.displayMaterial.name());
-            plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
+            pd.removeShards(session.price, "Shop: " + itemName);
         }
+
+        plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
         if (session.command != null && !session.command.isEmpty()) {
             String cmd = session.command
@@ -853,8 +845,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             } else {
                 player.sendMessage(ChatColor.RED + "Error: Item type not recognized!");
                 if (session.currency.equals("MONEY")) {
-                    Economy econ = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
-                    econ.depositPlayer(player, session.price);
+                    com.prismcore.survival.auction.EconomyHandler.depositPlayer(player, session.price, "Shop Refund");
                 } else {
                     pd.setShards(pd.getShards() + session.price, "Shop Refund");
                     plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());

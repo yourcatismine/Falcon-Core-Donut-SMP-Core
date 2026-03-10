@@ -181,6 +181,7 @@ public class DatabaseManager {
                     "disguise_name VARCHAR(16) DEFAULT NULL," +
                     "disguise_skin_texture TEXT DEFAULT NULL," +
                     "disguise_skin_signature TEXT DEFAULT NULL," +
+                    "history LONGTEXT," +
                     "last_updated BIGINT" +
                     ")";
             s.execute(statsTable);
@@ -212,7 +213,8 @@ public class DatabaseManager {
                     "disguised BOOLEAN DEFAULT FALSE",
                     "disguise_name VARCHAR(16) DEFAULT NULL",
                     "disguise_skin_texture TEXT DEFAULT NULL",
-                    "disguise_skin_signature TEXT DEFAULT NULL"
+                    "disguise_skin_signature TEXT DEFAULT NULL," +
+                            "history LONGTEXT"
             };
 
             for (String columnDef : statsColumns) {
@@ -933,25 +935,27 @@ public class DatabaseManager {
     public void savePlayerStats(UUID uuid, PlayerData data) {
         if (!isConnected())
             return;
-        String query = "UPDATE player_stats SET money = ?, shards = ?, shop_spent = ?, ip = ?, last_updated = ? WHERE uuid = ?";
+        String query = "UPDATE player_stats SET money = ?, shards = ?, shop_spent = ?, ip = ?, history = ?, last_updated = ? WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setDouble(1, data.getMoney());
             ps.setDouble(2, data.getShards());
             ps.setDouble(3, data.getShopSpent());
             ps.setString(4, data.getIp());
-            ps.setLong(5, System.currentTimeMillis());
-            ps.setString(6, uuid.toString());
+            ps.setString(5, data.getHistory());
+            ps.setLong(6, System.currentTimeMillis());
+            ps.setString(7, uuid.toString());
             int affected = ps.executeUpdate();
 
             if (affected == 0) {
-                String insertQuery = "INSERT INTO player_stats (uuid, money, shards, shop_spent, ip, last_updated) VALUES (?, ?, ?, ?, ?, ?)";
+                String insertQuery = "INSERT INTO player_stats (uuid, money, shards, shop_spent, ip, history, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ips = conn.prepareStatement(insertQuery)) {
                     ips.setString(1, uuid.toString());
                     ips.setDouble(2, data.getMoney());
                     ips.setDouble(3, data.getShards());
                     ips.setDouble(4, data.getShopSpent());
                     ips.setString(5, data.getIp());
-                    ips.setLong(6, System.currentTimeMillis());
+                    ips.setString(6, data.getHistory());
+                    ips.setLong(7, System.currentTimeMillis());
                     ips.executeUpdate();
                 }
             }
@@ -962,13 +966,13 @@ public class DatabaseManager {
     public PlayerDataStats loadPlayerStats(UUID uuid) {
         if (!isConnected())
             return null;
-        String query = "SELECT money, shards, shop_spent, ip FROM player_stats WHERE uuid = ?";
+        String query = "SELECT money, shards, shop_spent, ip, history FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new PlayerDataStats(rs.getDouble("money"), rs.getDouble("shards"),
-                            rs.getDouble("shop_spent"), rs.getString("ip"));
+                            rs.getDouble("shop_spent"), rs.getString("ip"), rs.getString("history"));
                 }
             }
         } catch (SQLException e) {
@@ -981,12 +985,14 @@ public class DatabaseManager {
         public double shards;
         public double shopSpent;
         public String ip;
+        public String history;
 
-        public PlayerDataStats(double money, double shards, double shopSpent, String ip) {
+        public PlayerDataStats(double money, double shards, double shopSpent, String ip, String history) {
             this.money = money;
             this.shards = shards;
             this.shopSpent = shopSpent;
             this.ip = ip;
+            this.history = history;
         }
     }
 

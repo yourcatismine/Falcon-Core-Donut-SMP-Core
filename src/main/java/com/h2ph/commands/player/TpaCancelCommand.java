@@ -11,6 +11,9 @@ import org.bukkit.entity.Player;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.ChatMessageType;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,6 +61,20 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
         }
 
         TpaRequestManager.getInstance().removeRequest(request.getTarget(), p.getUniqueId());
+
+        String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+        String typeLogStr = (request.getType() == TpaRequestManager.RequestType.TPA_HERE) ? "teleport here"
+                : "teleport";
+        org.bukkit.OfflinePlayer targetPlayer = org.bukkit.Bukkit.getOfflinePlayer(request.getTarget());
+        String targetName = (targetPlayer.getName() != null) ? targetPlayer.getName() : "Unknown";
+
+        com.prismcore.survival.manager.PlayerData senderPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(p.getUniqueId());
+        if (senderPD != null) {
+            senderPD.addHistory(
+                    dateTime + " - TPA Cancel\nYou cancelled your " + typeLogStr + " request to " + targetName);
+            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(p.getUniqueId());
+        }
 
         String feedback;
         if (request.getType() == TpaRequestManager.RequestType.TPA_HERE) {

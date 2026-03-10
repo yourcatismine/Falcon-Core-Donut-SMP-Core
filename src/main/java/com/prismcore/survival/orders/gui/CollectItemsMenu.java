@@ -26,6 +26,7 @@ import java.util.List;
 import com.prismcore.survival.orders.OrdersModule;
 import com.prismcore.survival.orders.Utils;
 import com.prismcore.survival.orders.data.Order;
+import com.prismcore.survival.orders.store.OrderManager;
 import com.prismcore.survival.orders.util.TaskUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -44,6 +45,11 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import com.h2ph.PrismSurvival;
+import com.prismcore.survival.manager.PlayerData;
 
 public class CollectItemsMenu
         implements InventoryHolder,
@@ -57,6 +63,7 @@ public class CollectItemsMenu
     private boolean internalPageSwitch = false;
     private long lastClickTime = 0;
     private static final long CLICK_COOLDOWN_MS = 200;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM HH:mm:ss");
 
     public CollectItemsMenu(OrdersModule module, Player p, Order order) {
         this(module, p, order, 0);
@@ -232,6 +239,22 @@ public class CollectItemsMenu
                     this.module.orders().saveOrder(this.order);
                     this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
 
+                    // Log Order Dropped Loot
+                    for (ItemStack item : toDrop) {
+                        if (item != null && item.getType() != Material.AIR) {
+                            String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
+                            String log = String.format("%s - Order Collection\nDropped %s x%d from order",
+                                    timeStr, OrderManager.nice(item.getType()), item.getAmount());
+                            PlayerData pd = PrismSurvival.getInstance().getPlayerDataManager()
+                                    .loadPlayer(this.p.getUniqueId());
+                            if (pd != null) {
+                                pd.addHistory(log);
+                                PrismSurvival.getInstance().getPlayerDataManager()
+                                        .savePlayerAsync(this.p.getUniqueId());
+                            }
+                        }
+                    }
+
                     this.internalPageSwitch = true;
                     this.open();
                     return;
@@ -270,7 +293,7 @@ public class CollectItemsMenu
                         if (action == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                             // Resume amethyst tool timers before moving to inventory
                             com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(toAdd);
-                            
+
                             HashMap<Integer, ItemStack> leftovers = this.p.getInventory().addItem(toAdd);
                             int rem = leftovers.isEmpty() ? 0 : leftovers.get(0).getAmount();
                             if (rem < initialAmount) {
@@ -298,10 +321,10 @@ public class CollectItemsMenu
                                 }
 
                                 ItemStack taking = toAdd.clone();
-                                taking.setAmount(toTake);                                
+                                taking.setAmount(toTake);
                                 // Resume amethyst tool timers when retrieving items
                                 com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(taking);
-                                                                e.getView().setCursor(taking);
+                                e.getView().setCursor(taking);
 
                                 if (toTake >= initialAmount) {
                                     this.order.storage.remove(index);
@@ -318,14 +341,15 @@ public class CollectItemsMenu
                                     int canTake = cursor.getMaxStackSize() - cursor.getAmount();
                                     if (canTake > 0) {
                                         int toTake = Math.min(canTake, initialAmount);
-                                        
+
                                         // Resume amethyst tool timers for the amount being taken
                                         if (toTake > 0) {
                                             ItemStack takenStack = item.clone();
                                             takenStack.setAmount(toTake);
-                                            com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(takenStack);
+                                            com.prismcore.survival.tools.ToolsManager.getInstance()
+                                                    .resumeOrdersTimers(takenStack);
                                         }
-                                        
+
                                         cursor.setAmount(cursor.getAmount() + toTake);
 
                                         if (toTake >= initialAmount) {
@@ -336,6 +360,19 @@ public class CollectItemsMenu
                                         this.module.orders().saveOrder(this.order);
                                         this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f,
                                                 1.0f);
+
+                                        // Log Order Collection
+                                        String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
+                                        String log = String.format("%s - Order Collection\nCollected %s x%d from order",
+                                                timeStr, OrderManager.nice(toAdd.getType()), toTake);
+                                        PlayerData pd = PrismSurvival.getInstance().getPlayerDataManager()
+                                                .loadPlayer(this.p.getUniqueId());
+                                        if (pd != null) {
+                                            pd.addHistory(log);
+                                            PrismSurvival.getInstance().getPlayerDataManager()
+                                                    .savePlayerAsync(this.p.getUniqueId());
+                                        }
+
                                         this.internalPageSwitch = true;
                                         this.open();
                                     }

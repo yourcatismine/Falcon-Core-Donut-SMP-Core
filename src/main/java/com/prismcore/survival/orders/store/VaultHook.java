@@ -51,6 +51,10 @@ public class VaultHook {
     }
 
     public boolean take(OfflinePlayer p, double amount) {
+        return take(p, amount, "Orders");
+    }
+
+    public boolean take(OfflinePlayer p, double amount, String source) {
         if (this.econ == null) {
             return false;
         }
@@ -64,7 +68,13 @@ public class VaultHook {
             return false;
         }
         try {
-            return this.econ.withdrawPlayer(p, amount).transactionSuccess();
+            // Set source context if using internal economy bridge
+            com.prismcore.survival.auction.EconomyHandler.setSourceContext(source);
+            try {
+                return this.econ.withdrawPlayer(p, amount).transactionSuccess();
+            } finally {
+                com.prismcore.survival.auction.EconomyHandler.clearSourceContext();
+            }
         } catch (Throwable t) {
             this.module.getPlugin().getLogger().warning("Vault withdraw failed: " + t.getMessage());
             return false;
@@ -72,6 +82,10 @@ public class VaultHook {
     }
 
     public boolean give(OfflinePlayer p, double amount) {
+        return give(p, amount, "Orders");
+    }
+
+    public boolean give(OfflinePlayer p, double amount, String source) {
         if (this.econ == null) {
             return false;
         }
@@ -82,7 +96,13 @@ public class VaultHook {
             return true;
         }
         try {
-            return this.econ.depositPlayer(p, amount).transactionSuccess();
+            // Set source context if using internal economy bridge
+            com.prismcore.survival.auction.EconomyHandler.setSourceContext(source);
+            try {
+                return this.econ.depositPlayer(p, amount).transactionSuccess();
+            } finally {
+                com.prismcore.survival.auction.EconomyHandler.clearSourceContext();
+            }
         } catch (Throwable t) {
             this.module.getPlugin().getLogger().warning("Vault deposit failed: " + t.getMessage());
             return false;

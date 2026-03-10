@@ -24,6 +24,9 @@ import com.prismcore.survival.sell.PrismSell;
 import com.prismcore.survival.sell.category.Category;
 import com.prismcore.survival.sell.data.PlayerData;
 import com.prismcore.survival.sell.utils.MessageUtil;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -318,6 +321,15 @@ public class SellGUI
             for (Map.Entry<Category, Double> entry : categoryProgressToAdd.entrySet()) {
                 data.addProgress(entry.getKey(), entry.getValue());
                 this.checkLevelUp(player, entry.getKey(), data);
+            }
+
+            com.prismcore.survival.manager.PlayerData mainPD = this.plugin.getPlugin().getPlayerDataManager()
+                    .get(player.getUniqueId());
+            if (mainPD != null) {
+                String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
+                        .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                mainPD.addHistory(dateTime + " - Shop Sale\nSold items for $" + String.format("%.2f", totalSold));
+                this.plugin.getPlugin().getPlayerDataManager().savePlayerAsync(player.getUniqueId());
             }
         }
 

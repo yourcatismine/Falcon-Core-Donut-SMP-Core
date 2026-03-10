@@ -12,6 +12,9 @@ import org.bukkit.entity.Player;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.ChatMessageType;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,6 +60,20 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
         }
 
         TpaRequestManager.getInstance().removeRequest(p.getUniqueId(), request.getSender());
+
+        String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+        String typeLogStr = (request.getType() == TpaRequestManager.RequestType.TPA_HERE) ? "teleport here"
+                : "teleport";
+        org.bukkit.OfflinePlayer senderPlayerObj = org.bukkit.Bukkit.getOfflinePlayer(request.getSender());
+        String senderNameObj = (senderPlayerObj.getName() != null) ? senderPlayerObj.getName() : "Unknown";
+
+        com.prismcore.survival.manager.PlayerData acceptorPD = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(p.getUniqueId());
+        if (acceptorPD != null) {
+            acceptorPD.addHistory(
+                    dateTime + " - TPA Deny\nYou denied " + senderNameObj + "'s " + typeLogStr + " request");
+            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(p.getUniqueId());
+        }
 
         org.bukkit.OfflinePlayer senderPlayer = org.bukkit.Bukkit.getOfflinePlayer(request.getSender());
         String senderName = senderPlayer.getName() != null ? senderPlayer.getName() : "Unknown";

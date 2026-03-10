@@ -1,5 +1,8 @@
 package com.h2ph.managers;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -175,6 +178,23 @@ public class TpaRequestManager {
             target.playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1f,
                     1f);
         }
+
+        String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+        String typeStr = (type == RequestType.TPA_HERE) ? "teleport here" : "teleport";
+
+        com.prismcore.survival.manager.PlayerData senderPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(sender.getUniqueId());
+        if (senderPD != null) {
+            senderPD.addHistory(dateTime + " - TPA Request\nSent " + typeStr + " request to " + target.getName());
+            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+        }
+
+        com.prismcore.survival.manager.PlayerData targetPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(target.getUniqueId());
+        if (targetPD != null) {
+            targetPD.addHistory(dateTime + " - TPA Request\nReceived " + typeStr + " request from " + sender.getName());
+            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(target.getUniqueId());
+        }
     }
 
     public void acceptRequest(org.bukkit.entity.Player acceptor, org.bukkit.entity.Player sender, RequestType type) {
@@ -207,9 +227,27 @@ public class TpaRequestManager {
 
         String acceptorMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
                 "&7You accepted &6" + smallCapsSender + "&7's " + typeMsg + ".");
-        acceptor.sendMessage(acceptorMsg);
         acceptor.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(acceptorMsg));
+
+        String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+        String typeLogStr = (type == RequestType.TPA_HERE) ? "teleport here" : "teleport";
+
+        com.prismcore.survival.manager.PlayerData acceptorPD = com.h2ph.PrismSurvival.getInstance()
+                .getPlayerDataManager().get(acceptor.getUniqueId());
+        if (acceptorPD != null) {
+            acceptorPD.addHistory(
+                    dateTime + " - TPA Accept\nAccepted " + typeLogStr + " request from " + sender.getName());
+            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(acceptor.getUniqueId());
+        }
+
+        com.prismcore.survival.manager.PlayerData senderPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+                .get(sender.getUniqueId());
+        if (senderPD != null) {
+            senderPD.addHistory(
+                    dateTime + " - TPA Accept\n" + acceptor.getName() + " accepted your " + typeLogStr + " request");
+            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+        }
 
         final java.util.concurrent.atomic.AtomicInteger seconds = new java.util.concurrent.atomic.AtomicInteger(5);
         final java.util.concurrent.atomic.AtomicReference<org.bukkit.scheduler.BukkitTask> task = new java.util.concurrent.atomic.AtomicReference<>();

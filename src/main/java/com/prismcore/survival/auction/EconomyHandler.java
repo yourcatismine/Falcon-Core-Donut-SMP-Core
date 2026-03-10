@@ -13,6 +13,19 @@ public class EconomyHandler {
     private static Economy vaultEcon;
     private static PrismSurvival plugin;
     private static boolean useVault;
+    private static final ThreadLocal<String> sourceContext = new ThreadLocal<>();
+
+    public static void setSourceContext(String source) {
+        sourceContext.set(source);
+    }
+
+    public static String getSourceContext() {
+        return sourceContext.get();
+    }
+
+    public static void clearSourceContext() {
+        sourceContext.remove();
+    }
 
     public static void setup(PrismSurvival instance, boolean configUseVault) {
         plugin = instance;
@@ -48,8 +61,13 @@ public class EconomyHandler {
             if (vaultEcon.getBalance((OfflinePlayer) player) < amount) {
                 return false;
             }
-            EconomyResponse res = vaultEcon.withdrawPlayer((OfflinePlayer) player, amount);
-            return res.transactionSuccess();
+            setSourceContext(source);
+            try {
+                EconomyResponse res = vaultEcon.withdrawPlayer((OfflinePlayer) player, amount);
+                return res.transactionSuccess();
+            } finally {
+                clearSourceContext();
+            }
         } else {
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data == null)
@@ -77,7 +95,12 @@ public class EconomyHandler {
 
     public static void depositOfflinePlayer(OfflinePlayer player, double amount, String source) {
         if (useVault && vaultEcon != null) {
-            vaultEcon.depositPlayer(player, amount);
+            setSourceContext(source);
+            try {
+                vaultEcon.depositPlayer(player, amount);
+            } finally {
+                clearSourceContext();
+            }
         } else {
             PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null) {
@@ -94,8 +117,13 @@ public class EconomyHandler {
     public static boolean depositByName(String playerName, double amount, String source) {
         if (useVault && vaultEcon != null) {
             OfflinePlayer off = plugin.getServer().getOfflinePlayer(playerName);
-            EconomyResponse res = vaultEcon.depositPlayer(off, amount);
-            return res != null && res.transactionSuccess();
+            setSourceContext(source);
+            try {
+                EconomyResponse res = vaultEcon.depositPlayer(off, amount);
+                return res != null && res.transactionSuccess();
+            } finally {
+                clearSourceContext();
+            }
         } else {
             OfflinePlayer off = plugin.getServer().getOfflinePlayer(playerName);
             if (off.hasPlayedBefore() || off.isOnline()) {

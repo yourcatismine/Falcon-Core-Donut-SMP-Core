@@ -13,6 +13,8 @@ import com.prismcore.survival.orders.Utils;
 import com.prismcore.survival.orders.data.ItemKey;
 import com.prismcore.survival.orders.data.Order;
 import com.prismcore.survival.orders.OrdersModule;
+import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.PrismSurvival;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -22,7 +24,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import com.h2ph.PrismSurvival;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -32,6 +36,7 @@ public class OrderManager {
     private final Map<UUID, Order> orders = new LinkedHashMap<UUID, Order>();
     private final File ordersDir;
     private final File legacyDir;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM HH:mm:ss");
 
     public OrderManager(Plugin pl) {
         this.pl = pl;
@@ -82,6 +87,16 @@ public class OrderManager {
         this.orders.put(o.id, o);
         this.saveOrder(o);
 
+        // Log Order Creation
+        String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
+        String log = String.format("%s - Order Created\nCreated order for %s x%d for $%s each ($%s)",
+                timeStr, key.displayName(), amount, Utils.abbr(priceEach), Utils.abbr(amount * priceEach));
+        PlayerData pd = PrismSurvival.getInstance().getPlayerDataManager().loadPlayer(owner);
+        if (pd != null) {
+            pd.addHistory(log);
+            PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(owner);
+        }
+
         return o;
     }
 
@@ -117,10 +132,9 @@ public class OrderManager {
         double price = Double.isFinite(o.priceEach) ? o.priceEach : 0.0;
         double refund = (double) remaining * price;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(o.owner);
-        OrdersModule.getInstance().vault().give(owner, refund);
+        OrdersModule.getInstance().vault().give(owner, refund, "Order Refund: " + o.key.displayName());
 
         this.saveOrder(o, false);
-
     }
 
     public void applyDelivery(Order o, List<ItemStack> accepted, int acceptedAmount, UUID deliverer) {
@@ -131,10 +145,28 @@ public class OrderManager {
         synchronized (this) {
             Order freshOrder = this.getOrder(o.id);
             if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
+                String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
+                String failLog = String.format(
+                        "%s - Order Delivery (Failed)\nFailed to deliver items: Order is no longer active or has been completed",
+                        timeStr);
+                PlayerData delivererPd = PrismSurvival.getInstance().getPlayerDataManager().loadPlayer(deliverer);
+                if (delivererPd != null) {
+                    delivererPd.addHistory(failLog);
+                    PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(deliverer);
+                }
                 throw new IllegalStateException("Order " + o.id + " is no longer active or has been completed");
             }
 
             if (freshOrder.delivered + acceptedAmount > freshOrder.requested) {
+                String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
+                String failLog = String.format(
+                        "%s - Order Delivery (Failed)\nFailed to deliver items: Delivery amount exceeds remaining order quantity",
+                        timeStr);
+                PlayerData delivererPd = PrismSurvival.getInstance().getPlayerDataManager().loadPlayer(deliverer);
+                if (delivererPd != null) {
+                    delivererPd.addHistory(failLog);
+                    PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(deliverer);
+                }
                 throw new IllegalStateException("Delivery amount exceeds remaining order quantity");
             }
 
@@ -195,7 +227,7 @@ public class OrderManager {
         String delivererName = "Someone";
 
         if (delivererPlayer != null) {
-            OrdersModule.getInstance().vault().give(delivererPlayer, receive);
+            OrdersModule.getInstance().vault().give(delivererPlayer, receive, "Order Payout: " + o.key.displayName());
             delivererName = delivererPlayer.getName();
         } else {
             OfflinePlayer op = Bukkit.getOfflinePlayer(deliverer);

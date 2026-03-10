@@ -69,6 +69,7 @@ public class PlayerDataManager {
             data.setShards(stats.shards, "Database Load");
             data.setShopSpent(stats.shopSpent);
             data.setIp(stats.ip);
+            data.setHistory(stats.history != null ? stats.history : "");
         }
 
         File legacyShardsFolder = new File(plugin.getDataFolder(), "economy/shards/players");

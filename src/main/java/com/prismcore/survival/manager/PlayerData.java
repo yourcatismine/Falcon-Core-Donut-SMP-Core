@@ -1,6 +1,10 @@
 package com.prismcore.survival.manager;
 
 import com.h2ph.PrismSurvival;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,6 +40,7 @@ public class PlayerData {
     private java.util.List<String> originalGroups = null;
     private String originalPrefix = null;
     private String ip;
+    private String history = "";
     private boolean unloading = false;
 
     public PlayerData(PrismSurvival plugin, UUID uuid) {
@@ -146,6 +151,24 @@ public class PlayerData {
         if (Math.abs(change) < 0.001)
             return;
 
+        String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+        String entry;
+
+        if (type.equalsIgnoreCase("MONEY")) {
+            double old = this.money - change;
+            String symbol = change > 0 ? "+$" : "-$";
+            entry = dateTime + " - Balance Changed\n$" + String.format("%.2f", old) + " -> $"
+                    + String.format("%.2f", this.money) + " (" + symbol + String.format("%.2f", Math.abs(change))
+                    + ")\nSource: " + source;
+        } else {
+            double old = this.shards - change;
+            String symbol = change > 0 ? "+" : "-";
+            entry = dateTime + " - Shards Changed\n" + String.format("%.1f", old) + " -> "
+                    + String.format("%.1f", this.shards) + " (" + symbol + String.format("%.1f", Math.abs(change))
+                    + ")\nSource: " + source;
+        }
+
+        addHistory(entry);
     }
 
     public double getShopSpent() {
@@ -643,6 +666,22 @@ public class PlayerData {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    public String getHistory() {
+        return history;
+    }
+
+    public void setHistory(String history) {
+        this.history = history;
+    }
+
+    public void addHistory(String message) {
+        if (this.history == null || this.history.isEmpty()) {
+            this.history = message;
+        } else {
+            this.history = this.history + "\n" + message;
+        }
     }
 
     public static class TeamInvite {

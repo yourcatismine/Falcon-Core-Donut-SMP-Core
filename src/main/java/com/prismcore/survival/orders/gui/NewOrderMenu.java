@@ -241,7 +241,7 @@ public class NewOrderMenu implements InventoryHolder, MenuOwner {
             }
 
             double total = this.amount * this.price;
-            if (!this.module.vault().take(this.p, total)) {
+            if (!this.module.vault().take(this.p, total, "Order Creation: " + this.selected.displayName())) {
                 this.p.sendMessage(Utils.formatColors(
                         this.module.cfg().msg("messages.cannot_afford", "&cYou cannot afford this (&f${total}&c).")
                                 .replace("${total}", Utils.abbr(total))));

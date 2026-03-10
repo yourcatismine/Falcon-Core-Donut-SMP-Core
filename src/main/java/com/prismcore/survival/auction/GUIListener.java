@@ -1,5 +1,8 @@
 package com.prismcore.survival.auction;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Collections;
@@ -244,6 +247,17 @@ public class GUIListener
                 this.controller.getAuctionManager().addItem(auctionItem);
 
                 String itemName = Utils.prettifyMaterialName(held.getType());
+                String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
+                        .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                com.prismcore.survival.manager.PlayerData pdListing = ((com.h2ph.PrismSurvival) this.controller
+                        .getPlugin()).getPlayerDataManager().get(p.getUniqueId());
+                if (pdListing != null) {
+                    pdListing.addHistory(dateTime + " - AH Listing\nListed " + itemName + " x" + held.getAmount()
+                            + " for $" + Utils.formatNumber(price));
+                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getPlayerDataManager()
+                            .savePlayerAsync(p.getUniqueId());
+                }
+
                 p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.listed-item",
                         "&#34ee80Your item has been listed on the auction house!")
                         .replace("{item}", itemName)
@@ -290,6 +304,14 @@ public class GUIListener
                 AuctionItem ai4 = opt.get();
 
                 if (!this.controller.getAuctionManager().removeItem(ai4)) {
+                    String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
+                            .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                    com.prismcore.survival.manager.PlayerData pdBuy = ((com.h2ph.PrismSurvival) this.controller
+                            .getPlugin()).getPlayerDataManager().get(p.getUniqueId());
+                    if (pdBuy != null) {
+                        pdBuy.addHistory(
+                                dateTime + " - AH Purchase (Failed)\nFailed to buy item (Reason: No longer available)");
+                    }
                     p.sendMessage(
                             Utils.formatColors(this.controller.getConfig().getString("messages.item-not-available")));
                     p.playSound(p.getLocation(), no, 1.0f, 1.0f);
@@ -302,6 +324,15 @@ public class GUIListener
 
                 if (p.getInventory().firstEmpty() == -1) {
                     this.controller.getAuctionManager().addItem(ai4);
+                    String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
+                            .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                    String itemNameFail = Utils.prettifyMaterialName(ai4.getItemStack().getType());
+                    com.prismcore.survival.manager.PlayerData pdBuy = ((com.h2ph.PrismSurvival) this.controller
+                            .getPlugin()).getPlayerDataManager().get(p.getUniqueId());
+                    if (pdBuy != null) {
+                        pdBuy.addHistory(dateTime + " - AH Purchase (Failed)\nFailed to buy " + itemNameFail
+                                + " (Reason: Inventory full)");
+                    }
                     p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.inventory-full")));
                     p.playSound(p.getLocation(), no, 1.0f, 1.0f);
                     p.closeInventory();
@@ -309,6 +340,15 @@ public class GUIListener
                 }
                 if (!EconomyHandler.chargePlayer(p, ai4.getPrice())) {
                     this.controller.getAuctionManager().addItem(ai4);
+                    String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
+                            .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                    String itemNameFail = Utils.prettifyMaterialName(ai4.getItemStack().getType());
+                    com.prismcore.survival.manager.PlayerData pdBuy = ((com.h2ph.PrismSurvival) this.controller
+                            .getPlugin()).getPlayerDataManager().get(p.getUniqueId());
+                    if (pdBuy != null) {
+                        pdBuy.addHistory(dateTime + " - AH Purchase (Failed)\nFailed to buy " + itemNameFail
+                                + " (Reason: Insufficient funds)");
+                    }
                     p.sendMessage(
                             Utils.formatColors(this.controller.getConfig().getString("messages.insufficient-funds")));
                     p.playSound(p.getLocation(), no, 1.0f, 1.0f);
@@ -321,6 +361,19 @@ public class GUIListener
                 p.getInventory().addItem(new ItemStack[] { finalItem });
                 this.controller.getTransactionManager().recordSale(finalItem, ai4.getPrice(), ai4.getSeller(),
                         p.getName());
+
+                String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
+                        .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                String boughtItemName = Utils.prettifyMaterialName(finalItem.getType());
+                com.prismcore.survival.manager.PlayerData pdBuy = ((com.h2ph.PrismSurvival) this.controller.getPlugin())
+                        .getPlayerDataManager().get(p.getUniqueId());
+                if (pdBuy != null) {
+                    pdBuy.addHistory(dateTime + " - AH Purchase (Success)\nBought " + boughtItemName + " x"
+                            + finalItem.getAmount() + " from " + sellerName + " for $"
+                            + Utils.formatNumber(ai4.getPrice()));
+                    ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getPlayerDataManager()
+                            .savePlayerAsync(p.getUniqueId());
+                }
                 String itemName = Utils.prettifyMaterialName(ai4.getItemStack().getType());
                 p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.purchase-success")
                         .replace("{priceFormatted}", Utils.formatNumber(ai4.getPrice()))
@@ -336,6 +389,16 @@ public class GUIListener
                 Player seller = Bukkit.getPlayer((String) sellerName);
                 if (seller != null && seller.isOnline()) {
                     EconomyHandler.depositPlayer(seller, ai4.getPrice(), "Auction Sale");
+
+                    com.prismcore.survival.manager.PlayerData pdSale = ((com.h2ph.PrismSurvival) this.controller
+                            .getPlugin()).getPlayerDataManager().get(seller.getUniqueId());
+                    if (pdSale != null) {
+                        pdSale.addHistory(
+                                dateTime + " - AH Sale (Success)\nSold " + boughtItemName + " x" + finalItem.getAmount()
+                                        + " to " + p.getName() + " for $" + Utils.formatNumber(ai4.getPrice()));
+                        ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getPlayerDataManager()
+                                .savePlayerAsync(seller.getUniqueId());
+                    }
                     String soldFmt = this.controller.getConfig().getString("messages.sold-notify")
                             .replace("{item}", itemName).replace("{buyer}", p.getName())
                             .replace("{priceFormatted}", Utils.formatNumber(ai4.getPrice()));
@@ -965,6 +1028,19 @@ public class GUIListener
                     double totalMoney = sales.stream().mapToDouble(s -> s.price).sum();
                     EconomyHandler.depositPlayer(p, totalMoney, "Offline Auction Earnings");
 
+                    String dateTimeJoin = LocalDateTime.now(ZoneId.of("UTC"))
+                            .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+                    com.prismcore.survival.manager.PlayerData pdJoin = ((com.h2ph.PrismSurvival) this.controller
+                            .getPlugin()).getPlayerDataManager().get(p.getUniqueId());
+                    if (pdJoin != null) {
+                        for (AuctionManager.OfflineSale sale : sales) {
+                            pdJoin.addHistory(dateTimeJoin + " - AH Sale (Success/Offline)\nSold " + sale.item + " to "
+                                    + sale.buyer + " for $" + Utils.formatNumber(sale.price));
+                        }
+                        ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getPlayerDataManager()
+                                .savePlayerAsync(p.getUniqueId());
+                    }
+
                     if (sales.size() == 1) {
                         AuctionManager.OfflineSale sale = sales.get(0);
                         String msg = this.controller.getConfig().getString("messages.sold-notify-offline")
@@ -1067,6 +1143,14 @@ public class GUIListener
 
         if (!EconomyHandler.chargePlayer(p, ai.getPrice())) {
             this.controller.getAuctionManager().addItem(ai);
+            String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+            String itemNameFail = Utils.prettifyMaterialName(ai.getItemStack().getType());
+            com.prismcore.survival.manager.PlayerData pdBuy = ((com.h2ph.PrismSurvival) this.controller.getPlugin())
+                    .getPlayerDataManager().get(p.getUniqueId());
+            if (pdBuy != null) {
+                pdBuy.addHistory(dateTime + " - AH Purchase (Failed)\nFailed to buy " + itemNameFail
+                        + " (Reason: Insufficient funds)");
+            }
             p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.insufficient-funds")));
             p.playSound(p.getLocation(),
                     Sound.valueOf((String) this.controller.getConfig().getString("sounds.villager-no")), 1.0f, 1.0f);
@@ -1079,6 +1163,17 @@ public class GUIListener
         p.getInventory().addItem(new ItemStack[] { finalItem });
         this.controller.getTransactionManager().recordSale(finalItem, ai.getPrice(), ai.getSeller(),
                 p.getName());
+
+        String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
+        String boughtItemName = Utils.prettifyMaterialName(finalItem.getType());
+        com.prismcore.survival.manager.PlayerData pdBuy = ((com.h2ph.PrismSurvival) this.controller.getPlugin())
+                .getPlayerDataManager().get(p.getUniqueId());
+        if (pdBuy != null) {
+            pdBuy.addHistory(dateTime + " - AH Purchase (Success)\nBought " + boughtItemName + " x"
+                    + finalItem.getAmount() + " from " + ai.getSeller() + " for $" + Utils.formatNumber(ai.getPrice()));
+            ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getPlayerDataManager()
+                    .savePlayerAsync(p.getUniqueId());
+        }
         String itemName = Utils.prettifyMaterialName(finalItem.getType());
         p.sendMessage(Utils.formatColors(this.controller.getConfig().getString("messages.purchase-success")
                 .replace("{priceFormatted}", Utils.formatNumber(ai.getPrice()))
@@ -1093,6 +1188,15 @@ public class GUIListener
         Player seller = Bukkit.getPlayer((String) sellerName);
         if (seller != null && seller.isOnline()) {
             EconomyHandler.depositPlayer(seller, ai.getPrice(), "Auction Sale");
+
+            com.prismcore.survival.manager.PlayerData pdSale = ((com.h2ph.PrismSurvival) this.controller.getPlugin())
+                    .getPlayerDataManager().get(seller.getUniqueId());
+            if (pdSale != null) {
+                pdSale.addHistory(dateTime + " - AH Sale (Success)\nSold " + boughtItemName + " x"
+                        + finalItem.getAmount() + " to " + p.getName() + " for $" + Utils.formatNumber(ai.getPrice()));
+                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getPlayerDataManager()
+                        .savePlayerAsync(seller.getUniqueId());
+            }
             String soldFmt = this.controller.getConfig().getString("messages.sold-notify")
                     .replace("{item}", itemName).replace("{buyer}", p.getName())
                     .replace("{priceFormatted}", Utils.formatNumber(ai.getPrice()));

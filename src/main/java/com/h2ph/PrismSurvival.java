@@ -573,6 +573,7 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InvSeeListener(this), this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.OperatorListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CommandLogListener(this), this);
 
         new com.h2ph.economy.EconomyMonitor(this);
 

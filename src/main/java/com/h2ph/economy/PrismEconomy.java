@@ -138,7 +138,11 @@ public class PrismEconomy implements Economy {
             return new EconomyResponse(0, balance, EconomyResponse.ResponseType.FAILURE, "Insufficient funds");
         }
 
-        data.removeMoney(amount, "Vault");
+        String source = com.prismcore.survival.auction.EconomyHandler.getSourceContext();
+        if (source == null)
+            source = "Vault";
+
+        data.removeMoney(amount, source);
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         return new EconomyResponse(amount, data.getMoney(), EconomyResponse.ResponseType.SUCCESS, null);
     }
@@ -166,7 +170,11 @@ public class PrismEconomy implements Economy {
         }
 
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
-        data.addMoney(amount, "Vault");
+        String source = com.prismcore.survival.auction.EconomyHandler.getSourceContext();
+        if (source == null)
+            source = "Vault";
+
+        data.addMoney(amount, source);
         plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
 
         return new EconomyResponse(amount, data.getMoney(), EconomyResponse.ResponseType.SUCCESS, null);

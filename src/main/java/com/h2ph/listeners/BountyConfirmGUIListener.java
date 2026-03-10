@@ -42,8 +42,7 @@ public class BountyConfirmGUIListener implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f);
                 player.closeInventory();
                 player.sendMessage(ChatColor.RED + "Bounty placement cancelled.");
-            }
-            else if (slot == 15) {
+            } else if (slot == 15) {
                 player.closeInventory();
                 executeBountyAdd(player, holder.getTargetId(), holder.getTargetName(), holder.getAmount());
             }
@@ -51,26 +50,9 @@ public class BountyConfirmGUIListener implements Listener {
     }
 
     private void executeBountyAdd(Player sender, UUID targetId, String targetName, double amount) {
-        net.milkbowl.vault.economy.Economy econ = plugin.getEconomy();
-
-        if (econ != null) {
-            if (!econ.has(sender, amount)) {
-                sender.sendMessage(ChatColor.RED + "You do not have enough money.");
-                return;
-            }
-            econ.withdrawPlayer(sender, amount);
-        } else {
-            PlayerData senderData = plugin.getPlayerDataManager().get(sender.getUniqueId());
-            if (senderData == null)
-                senderData = plugin.getPlayerDataManager().loadPlayer(sender.getUniqueId());
-
-            if (senderData.getMoney() < amount) {
-                sender.sendMessage(ChatColor.RED + "You do not have enough money.");
-                return;
-            }
-
-            senderData.removeMoney(amount, "Bounty on " + targetName);
-            plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+        if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(sender, amount, "Bounty on " + targetName)) {
+            sender.sendMessage(ChatColor.RED + "You do not have enough money.");
+            return;
         }
 
         plugin.getBountyManager().addBounty(targetId, amount);

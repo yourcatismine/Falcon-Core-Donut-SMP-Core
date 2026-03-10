@@ -17,6 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -145,17 +148,6 @@ public class PayCommand implements CommandExecutor, TabCompleter {
                 com.prismcore.survival.auction.EconomyHandler.depositOfflinePlayer(Bukkit.getOfflinePlayer(targetId),
                         amount,
                         "Payment from " + sender.getName());
-
-                plugin.getSchedulerAdapter().runTaskAsync(() -> {
-                    if (!com.prismcore.survival.auction.EconomyHandler.usingVault()) {
-                        plugin.getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
-                        plugin.getPlayerDataManager().savePlayerAsync(targetId);
-
-                        if (!targetWasLoaded && Bukkit.getPlayer(targetId) == null) {
-                            plugin.getPlayerDataManager().unload(targetId);
-                        }
-                    }
-                });
 
                 sendSuccess(sender, targetId, targetName, amount, finalTargetData);
             });

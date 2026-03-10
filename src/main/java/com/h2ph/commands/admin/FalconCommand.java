@@ -40,8 +40,13 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        sender.sendMessage(
-                "§cUsage: /falcon <auction|order|rtpqueue|speed|tools|void|respawngear|limiter|crate|crystal|anchor|pvpsafe|warps> [args]");
+        if (args.length == 0) {
+            if (sender instanceof Player) {
+                Player p = (Player) sender;
+                p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            }
+            return true;
+        }
 
         String sub = args[0].toLowerCase();
 
@@ -59,6 +64,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             }
             if (args.length < 2) {
                 player.sendMessage("§cUsage: /falcon auction <player>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             String targetName = args[1];
@@ -99,6 +105,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             if (args.length < 2) {
                 player.sendMessage("§cUsage: /falcon rtpqueue <create|delete> <region>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -107,6 +114,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             if (action.equals("create")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon rtpqueue create <region>");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
                 String regionName = args[2];
@@ -115,6 +123,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             } else if (action.equals("delete")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon rtpqueue delete <region>");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
                 String regionName = args[2];
@@ -122,12 +131,14 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             } else {
                 player.sendMessage("§cUsage: /falcon rtpqueue <create|delete> <region>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         }
 
         if (sub.equals("speed")) {
             if (args.length < 2) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -161,6 +172,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             if (args.length < 3) {
                 player.sendMessage("§cUsage: /falcon tools <tool> <player> [duration]");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -191,6 +203,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 overrideTimer = com.prismcore.survival.tools.Utils.parseDuration(args[3]);
                 if (overrideTimer <= 0) {
                     player.sendMessage("§cInvalid duration format. Use: 1d, 12h, 30m");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
             }
@@ -223,6 +236,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             } else {
                 player.sendMessage(
                         "§cInvalid tool type. Valid: drill, axe, shovel, multitool, bucket, shardbooster, sellaxe");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         }
@@ -235,6 +249,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             if (args.length < 2) {
                 player.sendMessage("§cUsage: /falcon void create <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -243,6 +258,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             if (action.equals("create")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon void create <name>");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
 
@@ -257,6 +273,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
                     if (worldEditRegion == null) {
                         player.sendMessage("§cPlease make a selection with WorldEdit first.");
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         return true;
                     }
 
@@ -285,6 +302,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             if (args.length < 2) {
                 player.sendMessage("§cUsage: /falcon respawngear <setup|delete>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -298,6 +316,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             } else {
                 player.sendMessage("§cUsage: /falcon respawngear <setup|delete>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         }
@@ -310,6 +329,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             if (args.length < 2) {
                 player.sendMessage("§cUsage: /falcon limiter <reload|stats>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -363,6 +383,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 });
             } else {
                 player.sendMessage("§cUsage: /falcon limiter <reload|stats>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             }
             return true;
         }
@@ -391,6 +412,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             if (args.length < 2) {
                 player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -399,6 +421,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             if (action.equals("set")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon warps set <name>");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
                 String name = args[2];
@@ -408,6 +431,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             } else if (action.equals("delete") || action.equals("del")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon warps delete <name>");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
                 String name = args[2];
@@ -416,6 +440,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage("§aWarp §f'" + name + "' §ahas been deleted.");
                 } else {
                     player.sendMessage("§cWarp '" + name + "' not found.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 }
                 return true;
             } else if (action.equals("list")) {
@@ -428,12 +453,14 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             } else {
                 player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         }
 
         player.sendMessage(
                 "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, anchor, pvpsafe, or warps.");
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
         return true;
     }
 
@@ -445,6 +472,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
         if (args.length < 3) {
             player.sendMessage(ChatColor.RED + "Usage: /falcon crate <create|edit|get|delete|effects> ...");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -453,6 +481,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         if (sub.equals("create")) {
             if (args.length < 4) {
                 player.sendMessage(ChatColor.RED + "Usage: /falcon crate create <name> <key> [type] [container]");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             String type = "NORMAL";
@@ -467,18 +496,21 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         } else if (sub.equals("edit")) {
             if (args.length < 3) {
                 player.sendMessage(ChatColor.RED + "Usage: /falcon crate edit <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateEdit(player, args[2]);
         } else if (sub.equals("get")) {
             if (args.length < 3) {
                 player.sendMessage(ChatColor.RED + "Usage: /falcon crate get <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateGet(player, args[2]);
         } else if (sub.equals("delete")) {
             if (args.length < 3) {
                 player.sendMessage(ChatColor.RED + "Usage: /falcon crate delete <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateDelete(player, args[2]);
@@ -486,6 +518,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             if (args.length < 5) {
                 player.sendMessage(
                         ChatColor.RED + "Usage: /falcon crate effects <add|remove|set> <crate> <effect|all>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateEffects(player, args[2], args[3], args[4]);
@@ -500,12 +533,14 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(ChatColor.RED + "Invalid key: " + keyName);
             player.sendMessage(
                     ChatColor.RED + "Available keys: " + String.join(", ", plugin.getKeyAllManager().getValidKeys()));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
         String type = typeStr.toUpperCase();
         if (!type.equals("NORMAL") && !type.equals("CAROUSEL")) {
             player.sendMessage(ChatColor.RED + "Invalid crate type. Options: NORMAL, CAROUSEL");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -515,12 +550,14 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 && !containerMat.name().endsWith("SHULKER_BOX"))) {
             player.sendMessage(
                     ChatColor.RED + "Invalid container type. Must be CHEST, ENDER_CHEST, or SHULKER_BOX variant.");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (crateFile.exists()) {
             player.sendMessage(ChatColor.RED + "A crate with that name already exists!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -652,6 +689,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         if (sub.equalsIgnoreCase("add")) {
             if (effects.contains(effectName)) {
                 player.sendMessage(ChatColor.RED + "This effect is already added.");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             effects.add(effectName);
@@ -670,6 +708,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             } else {
                 if (!effects.contains(effectName)) {
                     player.sendMessage(ChatColor.RED + "This effect is not present.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
                 effects.remove(effectName);
@@ -678,6 +717,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             }
         } else {
             player.sendMessage(ChatColor.RED + "Usage: /falcon crate effects <add|remove|set> <crate> <effect|all>");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -878,7 +918,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCrystal(Player player, String[] args) {
         if (!player.hasPermission("falcon.crystal")) {
-            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -913,7 +953,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleAnchor(Player player, String[] args) {
         if (!player.hasPermission("falcon.anchor")) {
-            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0f, 0f);
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -954,6 +994,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
         if (args.length < 2) {
             player.sendMessage("§cUsage: /falcon pvpsafe <setup|delete> [name]");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -962,6 +1003,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         if (action.equals("setup")) {
             if (args.length < 3) {
                 player.sendMessage("§cUsage: /falcon pvpsafe setup <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -976,6 +1018,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
                 if (worldEditRegion == null) {
                     player.sendMessage("§cPlease make a selection with WorldEdit first.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return true;
                 }
 
@@ -995,14 +1038,17 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
             } catch (com.sk89q.worldedit.IncompleteRegionException e) {
                 player.sendMessage("§cPlease make a complete selection (pos1 and pos2) first.");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             } catch (Exception e) {
                 player.sendMessage("§cError accessing WorldEdit selection: " + e.getMessage());
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 e.printStackTrace();
             }
             return true;
         } else if (action.equals("delete")) {
             if (args.length < 3) {
                 player.sendMessage("§cUsage: /falcon pvpsafe delete <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
 
@@ -1014,11 +1060,13 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage("§aPvP safe zone '" + zoneName + "' has been deleted!");
             } else {
                 player.sendMessage("§cFailed to delete PvP safe zone. Zone '" + zoneName + "' may not exist.");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             }
 
             return true;
         } else {
             player.sendMessage("§cUsage: /falcon pvpsafe <setup|delete> <name>");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
     }

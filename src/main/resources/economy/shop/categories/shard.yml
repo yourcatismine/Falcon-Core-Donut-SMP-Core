@@ -180,6 +180,6 @@ items:
     name: "&eᴘᴀɴᴅᴀ ꜱᴘᴀᴡɴᴇʀ"
     slot: 24
     command: "smartspawner give spawner {gamertag} panda {value}"
-    price: 1500
+    price: 3000
     values: [1,10,64]
     currency: SHARDS

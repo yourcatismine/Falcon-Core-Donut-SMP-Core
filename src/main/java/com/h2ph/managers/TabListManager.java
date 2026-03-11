@@ -55,6 +55,7 @@ public class TabListManager implements Listener {
         loadConfig();
         this.tabPacketListener = new PacketListenerCommon(PacketListenerPriority.HIGH) {
             public void onPacketSend(PacketSendEvent event) {
+                
                 handleTabPacketSend(event);
             }
         };
@@ -394,6 +395,21 @@ public class TabListManager implements Listener {
         }
 
         if (modified) {
+            // sort entries so packet order matches group ranking + name tiebreaker
+            entries.sort((d1, d2) -> {
+                UUID u1 = (d1.getUserProfile() != null) ? d1.getUserProfile().getUUID() : null;
+                UUID u2 = (d2.getUserProfile() != null) ? d2.getUserProfile().getUUID() : null;
+                if (u1 == null || u2 == null) return 0;
+                                Player p1 = Bukkit.getPlayer(u1);
+                Player p2 = Bukkit.getPlayer(u2);
+                                int r1 = (p1 != null) ? getGroupRanking(p1) : groupRankings.getOrDefault("default", 0);
+                int r2 = (p2 != null) ? getGroupRanking(p2) : groupRankings.getOrDefault("default", 0);
+                                int cmp = Integer.compare(r2, r1); // higher ranking first
+                if (cmp != 0) return cmp;
+                                String n1 = (p1 != null) ? sanitizePlayerName(p1.getName()) : sanitizePlayerName(realPlayerNames.getOrDefault(u1, ""));
+                String n2 = (p2 != null) ? sanitizePlayerName(p2.getName()) : sanitizePlayerName(realPlayerNames.getOrDefault(u2, ""));
+                return n1.compareToIgnoreCase(n2);
+            });
             wrapper.setPlayerDataList(entries);
             wrapper.write();
             event.setLastUsedWrapper(wrapper);

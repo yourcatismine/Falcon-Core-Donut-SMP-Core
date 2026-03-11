@@ -1,5 +1,5 @@
 package com.h2ph.listeners;
-
+import org.bukkit.entity.EntityType;
 import com.h2ph.PrismSurvival;
 import com.prismcore.survival.manager.PlayerData;
 import org.bukkit.entity.Monster;
@@ -18,22 +18,24 @@ public class MobSpawnListener implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) {
+        if (event.getEntity() instanceof org.bukkit.entity.Player) {
             return;
         }
 
-        if (!(event.getEntity() instanceof Monster) && !(event.getEntity() instanceof Slime)) {
+        boolean isTargetMob = (event.getEntity() instanceof Monster)
+        || (event.getEntity() instanceof Slime) || event.getEntityType() == EntityType.PHANTOM;
+
+        if (!isTargetMob) {
             return;
         }
-
+        
         double radiusSquared = 150.0 * 150.0;
-
         boolean shouldCancel = event.getLocation().getWorld().getPlayers().stream()
-                .filter(p -> p.getLocation().distanceSquared(event.getLocation()) <= radiusSquared)
-                .anyMatch(p -> {
-                    PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
-                    return data != null && data.isDisableMobSpawns();
-                });
+        .filter(p -> p.getLocation().distanceSquared(event.getLocation()) <= radiusSquared)
+        .anyMatch(p -> {
+            PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+            return data != null && data.isDisableMobSpawns();
+        });
 
         if (shouldCancel) {
             event.setCancelled(true);

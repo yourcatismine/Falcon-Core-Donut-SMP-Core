@@ -542,6 +542,7 @@ public class ShopCommand implements CommandExecutor, Listener {
 
             if (slot == 15 && event.getCurrentItem().getType() == Material.GREEN_STAINED_GLASS_PANE) {
                 processShardPurchase(player, session);
+                player.closeInventory(); //Added this to close the menu if the item has no values
                 return;
             }
         }
@@ -801,8 +802,9 @@ public class ShopCommand implements CommandExecutor, Listener {
                         new net.md_5.bungee.api.chat.TextComponent(errorMsg));
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
                 plugin.getSchedulerAdapter().runTaskLater(() -> {
-                    if (shardPurchaseSessions.containsKey(player.getUniqueId())) {
-                        openShardConfirmation(player, session);
+                    ShardPurchaseSession stored = shardPurchaseSessions.get(player.getUniqueId());
+                    if (stored != null) {
+                        openShardConfirmation(player, stored);
                     }
                 }, 1L);
                 return;

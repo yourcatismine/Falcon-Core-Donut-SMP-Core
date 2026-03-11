@@ -542,7 +542,7 @@ public class ShopCommand implements CommandExecutor, Listener {
 
             if (slot == 15 && event.getCurrentItem().getType() == Material.GREEN_STAINED_GLASS_PANE) {
                 processShardPurchase(player, session);
-                player.closeInventory(); //Added this to close the menu if the item has no values
+               // player.closeInventory(); //Return to Category instead of closing
                 return;
             }
         }
@@ -858,6 +858,7 @@ public class ShopCommand implements CommandExecutor, Listener {
         }
 
         playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
+        openCategory(player, session.categoryFile); //Instead of closing the GUI
         shardPurchaseSessions.remove(player.getUniqueId());
     }
 

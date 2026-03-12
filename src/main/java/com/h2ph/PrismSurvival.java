@@ -81,7 +81,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.listeners.CommandHideListener commandHideListener;
     private com.prismcore.survival.manager.DiscordWebhookManager discordWebhookManager;
 
-    private com.h2ph.managers.DiscordManager DiscordManager;
+    private com.h2ph.managers.DiscordManager discordManager;
 
     @Override
     public void onLoad() {
@@ -104,7 +104,8 @@ public class PrismSurvival extends JavaPlugin {
         }
         try {
             jda = JDABuilder.createDefault(TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT).build(); jda.awaitReady();
-            jda.addEventListener(new DiscordManager(this, targetChannelId)); getLogger().info("Discord has been started!");
+            discordManager = new com.h2ph.managers.DiscordManager(this, targetChannelId); jda.addEventListener(discordManager);
+            getLogger().info("Discord has been started!");
         } catch (InterruptedException e) {
             getLogger().severe("Faild to start Discord " + e.getMessage());
         }
@@ -639,7 +640,19 @@ public class PrismSurvival extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (jda != null) jda.shutdownNow(); jda = null; //Fixed stop errors coming around
+        if (jda != null) {
+            if (discordManager != null) {
+                jda.removeEventListener(discordManager); jda.shutdownNow(); long deadline 
+                = System.currentTimeMillis() + 5000L; while (jda.getStatus() != net.dv8tion.jda.api.JDA.Status.SHUTDOWN
+                && System.currentTimeMillis() < deadline) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException ignored) {}
+                }
+
+                jda = null; discordManager = null;
+            }
+        }
 
         if (this.playerDataManager != null) {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {

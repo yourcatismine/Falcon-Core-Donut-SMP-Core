@@ -2,9 +2,9 @@ drill:
   play-sound: true
   use-countdown: true
   timer: 259200 # 3 days, in seconds
-  update-interval: 30  # seconds between countdown updates for ALL tools (1 second for accurate display)
+  update-interval: 30 # seconds between countdown updates for ALL tools (1 second for accurate display)
   material: NETHERITE_PICKAXE
-  display-name: "&#860aeeᴘʀɪѕᴍ ᴘɪᴄᴋᴀхᴇ"
+  display-name: "&#860aeeѕᴘʜʏɴх ᴘɪᴄᴋᴀхᴇ"
   lore:
     - "&7Breaks 9 Blocks at Once"
     - "&8Self Destruct: "
@@ -35,9 +35,9 @@ sellaxe:
   play-sound: true
   use-countdown: true
   timer: 259200 # 3 days, in seconds
-  update-interval: 30  # seconds between countdown updates for ALL tools (1 second for accurate display)
+  update-interval: 30 # seconds between countdown updates for ALL tools (1 second for accurate display)
   material: NETHERITE_AXE
-  display-name: "&#860aeeᴘʀɪѕᴍ ѕᴇʟʟ ᴀхᴇ"
+  display-name: "&#860aeeѕᴘʜʏɴх ѕᴇʟʟ ᴀхᴇ"
   lore:
     - "&7Instantly Sells All Items in A Chest"
     - "&8Self Destruct: "
@@ -69,7 +69,7 @@ axe:
   use-countdown: true
   timer: 259200 # 3 days, in seconds
   material: NETHERITE_AXE
-  display-name: "&#860aeeᴘʀɪѕᴍ ᴀхᴇ"
+  display-name: "&#860aeeѕᴘʜʏɴх ᴀхᴇ"
   lore:
     - "&7Breaks Trees Instantly"
     - "&8Self Destruct: "
@@ -86,12 +86,11 @@ axe:
       b: 0
     count: 10
 
-
 shovel:
   use-countdown: true
   timer: 259200 # 3 days, in seconds
   material: NETHERITE_SHOVEL
-  display-name: "&#860aeeᴘʀɪѕᴍ ѕʜᴏᴠᴇʟ"
+  display-name: "&#860aeeѕᴘʜʏɴх ѕʜᴏᴠᴇʟ"
   lore:
     - "&79 Blocks Per Break"
     - "&8Self Destruct: "
@@ -115,12 +114,11 @@ shovel:
     y: 1
     z: 0
 
-
 bucket:
   use-countdown: true
   material: BUCKET
   timer: 259200
-  display-name: "&#860aeeᴘʀɪѕᴍ ʙᴜᴄᴋᴇᴛ"
+  display-name: "&#860aeeѕᴘʜʏɴх ʙᴜᴄᴋᴇᴛ"
   lore:
     - "&7Drains 27 Water At Once"
     - "&8Self Destruct:"
@@ -134,28 +132,26 @@ bucket:
     z: 2
   disabled-blocks: []
 
-
 shardbooster:
-  use-countdown: false  # Booster doesn't need countdown update (it's consumed)
+  use-countdown: false # Booster doesn't need countdown update (it's consumed)
   material: POTION
-  timer: 86400  # 24 hours in seconds
-  multiplier: 4  # 4x shard production
+  timer: 86400 # 24 hours in seconds
+  multiplier: 4 # 4x shard production
   display-name: "&6ѕʜᴀʀᴅ ʙᴏᴏѕᴛᴇʀ"
   lore:
     - "&f4x Shard Production for 24 hours"
     - "&8Self Destruct:"
     - "&8%countdown%"
-  potion-color: "8B5CF6"  # Purple hex color
+  potion-color: "8B5CF6" # Purple hex color
   activation-sound: ENTITY_PLAYER_LEVELUP
   activation-message: "&aYou have activated your &6Shard Booster&a for 24h."
-
 
 multitool:
   use-countdown: true
   material: NETHERITE_AXE
   timer: 259200
 
-  display-name: "&#860aeeᴘʀɪѕᴍ ᴍᴜʟᴛɪᴛᴏᴏʟ"
+  display-name: "&#860aeeѕᴘʜʏɴх ᴍᴜʟᴛɪᴛᴏᴏʟ"
   lore:
     - "&7Every Tool Inside a Tool"
     - "&8Self Destruct: "

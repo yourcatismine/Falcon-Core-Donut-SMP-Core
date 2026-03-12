@@ -639,7 +639,7 @@ public class PrismSurvival extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (jda != null) jda.shutdown();
+        if (jda != null) jda.shutdownNow(); jda = null; //Fixed stop errors coming around
 
         if (this.playerDataManager != null) {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {

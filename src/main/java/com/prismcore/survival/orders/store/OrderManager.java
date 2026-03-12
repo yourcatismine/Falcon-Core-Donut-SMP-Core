@@ -117,11 +117,15 @@ public class OrderManager {
                 return;
             }
 
-            // Update the order object with fresh data to ensure accurate refund calculation
             o.delivered = freshOrder.delivered;
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
             o.requested = freshOrder.requested;
+//Sync the storage just incase they going to claim already delivered items..
+            o.storage.clear();
+            if(freshOrder.storage != null) {
+                o.storage.addAll(freshOrder.storage);
+            }
 
             o.canceled = true;
             o.completed = true;
@@ -133,7 +137,7 @@ public class OrderManager {
         double refund = (double) remaining * price;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(o.owner);
         OrdersModule.getInstance().vault().give(owner, refund, "Order Refund: " + o.key.displayName());
-
+        this.orders.put(o.id, o); //Update cache with the canceled state.......
         this.saveOrder(o, false);
     }
 
@@ -173,6 +177,12 @@ public class OrderManager {
             o.delivered = freshOrder.delivered;
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
+
+//Sync this storage so we can prevent the wiping of previous deliveriess.
+            o.storage.clear();
+            if (freshOrder.storage != null) {
+                o.storage.addAll(freshOrder.storage);
+            }
         }
 
         OfflinePlayer recipientOp = Bukkit.getOfflinePlayer(o.owner);
@@ -241,6 +251,7 @@ public class OrderManager {
             o.completed = true;
         }
         o.paid = (double) o.delivered * o.priceEach;
+        this.orders.put(o.id, o); //
         this.saveOrder(o, false);
 
         String formattedAmount = Utils.abbr(acceptedAmount);

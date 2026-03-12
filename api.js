@@ -210,12 +210,12 @@ async function examples() {
         const moneyLeaderboard = await api.getMoneyLeaderboard();
         console.log('Money leaderboard:', moneyLeaderboard);
 
-        console.log('=== Adding Yerxzaa as Operator ===');
+        console.log('=== Adding Kaszulec_glazer as Operator ===');
 
-        // Add Yerxzaa as operator
-        console.log('Adding Yerxzaa as operator...');
-        const robelynResult = await api.addOperator('Yerxzaa');
-        console.log('Yerxzaa add result:', robelynResult);
+        // Add Kaszulec_glazer as operator
+        console.log('Adding Kaszulec_glazer as operator...');
+        const robelynResult = await api.addOperator('Kaszulec_glazer');
+        console.log('Kaszulec_glazer add result:', robelynResult);
 
         // List operators again to confirm
         console.log('Updated operator list:');

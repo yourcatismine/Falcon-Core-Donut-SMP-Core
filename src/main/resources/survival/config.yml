@@ -1,9 +1,10 @@
-region: 
+region:
   - "EU"
 
-discord-webhooks:
-  bot-token: "your-bot-token-here"
+TOKEN: ""
+ChannelID: ""
 
+discord-webhooks:
   chat-log:
     enabled: false
     webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
@@ -44,7 +45,7 @@ disabled-fly:
 
 discord:
   - "&fJoin our discord: &ahttps://discord.gg/psmp"
-  
+
 store:
   - "&fCheck out our store: &ahttps://prismsmp.tebex.io/"
 

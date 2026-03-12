@@ -1,5 +1,6 @@
 package com.h2ph;
 
+import com.h2ph.managers.DiscordManager;
 import com.prismcore.survival.manager.PlayerDataManager;
 import com.prismcore.survival.manager.DatabaseManager;
 import com.prismcore.survival.scheduler.SchedulerAdapter;
@@ -9,9 +10,14 @@ import com.h2ph.commands.player.QuickGameMode;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class PrismSurvival extends JavaPlugin {
 
+    private JDA jda;
     private PlayerDataManager playerDataManager;
     private DatabaseManager databaseManager;
     private SchedulerAdapter schedulerAdapter;
@@ -75,6 +81,8 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.listeners.CommandHideListener commandHideListener;
     private com.prismcore.survival.manager.DiscordWebhookManager discordWebhookManager;
 
+    private com.h2ph.managers.DiscordManager DiscordManager;
+
     @Override
     public void onLoad() {
 
@@ -84,10 +92,24 @@ public class PrismSurvival extends JavaPlugin {
     public void onEnable() {
         instance = this;
         saveAllResources();
+        loadSurvivalConfig();
+
+        String TOKEN = getSurvivalConfig().getString("TOKEN");
+        String targetChannelId = getSurvivalConfig().getString("ChannelID");
+        if (TOKEN == null || TOKEN.equals("TOKEN")) {
+            getLogger().warning("No Discord Token Detected"); return;
+        }
+        if (targetChannelId == null || targetChannelId.equals("ChannelID")) {
+            getLogger().warning("No ChannelID set!"); return;
+        }
+        try {
+            jda = JDABuilder.createDefault(TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT).build(); jda.awaitReady();
+            jda.addEventListener(new DiscordManager(this, targetChannelId)); getLogger().info("Discord has been started!");
+        } catch (InterruptedException e) {
+            getLogger().severe("Faild to start Discord " + e.getMessage());
+        }
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-
-        loadSurvivalConfig();
 
         this.discordWebhookManager = new com.prismcore.survival.manager.DiscordWebhookManager(this);
 
@@ -617,6 +639,8 @@ public class PrismSurvival extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (jda != null) jda.shutdown();
+
         if (this.playerDataManager != null) {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
                 this.playerDataManager.savePlayer(player.getUniqueId());

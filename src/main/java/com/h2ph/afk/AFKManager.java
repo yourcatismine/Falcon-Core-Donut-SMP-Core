@@ -93,19 +93,31 @@ public class AFKManager {
 
     public void loadRegions() {
         regions.clear();
-        if (!regionsFolder.exists()) {
-            regionsFolder.mkdirs();
-            return;
-        }
+        if(!plugin.getDatabaseManager().isConnected()) return; //If database is not connected.
 
-        File[] files = regionsFolder.listFiles((dir, name) -> name.endsWith(".db"));
-        if (files == null)
-            return;
-
-        for (File file : files) {
-            String name = file.getName().replace(".db", "");
-            loadRegion(name, file);
+        for (com.prismcore.survival.manager.DatabaseManager.AfkRegionRow row : plugin.getDatabaseManager().loadAllAfkRegions()) {
+            if (row.world = null || Bukkit.getWorld(row.world) == null) continue;
+            Vector min = new Vector(row.minX, row.minY, row.minZ); Vector max = new Vector(row.maxX, row.maxY, row.maxZ);
+            regions.put(row.name.toLowerCase(), new AFKRegion(row.name, row.world, min, max));
         }
+    }
+
+    public void createRegion(String name, String worldName, Vector min, Vector max) {
+        double minX = Math.min(min.getX(), max.getX());
+        double minY = Math.min(min.getY(), max.getY());
+        double minZ = Math.min(min.getZ(), max.getZ());
+        double maxX = Math.max(min.getX(), max.getX());
+        double maxY = Math.max(min.getY(), max.getY());
+        double maxZ = Math.max(min.getZ(), max.getZ());
+
+        plugin.getDatabaseManager().upsertAfkRegion(name, worldName, minX, minY, minZ, maxX, maxY, maxZ);
+        regions.put(name.toLowerCase(), new AFKRegion(name, worldName, new Vectore(minX, minY, minZ),
+        new Vector(maxX, maxY, maxZ)));
+    }
+
+    public boolean deleteRegion(String name) {
+        boolean existed = regions.remove(name.toLowerCase()) != null; boolean deleteInDb = plugin.getDatabaseManager().deleteAfkRegion(name);
+        return existed || deleteInDb;
     }
 
     private void loadRegion(String name, File file) {
@@ -122,32 +134,32 @@ public class AFKManager {
         }
     }
 
-    public void createRegion(String name, String worldName, Vector min, Vector max) {
-        File file = new File(regionsFolder, name + ".db");
-        FileConfiguration data = new YamlConfiguration();
-        data.set("world", worldName);
-        data.set("min", min);
-        data.set("max", max);
+ //  public void createRegion(String name, String worldName, Vector min, Vector max) {
+ //      File file = new File(regionsFolder, name + ".db");
+ //      FileConfiguration data = new YamlConfiguration();
+ //      data.set("world", worldName);
+ //      data.set("min", min);
+ //      data.set("max", max);
 
-        try {
-            data.save(file);
-            regions.put(name.toLowerCase(), new AFKRegion(name, worldName, min, max));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+ //      try {
+ //          data.save(file);
+ //          regions.put(name.toLowerCase(), new AFKRegion(name, worldName, min, max));
+ //      } catch (IOException e) {
+ //          e.printStackTrace();
+ //      }
+ //  }
 
-    public boolean deleteRegion(String name) {
-        if (!regions.containsKey(name.toLowerCase()))
-            return false;
+ //  public boolean deleteRegion(String name) {
+ //      if (!regions.containsKey(name.toLowerCase()))
+ //          return false;
 
-        File file = new File(regionsFolder, name + ".db");
-        if (file.exists()) {
-            file.delete();
-        }
-        regions.remove(name.toLowerCase());
-        return true;
-    }
+ //      File file = new File(regionsFolder, name + ".db");
+ //      if (file.exists()) {
+ //          file.delete();
+ //      }
+ //      regions.remove(name.toLowerCase());
+ //      return true;
+ //  }
 
     public boolean regionExists(String name) {
         return regions.containsKey(name.toLowerCase());

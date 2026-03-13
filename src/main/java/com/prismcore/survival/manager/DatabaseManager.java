@@ -68,9 +68,78 @@ public class DatabaseManager {
         }
     }
 
+    public void upsertAfkRegion(String name, String world, double minX, double MinY, double MinZ,
+    double maxX, double maxY, double maxZ) {
+        if (!isConnected()) return;
+
+    String q = "REPLACE INTO afk_regions (name, world, min_x, min_y, min_z, max_x, max_y, max_z, last_updated) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)) {
+        ps.setString(1, name.toLowerCase());
+        ps.setString(2, world);
+        ps.setDouble(3, minX);
+        ps.setDouble(4, MinY);
+        ps.setDouble(5, MinZ);
+        ps.setDouble(6, maxX);
+        ps.setDouble(7, maxY);
+        ps.setDouble(8, maxZ);
+        ps.setLong(9, System.currentTimeMillis());
+        ps.executeUpdate();
+    } catch (SQLException ignored) {}
+    }
+
+    private boolean deleteAfkRegion(String name) {
+        if (!isConnected()) return false;
+
+        String q = "DELETE FROM afk_regions WHERE name = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setString(1, name.toLowerCase());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ignored) {
+            return false;
+        }
+    }
+
+    public static class AfkRegionRow {
+        public final String name;
+        public final String world;
+        public final double minX, minY, minZ;
+        public final double maxX, maxY, maxZ;
+        public AfkRegionRow(String name, String world, double minX, double minY, double minZ,
+        double maxX, double maxY, double maxZ) {
+            this.name = name; this.world = world; this.minX = minX; this.minY = minY;
+            this.minZ = minZ; this.maxX = maxX; this.maxY = maxY; this.maxZ = maxZ;
+        }
+    }
+
+    public java.util.List<AfkRegionRow> loadAllAfkRegions() {
+        java.util.List<AfkRegionRow> list = new java.util.ArrayList<>(); if (!isConnected()) return list;
+        String q = "SELECT name, world, min_x, min_y, min_z, max_x, max_y, max_z FROM afk_regions";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)
+        ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new AfkRegionRow(rs.getString("name"),rs.getString("world"),rs.getDouble("min_x"),rs.getDouble("min_y"),rs.getDouble("min_z"),rs.getDouble("max_x"),rs.getDouble("max_y"),rs.getDouble("max_z")));
+            }
+        } catch (SQLException ignored) {}
+        return list;
+    }
+
     private void createTables() {
         try (Connection connection = getConnection();
                 Statement s = connection.createStatement()) {
+
+            String afkRegionsTable = "CREATE TABLE IF NOT EXISTS afk_regions (" +
+                    "name VARCHAR(64) NOT NULL PRIMARY KEY," + "world VARCHAR(64) NOT NULL," +
+                    "min_x DOUBLE NOT NULL," +
+                    "min_y DOUBLE NOT NULL," +
+                    "min_z DOUBLE NOT NULL," +
+                    "max_x DOUBLE NOT NULL," +
+                    "max_y DOUBLE NOT NULL," +
+                    "max_z DOUBLE NOT NULL," +
+                    "created_at BIGINT NOT NULL," +
+                    "INDEX name_idx (world)" +
+                    ")";
+            s.execute(afkRegionsTable);
+                    
             String bansTable = "CREATE TABLE IF NOT EXISTS bans (" +
                     "uuid VARCHAR(36) NOT NULL," +
                     "player_name VARCHAR(16)," +

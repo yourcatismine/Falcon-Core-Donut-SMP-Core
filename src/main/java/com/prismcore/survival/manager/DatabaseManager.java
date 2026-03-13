@@ -87,9 +87,8 @@ public class DatabaseManager {
     } catch (SQLException ignored) {}
     }
 
-    private boolean deleteAfkRegion(String name) {
+    public boolean deleteAfkRegion(String name) {
         if (!isConnected()) return false;
-
         String q = "DELETE FROM afk_regions WHERE name = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)) {
             ps.setString(1, name.toLowerCase());
@@ -114,7 +113,7 @@ public class DatabaseManager {
     public java.util.List<AfkRegionRow> loadAllAfkRegions() {
         java.util.List<AfkRegionRow> list = new java.util.ArrayList<>(); if (!isConnected()) return list;
         String q = "SELECT name, world, min_x, min_y, min_z, max_x, max_y, max_z FROM afk_regions";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q);
         ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(new AfkRegionRow(rs.getString("name"),rs.getString("world"),rs.getDouble("min_x"),rs.getDouble("min_y"),rs.getDouble("min_z"),rs.getDouble("max_x"),rs.getDouble("max_y"),rs.getDouble("max_z")));

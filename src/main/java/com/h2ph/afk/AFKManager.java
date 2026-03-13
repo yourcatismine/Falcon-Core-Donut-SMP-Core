@@ -96,7 +96,7 @@ public class AFKManager {
         if(!plugin.getDatabaseManager().isConnected()) return; //If database is not connected.
 
         for (com.prismcore.survival.manager.DatabaseManager.AfkRegionRow row : plugin.getDatabaseManager().loadAllAfkRegions()) {
-            if (row.world = null || Bukkit.getWorld(row.world) == null) continue;
+            if (row.world == null || Bukkit.getWorld(row.world) == null) continue;
             Vector min = new Vector(row.minX, row.minY, row.minZ); Vector max = new Vector(row.maxX, row.maxY, row.maxZ);
             regions.put(row.name.toLowerCase(), new AFKRegion(row.name, row.world, min, max));
         }
@@ -111,7 +111,7 @@ public class AFKManager {
         double maxZ = Math.max(min.getZ(), max.getZ());
 
         plugin.getDatabaseManager().upsertAfkRegion(name, worldName, minX, minY, minZ, maxX, maxY, maxZ);
-        regions.put(name.toLowerCase(), new AFKRegion(name, worldName, new Vectore(minX, minY, minZ),
+        regions.put(name.toLowerCase(), new AFKRegion(name, worldName, new Vector(minX, minY, minZ),
         new Vector(maxX, maxY, maxZ)));
     }
 

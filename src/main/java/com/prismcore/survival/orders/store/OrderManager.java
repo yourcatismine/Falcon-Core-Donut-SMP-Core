@@ -101,8 +101,6 @@ public class OrderManager {
     }
 
     public void cancel(Order o) {
-        // ANTI-DUPE FIX: Get fresh order data from database to prevent stale refund
-        // calculations
         synchronized (this) {
             if (o.canceled) {
                 return;
@@ -121,7 +119,7 @@ public class OrderManager {
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
             o.requested = freshOrder.requested;
-//Sync the storage just incase they going to claim already delivered items..
+
             o.storage.clear();
             if(freshOrder.storage != null) {
                 o.storage.addAll(freshOrder.storage);
@@ -148,6 +146,8 @@ public class OrderManager {
 
         synchronized (this) {
             Order freshOrder = this.getOrder(o.id);
+            int remaining = Math.max(0, freshOrder.requested - freshOrder.delivered);
+            double refund = remaining * freshOrder.priceEach;
             if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
                 String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
                 String failLog = String.format(

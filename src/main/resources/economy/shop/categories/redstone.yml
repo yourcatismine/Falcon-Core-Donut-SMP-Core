@@ -168,3 +168,24 @@ items:
     price: 200
     currency: MONEY
     values: [1, 10, 64]
+
+  packed_ice:
+    slot: 24
+    material: PACKED_ICE
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+
+  ice:
+    slot: 25
+    material: ICE
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  CRAFTER:
+    slot: 26
+    material: CRAFTER
+    price: 550
+    currency: MONEY
+    values: [1, 10, 64]

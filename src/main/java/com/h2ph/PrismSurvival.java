@@ -1,5 +1,6 @@
 package com.h2ph;
 
+import com.h2ph.listeners.MotdListener;
 import com.h2ph.managers.DiscordManager;
 import com.prismcore.survival.manager.PlayerDataManager;
 import com.prismcore.survival.manager.DatabaseManager;
@@ -25,6 +26,8 @@ public class PrismSurvival extends JavaPlugin {
     private ShopCommand shopCommand;
     private com.h2ph.commands.player.RulesCommand rulesCommand;
     private com.h2ph.commands.player.MediaCommand mediaCommand;
+    private String motd;
+    private boolean motdEnabled;
 
     private static PrismSurvival instance;
 
@@ -80,12 +83,15 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.survival.ChatFilter chatFilter;
     private com.h2ph.listeners.CommandHideListener commandHideListener;
     private com.prismcore.survival.manager.DiscordWebhookManager discordWebhookManager;
-
+    private com.h2ph.listeners.MotdListener MotdListener;
     private com.h2ph.managers.DiscordManager discordManager;
 
-    @Override
-    public void onLoad() {
+    public boolean isMotdEnabled() {
+        return motdEnabled;
+    }
 
+    public String getMotd() {
+        return motd;
     }
 
     @Override
@@ -93,6 +99,10 @@ public class PrismSurvival extends JavaPlugin {
         instance = this;
         saveAllResources();
         loadSurvivalConfig();
+
+        motdEnabled = getSurvivalConfig().getBoolean("motd.enabled", false); motd = getSurvivalConfig()
+        .getString("motd.motd", "FALCON"); //Main MOTD
+        getServer().getPluginManager().registerEvents(new MotdListener(this), this);
 
         String TOKEN = getSurvivalConfig().getString("TOKEN");
         String targetChannelId = getSurvivalConfig().getString("ChannelID");

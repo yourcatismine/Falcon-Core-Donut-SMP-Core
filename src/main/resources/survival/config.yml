@@ -1,6 +1,10 @@
 region:
   - "EU"
 
+motd:
+  enabled: false
+  motd: "FALCON"
+
 TOKEN: ""
 ChannelID: ""
 

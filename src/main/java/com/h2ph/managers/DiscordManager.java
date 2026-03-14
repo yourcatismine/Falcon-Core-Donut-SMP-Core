@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 
 public class DiscordManager extends ListenerAdapter {
     private final Plugin plugin; private final String targetChannelId;
@@ -33,6 +34,7 @@ public class DiscordManager extends ListenerAdapter {
         //BroadCast tO ALL
         Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
             Bukkit.broadcast(minecraftmessage);
+            event.getMessage().addReaction(Emoji.fromUnicode("✅")).queue(); //React if the message has been sent to the server.
         });
     }
 }

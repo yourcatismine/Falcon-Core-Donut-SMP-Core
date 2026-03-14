@@ -127,7 +127,7 @@ public class OrderManager {
 
             o.canceled = true;
             o.completed = true;
-            o.requested = o.delivered;
+           // o.requested = o.delivered; Removeed so I can get the refund...
         }
 
         int remaining = o.remainingAmount();

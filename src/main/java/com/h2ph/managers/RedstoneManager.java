@@ -54,6 +54,52 @@ public class RedstoneManager implements Listener {
 
     private static final EnumSet<Material> REDSTONE_COMPONENTS = EnumSet.noneOf(Material.class);
 
+    private static final EnumSet<Material> CROP_BLOCKS = EnumSet.of(
+        Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS,
+        Material.NETHER_WART, Material.PUMPKIN_STEM, Material.ATTACHED_PUMPKIN_STEM,
+        Material.MELON_STEM, Material.ATTACHED_MELON_STEM, Material.SWEET_BERRY_BUSH,
+        Material.COCOA, Material.BAMBOO, Material.BAMBOO_SAPLING, Material.KELP, Material.KELP_PLANT,
+        Material.NETHER_SPROUTS, Material.WEEPING_VINES, Material.TWISTING_VINES
+    );
+
+    private boolean isFarmingChunk(World world, int chunkX, int chunkZ) {
+        Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+        int farmlandCount = 0;
+        int cropCount = 0;
+        int waterNearFarmland = 0;
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = world.getMinHeight(); y < world.getMaxHeight(); y++) {
+                    Block block = chunk.getBlock(x, y, z);
+                    if(block.getType() == Material.FARMLAND) {
+                        farmlandCount++;
+
+                        //Check blocks if the crops is above
+                        Block above = block.getRelative(0, 1, 0);
+                        if (CROP_BLOCKS.contains(above.getType())) {
+                            cropCount++;
+                        }
+
+                        //Scan small area around farmland for water
+                        boolean foundWaterHere = false;
+                        for (int dx = -4; dx <= 4 && !foundWaterHere; dx++) {
+                            for (int dz = -4; dz <= 4 && !foundWaterHere; dz++) {
+                                Block neighbor = block.getRelative(dx, 0, dz);
+                                if(neighbor.getType() == Material.WATER) {
+                                    foundWaterHere = true;
+                                }
+                            }
+                        }
+                        if (foundWaterHere) {
+                            waterNearFarmland++;
+                        }
+                    }
+                }
+            }
+        }
+        return farmlandCount >= 32 && cropCount >= 16 && waterNearFarmland >= 4;
+    }
+
     static {
         for (Material m : Material.values()) {
             String name = m.name();
@@ -119,13 +165,19 @@ public class RedstoneManager implements Listener {
 
                 if (count >= THRESHOLD_MASSIVE) {
                     if (shouldNotify(worldId, chunkKey, 60000)) {
-                        disableChunk(worldId, chunkKey, 60000);
-                        recordNotification(worldId, chunkKey);
-
+                      //  disableChunk(worldId, chunkKey, 60000);
+                      //  recordNotification(worldId, chunkKey);
                         int x = (int) (chunkKey >> 32);
                         int z = (int) chunkKey;
 
                         runOnChunk(world, x, z, () -> {
+                            if (isFarmingChunk(world, x, z)) {
+                                return;
+                            }
+
+                            disableChunk(worldId, chunkKey, 60000); //Moved it here so if its not a farm then disablee it
+                            recordNotification(worldId, chunkKey);
+
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 60);
 
@@ -170,13 +222,19 @@ public class RedstoneManager implements Listener {
                     }
                 } else if (count >= THRESHOLD_WARNING) {
                     if (shouldNotify(worldId, chunkKey, 20000)) {
-                        disableChunk(worldId, chunkKey, 20000);
-                        recordNotification(worldId, chunkKey);
-
+                      //  disableChunk(worldId, chunkKey, 20000);
+                      //  recordNotification(worldId, chunkKey);
                         int x = (int) (chunkKey >> 32);
                         int z = (int) chunkKey;
 
                         runOnChunk(world, x, z, () -> {
+
+                            if (isFarmingChunk(world, x, z)) {
+                              return;
+                            }
+
+                            disableChunk(worldId, chunkKey, 20000); //Moved it here so if its not a farm then disablee it
+                            recordNotification(worldId, chunkKey);
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 20);
 

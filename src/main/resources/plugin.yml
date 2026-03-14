@@ -412,6 +412,9 @@ commands:
     default: true
 
 permissions:
+  prism.redstone.admin:
+    description: Permission to use /redstone admin commands
+    default: false
   prism.combat.bypass:
     description: Allows bypassing combat logging restrictions
     default: false

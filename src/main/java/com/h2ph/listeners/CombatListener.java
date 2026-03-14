@@ -65,7 +65,7 @@ public class CombatListener implements Listener {
         if (p == null)
             return false;
         if (p.hasPermission("prism.combat.bypass") || p.hasPermission("prism.bypass.combat"))
-            return; //
+            return false; //
         return remaining.containsKey(p.getUniqueId());
     }
 

@@ -72,7 +72,7 @@ public class DatabaseManager {
     double maxX, double maxY, double maxZ) {
         if (!isConnected()) return;
 
-    String q = "REPLACE INTO afk_regions (name, world, min_x, min_y, min_z, max_x, max_y, max_z, last_updated) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    String q = "REPLACE INTO afk_regions (name, world, min_x, min_y, min_z, max_x, max_y, max_z, created_at) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)) {
         ps.setString(1, name.toLowerCase());
         ps.setString(2, world);

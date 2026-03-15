@@ -12,10 +12,10 @@ public class MotdListener implements Listener {
 
     @EventHandler
     public void onPing(ServerListPingEvent event) {
-        if (!plugin.getConfig().getBoolean("motd.enabled", true)) {
+        if (!plugin.getSurvivalConfig().getBoolean("motd.enabled", true)) {
             return;
         }
-        String raw = plugin.getConfig().getString("motd.motd", "FALCON");
+        String raw = plugin.getSurvivalConfig().getString("motd.motd", "FALCON");
         String colored = ChatColor.translateAlternateColorCodes('&', raw);
         event.setMotd(colored);
     }

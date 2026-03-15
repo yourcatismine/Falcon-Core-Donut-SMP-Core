@@ -2,8 +2,8 @@ region:
   - "EU"
 
 motd:
-  enabled: false
-  motd: "FALCON"
+  enabled: true
+  motd: "                  \u00A7k\u00A7k\u00A7k\u00A7e★ \u00A76\u00A7lѕᴘʜʏɴхѕᴍᴘ\u00A7e ★\u00A7k\u00A7k\u00A7k\u00A7r\n                \u00A7b- \u00A77\u00A7nѕᴘʜʏɴхѕᴍᴘ.хʏᴢ\u00A7b -"
 
 TOKEN: ""
 ChannelID: ""

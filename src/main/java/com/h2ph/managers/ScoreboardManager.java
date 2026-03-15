@@ -158,9 +158,10 @@ public class ScoreboardManager implements Listener {
 
     private void startTask(Player player) {
         stopTask(player);
+        long delay = Math.abs(player.getUniqueId().hashCode() % 40);
         ScheduledTask task = player.getScheduler().runAtFixedRate(plugin, (t) -> {
             updateScoreboard(player);
-        }, null, 20L, 20L);
+        }, null, delay, 40L);
         tasks.put(player.getUniqueId(), task);
     }
 

@@ -144,9 +144,10 @@ public class TabListManager implements Listener {
 
     private void startTask(Player player) {
         stopTask(player);
+        long delay = Math.abs(player.getUniqueId().hashCode() % 40);
         ScheduledTask task = player.getScheduler().runAtFixedRate(plugin, (t) -> {
             updateTabList(player);
-        }, null, 20L, 20L);
+        }, null, delay, 40L);
         tasks.put(player.getUniqueId(), task);
     }
 

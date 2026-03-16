@@ -42,6 +42,8 @@ public class TabListManager implements Listener {
     private final Map<UUID, Map<UUID, String>> playerDisplayNames = new HashMap<>();
     private final Map<UUID, LinkedHashSet<UUID>> tabEntries = new ConcurrentHashMap<>();
     private final Map<UUID, String> realPlayerNames = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> namePrefixCache = new ConcurrentHashMap<>();
+    private final Set<String> resolvingNames = ConcurrentHashMap.newKeySet();
     private final PacketListenerCommon tabPacketListener;
     private int maxColumns = 4;
     private int maxRows = 20;
@@ -110,6 +112,8 @@ public class TabListManager implements Listener {
         lastSentHeaderFooter.clear();
         playerDisplayNames.clear();
         tabEntries.clear();
+        namePrefixCache.clear();
+        resolvingNames.clear();
         PacketEvents.getAPI().getEventManager().unregisterListener(tabPacketListener);
     }
 
@@ -133,6 +137,14 @@ public class TabListManager implements Listener {
                 plugin.getLogger().info("Using real name '" + realName + "' for disconnect of hidden player");
             } catch (Exception e) {
                 plugin.getLogger().warning("Error handling disconnect for player: " + e.getMessage());
+            }
+        }
+        com.prismcore.survival.manager.PlayerData pdata = plugin.getPlayerDataManager().get(uuid);
+        if (pdata != null) {
+            String disguiseName = pdata.getDisguiseName();
+            if (disguiseName != null && !disguiseName.isEmpty()) {
+                namePrefixCache.remove(disguiseName);
+                resolvingNames.remove(disguiseName);
             }
         }
         
@@ -245,13 +257,12 @@ public class TabListManager implements Listener {
                 
                 if (shouldShowDisguise) {
                     String disguiseName = data.getDisguiseName();
+                    String disguisePrefix = getPrefixForNameCached(disguiseName);
                     if (disguiseName != null) {
-                        org.bukkit.OfflinePlayer disguiseTarget = org.bukkit.Bukkit.getOfflinePlayer(disguiseName);
-                        String disguisePrefix = LuckPermsUtils.getPrefix(disguiseTarget);
-                        if (disguisePrefix != null && !disguisePrefix.isEmpty()) {
-                            prefix = disguisePrefix;
-                        }
-                    }
+                       // org.bukkit.OfflinePlayer disguiseTarget = org.bukkit.Bukkit.getOfflinePlayer(disguiseName);
+                       // String disguisePrefix = LuckPermsUtils.getPrefix(disguiseTarget);
+                        populatePrefixAsync(disguiseName);
+                    } else if (!disguisePrefix.isEmpty()) { prefix = disguisePrefix; }
                 }
                 
                 String playerDisplayName = getPlayerDisplayName(onlinePlayer, player);
@@ -296,6 +307,31 @@ public class TabListManager implements Listener {
             }
         }
         return best;
+    }
+
+    private String getPrefixForNameCached(String name) {
+    return namePrefixCache.get(name);
+    }
+
+    private void populatePrefixAsync(String name) {
+        if (name == null || name.isEmpty()) return;
+        if (!resolvingNames.add(name)) return;
+
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+            org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(name);
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                try {
+                    String prefix = LuckPermsUtils.getPrefix(off);
+                    namePrefixCache.put(name, prefix == null ? "" : prefix);
+                } finally {
+                    resolvingNames.remove(name);
+                }
+            });
+            } catch (Exception e) {
+            resolvingNames.remove(name);
+            }
+        });
     }
     
     /**

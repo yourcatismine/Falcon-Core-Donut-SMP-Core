@@ -78,10 +78,21 @@ public class DatabaseManager {
             queryBuilder.append("`tool_expiry` BIGINT DEFAULT 0, ");
             queryBuilder.append("`team` VARCHAR(36) DEFAULT NULL, ");
             queryBuilder.append("`name_hidden` BOOLEAN DEFAULT FALSE");
+            queryBuilder.append("`spawners` BIGINT DEFAULT 0, ");
             queryBuilder.append(")");
 
             stmt.execute(queryBuilder.toString());
 
+            String spawnersTable = "CREATE TABLE IF NOT EXISTS spawners (" +
+              "id INT AUTO_INCREMENT PRIMARY KEY, " +
+              "world VARCHAR(64) NOT NULL, x INT NOT NULL, y INT NOT NULL, z INT NOT NULL, " +
+              "owner_uuid VARCHAR(36) NOT NULL, previous_owner_uuid VARCHAR(36), last_owner_change_at BIGINT, " +
+              "type VARCHAR(64) NOT NULL, stack INT DEFAULT 1, accumulated_xp BIGINT DEFAULT 0, drops TEXT, " +
+              "created_at BIGINT NOT NULL, lost_at BIGINT, lost_reason VARCHAR(128), lost_by_uuid VARCHAR(36), " +
+              "UNIQUE KEY spawner_loc_idx (world,x,y,z), INDEX owner_idx (owner_uuid)" +
+              ")";
+            stmt.execute(spawnersTable);
+            
             String teamsTable = "CREATE TABLE IF NOT EXISTS teams (" +
                     "id VARCHAR(36) PRIMARY KEY, " +
                     "name VARCHAR(32) NOT NULL, " +

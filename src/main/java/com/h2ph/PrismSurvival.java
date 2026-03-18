@@ -703,7 +703,7 @@ public class PrismSurvival extends JavaPlugin {
         }
 
         if (this.spawnerManager != null) {
-            this.spawnerManager.saveSpawners();
+            this.spawnerManager.saveSpawners(true);
         }
 
         if (this.enderChestManager != null) {

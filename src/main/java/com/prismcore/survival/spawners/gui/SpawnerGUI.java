@@ -211,7 +211,7 @@ public class SpawnerGUI {
                     int stackSize = (int) Math.min(remaining, 64);
                     ItemStack item = new ItemStack(mat, stackSize);
                     ItemMeta itemMeta = item.getItemMeta();
-                    itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&e" + capitalize(mat.name()) + " x" + stackSize));
+                    itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&f" + capitalize(mat.name())));
                     item.setItemMeta(itemMeta);
                     inventory.setItem(slot, item);
                     slot++;

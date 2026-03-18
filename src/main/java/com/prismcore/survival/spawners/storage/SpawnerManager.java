@@ -8,15 +8,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.prismcore.survival.spawners.util.SchedulerAdapter; //
 import com.prismcore.survival.spawners.util.BukkitSchedulerAdapter; //
 import java.util.UUID; //
-
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SpawnerManager {
     private final PrismSurvival plugin;
     private final Map<Location, SpawnerData> spawners = new ConcurrentHashMap<>();
-    private final File spawnersFile;
     private ProductionTask productionTask;
 
     private final SchedulerAdapter scheduler; //
@@ -57,40 +51,17 @@ public class SpawnerManager {
 
     public SpawnerManager(PrismSurvival plugin) {
         this.plugin = plugin;
-        this.spawnersFile = new File(plugin.getDataFolder(), "spawners.yml");
         this.scheduler = new BukkitSchedulerAdapter(plugin); //
         long autoSave = plugin.getSpawnerConfig().getLong("settings.auto_save_interval", 6000L);
-        scheduler.runRepeatingAsync(() -> saveSpawners(false), autoSave, autoSave); //
+        scheduler.runRepeatingAsync(() -> saveSpawners(false), autoSave, autoSave); // periodic DB flush
     }
 
     public void loadSpawners() {
-        if (spawnersFile.exists()) {
-            FileConfiguration config = YamlConfiguration.loadConfiguration(spawnersFile);
-            for (String key : config.getKeys(false)) {
-                String[] parts = key.split(",");
-                if (parts.length != 4) continue;
-                if (Bukkit.getWorld(parts[0]) == null) {
-                    plugin.getLogger().warning("World " + parts[0] + " not found for spawner " + key + ". Skipping.");
-                    continue;
-                }
-                Location loc = new Location(Bukkit.getWorld(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
-
-                UUID owner = UUID.fromString(config.getString(key + ".owner"));
-                SpawnerType type = SpawnerType.fromString(config.getString(key + ".type"));
-                int stack = config.getInt(key + ".stack", 1);
-                long xp = config.getLong(key + ".xp", 0);
-                Map<Material, Long> drops = new HashMap<>();
-                if (config.contains(key + ".drops")) {
-                    for (String mat : config.getConfigurationSection(key + ".drops").getKeys(false)) {
-                        drops.put(Material.valueOf(mat), config.getLong(key + ".drops." + mat));
-                    }
-                }
-                SpawnerData data = new SpawnerData(loc, owner, type);
-                data.setStackSize(stack);
-                data.setAccumulatedXP(xp);
-                data.setAccumulatedDrops(drops);
-                spawners.put(loc, data);
-            }
+        try {
+            Map<Location, SpawnerData> dbSpawners = plugin.getDatabaseManager().loadAllSpawnersSync();
+            if (dbSpawners != null) spawners.putAll(dbSpawners);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to load spawners from DB: " + e.getMessage());
         }
 
         productionTask = new ProductionTask(this);
@@ -111,31 +82,21 @@ public class SpawnerManager {
 
     public void saveSpawners(boolean stopTask) {
         if (stopTask) {
-            if (productionHandle != null) { scheduler.cancel(productionHandle); productionHandle = null; } if (hopperHandle != null) { scheduler.cancel(hopperHandle); hopperHandle = null; } //
+            if (productionHandle != null) { scheduler.cancel(productionHandle); productionHandle = null; }
+            if (hopperHandle != null) { scheduler.cancel(hopperHandle); hopperHandle = null; }
         }
 
-        if (!spawnersFile.getParentFile().exists()) {
-            spawnersFile.getParentFile().mkdirs();
-        }
-
-        FileConfiguration config = new YamlConfiguration();
-        for (Map.Entry<Location, SpawnerData> entry : new HashMap<>(spawners).entrySet()) {
-            Location loc = entry.getKey();
-            SpawnerData data = entry.getValue();
-            String key = loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
-            config.set(key + ".owner", data.getOwner().toString());
-            config.set(key + ".type", data.getType().name());
-            config.set(key + ".stack", data.getStackSize());
-            config.set(key + ".xp", data.getAccumulatedXP());
-            for (Map.Entry<Material, Long> drop : data.getAccumulatedDrops().entrySet()) {
-                config.set(key + ".drops." + drop.getKey().name(), drop.getValue());
+        // Persist all spawners to DB asynchronously
+        Map<Location, SpawnerData> snapshot = new HashMap<>(spawners);
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            for (SpawnerData data : snapshot.values()) {
+                try {
+                    plugin.getDatabaseManager().insertOrUpdateSpawnerSync(data);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to save spawner at " + data.getLocation() + ": " + e.getMessage());
+                }
             }
-        }
-        try {
-            config.save(spawnersFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save spawners.yml: " + e.getMessage());
-        }
+        });
     }
 
     public void pauseHopperFor(SpawnerData data) {

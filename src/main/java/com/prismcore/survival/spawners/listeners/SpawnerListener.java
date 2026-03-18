@@ -117,7 +117,16 @@ public class SpawnerListener implements Listener {
 
         if (data != null) {
             if (requireSilk && !hasSilk) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getSpawnerConfig().getString("messages.cannot_mine_without_silk")));
+                player.spigot().sendMessage(
+                ChatMessageType.ACTION_BAR,
+                TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&cYou need silk touch to mine this spawner.")));
+                try {
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                } catch (Throwable t) {
+                try {
+                player.playSound(player.getLocation(), Sound.valueOf("VILLAGER_NO"), 1.0f, 1.0f);
+                } catch (Throwable ignored) {}
+                }
                 event.setCancelled(true);
                 return;
             }

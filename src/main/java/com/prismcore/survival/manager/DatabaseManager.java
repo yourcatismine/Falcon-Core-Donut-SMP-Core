@@ -3,6 +3,10 @@ package com.prismcore.survival.manager;
 import com.h2ph.PrismSurvival;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import com.prismcore.survival.spawners.storage.SpawnerData;
+import com.prismcore.survival.spawners.mob.SpawnerType;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -252,7 +256,17 @@ public class DatabaseManager {
                     "history LONGTEXT," +
                     "last_updated BIGINT" +
                     ")";
-            s.execute(statsTable);
+                s.execute(statsTable);
+
+                String spawnersTable = "CREATE TABLE IF NOT EXISTS spawners (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "world VARCHAR(64) NOT NULL, x INT NOT NULL, y INT NOT NULL, z INT NOT NULL, " +
+                    "owner_uuid VARCHAR(36) NOT NULL, previous_owner_uuid VARCHAR(36), last_owner_change_at BIGINT, " +
+                    "type VARCHAR(64) NOT NULL, stack INT DEFAULT 1, accumulated_xp BIGINT DEFAULT 0, drops TEXT, " +
+                    "created_at BIGINT NOT NULL, lost_at BIGINT, lost_reason VARCHAR(128), lost_by_uuid VARCHAR(36), " +
+                    "UNIQUE KEY spawner_loc_idx (world,x,y,z), INDEX owner_idx (owner_uuid)" +
+                    ")";
+                s.execute(spawnersTable);
 
             String[] statsColumns = {
                     "money DOUBLE DEFAULT 0",
@@ -1653,5 +1667,80 @@ public class DatabaseManager {
 
     public void setServerConfigDouble(String key, double value) {
         setServerConfig(key, String.valueOf(value));
+    }
+
+    // ---- Spawner persistence helpers ----
+    public java.util.Map<Location, SpawnerData> loadAllSpawnersSync() {
+        java.util.Map<Location, SpawnerData> result = new java.util.HashMap<>();
+        if (!isConnected()) return result;
+        String q = "SELECT world,x,y,z,owner_uuid,type,stack,accumulated_xp,drops FROM spawners WHERE lost_at IS NULL";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String world = rs.getString("world");
+                if (Bukkit.getWorld(world) == null) continue;
+                Location loc = new Location(Bukkit.getWorld(world), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
+                java.util.UUID owner = java.util.UUID.fromString(rs.getString("owner_uuid"));
+                SpawnerType type = SpawnerType.fromString(rs.getString("type"));
+                SpawnerData d = new SpawnerData(loc, owner, type);
+                d.setStackSize(rs.getInt("stack"));
+                d.setAccumulatedXP(rs.getLong("accumulated_xp"));
+                d.setAccumulatedDrops(deserializeDrops(rs.getString("drops")));
+                result.put(loc, d);
+            }
+        } catch (SQLException ignored) {}
+        return result;
+    }
+
+    public void insertOrUpdateSpawnerSync(SpawnerData data) throws SQLException {
+        if (!isConnected() || data == null || data.getLocation() == null) return;
+        String q = "INSERT INTO spawners (world,x,y,z,owner_uuid,previous_owner_uuid,last_owner_change_at,type,stack,accumulated_xp,drops,created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE owner_uuid=VALUES(owner_uuid), previous_owner_uuid=VALUES(previous_owner_uuid), last_owner_change_at=VALUES(last_owner_change_at), " +
+                "type=VALUES(type), stack=VALUES(stack), accumulated_xp=VALUES(accumulated_xp), drops=VALUES(drops), lost_at=NULL, lost_reason=NULL, lost_by_uuid=NULL";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)) {
+            Location loc = data.getLocation();
+            int i = 1;
+            ps.setString(i++, loc.getWorld().getName());
+            ps.setInt(i++, loc.getBlockX());
+            ps.setInt(i++, loc.getBlockY());
+            ps.setInt(i++, loc.getBlockZ());
+            ps.setString(i++, data.getOwner().toString());
+            ps.setString(i++, null);
+            ps.setLong(i++, System.currentTimeMillis());
+            ps.setString(i++, data.getType() != null ? data.getType().name() : "UNKNOWN");
+            ps.setInt(i++, data.getStackSize());
+            ps.setLong(i++, data.getAccumulatedXP());
+            ps.setString(i++, serializeDrops(data.getAccumulatedDrops()));
+            ps.setLong(i++, System.currentTimeMillis());
+            ps.executeUpdate();
+        }
+    }
+
+    private static String serializeDrops(java.util.Map<Material, Long> drops) {
+        if (drops == null || drops.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (java.util.Map.Entry<Material, Long> e : drops.entrySet()) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(e.getKey().name()).append('=').append(e.getValue());
+        }
+        return sb.toString();
+    }
+
+    private static java.util.Map<Material, Long> deserializeDrops(String raw) {
+        java.util.Map<Material, Long> map = new java.util.HashMap<>();
+        if (raw == null || raw.isEmpty()) return map;
+        try {
+            String[] parts = raw.split(",");
+            for (String p : parts) {
+                String[] kv = p.split("=");
+                if (kv.length != 2) continue;
+                try {
+                    Material mat = Material.valueOf(kv[0]);
+                    long v = Long.parseLong(kv[1]);
+                    map.put(mat, v);
+                } catch (IllegalArgumentException ignored) {}
+            }
+        } catch (Exception ignored) {}
+        return map;
     }
 }

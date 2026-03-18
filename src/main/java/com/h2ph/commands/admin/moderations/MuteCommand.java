@@ -89,7 +89,7 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
                 sender.getName());
 
         String adminMsg = ChatColor.translateAlternateColorCodes('&',
-                "&7You muted &6" + finalTargetName + "&7 for &f" + durationStr + "&7 Reason:&c " + reason);
+                "&7You muted &d" + finalTargetName + "&7 for &f" + durationStr + "&7 Reason:&c " + reason);
         sender.sendMessage(adminMsg);
         if (sender instanceof Player) {
             ((Player) sender).spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(adminMsg));

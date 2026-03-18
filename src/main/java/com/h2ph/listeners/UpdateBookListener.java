@@ -158,7 +158,7 @@ public class UpdateBookListener implements Listener {
                         int free = p.getInventory().firstEmpty();
                         if (free >= 0)
                             p.getInventory().setItem(free, book);
-                        String joinerMsg = "&6A server update has been placed in your inventory.";
+                        String joinerMsg = "&dA server update has been placed in your inventory.";
                         p.sendMessage(net.md_5.bungee.api.ChatColor.translateAlternateColorCodes('&', joinerMsg));
                         try {
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_SNARE, 1.0f, 1.0f);

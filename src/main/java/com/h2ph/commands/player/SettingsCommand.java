@@ -17,7 +17,7 @@ import java.util.List;
 
 public class SettingsCommand implements CommandExecutor {
 
-    public static final String GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&8ᴘʀɪѕᴍѕᴍᴘ ѕᴇᴛᴛɪɴɢѕ");
+    public static final String GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&8ѕᴇᴛᴛɪɴɢѕ");
     private final PrismSurvival plugin;
 
     public SettingsCommand(PrismSurvival plugin) {
@@ -180,7 +180,7 @@ public class SettingsCommand implements CommandExecutor {
             lore.add(ChatColor.translateAlternateColorCodes('&', "&fCurrently: " + status));
             lore.add("");
             if (!hasPerm) {
-                lore.add(ChatColor.translateAlternateColorCodes('&', "&6ѕᴘʜʏɴх &7- &7ᴀᴄᴄᴇѕѕ ᴏɴʟʏ"));
+                lore.add(ChatColor.translateAlternateColorCodes('&', "&dѕᴘʜʏɴх &7- &7ᴀᴄᴄᴇѕѕ ᴏɴʟʏ"));
                 lore.add(ChatColor.translateAlternateColorCodes('&', "&4ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ"));
             }
 

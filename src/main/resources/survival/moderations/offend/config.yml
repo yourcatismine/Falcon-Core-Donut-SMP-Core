@@ -1,6 +1,4 @@
 # 
-database_file: "bannedplayers.db"
-
 reasons:
   Racism/Harassment:
     delete_data: false
@@ -95,4 +93,4 @@ messages:
     
     &fExpires in: &f%time_left%
     
-    &7Appeal at :&f discord.gg/psmp
+    &7Appeal at :&f discord.gg/Acxkk6cCd3

@@ -29,7 +29,7 @@ items:
 
   sphynx:
     material: TRIPWIRE_HOOK
-    name: "&6ꜱᴘʜʏɴx ᴋᴇʏ"
+    name: "&dꜱᴘʜʏɴx ᴋᴇʏ"
     slot: 5
     command: "keys give {gamertag} sphynx 1"
     price: 1000
@@ -117,7 +117,7 @@ items:
   blaze_spawner:
     material: SPAWNER
     spawner: "BLAZE"
-    name: "&6ʙʟᴀᴢᴇ ѕᴘᴀᴡɴᴇʀ"
+    name: "&dʙʟᴀᴢᴇ ѕᴘᴀᴡɴᴇʀ"
     slot: 16
     command: "smartspawner give spawner {gamertag} blaze {value}"
     price: 500

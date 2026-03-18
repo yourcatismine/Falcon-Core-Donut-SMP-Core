@@ -89,7 +89,7 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(
                             ChatColor.translateAlternateColorCodes('&', "&7&m---------------------------------"));
                     sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6 Alt Accounts for &f" + targetName));
+                            "&d Alt Accounts for &f" + targetName));
                     sender.sendMessage("");
 
                     int found = 0;

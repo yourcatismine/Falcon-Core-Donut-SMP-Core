@@ -124,9 +124,9 @@ public class ReplyCommand implements CommandExecutor, TabCompleter {
         }
 
         String senderFormat = ChatColor.translateAlternateColorCodes('&',
-                "&6you -> " + target.getName() + ":&f " + message);
+                "&dyou -> " + target.getName() + ":&f " + message);
         String receiverFormat = ChatColor.translateAlternateColorCodes('&',
-                "&6" + player.getName() + " -> you:&f " + message);
+                "&d" + player.getName() + " -> you:&f " + message);
 
         player.sendMessage(senderFormat);
         target.sendMessage(receiverFormat);

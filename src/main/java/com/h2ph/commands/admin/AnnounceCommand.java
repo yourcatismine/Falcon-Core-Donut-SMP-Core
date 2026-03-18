@@ -71,7 +71,7 @@ public class AnnounceCommand implements CommandExecutor, TabCompleter {
         }
 
         message = String.join(" ", argList);
-        String titleText = color("&6&l" + StringUtils.toSmallCaps("announcements"));
+        String titleText = color("&d&l" + StringUtils.toSmallCaps("announcements"));
         String subtitleText = color(message);
 
         Component titleComp = LegacyComponentSerializer.legacySection().deserialize(titleText);

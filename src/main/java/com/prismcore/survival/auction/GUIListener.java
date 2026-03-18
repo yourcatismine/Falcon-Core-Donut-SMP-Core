@@ -246,6 +246,11 @@ public class GUIListener
                         this.controller.getAuctionManager().getDefaultTime());
                 this.controller.getAuctionManager().addItem(auctionItem);
 
+                long epoch = System.currentTimeMillis() / 1000L;
+                ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getDiscordWebhookManager().sendAuctionListing(
+                    p.getName(), p.getUniqueId().toString(), toSell, price, epoch
+                );
+
                 String itemName = Utils.prettifyMaterialName(held.getType());
                 String dateTime = LocalDateTime.now(ZoneId.of("UTC"))
                         .format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
@@ -1163,6 +1168,11 @@ public class GUIListener
         p.getInventory().addItem(new ItemStack[] { finalItem });
         this.controller.getTransactionManager().recordSale(finalItem, ai.getPrice(), ai.getSeller(),
                 p.getName());
+
+        long epoch = System.currentTimeMillis() / 1000L;
+        ((com.h2ph.PrismSurvival) this.controller.getPlugin()).getDiscordWebhookManager().sendAuctionBuyer(
+            p.getName(), p.getUniqueId().toString(), finalItem, ai.getPrice(), epoch
+        );
 
         String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
         String boughtItemName = Utils.prettifyMaterialName(finalItem.getType());

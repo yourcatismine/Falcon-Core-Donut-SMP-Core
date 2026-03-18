@@ -72,7 +72,7 @@ public class ShardBoosterListener implements Listener {
 
         player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 2.0f);
 
-        String msg = ChatColor.translateAlternateColorCodes('&', "&6Shard booster activated.");
+        String msg = ChatColor.translateAlternateColorCodes('&', "&dShard booster activated.");
         player.sendMessage(msg);
         player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 net.md_5.bungee.api.chat.TextComponent.fromLegacyText(msg));

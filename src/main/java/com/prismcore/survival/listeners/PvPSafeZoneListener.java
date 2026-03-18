@@ -64,7 +64,7 @@ public class PvPSafeZoneListener implements Listener {
      */
     private void showSafeZoneEntry(Player player) {
         // Send title
-        String title = ChatColor.translateAlternateColorCodes('&', "&6ѕᴀꜰᴇ ᴍᴏᴅᴇ");
+        String title = ChatColor.translateAlternateColorCodes('&', "&dѕᴀꜰᴇ ᴍᴏᴅᴇ");
         String subtitle = ChatColor.translateAlternateColorCodes('&', "&fYou are safe to this area");
         player.sendTitle(title, subtitle, 10, 40, 10);
 

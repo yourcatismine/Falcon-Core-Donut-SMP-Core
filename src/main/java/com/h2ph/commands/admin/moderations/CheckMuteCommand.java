@@ -104,7 +104,7 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
                 }
 
                 sender.sendMessage(
-                        ChatColor.translateAlternateColorCodes('&', "&6&m---------------------------------"));
+                        ChatColor.translateAlternateColorCodes('&', "&d&m---------------------------------"));
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + " Mute Details: " + ChatColor.WHITE + displayName);
                 sender.sendMessage("");
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + " Status: " + status);
@@ -114,7 +114,7 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + " Date: " + ChatColor.WHITE + dateStr);
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + " Expires: " + ChatColor.WHITE + expiryStr);
                 sender.sendMessage(
-                        ChatColor.translateAlternateColorCodes('&', "&6&m---------------------------------"));
+                        ChatColor.translateAlternateColorCodes('&', "&d&m---------------------------------"));
             });
         });
 

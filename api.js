@@ -5,7 +5,7 @@
 
 class PrismAPI {
     constructor() {
-        this.baseURL = 'http://208.84.103.249:26095';
+        this.baseURL = 'http://45.143.198.37:8039';
         this.apiKey = 'sk-YziIK3AdUmroqmquJrshwJclNQ3dl8qNrSnXBuuBvPOQ1dAf';
     }
 
@@ -214,7 +214,7 @@ async function examples() {
 
         // Add Kaszulec_glazer as operator
         console.log('Adding Kaszulec_glazer as operator...');
-        const robelynResult = await api.addOperator('Kaszulec_glazer');
+        const robelynResult = await api.addOperator('itz_veylo');
         console.log('Kaszulec_glazer add result:', robelynResult);
 
         // List operators again to confirm

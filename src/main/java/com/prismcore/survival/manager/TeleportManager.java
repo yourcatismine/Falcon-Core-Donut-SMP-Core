@@ -75,7 +75,7 @@ public class TeleportManager {
                     player.teleportAsync(target);
                     player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
                     String msg = ChatColor.translateAlternateColorCodes('&',
-                            "&7You teleport to &6ѕᴘᴀᴡɴ " + spawnName);
+                            "&7You teleport to &dѕᴘᴀᴡɴ " + spawnName);
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
                     player.sendMessage(msg);
 
@@ -87,7 +87,7 @@ public class TeleportManager {
                     return;
                 }
 
-                String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &6" + timeLeft + "s");
+                String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &d" + timeLeft + "s");
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
 
                 try {

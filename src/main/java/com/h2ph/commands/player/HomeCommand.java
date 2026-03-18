@@ -54,7 +54,7 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
         }
 
         if (index != null && index >= 3 && !player.hasPermission("prismcore.home." + index) && !player.hasPermission("prismcore.home.all")) {
-            String storeMsg = HomeGUI.color("&fBuy &6ѕᴘʜʏɴх&f in /store for more homes");
+            String storeMsg = HomeGUI.color("&fBuy &dѕᴘʜʏɴх&f in /store for more homes");
             player.sendMessage(storeMsg);
             player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));
             return true;
@@ -68,7 +68,7 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
         Location dest = manager.getHomeLocation(player.getUniqueId(), index);
         if (dest != null) {
             String successMsg = "&7You were teleported to your home.";
-            plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &6%s", successMsg);
+            plugin.getTeleportManager().teleport(player, dest, 5, "&fTeleporting in &d%s", successMsg);
         }
 
         return true;

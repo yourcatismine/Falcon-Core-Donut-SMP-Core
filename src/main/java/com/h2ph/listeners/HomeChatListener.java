@@ -43,7 +43,7 @@ public class HomeChatListener implements Listener {
 
         manager.renameHome(uuid, homeIndex, newName);
 
-        player.sendMessage(HomeGUI.color("&7Home renamed to: &6" + newName));
+        player.sendMessage(HomeGUI.color("&7Home renamed to: &d" + newName));
 
         plugin.getSchedulerAdapter().runTask(() -> HomeGUI.open(player, plugin));
     }

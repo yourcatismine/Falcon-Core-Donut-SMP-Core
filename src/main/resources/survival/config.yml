@@ -9,6 +9,12 @@ TOKEN: ""
 ChannelID: ""
 
 discord-webhooks:
+  auction:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+  orders:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
   chat-log:
     enabled: false
     webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"

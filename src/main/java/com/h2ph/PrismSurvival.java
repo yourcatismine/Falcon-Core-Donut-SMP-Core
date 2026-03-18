@@ -927,7 +927,7 @@ public class PrismSurvival extends JavaPlugin {
                 if (data != null && data.isTeamChat() && data.getTeamId() != null) {
                     player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             new net.md_5.bungee.api.chat.TextComponent(
-                                    com.prismcore.survival.orders.Utils.formatColors("&6You have team chat on.")));
+                                    com.prismcore.survival.orders.Utils.formatColors("&dYou have team chat on.")));
                 }
             }
         }, 40L, 40L);

@@ -6,10 +6,10 @@ SCOREBOARD:
   SWITCHER: ["&#F97603☠ &fDeaths &#F97603%prismcore_deaths%", "&#FC0000🗡 &fKills &#FC0000%prismcore_kills%"]
   TEAMS: "&#5729DD🪓 &fTeam %team_name%"
   TITLE:
-    - "&6&lS&6&lp&6&lh&6&ly&6&ln&6&lx&6&lS&6&lM&6&lP"
+    - "&d&lᴠᴀʟᴇѕᴍᴘ"
   LINES:
     - ""
-    - "&c🔥 &c{gamertag} &7(&6{region_ping}ms&7)"
+    - "&c🔥 &c{gamertag} &7(&d{region_ping}ms&7)"
     - "&e&l$ &fBucks &e%prismcore_balance%"
     - "&5⭐ &fCards &5%prismcore_shards%"
     - "{switcher}"
@@ -40,7 +40,7 @@ TAB:
         default: 1
     TITLE:
       header:
-      - '&6ѕᴘʜʏɴхѕᴍᴘ'
+      - '&d&lᴠᴀʟᴇѕᴍᴘ'
       - ''
       - ''
       footer:

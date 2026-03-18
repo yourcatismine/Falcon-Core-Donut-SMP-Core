@@ -72,7 +72,7 @@ public class UnmuteCommand implements CommandExecutor, TabCompleter {
 
         plugin.getDatabaseManager().removeMute(targetUUID);
 
-        String adminMsg = ChatColor.translateAlternateColorCodes('&', "&6" + finalTargetName + "&7 has been unmuted.");
+        String adminMsg = ChatColor.translateAlternateColorCodes('&', "&d" + finalTargetName + "&7 has been unmuted.");
         sender.sendMessage(adminMsg);
         if (sender instanceof Player) {
             ((Player) sender).spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(adminMsg));

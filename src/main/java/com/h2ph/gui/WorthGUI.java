@@ -106,7 +106,7 @@ public class WorthGUI {
             ItemStack item = entry.getKey().buildIcon();
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(color("&6" + entry.getKey().displayName()));
+                meta.setDisplayName(color("&d" + entry.getKey().displayName()));
                 List<String> lore = new ArrayList<>();
                 lore.add(color("&fPrice: &a$" + formatNumber(entry.getValue())));
                 meta.setLore(lore);
@@ -130,9 +130,9 @@ public class WorthGUI {
                 sortLore.add(color("&f• " + st.getDisplayName()));
             }
         }
-        inv.setItem(48, createItem(Material.CAULDRON, "&6ѕᴏʀᴛ", sortLore));
+        inv.setItem(48, createItem(Material.CAULDRON, "&dѕᴏʀᴛ", sortLore));
 
-        inv.setItem(49, createItem(Material.ANVIL, "&6ɪᴛᴇᴍ ᴘʀɪᴄᴇѕ", "&fClick to refresh"));
+        inv.setItem(49, createItem(Material.ANVIL, "&dɪᴛᴇᴍ ᴘʀɪᴄᴇѕ", "&fClick to refresh"));
 
         List<String> filterLore = new ArrayList<>();
         for (FilterType ft : FilterType.values()) {
@@ -142,7 +142,7 @@ public class WorthGUI {
                 filterLore.add(color("&f• " + ft.getDisplayName()));
             }
         }
-        inv.setItem(50, createItem(Material.HOPPER, "&6ꜰɪʟᴛᴇʀ", filterLore));
+        inv.setItem(50, createItem(Material.HOPPER, "&dꜰɪʟᴛᴇʀ", filterLore));
 
         player.openInventory(inv);
     }

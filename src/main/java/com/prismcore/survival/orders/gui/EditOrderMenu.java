@@ -92,9 +92,9 @@ public class EditOrderMenu
         }
         lore.add(Utils.formatColors("&a$" + Utils.abbr(this.order.priceEach) + "&f each"));
         lore.add("");
-        lore.add(Utils.formatColors("&6" + Utils.abbr(this.order.delivered) + "/&a" + Utils.abbr(this.order.requested)
+        lore.add(Utils.formatColors("&d" + Utils.abbr(this.order.delivered) + "/&a" + Utils.abbr(this.order.requested)
                 + "&7 Delivered"));
-        lore.add(Utils.formatColors("&6$" + Utils.abbr((double) this.order.delivered * this.order.priceEach) + "/&a$"
+        lore.add(Utils.formatColors("&d$" + Utils.abbr((double) this.order.delivered * this.order.priceEach) + "/&a$"
                 + Utils.abbr(this.order.totalPrice()) + "&7 Paid"));
         lore.add("");
 

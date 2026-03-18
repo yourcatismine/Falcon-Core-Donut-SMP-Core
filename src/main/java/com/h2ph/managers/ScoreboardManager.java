@@ -536,14 +536,14 @@ public class ScoreboardManager implements Listener {
                 if (team != null) {
                     String teamName = team.getName();
                     if (!teamName.contains("&") && !teamName.contains("§") && !teamName.contains("#")) {
-                        teamName = "&6" + teamName;
+                        teamName = "&d" + teamName;
                     }
                     text = text.replace("%team_name%", teamName);
                 } else {
-                    text = text.replace("%team_name%", "&6None");
+                    text = text.replace("%team_name%", "&dNone");
                 }
             } else {
-                text = text.replace("%team_name%", "&6None");
+                text = text.replace("%team_name%", "&dNone");
             }
         }
 

@@ -93,8 +93,8 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
         gui.setItem(10, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
                 "&fClick to randomly teleport",
                 "",
-                "&7Players (&6" + count + "&7)",
-                "&7Europe (&6" + ping + "ms&7)"));
+                "&7Players (&d" + count + "&7)",
+                "&7Europe (&d" + ping + "ms&7)"));
     }
 
     public static void updateItems(Inventory gui, Player player) {
@@ -106,19 +106,19 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
         gui.setItem(11, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
                 "&fClick to select a region",
                 "",
-                "&7Players (&6" + overworldCount + "&7)"));
+                "&7Players (&d" + overworldCount + "&7)"));
 
         gui.setItem(13, createItem(org.bukkit.Material.NETHERRACK, "&aɴᴇᴛʜᴇʀ",
                 "&fClick to randomly teleport",
                 "",
-                "&7Players (&6" + netherCount + "&7)",
-                "&7Europe (&6" + ping + "ms&7)"));
+                "&7Players (&d" + netherCount + "&7)",
+                "&7Europe (&d" + ping + "ms&7)"));
 
         gui.setItem(15, createItem(org.bukkit.Material.END_STONE, "&aᴇɴᴅ",
                 "&fClick to randomly teleport",
                 "",
-                "&7Players (&6" + endCount + "&7)",
-                "&7Europe (&#A9833D" + ping + "ms&7)"));
+                "&7Players (&d" + endCount + "&7)",
+                "&7Europe (&d" + ping + "ms&7)"));
     }
 
     private static int getPlayerCount(String type) {

@@ -120,7 +120,7 @@ public class ShardsManager implements Listener {
         data.addShards(amount, "Passive Reward");
 
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&6+" + amount + " cards")));
+                TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&d+" + amount + " shards")));
     }
 
     @EventHandler

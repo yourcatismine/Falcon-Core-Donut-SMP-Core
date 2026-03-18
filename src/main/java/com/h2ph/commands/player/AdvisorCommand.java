@@ -50,7 +50,7 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
         ItemStack book = new ItemStack(Material.WRITABLE_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6Advisor Book Editor"));
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dAdvisor Book Editor"));
             List<String> currentPages = plugin.getActiveAdvisorPages();
             if (currentPages != null && !currentPages.isEmpty()) {
                 meta.setPages(currentPages);
@@ -83,7 +83,7 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
         if (meta != null) {
             meta.setTitle("Server Advisor");
             meta.setAuthor("Server Admin");
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6Server Advisor"));
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dServer Advisor"));
             meta.setPages(plugin.getActiveAdvisorPages());
             book.setItemMeta(meta);
         }

@@ -33,7 +33,7 @@ public class BountyConfirmGUI {
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         if (meta != null) {
             meta.setOwningPlayer(Bukkit.getOfflinePlayer(targetId));
-            meta.setDisplayName(color("&6" + targetName));
+            meta.setDisplayName(color("&d" + targetName));
             head.setItemMeta(meta);
         }
         inv.setItem(13, head);

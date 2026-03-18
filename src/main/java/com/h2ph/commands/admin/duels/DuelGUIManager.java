@@ -205,7 +205,7 @@ public class DuelGUIManager {
         gui.setItem(13, statsItem);
 
         ItemStack regionItem = createItem(Material.FEATHER, "&aʀᴇɢɪᴏɴ", null,
-                "&7Europe (&#A9833D--&7)");
+                "&7Europe (&d--&7)");
         gui.setItem(14, regionItem);
 
         ItemStack confirmItem = createItem(Material.GREEN_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ", null,

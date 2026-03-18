@@ -165,7 +165,7 @@ public class DuelQueueManager implements Listener {
         gui.setItem(13, statsItem);
 
         ItemStack regionItem = createItem(Material.FEATHER, "&aʀᴇɢɪᴏɴ",
-                "&7Europe (&#A9833D" + ping + "ms&7)");
+                "&7Europe (&d" + ping + "ms&7)");
         gui.setItem(14, regionItem);
 
         boolean isInQueue = queuedPlayers.containsKey(uuid);

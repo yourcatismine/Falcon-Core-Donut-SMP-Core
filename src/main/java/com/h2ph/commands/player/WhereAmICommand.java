@@ -31,7 +31,7 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 0) {
             String dimensionName = getDimensionName(player.getWorld().getName());
-            String message = "&7You are currenlty on &6" + dimensionName;
+            String message = "&7You are currenlty on &d" + dimensionName;
             String formattedMessage = LegacyComponentSerializer.legacyAmpersand().deserialize(message).toString();
             player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
             return true;
@@ -68,7 +68,7 @@ public class WhereAmICommand implements CommandExecutor, TabCompleter {
         }
 
         String dimensionName = getDimensionName(targetPlayer.getWorld().getName());
-        String message = "&6" + targetPlayer.getName() + "&7 is currenlty on &6" + dimensionName;
+        String message = "&d" + targetPlayer.getName() + "&7 is currenlty on &d" + dimensionName;
         player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
 
         return true;

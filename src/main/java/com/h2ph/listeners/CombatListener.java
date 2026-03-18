@@ -264,7 +264,7 @@ public class CombatListener implements Listener {
                     return;
                 }
 
-                String msg = ChatColor.translateAlternateColorCodes('&', "&6Combat:&f " + timeLeft + "s");
+                String msg = ChatColor.translateAlternateColorCodes('&', "&dCombat:&f " + timeLeft + "s");
                 try {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
                 } catch (Throwable ignored) {

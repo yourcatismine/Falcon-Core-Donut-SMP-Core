@@ -96,8 +96,8 @@ public class YourOrdersMenu implements InventoryHolder, MenuOwner {
         }
         lore.add(Utils.formatColors("&a$" + Utils.abbr(o.priceEach) + " &feach"));
         lore.add("");
-        lore.add(Utils.formatColors("&6" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + " &7Delivered"));
-        lore.add(Utils.formatColors("&6$" + Utils.abbr((double) o.delivered * o.priceEach) + "/&a$"
+        lore.add(Utils.formatColors("&d" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + " &7Delivered"));
+        lore.add(Utils.formatColors("&d$" + Utils.abbr((double) o.delivered * o.priceEach) + "/&a$"
                 + Utils.abbr(o.totalPrice()) + " &7Paid"));
         lore.add("");
 

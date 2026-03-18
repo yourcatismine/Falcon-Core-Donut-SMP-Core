@@ -86,7 +86,7 @@ public class AdminOrderDetailsMenu implements InventoryHolder, MenuOwner {
         }
         lore.add(Utils.formatColors("&a$" + Utils.abbr(o.priceEach) + "&f each"));
         lore.add("");
-        lore.add(Utils.formatColors("&6" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + "&7 Delivered"));
+        lore.add(Utils.formatColors("&d" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + "&7 Delivered"));
         lore.add("");
         lore.add(Utils.formatColors("&cClick to view"));
 

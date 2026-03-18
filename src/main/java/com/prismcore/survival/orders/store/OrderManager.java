@@ -87,6 +87,12 @@ public class OrderManager {
         this.orders.put(o.id, o);
         this.saveOrder(o);
 
+        long epoch = System.currentTimeMillis() / 1000L;
+        String ownerName = Bukkit.getOfflinePlayer(owner).getName();
+        PrismSurvival.getInstance().getDiscordWebhookManager().sendOrderCreated(
+            ownerName, owner.toString(), o.key.displayName(), o.requested, o.priceEach, epoch
+        );
+
         // Log Order Creation
         String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
         String log = String.format("%s - Order Created\nCreated order for %s x%d for $%s each ($%s)",

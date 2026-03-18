@@ -185,7 +185,7 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
 
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6ᴀꜰᴋ " + (index + 1)));
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dᴀꜰᴋ " + (index + 1)));
                 List<String> lore = new ArrayList<>();
                 lore.add(ChatColor.translateAlternateColorCodes('&', "&8" + playerCount + "/" + maxPlayers));
 
@@ -342,7 +342,7 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
                 return;
             }
 
-            String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &6" + countdown.get() + "s");
+            String msg = ChatColor.translateAlternateColorCodes('&', "&7Teleporting in &d" + countdown.get() + "s");
             p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(msg));
 

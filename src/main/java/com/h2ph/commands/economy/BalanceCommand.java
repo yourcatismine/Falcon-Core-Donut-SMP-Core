@@ -111,7 +111,7 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
         if (isSelf) {
             msg = ChatColor.translateAlternateColorCodes('&', "&7You have &a$" + moneyFormatted);
         } else {
-            msg = ChatColor.translateAlternateColorCodes('&', "&6" + playerName + "&7 has &a$" + moneyFormatted);
+            msg = ChatColor.translateAlternateColorCodes('&', "&d" + playerName + "&7 has &a$" + moneyFormatted);
         }
 
         sender.sendMessage(msg);

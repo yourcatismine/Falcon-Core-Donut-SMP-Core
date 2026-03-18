@@ -121,7 +121,7 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                 if (m.uuid.equals(ownerUuid)) {
                     meta.displayName(Utils.format("&c" + m.name));
                 } else {
-                    meta.displayName(Utils.format("&6" + m.name));
+                    meta.displayName(Utils.format("&d" + m.name));
                 }
                 meta.lore(Utils.format(List.of("&8&oSoon")));
                 meta.setOwningPlayer(mPlayer);
@@ -136,7 +136,7 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
             inventory.setItem(slot++, inviteItem);
         }
 
-        String searchName = searchQuery == null ? "&6ѕᴇᴀʀᴄʜ" : "&6ѕᴇᴀʀᴄʜ: &f" + searchQuery;
+        String searchName = searchQuery == null ? "&dѕᴇᴀʀᴄʜ" : "&dѕᴇᴀʀᴄʜ: &f" + searchQuery;
         inventory.setItem(45, createItem(Material.OAK_SIGN, searchName, "&fClick to search"));
 
         List<String> sortLore = new ArrayList<>();
@@ -147,10 +147,10 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                 sortLore.add("&f• " + mode.getDisplay());
             }
         }
-        inventory.setItem(46, createItem(Material.HOPPER, "&6ѕᴏʀᴛ", sortLore));
+        inventory.setItem(46, createItem(Material.HOPPER, "&dѕᴏʀᴛ", sortLore));
 
         if (page > 1) {
-            inventory.setItem(48, createItem(Material.ARROW, "&6ʙᴀᴄᴋ", "&fClick to go to the previous page"));
+            inventory.setItem(48, createItem(Material.ARROW, "&dʙᴀᴄᴋ", "&fClick to go to the previous page"));
         } else {
             inventory.setItem(48, createItem(Material.ARROW, "&cʙᴀᴄᴋ", "&7No previous page available"));
         }
@@ -158,19 +158,19 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
         List<String> infoLore = new ArrayList<>();
         infoLore.add("&fClick to refresh");
         infoLore.add("&7Add up to 50 members");
-        inventory.setItem(49, createItem(Material.IRON_HELMET, "&6ᴛᴇᴀᴍ " + team.getName(), infoLore));
+        inventory.setItem(49, createItem(Material.IRON_HELMET, "&dᴛᴇᴀᴍ " + team.getName(), infoLore));
 
         if (members.size() > page * 45) {
-            inventory.setItem(50, createItem(Material.ARROW, "&6ɴᴇхᴛ", "&fClick to go to the next page"));
+            inventory.setItem(50, createItem(Material.ARROW, "&dɴᴇхᴛ", "&fClick to go to the next page"));
         } else {
             inventory.setItem(50, createItem(Material.ARROW, "&cɴᴇхᴛ", "&7No next page available"));
         }
 
         if (!team.hasHome()) {
             inventory.setItem(52,
-                    createItem(Material.GRAY_BANNER, "&6Your team does not have a home", "&fNo team home"));
+                    createItem(Material.GRAY_BANNER, "&dYour team does not have a home", "&fNo team home"));
         } else {
-            inventory.setItem(52, createItem(Material.PURPLE_BANNER, "&6ᴛᴇᴀᴍ ʜᴏᴍᴇ", "&fCick to teleport to team home"));
+            inventory.setItem(52, createItem(Material.PURPLE_BANNER, "&dᴛᴇᴀᴍ ʜᴏᴍᴇ", "&fCick to teleport to team home"));
         }
 
         String pvpStatus = team.isPvpEnabled() ? "&a&lON" : "&4&lOFF";
@@ -180,7 +180,7 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
         if (!isMenuOwner) {
             pvpLore.add("&cOnly the team owner can toggle this.");
         }
-        inventory.setItem(53, createItem(Material.IRON_SWORD, "&6ᴘᴠᴘ", pvpLore));
+        inventory.setItem(53, createItem(Material.IRON_SWORD, "&dᴘᴠᴘ", pvpLore));
     }
 
     private ItemStack createItem(Material material, String name, String lore) {

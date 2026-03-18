@@ -157,7 +157,7 @@ public class PayCommand implements CommandExecutor, TabCompleter {
     private void sendSuccess(Player sender, UUID targetId, String targetName, double amount, PlayerData targetData) {
         String moneyFormatted = formatNumber(amount);
         String senderMsg = ChatColor.translateAlternateColorCodes('&',
-                "&7You paid &6" + targetName + "&a $" + moneyFormatted);
+                "&7You paid &d" + targetName + "&a $" + moneyFormatted);
         sender.sendMessage(senderMsg);
         sender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(senderMsg));
 
@@ -168,7 +168,7 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             }
 
             String targetMsg = ChatColor.translateAlternateColorCodes('&',
-                    "&6" + sender.getName() + "&7 has paid you&a $" + moneyFormatted);
+                    "&d" + sender.getName() + "&7 has paid you&a $" + moneyFormatted);
             targetOnline.sendMessage(targetMsg);
             targetOnline.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(targetMsg));
 

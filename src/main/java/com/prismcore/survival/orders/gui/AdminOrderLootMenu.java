@@ -104,7 +104,7 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
         this.inv.setItem(49, makeItem(Material.TNT, "&cᴅᴇʟᴇᴛᴇ & ʀᴇꜰᴜɴᴅ ᴏʀᴅᴇʀ",
                 List.of("&fClick to cancel this order and", "&frefund remaining items to AH.")));
 
-        this.inv.setItem(50, makeItem(Material.MAP, "&6ʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
+        this.inv.setItem(50, makeItem(Material.MAP, "&dʀᴇꜰʀᴇѕʜ", List.of("&fClick to refresh items")));
 
         this.admin.openInventory(this.inv);
     }

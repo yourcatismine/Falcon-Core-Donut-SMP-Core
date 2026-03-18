@@ -405,63 +405,71 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
 
         if (sub.equals("warps")) {
-            if (!player.hasPermission("prism.admin.warps")) {
-                player.sendMessage("§cYou do not have permission to use this command.");
-                return true;
-            }
+            return handleWarps(player, args);
+        }
 
-            if (args.length < 2) {
-                player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
-
-            String action = args[1].toLowerCase();
-
-            if (action.equals("set")) {
-                if (args.length < 3) {
-                    player.sendMessage("§cUsage: /falcon warps set <name>");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return true;
-                }
-                String name = args[2];
-                plugin.getWarpManager().setWarp(name, player.getLocation());
-                player.sendMessage("§aWarp §f'" + name + "' §ahas been set at your current location.");
-                return true;
-            } else if (action.equals("delete") || action.equals("del")) {
-                if (args.length < 3) {
-                    player.sendMessage("§cUsage: /falcon warps delete <name>");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return true;
-                }
-                String name = args[2];
-                boolean deleted = plugin.getWarpManager().deleteWarp(name);
-                if (deleted) {
-                    player.sendMessage("§aWarp §f'" + name + "' §ahas been deleted.");
-                } else {
-                    player.sendMessage("§cWarp '" + name + "' not found.");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                }
-                return true;
-            } else if (action.equals("list")) {
-                java.util.List<String> warps = plugin.getWarpManager().listWarps();
-                if (warps.isEmpty()) {
-                    player.sendMessage("§7No warps have been set.");
-                } else {
-                    player.sendMessage("§6Warps: §f" + String.join("§7, §f", warps));
-                }
-                return true;
-            } else {
-                player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
+        if (sub.equals("spawner")) {
+            return handleSpawner(player, args);
         }
 
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, anchor, pvpsafe, or warps.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crate, crystal, anchor, pvpsafe, warps, or spawner.");
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
         return true;
+    }
+
+    private boolean handleWarps(Player player, String[] args) {
+        if (!player.hasPermission("prism.admin.warps")) {
+            player.sendMessage("§cYou do not have permission to use this command.");
+            return true;
+        }
+
+        if (args.length < 2) {
+            player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+
+        if (action.equals("set")) {
+            if (args.length < 3) {
+                player.sendMessage("§cUsage: /falcon warps set <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+            String name = args[2];
+            plugin.getWarpManager().setWarp(name, player.getLocation());
+            player.sendMessage("§aWarp §f'" + name + "' §ahas been set at your current location.");
+            return true;
+        } else if (action.equals("delete") || action.equals("del")) {
+            if (args.length < 3) {
+                player.sendMessage("§cUsage: /falcon warps delete <name>");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+            String name = args[2];
+            boolean deleted = plugin.getWarpManager().deleteWarp(name);
+            if (deleted) {
+                player.sendMessage("§aWarp §f'" + name + "' §ahas been deleted.");
+            } else {
+                player.sendMessage("§cWarp '" + name + "' not found.");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            }
+            return true;
+        } else if (action.equals("list")) {
+            java.util.List<String> warps = plugin.getWarpManager().listWarps();
+            if (warps.isEmpty()) {
+                player.sendMessage("§7No warps have been set.");
+            } else {
+                player.sendMessage("§6Warps: §f" + String.join("§7, §f", warps));
+            }
+            return true;
+        } else {
+            player.sendMessage("§cUsage: /falcon warps <set|delete|list> [name]");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
     }
 
     private boolean handleCrate(Player player, String[] args) {
@@ -734,12 +742,79 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleSpawner(Player player, String[] args) {
+        if (!player.hasPermission("donutspawners.admin") && !player.hasPermission("prism.admin")) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        if (args.length < 4 || !args[1].equalsIgnoreCase("give")) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        String targetName = args[2];
+        String typeStr = args[3];
+        int amountArg = 1;
+        if (args.length >= 5) {
+            try {
+                amountArg = Integer.parseInt(args[4]);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        final int amount = amountArg;
+
+        com.prismcore.survival.spawners.mob.SpawnerType type = com.prismcore.survival.spawners.mob.SpawnerType.fromString(typeStr);
+        if (type == null) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
+            @SuppressWarnings("deprecation")
+            OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
+            boolean hasPlayed = offlineTarget.hasPlayedBefore();
+            boolean isOnline = offlineTarget.isOnline();
+            
+            plugin.getSchedulerAdapter().runAtLocation(player.getLocation(), () -> {
+                if (!hasPlayed && !isOnline) {
+                    player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            net.md_5.bungee.api.chat.TextComponent.fromLegacyText(
+                                    com.prismcore.survival.tools.Utils.formatColors("&cUnknown player!")));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return;
+                }
+                
+                if (!isOnline) {
+                    player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            net.md_5.bungee.api.chat.TextComponent.fromLegacyText(
+                                    com.prismcore.survival.tools.Utils.formatColors("&cThat player is not online.")));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return;
+                }
+
+                Player onlineTarget = offlineTarget.getPlayer();
+                if (onlineTarget != null) {
+                    ItemStack item = com.prismcore.survival.spawners.util.SpawnerItemUtil.createSpawnerItem(type, amount);
+                    onlineTarget.getInventory().addItem(item);
+
+                    String msg = com.prismcore.survival.tools.Utils.formatColors("&7Given&a " + onlineTarget.getName() + "&7 spawner&a " + type.name() + "&7 " + amount);
+                    player.sendMessage(msg);
+                    player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                            net.md_5.bungee.api.chat.TextComponent.fromLegacyText(msg));
+                }
+            });
+        });
+
+        return true;
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
                     .asList("auction", "order", "rtpqueue", "speed", "tools", "void", "respawngear", "limiter",
-                            "crate", "crystal", "anchor", "pvpsafe", "warps")
+                            "crate", "crystal", "anchor", "pvpsafe", "warps", "spawner")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -793,6 +868,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return Arrays.asList("set", "delete", "list").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("spawner")) {
+                return Arrays.asList("give").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
             }
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("rtpqueue")) {
@@ -819,6 +898,11 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             } else if (args[0].equalsIgnoreCase("warps") && args[1].equalsIgnoreCase("delete")) {
                 return plugin.getWarpManager().listWarps().stream()
                         .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("spawner") && args[1].equalsIgnoreCase("give")) {
+                return Bukkit.getOnlinePlayers().stream()
+                        .map(Player::getName)
+                        .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("crate")) {
                 if (args[1].equalsIgnoreCase("effects")) {
@@ -859,6 +943,11 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             }
         } else if (args.length == 4 && args[0].equalsIgnoreCase("tools")) {
             return Arrays.asList("1d", "12h", "30m", "1w");
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("spawner") && args[1].equalsIgnoreCase("give")) {
+            return Arrays.stream(com.prismcore.survival.spawners.mob.SpawnerType.values())
+                    .map(type -> type.name().toLowerCase())
+                    .filter(name -> name.startsWith(args[3].toLowerCase()))
+                    .collect(Collectors.toList());
         } else if (args.length == 4 && args[0].equalsIgnoreCase("crate")) {
             if (args[1].equalsIgnoreCase("effects")) {
                 File cratesDir = new File(plugin.getDataFolder(), "crates/crate");

@@ -35,6 +35,18 @@ public class PrismSurvival extends JavaPlugin {
         return instance;
     }
 
+    public com.prismcore.survival.spawners.storage.SpawnerManager getSpawnerManager() {
+        return spawnerManager;
+    }
+
+    public com.prismcore.survival.spawners.economy.EconomyHandler getEconomyHandler() {
+        return spawnerEconomyHandler;
+    }
+
+    public org.bukkit.configuration.file.FileConfiguration getSpawnerConfig() {
+        return spawnerConfig;
+    }
+
     private com.h2ph.afk.AFKManager afkManager;
     private org.bukkit.configuration.file.FileConfiguration survivalConfig;
     private com.h2ph.commands.admin.moderations.OffendPlugin offendPlugin;
@@ -85,6 +97,11 @@ public class PrismSurvival extends JavaPlugin {
     private com.prismcore.survival.manager.DiscordWebhookManager discordWebhookManager;
     private com.h2ph.listeners.MotdListener MotdListener;
     private com.h2ph.managers.DiscordManager discordManager;
+    
+    private com.prismcore.survival.spawners.storage.SpawnerManager spawnerManager;
+    private com.prismcore.survival.spawners.economy.EconomyHandler spawnerEconomyHandler;
+    private org.bukkit.configuration.file.FileConfiguration spawnerConfig;
+    private java.io.File spawnerConfigFile;
 
     public boolean isMotdEnabled() {
         return motdEnabled;
@@ -639,6 +656,21 @@ public class PrismSurvival extends JavaPlugin {
         getServer().getPluginManager()
                 .registerEvents(new com.prismcore.survival.listeners.PlayerNameCacheListener(this), this);
 
+        spawnerConfigFile = new java.io.File(getDataFolder(), "economy/spawner/config.yml");
+        if (!spawnerConfigFile.exists()) {
+            spawnerConfigFile.getParentFile().mkdirs();
+            saveResource("economy/spawner/config.yml", false);
+        }
+        if (spawnerConfigFile.exists()) {
+            spawnerConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(spawnerConfigFile);
+        }
+
+        this.spawnerEconomyHandler = new com.prismcore.survival.spawners.economy.EconomyHandler(this);
+        this.spawnerManager = new com.prismcore.survival.spawners.storage.SpawnerManager(this);
+        this.spawnerManager.loadSpawners();
+
+        getServer().getPluginManager().registerEvents(new com.prismcore.survival.spawners.listeners.SpawnerListener(this), this);
+
         try {
             org.apache.logging.log4j.core.Logger rootLogger = (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager
                     .getRootLogger();
@@ -668,6 +700,10 @@ public class PrismSurvival extends JavaPlugin {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
                 this.playerDataManager.savePlayer(player.getUniqueId());
             }
+        }
+
+        if (this.spawnerManager != null) {
+            this.spawnerManager.saveSpawners();
         }
 
         if (this.enderChestManager != null) {

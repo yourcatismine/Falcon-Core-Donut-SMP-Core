@@ -136,9 +136,9 @@ public class DiscordWebhookManager {
         // Log attempt (host only) for debugging without exposing full webhook URL
         try {
             String host = new URL(webhookUrl).getHost();
-            plugin.getLogger().info("[Discord] Sending webhook to " + host + " for player " + playerName);
+           // plugin.getLogger().info("[Discord] Sending webhook to " + host + " for player " + playerName);
         } catch (Exception ignored) {
-            plugin.getLogger().info("[Discord] Sending webhook for player " + playerName);
+           // plugin.getLogger().info("[Discord] Sending webhook for player " + playerName);
         }
 
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {

@@ -168,7 +168,7 @@ public class SettingsCommand implements CommandExecutor {
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aǫᴜɪᴄᴋ ᴀᴜᴄᴛɪᴏɴ ʙᴜʏ"));
             List<String> lore = new ArrayList<>();
 
-            boolean hasPerm = player.hasPermission("prismsmp.quick.auction");
+            boolean hasPerm = player.hasPermission("falcon.quick.auction");
             String status;
             if (hasPerm) {
                 boolean enabled = data != null && data.isQuickAuctionBuy();

@@ -23,7 +23,7 @@ public class EnderChestCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        if (!player.hasPermission("prismcore.enderchest")) {
+        if (!player.hasPermission("falcon.enderchest")) {
             return true;
         }
         new EnderChestGUI(plugin).open(player);

@@ -268,7 +268,7 @@ public class TeamMenu implements InventoryHolder, MenuOwner {
                 int homeToSet = -1;
 
                 for (int i = 1; i <= 5; i++) {
-                    if (i >= 3 && !player.hasPermission("prismcore.home." + i)) {
+                    if (i >= 3 && !player.hasPermission("falcon.home." + i)) {
                         continue;
                     }
                     if (!homeManager.hasHome(uuid, i)) {

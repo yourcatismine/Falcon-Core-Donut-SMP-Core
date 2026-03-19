@@ -242,7 +242,7 @@ public class TabListManager implements Listener {
                 currentPlayers.add(onlineUUID);
 
                 if (onlinePlayer.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
-                    if (!player.hasPermission("prism.admin.see_spectators")) {
+                    if (!player.hasPermission("falcon.see_spectators")) {
                         continue;
                     }
                 }
@@ -253,7 +253,7 @@ public class TabListManager implements Listener {
                 
                 boolean shouldShowDisguise = data.isDisguised() && 
                     (player.getUniqueId().equals(onlineUUID) ||
-                     (player == null || !player.hasPermission("prism.disguise.see")));
+                     (player == null || !player.hasPermission("falcon.disguise.see")));
                 
                 if (shouldShowDisguise) {
                     String disguiseName = data.getDisguiseName();
@@ -624,7 +624,7 @@ public class TabListManager implements Listener {
             String disguiseName = data.getDisguiseName();
             
             boolean shouldShowDisguise = (observer != null && observer.getUniqueId().equals(targetPlayer.getUniqueId())) || 
-                                       (observer == null || !observer.hasPermission("prism.disguise.see"));
+                                       (observer == null || !observer.hasPermission("falcon.disguise.see"));
             
             if (shouldShowDisguise && disguiseName != null && !disguiseName.isEmpty()) {
                 return sanitizePlayerName(disguiseName);

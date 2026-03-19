@@ -17,7 +17,7 @@ public class SmithingTableCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("prism.smithingtable")) {
+        if (!player.hasPermission("falcon.smithingtable")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

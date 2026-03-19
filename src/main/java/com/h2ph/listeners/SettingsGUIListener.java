@@ -95,7 +95,7 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 3) {
-                    if (!p.hasPermission("prismsmp.quick.auction")) {
+                    if (!p.hasPermission("falcon.quick.auction")) {
                         p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         return;
                     }

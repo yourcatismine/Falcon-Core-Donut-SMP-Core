@@ -34,7 +34,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
             return true;
         Player player = (Player) sender;
 
-        if (!player.hasPermission("prism.admin.spectator")) {
+        if (!player.hasPermission("falcon.spectator")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
@@ -53,7 +53,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
         player.setGameMode(GameMode.SPECTATOR);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
-            if (!online.hasPermission("prism.admin.spectator")) {
+            if (!online.hasPermission("falcon.spectator")) {
                 online.hidePlayer(plugin, player);
             }
         }
@@ -89,7 +89,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
 
         if (spectators.contains(joinedPlayer.getUniqueId())) {
             for (Player online : Bukkit.getOnlinePlayers()) {
-                if (!online.hasPermission("prism.admin.spectator")) {
+                if (!online.hasPermission("falcon.spectator")) {
                     online.hidePlayer(plugin, joinedPlayer);
                 }
             }
@@ -100,7 +100,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
             ((PrismSurvival) plugin).getSchedulerAdapter().runTaskLater(() -> {
                 for (UUID uuid : spectators) {
                     Player hiddenStaff = Bukkit.getPlayer(uuid);
-                    if (hiddenStaff != null && !joinedPlayer.hasPermission("prism.admin.spectator")) {
+                    if (hiddenStaff != null && !joinedPlayer.hasPermission("falcon.spectator")) {
                         joinedPlayer.hidePlayer(plugin, hiddenStaff);
                     }
                 }
@@ -112,7 +112,7 @@ public class SpectatorMode implements CommandExecutor, Listener {
                     for (UUID uuid : spectators) {
                         Player hiddenStaff = Bukkit.getPlayer(uuid);
 
-                        if (hiddenStaff != null && !joinedPlayer.hasPermission("prism.admin.spectator")) {
+                        if (hiddenStaff != null && !joinedPlayer.hasPermission("falcon.spectator")) {
                             joinedPlayer.hidePlayer(plugin, hiddenStaff);
                         }
                     }

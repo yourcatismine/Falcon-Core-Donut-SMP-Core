@@ -30,7 +30,7 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-        if (!sender.hasPermission("prism.admin.key")) {
+        if (!sender.hasPermission("falcon.admin.key")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission.");
             return true;
         }
@@ -169,7 +169,7 @@ public class KeyCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("prism.admin.key"))
+        if (!sender.hasPermission("falcon.admin.key"))
             return Collections.emptyList();
 
         if (args.length == 1) {

@@ -52,7 +52,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
         }
 
         Player p = (Player) sender;
-        String perm = "prism.hidename";
+        String perm = "falcon.hidename";
         if (!p.hasPermission(perm)) {
             return true;
         }
@@ -115,7 +115,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
 
         Player observer = (Player) evt.getSender();
 
-        if (observer.hasPermission("prism.hidename.see"))
+        if (observer.hasPermission("falcon.hidename.see"))
             return;
 
         List<String> completions = new ArrayList<>(evt.getCompletions());
@@ -155,7 +155,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
                     continue;
 
                 if (plugin.getPlayerDataManager().get(player.getUniqueId()).isNameHidden()) {
-                    if (p.hasPermission("prism.hidename.see")) {
+                    if (p.hasPermission("falcon.hidename.see")) {
                         continue;
                     }
 
@@ -196,7 +196,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
                 continue;
             }
 
-            if (online.hasPermission("prism.hidename.see")) {
+            if (online.hasPermission("falcon.hidename.see")) {
                 continue;
             }
 

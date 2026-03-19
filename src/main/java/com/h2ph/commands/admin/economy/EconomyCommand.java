@@ -30,7 +30,7 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
 
-        if (!sender.hasPermission("prismcore.admin.economy")) {
+        if (!sender.hasPermission("falcon.economy")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
@@ -217,7 +217,7 @@ public class EconomyCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
 
-        if (!sender.hasPermission("prismcore.admin.economy")) {
+        if (!sender.hasPermission("falcon.economy")) {
             return new ArrayList<>();
         }
 

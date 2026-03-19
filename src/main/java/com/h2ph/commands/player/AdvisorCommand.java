@@ -33,7 +33,7 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
 
         if (args.length > 0 && args[0].equalsIgnoreCase("admin")) {
-            if (!player.hasPermission("prism.admin.advisor")) {
+            if (!player.hasPermission("falcon.advisor")) {
                 player.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
                 return true;
             }
@@ -95,7 +95,7 @@ public class AdvisorCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             List<String> completions = new ArrayList<>();
-            if (sender.hasPermission("prism.admin.advisor")) {
+            if (sender.hasPermission("falcon.advisor")) {
                 if ("admin".startsWith(args[0].toLowerCase())) {
                     completions.add("admin");
                 }

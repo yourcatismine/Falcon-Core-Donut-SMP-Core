@@ -1,6 +1,6 @@
 interval: 60
 amount: 2
-permission: "prism.shards.passive"
+permission: "falcon.shards.passive"
 
 # Kill Reward Configuration
 kill-reward:

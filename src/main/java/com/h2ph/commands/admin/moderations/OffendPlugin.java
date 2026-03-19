@@ -146,7 +146,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("checkban")) {
-            if (!sender.hasPermission("prism.admin.checkban")) {
+            if (!sender.hasPermission("falcon.checkban")) {
                 sender.sendMessage(ChatColor.RED + "No permission.");
                 return true;
             }
@@ -205,7 +205,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
         }
 
         else if (command.getName().equalsIgnoreCase("unban")) {
-            if (!sender.hasPermission("prism.admin.unban")) {
+            if (!sender.hasPermission("falcon.unban")) {
                 sender.sendMessage(ChatColor.RED + "No permission.");
                 return true;
             }
@@ -264,7 +264,7 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
         }
 
         else if (command.getName().equalsIgnoreCase("offend")) {
-            if (!sender.hasPermission("prism.admin.offend")) {
+            if (!sender.hasPermission("falcon.offend")) {
                 sender.sendMessage(ChatColor.RED + "No permission.");
                 return true;
             }

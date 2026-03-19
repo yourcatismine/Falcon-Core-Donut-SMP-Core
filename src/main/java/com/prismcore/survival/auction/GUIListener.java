@@ -169,7 +169,7 @@ public class GUIListener
                     com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager()
                             .get(p.getUniqueId());
                     boolean quickBuy = data != null && data.isQuickAuctionBuy();
-                    boolean hasPerm = p.hasPermission("prismsmp.quick.auction");
+                    boolean hasPerm = p.hasPermission("falcon.quick.auction");
 
                     if (quickBuy && hasPerm) {
                         purchaseItem(p, ai2);

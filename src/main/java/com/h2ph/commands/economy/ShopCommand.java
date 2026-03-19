@@ -198,7 +198,7 @@ public class ShopCommand implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
-        if (args.length > 0 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("prismcore.admin.shop")) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("falcon.shop")) {
             loadConfigs();
             sender.sendMessage(ChatColor.GREEN + "Shop configuration reloaded.");
             return true;

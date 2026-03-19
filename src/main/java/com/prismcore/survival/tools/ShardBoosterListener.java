@@ -64,7 +64,7 @@ public class ShardBoosterListener implements Listener {
         data.setShardBoosterExpiry(expiryMillis);
 
         boolean inAfkRegion = plugin.getAfkManager().getRegionAt(player.getLocation()) != null;
-        if (player.hasPermission("prism.shards.passive") || inAfkRegion) {
+        if (player.hasPermission("falcon.shards.passive") || inAfkRegion) {
             data.addShards(8, "Shard Booster Reward");
         }
 

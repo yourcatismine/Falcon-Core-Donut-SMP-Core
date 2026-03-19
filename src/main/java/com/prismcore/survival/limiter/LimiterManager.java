@@ -308,7 +308,7 @@ public class LimiterManager {
         plugin.getLogger().info("[Limiter-Debug] " + msg);
         String formatted = org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8[&cLimiter-Debug&8] &7" + msg);
         for (Player p : plugin.getServer().getOnlinePlayers()) {
-            if (p.hasPermission("prismcore.limiter.debug")) {
+            if (p.hasPermission("falcon.limiter.debug")) {
                 p.sendMessage(formatted);
             }
         }

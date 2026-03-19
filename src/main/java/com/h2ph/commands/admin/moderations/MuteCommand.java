@@ -33,7 +33,7 @@ public class MuteCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
-        if (!sender.hasPermission("prismsmp.admin.mute")) {
+        if (!sender.hasPermission("falcon.mute")) {
             sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
         }

@@ -27,7 +27,7 @@ public class EnderSeeCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player))
             return true;
         Player player = (Player) sender;
-        if (!player.hasPermission("prism.admin.endersee")) {
+        if (!player.hasPermission("falcon.endersee")) {
             player.sendMessage("§cYou do not have permission to use this command.");
             return true;
         }

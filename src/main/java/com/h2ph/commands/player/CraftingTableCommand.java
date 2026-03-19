@@ -17,7 +17,7 @@ public class CraftingTableCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("prism.craftingtable")) {
+        if (!player.hasPermission("falcon.craftingtable")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

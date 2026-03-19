@@ -37,7 +37,7 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
 
         Player player = (Player) sender;
 
-        if (!player.hasPermission("prismsmp.fly")) {
+        if (!player.hasPermission("falcon.fly")) {
             return true;
         }
 

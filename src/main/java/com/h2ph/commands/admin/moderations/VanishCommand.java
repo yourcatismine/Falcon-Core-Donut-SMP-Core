@@ -36,7 +36,7 @@ public class VanishCommand implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
-        if (!player.hasPermission("prism.admin.vanish")) {
+        if (!player.hasPermission("falcon.vanish")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

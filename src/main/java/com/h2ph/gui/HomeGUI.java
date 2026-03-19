@@ -81,7 +81,7 @@ public class HomeGUI {
                 dyeSlot = DYE_START_2 + (i - 5);
             }
 
-            if (homeNumber >= 3 && !player.hasPermission("prismcore.home." + homeNumber) && !player.hasPermission("prismcore.home.all")) {
+            if (homeNumber >= 3 && !player.hasPermission("falcon.home." + homeNumber) && !player.hasPermission("falcon.home.all")) {
                 List<String> lockedLore = List.of(
                         color("&fBuy &dѕᴘʜʏɴх&f in /store for more homes"));
                 inv.setItem(bedSlot, make(Material.RED_BED,

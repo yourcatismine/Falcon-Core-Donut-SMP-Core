@@ -52,7 +52,7 @@ public class ChatFilter implements Listener {
         Player player = event.getPlayer();
         FileConfiguration config = plugin.getChatFilterConfig();
 
-        boolean hasBypass = player.hasPermission("prism.chat.bypass");
+        boolean hasBypass = player.hasPermission("falcon.chat.bypass");
 
         UUID uuid = player.getUniqueId();
 

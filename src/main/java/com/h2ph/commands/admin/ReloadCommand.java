@@ -27,7 +27,7 @@ public class ReloadCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("prism.admin.reload")) {
+        if (!sender.hasPermission("falcon.reload")) {
             sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("no permission"));
             return true;
         }

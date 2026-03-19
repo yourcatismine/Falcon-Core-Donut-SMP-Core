@@ -60,7 +60,7 @@ public class ShardsManager implements Listener {
 
         intervalSeconds = config.getInt("interval", 60);
         rewardAmount = config.getInt("amount", 1);
-        permission = config.getString("permission", "prism.shards.passive");
+        permission = config.getString("permission", "falcon.shards.passive");
 
         killRewardAmount = config.getInt("kill-reward.amount", 1);
         killRewardCooldown = config.getInt("kill-reward.cooldown", 300);

@@ -102,7 +102,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                     new net.md_5.bungee.api.chat.TextComponent(errorMsg));
             return true;
         } else if (subCommand.equals("create")) {
-            if (!sender.hasPermission("prismcore.admin.duel")) {
+            if (!sender.hasPermission("falcon.duel")) {
                 sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
                 return true;
             }
@@ -113,7 +113,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             handleCreate(sender, args[1]);
             return true;
         } else if (subCommand.equals("settings")) {
-            if (sender.hasPermission("prismcore.admin.duel")) {
+            if (sender.hasPermission("falcon.duel")) {
                 handleSettings(sender);
             } else if (sender instanceof org.bukkit.entity.Player) {
                 queueManager.openQueueGUI((org.bukkit.entity.Player) sender);
@@ -256,7 +256,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.RED + "Usage:");
         sender.sendMessage(ChatColor.RED + "/duel <player>");
         sender.sendMessage(ChatColor.RED + "/duel cancel");
-        if (sender.hasPermission("prismcore.admin.duel")) {
+        if (sender.hasPermission("falcon.duel")) {
             sender.sendMessage(ChatColor.RED + "/duel create <name>");
             sender.sendMessage(ChatColor.RED + "/duel settings");
         }
@@ -365,7 +365,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
             completions.add("accept");
             completions.add("decline");
             completions.add("leave");
-            if (sender.hasPermission("prismcore.admin.duel")) {
+            if (sender.hasPermission("falcon.duel")) {
                 completions.add("create");
                 completions.add("settings");
             }

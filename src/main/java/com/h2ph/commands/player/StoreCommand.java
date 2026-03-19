@@ -24,7 +24,7 @@ public class StoreCommand implements CommandExecutor {
 
         if (messages.isEmpty()) {
             sender.sendMessage(
-                    ChatColor.translateAlternateColorCodes('&', "&fCheck out our store: &ahttps://prismsmp.tebex.io/"));
+                    ChatColor.translateAlternateColorCodes('&', "&fCheck out our store: &ahttps://falcon.tebex.io/"));
             return true;
         }
 

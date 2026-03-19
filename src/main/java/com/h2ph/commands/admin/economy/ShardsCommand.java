@@ -30,7 +30,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
             @NotNull String[] args) {
         if (!(sender instanceof Player)) {
-            if (args.length >= 3 && sender.hasPermission("prismcore.admin.shards")) {
+            if (args.length >= 3 && sender.hasPermission("falcon.shards")) {
                 return handleAdminCommand(sender, args);
             }
             sender.sendMessage(ChatColor.RED + "Only players can check shard balances.");
@@ -60,7 +60,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             return handlePayCommand(player, args);
         }
 
-        if (sender.hasPermission("prismcore.admin.shards")) {
+        if (sender.hasPermission("falcon.shards")) {
             return handleAdminCommand(sender, args);
         }
 
@@ -519,7 +519,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             List<String> actions = new ArrayList<>();
             actions.add("pay");
 
-            if (sender.hasPermission("prismcore.admin.shards")) {
+            if (sender.hasPermission("falcon.shards")) {
                 actions.add("give");
                 actions.add("set");
                 actions.add("remove");
@@ -546,7 +546,7 @@ public class ShardsCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        if (sender.hasPermission("prismcore.admin.shards")) {
+        if (sender.hasPermission("falcon.shards")) {
             String action = args[0].toLowerCase();
             if (action.equals("give") || action.equals("set") || action.equals("remove")) {
                 if (args.length == 2) {

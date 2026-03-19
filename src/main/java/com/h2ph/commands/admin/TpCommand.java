@@ -27,7 +27,7 @@ public class TpCommand implements CommandExecutor, TabCompleter {
 
         Player p = (Player) sender;
 
-        if (!p.hasPermission("prismcore.teleport")) {
+        if (!p.hasPermission("falcon.teleport")) {
             p.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

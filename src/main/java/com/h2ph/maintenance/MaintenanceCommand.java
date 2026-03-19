@@ -16,7 +16,7 @@ public class MaintenanceCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("prismcore.maintenance")) {
+        if (!sender.hasPermission("falcon.maintenance")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

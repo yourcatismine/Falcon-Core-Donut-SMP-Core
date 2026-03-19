@@ -23,7 +23,7 @@ public class SetSpawnCommand implements TabExecutor {
             return true;
         }
         Player p = (Player) sender;
-        if (!p.hasPermission("prism.admin.setspawn")) {
+        if (!p.hasPermission("falcon.setspawn")) {
             p.sendMessage(ChatColor.RED + "You do not have permission to do that.");
             return true;
         }

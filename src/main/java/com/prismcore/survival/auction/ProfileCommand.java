@@ -28,7 +28,7 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("prism.admin.profile")) {
+        if (!sender.hasPermission("falcon.profile")) {
             sender.sendMessage(Utils.formatColors("&#ff4444You do not have permission to use this command."));
             return true;
         }
@@ -72,7 +72,7 @@ public class ProfileCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("prism.admin.profile")) {
+        if (!sender.hasPermission("falcon.profile")) {
             return Collections.emptyList();
         }
 

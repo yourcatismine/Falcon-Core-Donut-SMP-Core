@@ -71,7 +71,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return true;
         } else if (sub.equals("order")) {
             if (args.length >= 2) {
-                if (!player.hasPermission("prism.admin.orders")) {
+                if (!player.hasPermission("falcon.orders")) {
                     player.sendMessage("§cYou do not have permission to manage player orders.");
                     return true;
                 }
@@ -363,7 +363,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleWarps(Player player, String[] args) {
-        if (!player.hasPermission("prism.admin.warps")) {
+        if (!player.hasPermission("falcon.warps")) {
             player.sendMessage("§cYou do not have permission to use this command.");
             return true;
         }

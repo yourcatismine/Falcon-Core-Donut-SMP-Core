@@ -27,7 +27,7 @@ public class InvSeeCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player))
             return true;
         Player player = (Player) sender;
-        if (!player.hasPermission("prism.admin.invsee")) {
+        if (!player.hasPermission("falcon.invsee")) {
             player.sendMessage("§cYou do not have permission to use this command.");
             return true;
         }

@@ -24,7 +24,7 @@ public class TabCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("prism.admin.tab")) {
+        if (!sender.hasPermission("falcon.tab")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
@@ -136,7 +136,7 @@ public class TabCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("prism.admin.tab")) {
+        if (!sender.hasPermission("falcon.tab")) {
             return Collections.emptyList();
         }
 

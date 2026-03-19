@@ -50,7 +50,7 @@ public class VanishManager {
                 continue;
             }
 
-            if (!online.hasPermission("prism.admin.vanish.see")) {
+            if (!online.hasPermission("falcon.vanish.see")) {
                 try {
                     online.hidePlayer(plugin, player);
                 } catch (Exception e) {

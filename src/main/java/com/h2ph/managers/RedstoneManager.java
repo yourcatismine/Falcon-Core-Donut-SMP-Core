@@ -799,7 +799,7 @@ public class RedstoneManager implements Listener {
 
     private void broadcastAdmin(TextComponent message) {
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.hasPermission("prism.redstone.admin")) {
+            if (p.hasPermission("falcon.redstone")) {
                 p.spigot().sendMessage(message);
             }
         }

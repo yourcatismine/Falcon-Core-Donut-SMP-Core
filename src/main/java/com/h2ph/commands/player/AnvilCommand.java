@@ -16,7 +16,7 @@ public class AnvilCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("prism.anvil")) {
+        if (!player.hasPermission("falcon.anvil")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

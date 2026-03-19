@@ -24,7 +24,7 @@ public class RedstoneCommand implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        if (!player.hasPermission("prism.redstone.admin")) {
+        if (!player.hasPermission("falcon.redstone")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }

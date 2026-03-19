@@ -32,7 +32,7 @@ public class CheckAltCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("prism.admin.checkalt")) {
+        if (!sender.hasPermission("falcon.checkalt")) {
             if (sender instanceof Player) {
                 Player p = (Player) sender;
                 p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);

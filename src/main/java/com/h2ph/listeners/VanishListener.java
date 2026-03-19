@@ -35,7 +35,7 @@ public class VanishListener implements Listener {
                     continue;
                 }
                     
-                if (!online.hasPermission("prism.admin.vanish.see")) {
+                if (!online.hasPermission("falcon.vanish.see")) {
                     try {
                         online.hidePlayer(plugin, player);
                     } catch (Exception e) {
@@ -59,7 +59,7 @@ public class VanishListener implements Listener {
                 }
                     
                 if (vanishManager.isVanished(online.getUniqueId())) {
-                    if (!player.hasPermission("prism.admin.vanish.see")) {
+                    if (!player.hasPermission("falcon.vanish.see")) {
                         try {
                             player.hidePlayer(plugin, online);
                         } catch (Exception e) {
@@ -81,7 +81,7 @@ public class VanishListener implements Listener {
                 if (vanishManager.isVanished(vanishedPlayer.getUniqueId())) {
                     String mention = "@" + vanishedPlayer.getName();
                     if (message.toLowerCase().contains(mention.toLowerCase())) {
-                        if (!event.getPlayer().hasPermission("prism.admin.vanish.see")) {
+                        if (!event.getPlayer().hasPermission("falcon.vanish.see")) {
                             String newMessage = message.replaceAll("(?i)@" + vanishedPlayer.getName(),
                                     vanishedPlayer.getName());
                             event.setMessage(newMessage);

@@ -64,7 +64,7 @@ public class CombatListener implements Listener {
     public boolean isInCombat(Player p) {
         if (p == null)
             return false;
-        if (p.hasPermission("prism.combat.bypass") || p.hasPermission("prism.bypass.combat"))
+        if (p.hasPermission("falcon.combat.bypass") || p.hasPermission("falcon.combat.bypass"))
             return false;
         return remaining.containsKey(p.getUniqueId());
     }
@@ -305,7 +305,7 @@ public class CombatListener implements Listener {
         if (!remaining.containsKey(uuid))
             return;
 
-        if (p.hasPermission("prism.combat.bypass") || p.hasPermission("prism.bypass.combat"))
+        if (p.hasPermission("falcon.combat.bypass") || p.hasPermission("falcon.combat.bypass"))
             return;
 
         List<String> blocked = plugin.getSurvivalConfig().getStringList("combat");

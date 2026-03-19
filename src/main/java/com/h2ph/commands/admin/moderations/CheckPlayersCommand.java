@@ -26,7 +26,7 @@ public class CheckPlayersCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!sender.hasPermission("prism.admin.checkplayers")) {
+        if (!sender.hasPermission("falcon.checkplayers")) {
             sender.sendMessage(ChatColor.RED + "No permission.");
             return true;
         }

@@ -80,7 +80,7 @@ public class MaintenanceManager {
     }
 
     public boolean canBypass(Player player) {
-        return player.isOp() || player.hasPermission("prismcore.maintenance.bypass");
+        return player.isOp() || player.hasPermission("falcon.maintenance.bypass");
     }
 
     public FileConfiguration getMaintenanceConfig() {

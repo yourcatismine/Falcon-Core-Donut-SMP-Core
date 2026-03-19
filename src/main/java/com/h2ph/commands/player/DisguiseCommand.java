@@ -180,7 +180,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
         Player p = (Player) sender;
         
-        if (!p.hasPermission("prism.disguise")) {
+        if (!p.hasPermission("falcon.disguise")) {
             p.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
         }
@@ -199,21 +199,21 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 removeDisguise(p);
                 break;
             case "list":
-                if (p.hasPermission("prism.disguise.admin")) {
+                if (p.hasPermission("falcon.disguise.admin")) {
                     listDisguised(p);
                 } else {
                     p.sendMessage(ChatColor.RED + "You don't have permission to list disguised players.");
                 }
                 break;
             case "debug":
-                if (p.hasPermission("prism.disguise.admin")) {
+                if (p.hasPermission("falcon.disguise.admin")) {
                     debugDisguise(p);
                 } else {
                     p.sendMessage(ChatColor.RED + "You don't have permission to use debug.");
                 }
                 break;
             case "testskin":
-                if (p.hasPermission("prism.disguise.admin")) {
+                if (p.hasPermission("falcon.disguise.admin")) {
                     if (args.length >= 2) {
                         testSkinFetch(p, args[1]);
                     } else {
@@ -241,7 +241,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         p.sendMessage(ChatColor.GOLD + "=== Disguise Command Usage ===");
         p.sendMessage(ChatColor.YELLOW + "/disguise <playername> [skin] " + ChatColor.GRAY + "- Disguise as player");
         p.sendMessage(ChatColor.YELLOW + "/disguise off " + ChatColor.GRAY + "- Remove disguise");
-        if (p.hasPermission("prism.disguise.admin")) {
+        if (p.hasPermission("falcon.disguise.admin")) {
             p.sendMessage(ChatColor.YELLOW + "/disguise list " + ChatColor.GRAY + "- List disguised players");
             p.sendMessage(ChatColor.YELLOW + "/disguise debug " + ChatColor.GRAY + "- Show debug information");
             p.sendMessage(ChatColor.YELLOW + "/disguise testskin <player> " + ChatColor.GRAY + "- Test skin fetching");
@@ -477,7 +477,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
         Player observer = (Player) evt.getSender();
 
-        if (observer.hasPermission("prism.disguise.see"))
+        if (observer.hasPermission("falcon.disguise.see"))
             return;
 
         List<String> completions = new ArrayList<>(evt.getCompletions());
@@ -531,7 +531,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
                 com.prismcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(player.getUniqueId());
                 if (playerData.isDisguised()) {
-                    if (p.hasPermission("prism.disguise.see")) {
+                    if (p.hasPermission("falcon.disguise.see")) {
                         continue;
                     }
 
@@ -574,7 +574,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
                 continue;
             }
 
-            if (online.hasPermission("prism.disguise.see") && !online.equals(target)) {
+            if (online.hasPermission("falcon.disguise.see") && !online.equals(target)) {
                 continue; 
             }
 
@@ -886,7 +886,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         
         if (args.length == 1) {
             completions.add("off");
-            if (sender.hasPermission("prism.disguise.admin")) {
+            if (sender.hasPermission("falcon.disguise.admin")) {
                 completions.add("list");
             }
             

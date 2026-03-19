@@ -186,7 +186,7 @@ public class SusCommand implements CommandExecutor, Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!sender.hasPermission("prism.admin.sus")) {
+        if (!sender.hasPermission("falcon.sus")) {
             sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("no permission"));
             return true;
         }

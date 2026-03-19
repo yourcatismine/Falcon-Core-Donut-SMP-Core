@@ -117,7 +117,7 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
         }
 
         if (args.length > 0 && args[0].equalsIgnoreCase("admin")) {
-            if (!player.hasPermission("prism.admin.billford")) {
+            if (!player.hasPermission("falcon.billford")) {
                 openPlayerGUI(player);
                 return true;
             }
@@ -427,7 +427,7 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            if (sender.hasPermission("prism.admin.billford")) {
+            if (sender.hasPermission("falcon.billford")) {
                 List<String> completions = new ArrayList<>();
                 if ("admin".startsWith(args[0].toLowerCase())) {
                     completions.add("admin");

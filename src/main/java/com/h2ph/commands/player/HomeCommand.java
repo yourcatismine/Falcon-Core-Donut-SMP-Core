@@ -53,7 +53,7 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
             index = manager.getHomeIndexByName(player.getUniqueId(), target);
         }
 
-        if (index != null && index >= 3 && !player.hasPermission("prismcore.home." + index) && !player.hasPermission("prismcore.home.all")) {
+        if (index != null && index >= 3 && !player.hasPermission("falcon.home." + index) && !player.hasPermission("falcon.home.all")) {
             String storeMsg = HomeGUI.color("&fBuy &dѕᴘʜʏɴх&f in /store for more homes");
             player.sendMessage(storeMsg);
             player.sendActionBar(LegacyComponentSerializer.legacyAmpersand().deserialize(storeMsg));

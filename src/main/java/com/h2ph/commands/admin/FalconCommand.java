@@ -124,33 +124,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        if (sub.equals("speed")) {
-            if (args.length < 2) {
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
-
-            try {
-                float speed;
-                String speedArg = args[1].toLowerCase();
-
-                if (speedArg.equals("normal")) {
-                    speed = 0.1f;
-                } else {
-                    speed = Float.parseFloat(speedArg) / 10.0f;
-                }
-
-                if (speed > 1.0f) {
-                    speed = 1.0f;
-                } else if (speed < 0.0001f) {
-                    speed = 0.0001f;
-                }
-
-                player.setFlySpeed(speed);
-            } catch (Exception ignored) {
-            }
-            return true;
-        }
 
         if (sub.equals("tools")) {
             if (!player.hasPermission("prism.admin.tools")) {
@@ -395,7 +368,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
 
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, speed, tools, void, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, tools, void, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
         return true;
     }
@@ -457,7 +430,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
-                    .asList("auction", "order", "rtpqueue", "speed", "tools", "void", "respawngear", "limiter",
+                    .asList("auction", "order", "rtpqueue", "tools", "void", "respawngear", "limiter",
                             "crystal", "anchor", "pvpsafe", "warps")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
@@ -472,10 +445,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return plugin.getPlayerNameCache().getCompletions(args[1]);
             } else if (args[0].equalsIgnoreCase("rtpqueue")) {
                 return Arrays.asList("create", "delete").stream()
-                        .filter(s -> s.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
-            } else if (args[0].equalsIgnoreCase("speed")) {
-                return Arrays.asList("normal", "1", "2", "3", "4", "5", "1.5").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("tools")) {

@@ -139,12 +139,18 @@ commands:
   crate:
     description: Manage crates
     permission: falcon.crates
-    usage: /crate <create|edit|get|delete|effects> ...
+    usage: /crate <create|edit|get|delete|effects>
 
   spawner:
     description: Manage spawners
     permission: falcon.spawners
-    usage: /spawner give <player> <type> [amount] ...
+    usage: /spawner give <player> <type> [amount]
+    aliases: [ss]
+
+  speed:
+    description: Manage flying speed
+    permission: falcon.speed
+    usage: /speed <amount|normal>
 
   sus:
     description: Monitor suspicious activity
@@ -531,4 +537,8 @@ permissions:
 
   falcon.spawners:
     description: Permission to manage spawners via /spawner
+    default: op
+
+  falcon.speed:
+    description: Permission to manage speed via /speed
     default: op

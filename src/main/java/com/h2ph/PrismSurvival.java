@@ -259,6 +259,10 @@ public class PrismSurvival extends JavaPlugin {
         getCommand("spawner").setExecutor(spawnerCommand);
         getCommand("spawner").setTabCompleter(spawnerCommand);
 
+        com.h2ph.commands.admin.SpeedCommand speedCommand = new com.h2ph.commands.admin.SpeedCommand(this);
+        getCommand("speed").setExecutor(speedCommand);
+        getCommand("speed").setTabCompleter(speedCommand);
+
         com.h2ph.commands.admin.economy.BillfordCommand billfordCommand = new com.h2ph.commands.admin.economy.BillfordCommand(
                 this);
         getCommand("billford").setExecutor(billfordCommand);

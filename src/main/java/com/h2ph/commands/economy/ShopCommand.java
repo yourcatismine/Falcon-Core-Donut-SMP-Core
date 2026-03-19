@@ -1,6 +1,6 @@
 package com.h2ph.commands.economy;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.economy.Economy;
@@ -32,7 +32,7 @@ import java.util.*;
 
 public class ShopCommand implements CommandExecutor, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Map<String, FileConfiguration> categoryConfigs = new HashMap<>();
     private FileConfiguration mainConfig;
 
@@ -48,7 +48,7 @@ public class ShopCommand implements CommandExecutor, Listener {
     private String cachedBuyingPrefix;
     private String cachedConfirmTitle;
 
-    public ShopCommand(PrismSurvival plugin) {
+    public ShopCommand(Falcon plugin) {
         this.plugin = plugin;
         loadConfigs();
     }
@@ -569,7 +569,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             return;
         }
 
-        com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (pd == null) {
             player.sendMessage(ChatColor.RED + "Error loading your data!");
             return;
@@ -579,7 +579,7 @@ public class ShopCommand implements CommandExecutor, Listener {
         String itemName = session.displayName != null ? session.displayName : formatName(session.baseItem);
 
         if (session.currency.equals("MONEY")) {
-            if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(player, totalCost, "Shop: " + itemName)) {
+            if (!com.falconcore.survival.auction.EconomyHandler.chargePlayer(player, totalCost, "Shop: " + itemName)) {
                 player.sendMessage(ChatColor.RED + "You do not have enough money!");
                 playSound(player, Sound.ENTITY_VILLAGER_NO);
                 return;
@@ -777,7 +777,7 @@ public class ShopCommand implements CommandExecutor, Listener {
     }
 
     private void processShardPurchase(Player player, ShardPurchaseSession session) {
-        com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (pd == null) {
             player.sendMessage(ChatColor.RED + "Error loading your data!");
             playSound(player, Sound.ENTITY_VILLAGER_NO);
@@ -793,7 +793,7 @@ public class ShopCommand implements CommandExecutor, Listener {
         String itemName = !session.displayName.isEmpty() ? session.displayName : session.displayMaterial.name();
 
         if (session.currency.equals("MONEY")) {
-            if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(player, session.price,
+            if (!com.falconcore.survival.auction.EconomyHandler.chargePlayer(player, session.price,
                     "Shop: " + itemName)) {
                 String errorMsg = ChatColor.RED + "You don't have enough money!";
                 player.sendMessage(errorMsg);
@@ -846,7 +846,7 @@ public class ShopCommand implements CommandExecutor, Listener {
             } else {
                 player.sendMessage(ChatColor.RED + "Error: Item type not recognized!");
                 if (session.currency.equals("MONEY")) {
-                    com.prismcore.survival.auction.EconomyHandler.depositPlayer(player, session.price, "Shop Refund");
+                    com.falconcore.survival.auction.EconomyHandler.depositPlayer(player, session.price, "Shop Refund");
                 } else {
                     pd.setShards(pd.getShards() + session.price, "Shop Refund");
                     plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());

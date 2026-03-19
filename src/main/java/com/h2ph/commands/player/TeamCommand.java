@@ -1,10 +1,10 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.teams.Team;
 import com.h2ph.teams.TeamManager;
-import com.prismcore.survival.manager.PlayerData;
-import com.prismcore.survival.orders.Utils;
+import com.falconcore.survival.manager.PlayerData;
+import com.falconcore.survival.orders.Utils;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
 
 public class TeamCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final TeamManager teamManager;
 
-    public TeamCommand(PrismSurvival plugin) {
+    public TeamCommand(Falcon plugin) {
         this.plugin = plugin;
         this.teamManager = plugin.getTeamManager();
     }

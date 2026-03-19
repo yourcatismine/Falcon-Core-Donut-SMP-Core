@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -43,8 +43,8 @@ public class SusCommand implements CommandExecutor, Listener {
     }
 
     private void startAutoClearTask() {
-        if (plugin instanceof PrismSurvival) {
-            ((PrismSurvival) plugin).getSchedulerAdapter().runTaskTimer(() -> {
+        if (plugin instanceof Falcon) {
+            ((Falcon) plugin).getSchedulerAdapter().runTaskTimer(() -> {
                 if (!susDataMap.isEmpty()) {
                     susDataMap.clear();
                 }

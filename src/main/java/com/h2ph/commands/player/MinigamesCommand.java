@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -18,9 +18,9 @@ import java.util.List;
 
 public class MinigamesCommand implements CommandExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public MinigamesCommand(PrismSurvival plugin) {
+    public MinigamesCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

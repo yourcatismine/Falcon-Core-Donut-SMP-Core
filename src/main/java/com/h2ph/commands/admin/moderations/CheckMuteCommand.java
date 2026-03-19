@@ -1,7 +1,7 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -23,9 +23,9 @@ import java.util.UUID;
 
 public class CheckMuteCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public CheckMuteCommand(PrismSurvival plugin) {
+    public CheckMuteCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -62,7 +62,7 @@ public class CheckMuteCommand implements CommandExecutor, TabCompleter {
                 displayName = offlinePlayer.getName() != null ? offlinePlayer.getName() : targetName;
             }
 
-            com.prismcore.survival.manager.DatabaseManager.MuteInfo muteInfo = plugin.getDatabaseManager()
+            com.falconcore.survival.manager.DatabaseManager.MuteInfo muteInfo = plugin.getDatabaseManager()
                     .getMuteInfo(targetUUID);
             PlayerData data = plugin.getPlayerDataManager().loadPlayer(targetUUID);
 

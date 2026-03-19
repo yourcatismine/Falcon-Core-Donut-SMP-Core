@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,9 +14,9 @@ import java.time.format.DateTimeFormatter;
 
 public class CommandLogListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public CommandLogListener(PrismSurvival plugin) {
+    public CommandLogListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

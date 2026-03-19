@@ -1,7 +1,7 @@
 package com.h2ph.teams;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.sell.database.DatabaseManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.sell.database.DatabaseManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -35,13 +35,13 @@ public class TeamManager {
         }
     }
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DatabaseManager dbManager;
     private final Map<String, Team> teamCache = new ConcurrentHashMap<>();
 
-    public TeamManager(PrismSurvival plugin) {
+    public TeamManager(Falcon plugin) {
         this.plugin = plugin;
-        this.dbManager = plugin.getPrismSell().getDatabaseManager();
+        this.dbManager = plugin.getFalconSell().getDatabaseManager();
     }
 
     public Team createTeam(String name, UUID ownerUuid) {
@@ -111,7 +111,7 @@ public class TeamManager {
     public Team getPlayerTeam(UUID uuid) {
         if (uuid == null)
             return null;
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(uuid);
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(uuid);
         if (data == null || data.getTeamId() == null)
             return null;
         return getTeam(data.getTeamId());
@@ -169,7 +169,7 @@ public class TeamManager {
         teamCache.remove(teamId);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
             if (data != null && teamId.equals(data.getTeamId())) {
                 syncTeamId(online.getUniqueId(), null, null);
                 plugin.getScoreboardManager().reloadScoreboard(online);
@@ -199,7 +199,7 @@ public class TeamManager {
                 if (teamToDisband != null) {
                     teamCache.put(teamId, teamToDisband);
                     for (Player online : Bukkit.getOnlinePlayers()) {
-                        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
+                        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
                         if (data != null && data.getTeamId() == null) {
                             java.util.Set<UUID> memberUuids = getTeamMemberUuids(teamId);
                             if (memberUuids.contains(online.getUniqueId())) {
@@ -244,7 +244,7 @@ public class TeamManager {
     }
 
     public void removeMember(String teamId, UUID memberUuid) {
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(memberUuid);
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(memberUuid);
         String previousTeamId = data != null ? data.getTeamId() : null;
         String previousRole = data != null ? data.getTeamRole() : null;
         
@@ -274,7 +274,7 @@ public class TeamManager {
     }
 
     public void syncTeamId(UUID uuid, String teamId, String role) {
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(uuid);
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(uuid);
         if (data != null) {
             data.setTeamId(teamId);
             data.setTeamRole(role);
@@ -323,7 +323,7 @@ public class TeamManager {
                                     name = "Unknown";
 
                                 double money = 0;
-                                com.prismcore.survival.manager.PlayerData pData = plugin.getPlayerDataManager()
+                                com.falconcore.survival.manager.PlayerData pData = plugin.getPlayerDataManager()
                                         .get(uuid);
                                 if (pData != null) {
                                     money = pData.getMoney();

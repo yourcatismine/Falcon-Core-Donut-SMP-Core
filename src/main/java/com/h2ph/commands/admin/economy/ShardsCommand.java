@@ -1,7 +1,7 @@
 package com.h2ph.commands.admin.economy;
 
-import com.prismcore.survival.manager.PlayerData;
-import com.h2ph.PrismSurvival;
+import com.falconcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -20,9 +20,9 @@ import java.util.stream.Collectors;
 
 public class ShardsCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public ShardsCommand(PrismSurvival plugin) {
+    public ShardsCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

@@ -1,15 +1,15 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 public class LiveCommandListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public LiveCommandListener(PrismSurvival plugin) {
+    public LiveCommandListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

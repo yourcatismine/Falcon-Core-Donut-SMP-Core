@@ -1,8 +1,8 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.managers.VanishManager;
-import com.prismcore.survival.manager.PlayerData;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,9 +15,9 @@ import java.util.UUID;
 
 public class VanishListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public VanishListener(PrismSurvival plugin) {
+    public VanishListener(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -90,7 +90,7 @@ public class VanishListener implements Listener {
                 }
             }
 
-            com.prismcore.survival.manager.PlayerData senderData = plugin.getPlayerDataManager()
+            com.falconcore.survival.manager.PlayerData senderData = plugin.getPlayerDataManager()
                     .get(event.getPlayer().getUniqueId());
             if (senderData != null) {
                 for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
@@ -98,7 +98,7 @@ public class VanishListener implements Listener {
                     String mention = "@" + onlinePlayer.getName();
                     
                     if (message.toLowerCase().contains(mention.toLowerCase())) {
-                        com.prismcore.survival.manager.PlayerData mentionedPlayerData = plugin.getPlayerDataManager()
+                        com.falconcore.survival.manager.PlayerData mentionedPlayerData = plugin.getPlayerDataManager()
                                 .get(mentionedPlayerUuid);
                         if (mentionedPlayerData != null && mentionedPlayerData.isIgnoring(event.getPlayer().getUniqueId())) {
                             String newMessage = message.replaceAll("(?i)@" + onlinePlayer.getName(),

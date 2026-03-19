@@ -67,12 +67,12 @@ public class TpaDenyCommand implements CommandExecutor, TabCompleter {
         org.bukkit.OfflinePlayer senderPlayerObj = org.bukkit.Bukkit.getOfflinePlayer(request.getSender());
         String senderNameObj = (senderPlayerObj.getName() != null) ? senderPlayerObj.getName() : "Unknown";
 
-        com.prismcore.survival.manager.PlayerData acceptorPD = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData acceptorPD = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(p.getUniqueId());
         if (acceptorPD != null) {
             acceptorPD.addHistory(
                     dateTime + " - TPA Deny\nYou denied " + senderNameObj + "'s " + typeLogStr + " request");
-            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(p.getUniqueId());
+            com.h2ph.Falcon.getInstance().getPlayerDataManager().savePlayerAsync(p.getUniqueId());
         }
 
         org.bukkit.OfflinePlayer senderPlayer = org.bukkit.Bukkit.getOfflinePlayer(request.getSender());

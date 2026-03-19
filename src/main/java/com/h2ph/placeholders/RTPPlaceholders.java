@@ -1,22 +1,22 @@
 package com.h2ph.placeholders;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 public class RTPPlaceholders extends PlaceholderExpansion {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public RTPPlaceholders(PrismSurvival plugin) {
+    public RTPPlaceholders(Falcon plugin) {
         this.plugin = plugin;
     }
 
     @Override
     @NotNull
     public String getIdentifier() {
-        return "prismsmp";
+        return "falconsmp";
     }
 
     @Override

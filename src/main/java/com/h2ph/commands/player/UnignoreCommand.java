@@ -1,7 +1,7 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -21,9 +21,9 @@ import java.util.UUID;
 
 public class UnignoreCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public UnignoreCommand(PrismSurvival plugin) {
+    public UnignoreCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

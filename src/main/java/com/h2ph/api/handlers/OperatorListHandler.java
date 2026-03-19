@@ -1,6 +1,6 @@
 package com.h2ph.api.handlers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 
 public class OperatorListHandler implements HttpHandler {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public OperatorListHandler(PrismSurvival plugin) {
+    public OperatorListHandler(Falcon plugin) {
         this.plugin = plugin;
     }
 

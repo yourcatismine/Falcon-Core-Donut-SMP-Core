@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -9,9 +9,9 @@ import org.bukkit.entity.Player;
 
 public class RedstoneCommand implements CommandExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public RedstoneCommand(PrismSurvival plugin) {
+    public RedstoneCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

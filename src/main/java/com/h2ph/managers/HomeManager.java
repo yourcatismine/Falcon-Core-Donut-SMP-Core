@@ -1,6 +1,6 @@
 package com.h2ph.managers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -19,18 +19,18 @@ import java.util.logging.Level;
  */
 public class HomeManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
     private final Map<UUID, Map<Integer, HomeEntry>> cache = new ConcurrentHashMap<>();
 
     private final Map<UUID, Integer> renamingPlayers = new ConcurrentHashMap<>();
 
-    public HomeManager(PrismSurvival plugin) {
+    public HomeManager(Falcon plugin) {
         this.plugin = plugin;
     }
 
     private Connection getConnection() throws SQLException {
-        return plugin.getPrismSell().getDatabaseManager().getConnection();
+        return plugin.getFalconSell().getDatabaseManager().getConnection();
     }
 
     public Map<Integer, HomeEntry> loadHomes(UUID uuid) {

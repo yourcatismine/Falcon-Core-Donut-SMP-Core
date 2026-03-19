@@ -1,6 +1,6 @@
 name: Falcon
 version: "5.0.0"
-main: com.h2ph.PrismSurvival
+main: com.h2ph.Falcon
 api-version: "1.21"
 author: h2ph
 folia-supported: true
@@ -204,11 +204,11 @@ commands:
     permission: falcon.duel.use
     permission-message: You do not have permission to use this command.
 
-  prismreload:
+  falconreload:
     description: Reload all plugin configurations
     permission: falcon.reload
     aliases: [preload]
-    usage: /prismreload
+    usage: /falconreload
 
   mute:
     description: Mute a player for a certain duration

@@ -1,6 +1,6 @@
 package com.h2ph.api.handlers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.utils.LuckPermsUtils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 
 public class PlayerListHandler implements HttpHandler {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public PlayerListHandler(PrismSurvival plugin) {
+    public PlayerListHandler(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -191,7 +191,7 @@ public class PlayerListHandler implements HttpHandler {
 
     private double getShards(OfflinePlayer p) {
         try {
-            com.prismcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(p.getUniqueId());
+            com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(p.getUniqueId());
             return pd != null ? pd.getShards() : 0;
         } catch (Exception e) {
             return 0;

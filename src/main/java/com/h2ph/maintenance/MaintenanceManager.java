@@ -1,6 +1,6 @@
 package com.h2ph.maintenance;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -12,12 +12,12 @@ import java.util.List;
 
 public class MaintenanceManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private boolean maintenanceEnabled;
     private File dataFile;
     private FileConfiguration dataConfig;
 
-    public MaintenanceManager(PrismSurvival plugin) {
+    public MaintenanceManager(Falcon plugin) {
         this.plugin = plugin;
         this.dataFile = new File(plugin.getDataFolder(), "maintenance/data.yml");
 

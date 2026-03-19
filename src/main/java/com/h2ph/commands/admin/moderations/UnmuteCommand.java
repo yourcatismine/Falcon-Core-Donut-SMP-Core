@@ -1,7 +1,7 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 
 public class UnmuteCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public UnmuteCommand(PrismSurvival plugin) {
+    public UnmuteCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

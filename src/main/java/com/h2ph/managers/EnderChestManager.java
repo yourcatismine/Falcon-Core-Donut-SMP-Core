@@ -4,7 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockAction;
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -36,18 +36,18 @@ import java.util.logging.Level;
  */
 public class EnderChestManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
     private final Map<Location, Set<UUID>> blockViewers = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<UUID, org.bukkit.inventory.Inventory> activeInventories = new ConcurrentHashMap<>();
 
-    public EnderChestManager(PrismSurvival plugin) {
+    public EnderChestManager(Falcon plugin) {
         this.plugin = plugin;
     }
 
     private Connection getConnection() throws SQLException {
-        return plugin.getPrismSell().getDatabaseManager().getConnection();
+        return plugin.getFalconSell().getDatabaseManager().getConnection();
     }
 
     public Map<UUID, org.bukkit.inventory.Inventory> getActiveInventories() {

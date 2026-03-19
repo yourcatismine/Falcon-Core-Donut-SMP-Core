@@ -1,8 +1,8 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.BountyConfirmGUI;
-import com.prismcore.survival.manager.PlayerData;
+import com.falconcore.survival.manager.PlayerData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -19,10 +19,10 @@ import java.util.UUID;
 
 public class BountyConfirmGUIListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final DecimalFormat DF = new DecimalFormat("#.#");
 
-    public BountyConfirmGUIListener(PrismSurvival plugin) {
+    public BountyConfirmGUIListener(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -50,7 +50,7 @@ public class BountyConfirmGUIListener implements Listener {
     }
 
     private void executeBountyAdd(Player sender, UUID targetId, String targetName, double amount) {
-        if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(sender, amount, "Bounty on " + targetName)) {
+        if (!com.falconcore.survival.auction.EconomyHandler.chargePlayer(sender, amount, "Bounty on " + targetName)) {
             sender.sendMessage(ChatColor.RED + "You do not have enough money.");
             return;
         }

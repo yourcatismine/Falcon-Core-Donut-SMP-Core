@@ -1,7 +1,7 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.DatabaseManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.DatabaseManager;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -24,9 +24,9 @@ import java.sql.SQLException;
 
 public class CheckAltCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public CheckAltCommand(PrismSurvival plugin) {
+    public CheckAltCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

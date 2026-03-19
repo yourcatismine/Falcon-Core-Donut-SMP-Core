@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -17,9 +17,9 @@ import java.util.List;
 
 public class AdvisorCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public AdvisorCommand(PrismSurvival plugin) {
+    public AdvisorCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

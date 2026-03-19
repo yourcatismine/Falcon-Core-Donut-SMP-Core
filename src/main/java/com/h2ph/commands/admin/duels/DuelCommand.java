@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -31,13 +31,13 @@ import java.util.stream.Collectors;
 
 public class DuelCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DuelRequestManager requestManager;
     private final DuelArenaManager arenaManager;
     private final DuelStatsManager statsManager;
     private final DuelQueueManager queueManager;
 
-    public DuelCommand(PrismSurvival plugin, DuelArenaManager arenaManager) {
+    public DuelCommand(Falcon plugin, DuelArenaManager arenaManager) {
         this.plugin = plugin;
         this.arenaManager = arenaManager;
         this.requestManager = new DuelRequestManager(plugin, arenaManager);
@@ -178,7 +178,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            com.prismcore.survival.manager.PlayerData targetData = plugin.getPlayerDataManager()
+            com.falconcore.survival.manager.PlayerData targetData = plugin.getPlayerDataManager()
                     .get(target.getUniqueId());
             if (targetData != null && !targetData.isDuelRequests()) {
                 String errorMsg = ChatColor.translateAlternateColorCodes('&', "&cUser disabled duel requests.");

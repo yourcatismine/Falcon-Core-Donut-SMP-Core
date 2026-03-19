@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerEditBookEvent;
@@ -16,9 +16,9 @@ import org.bukkit.metadata.MetadataValue;
 import java.util.List;
 
 public class UpdateBookListener implements Listener {
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public UpdateBookListener(PrismSurvival plugin) {
+    public UpdateBookListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

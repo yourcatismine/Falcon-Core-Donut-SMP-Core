@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.EnderChestGUI;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -21,9 +21,9 @@ import java.util.UUID;
 
 public class EnderChestGUIListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public EnderChestGUIListener(PrismSurvival plugin) {
+    public EnderChestGUIListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

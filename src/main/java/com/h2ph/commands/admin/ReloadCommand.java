@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -8,9 +8,9 @@ import org.bukkit.command.CommandSender;
 
 public class ReloadCommand implements CommandExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public ReloadCommand(PrismSurvival plugin) {
+    public ReloadCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -102,8 +102,8 @@ public class ReloadCommand implements CommandExecutor {
                 plugin.getToolsManager().reloadConfig();
             }
 
-            if (plugin.getPrismSell() != null) {
-                plugin.getPrismSell().reloadConfig();
+            if (plugin.getFalconSell() != null) {
+                plugin.getFalconSell().reloadConfig();
             }
 
             if (plugin.getOrdersModule() != null && plugin.getOrdersModule().cfg() != null) {
@@ -130,12 +130,12 @@ public class ReloadCommand implements CommandExecutor {
             long time = System.currentTimeMillis() - start;
 
             sender.sendMessage("");
-            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("prism") + " " + ChatColor.GREEN
+            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("falcon") + " " + ChatColor.GREEN
                     + toSmallCaps("reloaded successfully") + ChatColor.GRAY + " (" + time + "ms)");
             sender.sendMessage("");
 
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("prism") + " " + ChatColor.RED
+            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("falcon") + " " + ChatColor.RED
                     + toSmallCaps("reload failed (check console)"));
             e.printStackTrace();
         }

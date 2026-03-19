@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.WorthGUI;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -12,9 +12,9 @@ import org.bukkit.inventory.ItemStack;
 
 public class WorthGUIListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public WorthGUIListener(PrismSurvival plugin) {
+    public WorthGUIListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

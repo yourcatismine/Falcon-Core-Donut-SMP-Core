@@ -35,8 +35,8 @@ public class SettingsGUIListener implements Listener {
                 int slot = e.getSlot();
 
                 if (slot == 0) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isHideChat();
                         data.setHideChat(newState);
@@ -55,8 +55,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 1) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isPrivateMessages();
                         data.setPrivateMessages(newState);
@@ -75,8 +75,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 2) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isPayAlerts();
                         data.setPayAlerts(newState);
@@ -100,8 +100,8 @@ public class SettingsGUIListener implements Listener {
                         return;
                     }
 
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isQuickAuctionBuy();
                         data.setQuickAuctionBuy(newState);
@@ -118,8 +118,8 @@ public class SettingsGUIListener implements Listener {
                     }
                 }
                 if (slot == 4) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isDisableMobSpawns();
                         data.setDisableMobSpawns(newState);
@@ -137,8 +137,8 @@ public class SettingsGUIListener implements Listener {
                     }
                 }
                 if (slot == 5) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isSoundNotifications();
                         data.setSoundNotifications(newState);
@@ -156,8 +156,8 @@ public class SettingsGUIListener implements Listener {
                     }
                 }
                 if (slot == 6) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isTpaConfirmMenus();
                         data.setTpaConfirmMenus(newState);
@@ -175,8 +175,8 @@ public class SettingsGUIListener implements Listener {
                     }
                 }
                 if (slot == 7) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isDuelRequests();
                         data.setDuelRequests(newState);
@@ -195,8 +195,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 8) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isTpaRequests();
                         data.setTpaRequests(newState);
@@ -215,8 +215,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 9) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isTpaHereRequests();
                         data.setTpaHereRequests(newState);
@@ -235,8 +235,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 10) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isPayments();
                         data.setPayments(newState);
@@ -255,8 +255,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 11) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isShardsNotifier();
                         data.setShardsNotifier(newState);
@@ -275,8 +275,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 12) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isShowScoreboard();
                         data.setShowScoreboard(newState);
@@ -301,8 +301,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 13) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isFastCrystals();
                         data.setFastCrystals(newState);
@@ -321,8 +321,8 @@ public class SettingsGUIListener implements Listener {
                 }
 
                 if (slot == 14) {
-                    com.h2ph.PrismSurvival plugin = com.h2ph.PrismSurvival.getInstance();
-                    com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                    com.h2ph.Falcon plugin = com.h2ph.Falcon.getInstance();
+                    com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
                     if (data != null) {
                         boolean newState = !data.isRespawnRTP();
                         data.setRespawnRTP(newState);

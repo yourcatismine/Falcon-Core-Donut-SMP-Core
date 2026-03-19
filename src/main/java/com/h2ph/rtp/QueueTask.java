@@ -1,18 +1,18 @@
 package com.h2ph.rtp;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 public class QueueTask implements Runnable {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Player player;
     private final RTPQueueManager.RTPQueueRegion region;
     private org.bukkit.scheduler.BukkitTask task;
 
-    public QueueTask(PrismSurvival plugin, Player player, RTPQueueManager.RTPQueueRegion region) {
+    public QueueTask(Falcon plugin, Player player, RTPQueueManager.RTPQueueRegion region) {
         this.plugin = plugin;
         this.player = player;
         this.region = region;

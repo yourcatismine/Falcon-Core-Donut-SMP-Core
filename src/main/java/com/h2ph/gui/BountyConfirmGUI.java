@@ -1,6 +1,6 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -17,9 +17,9 @@ import java.util.UUID;
 
 public class BountyConfirmGUI {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public BountyConfirmGUI(PrismSurvival plugin) {
+    public BountyConfirmGUI(Falcon plugin) {
         this.plugin = plugin;
     }
 

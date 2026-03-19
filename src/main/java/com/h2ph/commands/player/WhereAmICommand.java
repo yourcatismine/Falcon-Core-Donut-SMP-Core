@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -17,9 +17,9 @@ import java.util.List;
 
 public class WhereAmICommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public WhereAmICommand(PrismSurvival plugin) {
+    public WhereAmICommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

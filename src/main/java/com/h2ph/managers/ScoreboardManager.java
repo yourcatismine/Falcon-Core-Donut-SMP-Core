@@ -8,7 +8,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUp
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTeams;
 import com.github.retrooper.packetevents.protocol.score.ScoreFormat;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 public class ScoreboardManager implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private FileConfiguration config;
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
     private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
@@ -45,7 +45,7 @@ public class ScoreboardManager implements Listener {
     private long lastSwitcherUpdate = 0;
     private int currentSwitcherIndex = 0;
 
-    public ScoreboardManager(PrismSurvival plugin) {
+    public ScoreboardManager(Falcon plugin) {
         this.plugin = plugin;
         loadConfig();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -87,7 +87,7 @@ public class ScoreboardManager implements Listener {
         if (!config.getBoolean("SCOREBOARD.ENABLED", true))
             return;
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null && !data.isShowScoreboard()) {
             return;
         }
@@ -105,7 +105,7 @@ public class ScoreboardManager implements Listener {
             WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
                     entry,
                     WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
-                    "PrismCore",
+                    "FalconCore",
                     Optional.empty());
             user.sendPacket(removeScorePacket);
 
@@ -125,7 +125,7 @@ public class ScoreboardManager implements Listener {
         }
 
         WrapperPlayServerScoreboardObjective removePacket = new WrapperPlayServerScoreboardObjective(
-                "PrismCore",
+                "FalconCore",
                 WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
                 Component.empty(),
                 WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
@@ -187,7 +187,7 @@ public class ScoreboardManager implements Listener {
             WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
                     entry,
                     WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
-                    "PrismCore",
+                    "FalconCore",
                     Optional.empty());
             user.sendPacket(removeScorePacket);
 
@@ -200,7 +200,7 @@ public class ScoreboardManager implements Listener {
         }
 
         WrapperPlayServerScoreboardObjective removePacket = new WrapperPlayServerScoreboardObjective(
-                "PrismCore",
+                "FalconCore",
                 WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
                 Component.empty(),
                 WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
@@ -215,7 +215,7 @@ public class ScoreboardManager implements Listener {
         if (!config.getBoolean("SCOREBOARD.ENABLED", true))
             return;
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null && !data.isShowScoreboard()) {
             return;
         }
@@ -227,11 +227,11 @@ public class ScoreboardManager implements Listener {
         titleIndexMap.put(player.getUniqueId(), 0);
 
         List<String> titles = config.getStringList("SCOREBOARD.TITLE");
-        String title = titles.isEmpty() ? "PrismSMP" : color(titles.get(0));
+        String title = titles.isEmpty() ? "FalconSMP" : color(titles.get(0));
         Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
 
         WrapperPlayServerScoreboardObjective objectivePacket = new WrapperPlayServerScoreboardObjective(
-                "PrismCore",
+                "FalconCore",
                 WrapperPlayServerScoreboardObjective.ObjectiveMode.CREATE,
                 titleComp,
                 WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
@@ -240,7 +240,7 @@ public class ScoreboardManager implements Listener {
 
         WrapperPlayServerDisplayScoreboard displayPacket = new WrapperPlayServerDisplayScoreboard(
                 1,
-                "PrismCore");
+                "FalconCore");
         user.sendPacket(displayPacket);
 
         List<String> lines = buildLines(player);
@@ -260,7 +260,7 @@ public class ScoreboardManager implements Listener {
         if (!config.getBoolean("SCOREBOARD.ENABLED", true))
             return;
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null && !data.isShowScoreboard()) {
             return;
         }
@@ -289,7 +289,7 @@ public class ScoreboardManager implements Listener {
                 Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
 
                 WrapperPlayServerScoreboardObjective updateTitlePacket = new WrapperPlayServerScoreboardObjective(
-                        "PrismCore",
+                        "FalconCore",
                         WrapperPlayServerScoreboardObjective.ObjectiveMode.UPDATE,
                         titleComp,
                         WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
@@ -367,7 +367,7 @@ public class ScoreboardManager implements Listener {
             WrapperPlayServerUpdateScore scorePacket = new WrapperPlayServerUpdateScore(
                     entry,
                     WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
-                    "PrismCore",
+                    "FalconCore",
                     Optional.of(score));
             user.sendPacket(scorePacket);
 
@@ -378,7 +378,7 @@ public class ScoreboardManager implements Listener {
     private List<String> buildLines(Player player) {
         List<String> lines = new ArrayList<>(config.getStringList("SCOREBOARD.LINES"));
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null) {
             int playtimeIndex = -1;
             for (int i = 0; i < lines.size(); i++) {
@@ -447,7 +447,7 @@ public class ScoreboardManager implements Listener {
             WrapperPlayServerUpdateScore scorePacket = new WrapperPlayServerUpdateScore(
                     entry,
                     WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
-                    "PrismCore",
+                    "FalconCore",
                     Optional.of(score));
             user.sendPacket(scorePacket);
 
@@ -463,7 +463,7 @@ public class ScoreboardManager implements Listener {
             WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
                     entry,
                     WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
-                    "PrismCore",
+                    "FalconCore",
                     Optional.empty());
             user.sendPacket(removeScorePacket);
 
@@ -530,7 +530,7 @@ public class ScoreboardManager implements Listener {
         }
 
         if (text.contains("%team_name%")) {
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             if (data != null && data.getTeamId() != null) {
                 com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(data.getTeamId());
                 if (team != null) {

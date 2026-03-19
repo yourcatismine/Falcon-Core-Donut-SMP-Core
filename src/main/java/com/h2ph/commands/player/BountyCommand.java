@@ -1,7 +1,7 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import com.h2ph.gui.BountyGUI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -24,10 +24,10 @@ import java.util.UUID;
 
 public class BountyCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final DecimalFormat DF = new DecimalFormat("#.#");
 
-    public BountyCommand(PrismSurvival plugin) {
+    public BountyCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

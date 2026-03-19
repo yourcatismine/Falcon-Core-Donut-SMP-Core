@@ -1,7 +1,7 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.SpawnManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.SpawnManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.TabExecutor;
@@ -10,9 +10,9 @@ import org.bukkit.entity.Player;
 
 public class SetSpawnCommand implements TabExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public SetSpawnCommand(PrismSurvival plugin) {
+    public SetSpawnCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

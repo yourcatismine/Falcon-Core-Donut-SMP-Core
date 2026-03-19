@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.utils.StringUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -27,7 +27,7 @@ public class AnnounceCommand implements CommandExecutor, TabCompleter {
 
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
 
-    public AnnounceCommand(PrismSurvival plugin) {
+    public AnnounceCommand(Falcon plugin) {
     }
 
     @Override

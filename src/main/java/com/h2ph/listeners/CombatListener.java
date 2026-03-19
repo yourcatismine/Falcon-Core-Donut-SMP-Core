@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CombatListener implements Listener {
 
     private static CombatListener instance;
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Map<UUID, org.bukkit.scheduler.BukkitTask> tasks = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> remaining = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> explosiveEntityOwners = new ConcurrentHashMap<>();
@@ -46,7 +46,7 @@ public class CombatListener implements Listener {
     private static final long EXPLOSION_TRACK_MILLIS = 4_000;
     private static final double EXPLOSION_SEARCH_RADIUS_SQ = 64.0;
 
-    public CombatListener(PrismSurvival plugin) {
+    public CombatListener(Falcon plugin) {
         this.plugin = plugin;
         instance = this;
     }

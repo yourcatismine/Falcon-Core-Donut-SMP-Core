@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.InvSeeGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -17,9 +17,9 @@ import java.util.UUID;
 
 public class InvSeeListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public InvSeeListener(PrismSurvival plugin) {
+    public InvSeeListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

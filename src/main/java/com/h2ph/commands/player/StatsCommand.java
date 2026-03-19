@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 
 public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public StatsCommand(PrismSurvival plugin) {
+    public StatsCommand(Falcon plugin) {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -85,7 +85,7 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
                     }
 
                     try {
-                        com.prismcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager()
+                        com.falconcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager()
                                 .get(check.getUniqueId());
                         if (corePd != null) {
                             shards = (long) corePd.getShards();
@@ -95,8 +95,8 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
                     }
 
                     try {
-                        if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
-                            com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell()
+                        if (plugin.getFalconSell() != null && plugin.getFalconSell().getPlayerDataManager() != null) {
+                            com.falconcore.survival.sell.data.PlayerData sellPd = plugin.getFalconSell()
                                     .getPlayerDataManager()
                                     .getPlayerData(check.getUniqueId());
                             if (sellPd != null) {
@@ -145,7 +145,7 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
         }
 
         try {
-            com.prismcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager().get(target.getUniqueId());
+            com.falconcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager().get(target.getUniqueId());
             if (corePd != null) {
                 shards = (long) corePd.getShards();
                 spent = corePd.getShopSpent();
@@ -154,8 +154,8 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
         }
 
         try {
-            if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
-                com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell().getPlayerDataManager()
+            if (plugin.getFalconSell() != null && plugin.getFalconSell().getPlayerDataManager() != null) {
+                com.falconcore.survival.sell.data.PlayerData sellPd = plugin.getFalconSell().getPlayerDataManager()
                         .getPlayerData(target.getUniqueId());
                 if (sellPd != null) {
                     kills = sellPd.getKills();

@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -18,9 +18,9 @@ import java.util.List;
 public class SettingsCommand implements CommandExecutor {
 
     public static final String GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&8ѕᴇᴛᴛɪɴɢѕ");
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public SettingsCommand(PrismSurvival plugin) {
+    public SettingsCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -46,7 +46,7 @@ public class SettingsCommand implements CommandExecutor {
     private void openSettingsGUI(Player player) {
         Inventory gui = Bukkit.createInventory(new SettingsHolder(), 27, GUI_TITLE);
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         boolean hideChat = data != null && data.isHideChat();
         String hideChatStatus = hideChat ? "&a&lON" : "&4&lOFF";
 
@@ -161,7 +161,7 @@ public class SettingsCommand implements CommandExecutor {
         return item;
     }
 
-    private ItemStack createAuctionItem(Player player, com.prismcore.survival.manager.PlayerData data) {
+    private ItemStack createAuctionItem(Player player, com.falconcore.survival.manager.PlayerData data) {
         ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {

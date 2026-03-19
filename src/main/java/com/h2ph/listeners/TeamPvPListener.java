@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.teams.Team;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
@@ -14,9 +14,9 @@ import org.bukkit.projectiles.ProjectileSource;
 
 public class TeamPvPListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public TeamPvPListener(PrismSurvival plugin) {
+    public TeamPvPListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

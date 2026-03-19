@@ -2,19 +2,19 @@ INTERVAL: 60 #Switcher
 
 SCOREBOARD:
   ENABLED: true
-  SHARD-BOOSTER: "&#A303F9⚡ &fBooster &#A303F9%prismcore_shard_booster%"
-  SWITCHER: ["&#F97603☠ &fDeaths &#F97603%prismcore_deaths%", "&#FC0000🗡 &fKills &#FC0000%prismcore_kills%"]
+  SHARD-BOOSTER: "&#A303F9⚡ &fBooster &#A303F9%falconcore_shard_booster%"
+  SWITCHER: ["&#F97603☠ &fDeaths &#F97603%falconcore_deaths%", "&#FC0000🗡 &fKills &#FC0000%falconcore_kills%"]
   TEAMS: "&#5729DD🪓 &fTeam %team_name%"
   TITLE:
     - "&d&lᴠᴀʟᴇѕᴍᴘ"
   LINES:
     - ""
     - "&c🔥 &c{gamertag} &7(&d{region_ping}ms&7)"
-    - "&e&l$ &fBucks &e%prismcore_balance%"
-    - "&5⭐ &fCards &5%prismcore_shards%"
+    - "&e&l$ &fBucks &e%falconcore_balance%"
+    - "&5⭐ &fCards &5%falconcore_shards%"
     - "{switcher}"
-    - "&#B300FF☄ &fKeyall &#B300FF%prismcore_keyall%"
-    - "&#FF00CF⌚ &fPlaytime &#FF00CF%prismcore_playtime%"
+    - "&#B300FF☄ &fKeyall &#B300FF%falconcore_keyall%"
+    - "&#FF00CF⌚ &fPlaytime &#FF00CF%falconcore_playtime%"
     - ""
 
 TAB:

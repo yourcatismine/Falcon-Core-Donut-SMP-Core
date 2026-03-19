@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,9 +12,9 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class SpawnListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public SpawnListener(PrismSurvival plugin) {
+    public SpawnListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

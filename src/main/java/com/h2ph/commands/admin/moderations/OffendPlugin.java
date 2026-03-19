@@ -1,8 +1,8 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.listeners.BanListener;
-import com.prismcore.survival.manager.DatabaseManager;
+import com.falconcore.survival.manager.DatabaseManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -33,11 +33,11 @@ import com.google.gson.JsonObject;
 
 public class OffendPlugin implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private DatabaseManager dbManager;
     private FileConfiguration offendConfig;
 
-    public OffendPlugin(PrismSurvival plugin) {
+    public OffendPlugin(Falcon plugin) {
         this.plugin = plugin;
 
         try {
@@ -544,23 +544,23 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
 
-                com.prismcore.survival.manager.PlayerData mainPd = plugin.getPlayerDataManager().get(uuid);
+                com.falconcore.survival.manager.PlayerData mainPd = plugin.getPlayerDataManager().get(uuid);
                 if (mainPd != null) {
                     mainPd.setShardBoosterExpiry(0);
                 }
                 plugin.getPlayerDataManager().unload(uuid);
 
-                if (plugin.getPrismSell() != null && plugin.getPrismSell().getPlayerDataManager() != null) {
-                    com.prismcore.survival.sell.data.PlayerData sellPd = plugin.getPrismSell().getPlayerDataManager()
+                if (plugin.getFalconSell() != null && plugin.getFalconSell().getPlayerDataManager() != null) {
+                    com.falconcore.survival.sell.data.PlayerData sellPd = plugin.getFalconSell().getPlayerDataManager()
                             .getPlayerData(uuid);
                     if (sellPd != null) {
-                        for (com.prismcore.survival.sell.category.Category cat : com.prismcore.survival.sell.category.Category
+                        for (com.falconcore.survival.sell.category.Category cat : com.falconcore.survival.sell.category.Category
                                 .values()) {
                             sellPd.setMultiplier(cat, 1.0);
                             sellPd.setProgress(cat, 0.0);
                         }
                     }
-                    plugin.getPrismSell().getPlayerDataManager().unloadPlayer(uuid);
+                    plugin.getFalconSell().getPlayerDataManager().unloadPlayer(uuid);
                 }
 
                 DatabaseManager mainDb = plugin.getDatabaseManager();
@@ -571,8 +571,8 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                     mainDb.wipeOrders(uuid);
                 }
 
-                if (plugin.getPrismSell() != null && plugin.getPrismSell().getDatabaseManager() != null) {
-                    plugin.getPrismSell().getDatabaseManager().wipeAllPlayerData(uuid);
+                if (plugin.getFalconSell() != null && plugin.getFalconSell().getDatabaseManager() != null) {
+                    plugin.getFalconSell().getDatabaseManager().wipeAllPlayerData(uuid);
                 }
 
                 if (plugin.getEnderChestManager() != null) {

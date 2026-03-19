@@ -1,7 +1,7 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -21,7 +21,7 @@ public class TpAutoCommand implements CommandExecutor {
         }
 
         Player p = (Player) sender;
-        PlayerData data = PrismSurvival.getInstance().getPlayerDataManager().get(p.getUniqueId());
+        PlayerData data = Falcon.getInstance().getPlayerDataManager().get(p.getUniqueId());
 
         if (data == null) {
             p.sendMessage(ChatColor.RED + "Data not found.");

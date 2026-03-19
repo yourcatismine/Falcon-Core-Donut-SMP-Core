@@ -1,6 +1,6 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.managers.RespawnGearManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -16,10 +16,10 @@ import java.util.List;
 
 public class RespawnGearGUI implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     public static final String TITLE = ChatColor.translateAlternateColorCodes('&', "&8ʀᴇsᴘᴀᴡɴ ɢᴇᴀʀ");
 
-    public RespawnGearGUI(PrismSurvival plugin) {
+    public RespawnGearGUI(Falcon plugin) {
         this.plugin = plugin;
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }

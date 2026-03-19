@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.Bukkit;
@@ -23,10 +23,10 @@ import java.util.List;
 
 public class SpawnCommand implements CommandExecutor, TabCompleter, org.bukkit.event.Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     public static final String GUI_TITLE = org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8ѕᴘᴀᴡɴ");
 
-    public SpawnCommand(PrismSurvival plugin) {
+    public SpawnCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

@@ -1,6 +1,6 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -17,14 +17,14 @@ import java.util.UUID;
 
 public class EnderChestGUI {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public EnderChestGUI(PrismSurvival plugin) {
+    public EnderChestGUI(Falcon plugin) {
         this.plugin = plugin;
     }
 
     public static Map<UUID, Inventory> getActiveInventories() {
-        return PrismSurvival.getInstance().getEnderChestManager().getActiveInventories();
+        return Falcon.getInstance().getEnderChestManager().getActiveInventories();
     }
 
     /** Open own echest via /echest command — no block animation. */

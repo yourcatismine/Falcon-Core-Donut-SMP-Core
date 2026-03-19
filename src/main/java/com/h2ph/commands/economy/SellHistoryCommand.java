@@ -1,6 +1,6 @@
 package com.h2ph.commands.economy;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -17,7 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import com.prismcore.survival.sell.category.Category;
+import com.falconcore.survival.sell.category.Category;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,13 +25,13 @@ import java.util.*;
 
 public class SellHistoryCommand implements CommandExecutor, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final String GUI_PREFIX = ChatColor.translateAlternateColorCodes('&', "&8ѕᴇʟʟ ʜɪѕᴛᴏʀʏ");
     private final int PAGE_SIZE = 45;
 
     private final Map<UUID, Boolean> sortByName = new HashMap<>();
 
-    public SellHistoryCommand(PrismSurvival plugin) {
+    public SellHistoryCommand(Falcon plugin) {
         this.plugin = plugin;
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
@@ -56,8 +56,8 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
     private void openSellHistory(Player p, int page) {
         UUID uid = p.getUniqueId();
 
-        if (plugin.getPrismSell() != null && plugin.getPrismSell().getDatabaseManager() != null) {
-            plugin.getPrismSell().getDatabaseManager().getSellHistoryAsync(uid, (Map<String, double[]> result) -> {
+        if (plugin.getFalconSell() != null && plugin.getFalconSell().getDatabaseManager() != null) {
+            plugin.getFalconSell().getDatabaseManager().getSellHistoryAsync(uid, (Map<String, double[]> result) -> {
                 List<AggEntry> entries = new ArrayList<>();
                 for (Map.Entry<String, double[]> entry : result.entrySet()) {
                     try {
@@ -265,9 +265,9 @@ public class SellHistoryCommand implements CommandExecutor, Listener {
     }
 
     public static double getTotalSold(UUID uid) {
-        PrismSurvival plugin = PrismSurvival.getInstance();
-        if (plugin != null && plugin.getPrismSell() != null) {
-            return plugin.getPrismSell().getPlayerDataManager().getPlayerData(uid).getSellMade();
+        Falcon plugin = Falcon.getInstance();
+        if (plugin != null && plugin.getFalconSell() != null) {
+            return plugin.getFalconSell().getPlayerDataManager().getPlayerData(uid).getSellMade();
         }
         return 0.0;
     }

@@ -1,4 +1,4 @@
 # Economy Configuration
 
-# Toggle to enable PrismCore's custom Vault Economy hook.
+# Toggle to enable FalconCore's custom Vault Economy hook.
 vault-enabled: false

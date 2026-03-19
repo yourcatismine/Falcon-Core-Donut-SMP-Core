@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.rtp.QueueTask;
 import com.h2ph.rtp.RTPQueueManager;
 import org.bukkit.Location;
@@ -16,10 +16,10 @@ import java.util.UUID;
 
 public class RTPQueueListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Map<UUID, QueueTask> activeTasks = new HashMap<>();
 
-    public RTPQueueListener(PrismSurvival plugin) {
+    public RTPQueueListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

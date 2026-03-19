@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public class NightVisionCommand implements CommandExecutor, TabCompleter {
 
-    public NightVisionCommand(PrismSurvival plugin) {
+    public NightVisionCommand(Falcon plugin) {
     }
 
     @Override

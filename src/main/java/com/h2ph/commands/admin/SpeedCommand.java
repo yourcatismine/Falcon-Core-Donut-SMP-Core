@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class SpeedCommand implements CommandExecutor, TabCompleter {
 
-    public SpeedCommand(PrismSurvival plugin) {
+    public SpeedCommand(Falcon plugin) {
     }
 
     @Override

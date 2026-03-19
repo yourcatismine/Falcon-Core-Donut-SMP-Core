@@ -22,7 +22,7 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
 
         Player player = (Player) sender;
         if (args.length > 0) {
-            com.h2ph.PrismSurvival main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.PrismSurvival.class);
+            com.h2ph.Falcon main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.Falcon.class);
             java.io.File regionFile = new java.io.File(main.getDataFolder(), "rtp/" + args[0]);
             java.io.File configFile = new java.io.File(regionFile, "config.yml");
 
@@ -42,7 +42,7 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
             @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
             java.util.List<String> regions = new java.util.ArrayList<>();
-            com.h2ph.PrismSurvival main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.PrismSurvival.class);
+            com.h2ph.Falcon main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.Falcon.class);
             java.io.File rtpFolder = new java.io.File(main.getDataFolder(), "rtp");
 
             if (rtpFolder.exists() && rtpFolder.isDirectory()) {
@@ -122,7 +122,7 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
     }
 
     private static int getPlayerCount(String type) {
-        com.h2ph.PrismSurvival main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.PrismSurvival.class);
+        com.h2ph.Falcon main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.Falcon.class);
         if (main.getRTPConfig() == null) {
             return 0;
         }

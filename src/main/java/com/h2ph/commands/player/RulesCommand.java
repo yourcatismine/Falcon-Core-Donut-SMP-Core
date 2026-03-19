@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -23,11 +23,11 @@ import java.util.List;
 
 public class RulesCommand implements CommandExecutor, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private FileConfiguration config;
     private File configFile;
 
-    public RulesCommand(PrismSurvival plugin) {
+    public RulesCommand(Falcon plugin) {
         this.plugin = plugin;
         loadConfig();
     }

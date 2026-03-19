@@ -1,6 +1,6 @@
 package com.h2ph.managers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -12,12 +12,12 @@ import java.util.List;
 
 public class RespawnGearManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final File file;
     private FileConfiguration config;
     private List<ItemStack> items = new ArrayList<>();
 
-    public RespawnGearManager(PrismSurvival plugin) {
+    public RespawnGearManager(Falcon plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "respawn/gear_items.yml");
         load();

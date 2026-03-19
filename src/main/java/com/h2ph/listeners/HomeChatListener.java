@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.HomeGUI;
 import com.h2ph.managers.HomeManager;
 import org.bukkit.ChatColor;
@@ -14,9 +14,9 @@ import java.util.UUID;
 
 public class HomeChatListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public HomeChatListener(PrismSurvival plugin) {
+    public HomeChatListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

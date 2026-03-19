@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -56,11 +56,11 @@ public class TpCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
+        Falcon.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
             org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
             boolean exists = offlineTarget.hasPlayedBefore();
 
-            PrismSurvival.getInstance().getSchedulerAdapter().runTask(() -> {
+            Falcon.getInstance().getSchedulerAdapter().runTask(() -> {
                 if (!p.isOnline())
                     return;
 

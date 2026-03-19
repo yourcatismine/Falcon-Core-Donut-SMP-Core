@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -15,9 +15,9 @@ import org.bukkit.inventory.ItemStack;
 
 public class AdvisorListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public AdvisorListener(PrismSurvival plugin) {
+    public AdvisorListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

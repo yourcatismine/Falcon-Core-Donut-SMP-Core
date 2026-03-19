@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 public class DuelRequestManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DuelArenaManager arenaManager;
     private final Map<UUID, UUID> pendingRequests = new HashMap<>();
     private final Map<UUID, Long> requestTimestamps = new HashMap<>();
@@ -27,7 +27,7 @@ public class DuelRequestManager {
     private int pendingTimeoutSeconds = 60;
     private int requestCooldownSeconds = 10;
 
-    public DuelRequestManager(PrismSurvival plugin, DuelArenaManager arenaManager) {
+    public DuelRequestManager(Falcon plugin, DuelArenaManager arenaManager) {
         this.plugin = plugin;
         this.arenaManager = arenaManager;
         loadConfig();

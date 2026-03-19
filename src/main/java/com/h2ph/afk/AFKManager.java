@@ -1,6 +1,6 @@
 package com.h2ph.afk;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AFKManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final File regionsFolder;
     private final File configFile;
     private FileConfiguration config;
@@ -34,7 +34,7 @@ public class AFKManager {
     private float entrySoundVolume;
     private float entrySoundPitch;
 
-    public AFKManager(PrismSurvival plugin) {
+    public AFKManager(Falcon plugin) {
         this.plugin = plugin;
         this.regionsFolder = new File(plugin.getDataFolder(), "survival/regions/AFK");
         this.configFile = new File(plugin.getDataFolder(), "survival/AFK/config.yml");
@@ -95,7 +95,7 @@ public class AFKManager {
         regions.clear();
         if(!plugin.getDatabaseManager().isConnected()) return;
 
-        for (com.prismcore.survival.manager.DatabaseManager.AfkRegionRow row : plugin.getDatabaseManager().loadAllAfkRegions()) {
+        for (com.falconcore.survival.manager.DatabaseManager.AfkRegionRow row : plugin.getDatabaseManager().loadAllAfkRegions()) {
             if (row.world == null || Bukkit.getWorld(row.world) == null) continue;
             Vector min = new Vector(row.minX, row.minY, row.minZ); Vector max = new Vector(row.maxX, row.maxY, row.maxZ);
             regions.put(row.name.toLowerCase(), new AFKRegion(row.name, row.world, min, max));
@@ -242,7 +242,7 @@ public class AFKManager {
         }
 
         if (remaining <= 1) {
-            com.prismcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(uuid);
+            com.falconcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(uuid);
             int multiplier = playerData.hasActiveShardBooster() ? 2 : 1;
             String source = multiplier > 1 ? "AFK Reward (Booster)" : "AFK Reward";
             int amountGained = rewardAmount * multiplier;

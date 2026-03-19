@@ -1,7 +1,7 @@
 package com.h2ph.api;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.DatabaseManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.DatabaseManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -19,7 +19,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class ApiServer {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private HttpServer server;
     private final List<HttpExchange> liveClients = new CopyOnWriteArrayList<>();
     private final List<HttpExchange> filterClients = new CopyOnWriteArrayList<>();
@@ -28,7 +28,7 @@ public class ApiServer {
     private String apiKey;
     private String region;
 
-    public ApiServer(PrismSurvival plugin) {
+    public ApiServer(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -680,8 +680,8 @@ public class ApiServer {
                     int kills = p.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
                     int deaths = p.getStatistic(org.bukkit.Statistic.DEATHS);
                     int mobsKilled = p.getStatistic(org.bukkit.Statistic.MOB_KILLS);
-                    int blocksBroken = com.prismcore.survival.utils.BlockStatsUtils.getTotalBlocksBroken(p);
-                    int blocksPlaced = com.prismcore.survival.utils.BlockStatsUtils.getTotalBlocksPlaced(p);
+                    int blocksBroken = com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksBroken(p);
+                    int blocksPlaced = com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksPlaced(p);
 
                     int playtimeTicks = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
                     String playtimeFormatted = formatPlaytime(playtimeTicks / 20L);
@@ -690,14 +690,14 @@ public class ApiServer {
                             "{\"name\": \"%s\", \"uuid\": \"%s\", \"kills\": %d, \"kills_formatted\": \"%s\", \"deaths\": %d, \"deaths_formatted\": \"%s\", \"blocks_break\": %d, \"blocks_break_formatted\": \"%s\", \"blocks_placed\": %d, \"blocks_placed_formatted\": \"%s\", \"mobs_killed\": %d, \"mobs_killed_formatted\": \"%s\", \"ping\": %d, \"balance\": %.2f, \"balance_formatted\": \"%s\", \"shards\": %.2f, \"shards_formatted\": \"%s\", \"playtime_formatted\": \"%s\"}",
                             escape(p.getName()),
                             p.getUniqueId(),
-                            kills, com.prismcore.survival.utils.NumberUtils.format(kills),
-                            deaths, com.prismcore.survival.utils.NumberUtils.format(deaths),
-                            blocksBroken, com.prismcore.survival.utils.NumberUtils.format(blocksBroken),
-                            blocksPlaced, com.prismcore.survival.utils.NumberUtils.format(blocksPlaced),
-                            mobsKilled, com.prismcore.survival.utils.NumberUtils.format(mobsKilled),
+                            kills, com.falconcore.survival.utils.NumberUtils.format(kills),
+                            deaths, com.falconcore.survival.utils.NumberUtils.format(deaths),
+                            blocksBroken, com.falconcore.survival.utils.NumberUtils.format(blocksBroken),
+                            blocksPlaced, com.falconcore.survival.utils.NumberUtils.format(blocksPlaced),
+                            mobsKilled, com.falconcore.survival.utils.NumberUtils.format(mobsKilled),
                             p.getPing(),
-                            balance, com.prismcore.survival.utils.NumberUtils.formatMoney(balance),
-                            shards, com.prismcore.survival.utils.NumberUtils.format(shards),
+                            balance, com.falconcore.survival.utils.NumberUtils.formatMoney(balance),
+                            shards, com.falconcore.survival.utils.NumberUtils.format(shards),
                             escape(playtimeFormatted)));
                 }
                 String response = "[" + String.join(",", jsonList) + "]";
@@ -737,8 +737,8 @@ public class ApiServer {
                     int kills = target.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
                     int deaths = target.getStatistic(org.bukkit.Statistic.DEATHS);
                     int mobsKilled = target.getStatistic(org.bukkit.Statistic.MOB_KILLS);
-                    int blocksBroken = com.prismcore.survival.utils.BlockStatsUtils.getTotalBlocksBroken(target);
-                    int blocksPlaced = com.prismcore.survival.utils.BlockStatsUtils.getTotalBlocksPlaced(target);
+                    int blocksBroken = com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksBroken(target);
+                    int blocksPlaced = com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksPlaced(target);
                     long lastPlayed = target.getLastPlayed();
                     boolean isOnline = target.isOnline();
 
@@ -749,16 +749,16 @@ public class ApiServer {
                             "{\"name\": \"%s\", \"uuid\": \"%s\", \"kills\": %d, \"kills_formatted\": \"%s\", \"deaths\": %d, \"deaths_formatted\": \"%s\", \"blocks_break\": %d, \"blocks_break_formatted\": \"%s\", \"blocks_placed\": %d, \"blocks_placed_formatted\": \"%s\", \"mobs_killed\": %d, \"mobs_killed_formatted\": \"%s\", \"lastPlayed\": %d, \"playtime_formatted\": \"%s\", \"isOnline\": %b, \"balance\": %.2f, \"balance_formatted\": \"%s\", \"shards\": %.2f, \"shards_formatted\": \"%s\"}",
                             escape(target.getName()),
                             target.getUniqueId(),
-                            kills, com.prismcore.survival.utils.NumberUtils.format(kills),
-                            deaths, com.prismcore.survival.utils.NumberUtils.format(deaths),
-                            blocksBroken, com.prismcore.survival.utils.NumberUtils.format(blocksBroken),
-                            blocksPlaced, com.prismcore.survival.utils.NumberUtils.format(blocksPlaced),
-                            mobsKilled, com.prismcore.survival.utils.NumberUtils.format(mobsKilled),
+                            kills, com.falconcore.survival.utils.NumberUtils.format(kills),
+                            deaths, com.falconcore.survival.utils.NumberUtils.format(deaths),
+                            blocksBroken, com.falconcore.survival.utils.NumberUtils.format(blocksBroken),
+                            blocksPlaced, com.falconcore.survival.utils.NumberUtils.format(blocksPlaced),
+                            mobsKilled, com.falconcore.survival.utils.NumberUtils.format(mobsKilled),
                             lastPlayed,
                             escape(playtimeFormatted),
                             isOnline,
-                            balance, com.prismcore.survival.utils.NumberUtils.formatMoney(balance),
-                            shards, com.prismcore.survival.utils.NumberUtils.format(shards));
+                            balance, com.falconcore.survival.utils.NumberUtils.formatMoney(balance),
+                            shards, com.falconcore.survival.utils.NumberUtils.format(shards));
 
                     t.getResponseHeaders().set("Content-Type", "application/json");
                     t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
@@ -831,12 +831,12 @@ public class ApiServer {
                 return;
             }
 
-            java.util.List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> top = plugin
+            java.util.List<com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry> top = plugin
                     .getPlayerDataManager().getTopMoney(10);
 
             StringBuilder json = new StringBuilder("[");
             for (int i = 0; i < top.size(); i++) {
-                com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
+                com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
                 json.append(String.format("{\"rank\": %d, \"player\": \"%s\", \"balance\": %.2f}",
                         i + 1, escape(entry.name), entry.value));
                 if (i < top.size() - 1)
@@ -860,12 +860,12 @@ public class ApiServer {
                 return;
             }
 
-            java.util.List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> top = plugin
+            java.util.List<com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry> top = plugin
                     .getPlayerDataManager().getTopShards(10);
 
             StringBuilder json = new StringBuilder("[");
             for (int i = 0; i < top.size(); i++) {
-                com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
+                com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
                 json.append(String.format("{\"rank\": %d, \"player\": \"%s\", \"shards\": %.2f}",
                         i + 1, escape(entry.name), entry.value));
                 if (i < top.size() - 1)
@@ -937,7 +937,7 @@ public class ApiServer {
 
     private class PlaytimeLeaderboardHandler implements HttpHandler {
 
-        private List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> cachedTop = null;
+        private List<com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry> cachedTop = null;
         private long lastUpdate = 0;
         private static final long CACHE_DURATION = 300 * 1000;
 
@@ -952,7 +952,7 @@ public class ApiServer {
                 return;
             }
 
-            List<com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry> top;
+            List<com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry> top;
 
             synchronized (this) {
                 if (cachedTop != null && (System.currentTimeMillis() - lastUpdate < CACHE_DURATION)) {
@@ -969,7 +969,7 @@ public class ApiServer {
                                 int ticks = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
                                 if (ticks > 0) {
                                     long seconds = ticks / 20L;
-                                    top.add(new com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry(
+                                    top.add(new com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry(
                                             p.getName(), p.getUniqueId(), (double) seconds));
                                 }
                             } catch (Exception ignored) {
@@ -990,7 +990,7 @@ public class ApiServer {
 
             StringBuilder json = new StringBuilder("[");
             for (int i = 0; i < top.size(); i++) {
-                com.prismcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
+                com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
                 String formatted = formatPlaytime((long) entry.value);
                 json.append(String.format(
                         "{\"rank\": %d, \"player\": \"%s\", \"playtime_seconds\": %d, \"playtime_formatted\": \"%s\"}",
@@ -1042,14 +1042,14 @@ public class ApiServer {
     private class BlocksBrokenHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            handleCustomStat(t, "blocks_break", com.prismcore.survival.utils.BlockStatsUtils::getTotalBlocksBroken);
+            handleCustomStat(t, "blocks_break", com.falconcore.survival.utils.BlockStatsUtils::getTotalBlocksBroken);
         }
     }
 
     private class BlocksPlacedHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            handleCustomStat(t, "blocks_placed", com.prismcore.survival.utils.BlockStatsUtils::getTotalBlocksPlaced);
+            handleCustomStat(t, "blocks_placed", com.falconcore.survival.utils.BlockStatsUtils::getTotalBlocksPlaced);
         }
     }
 

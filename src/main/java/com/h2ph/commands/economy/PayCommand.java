@@ -1,7 +1,7 @@
 package com.h2ph.commands.economy;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 
 public class PayCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final DecimalFormat DF = new DecimalFormat("#.#");
 
-    public PayCommand(PrismSurvival plugin) {
+    public PayCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -139,13 +139,13 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             }
 
             plugin.getSchedulerAdapter().runTask(() -> {
-                if (!com.prismcore.survival.auction.EconomyHandler.chargePlayer(sender, amount,
+                if (!com.falconcore.survival.auction.EconomyHandler.chargePlayer(sender, amount,
                         "Payment to " + targetName)) {
                     sendError(sender, "&cTransaction failed.");
                     return;
                 }
 
-                com.prismcore.survival.auction.EconomyHandler.depositOfflinePlayer(Bukkit.getOfflinePlayer(targetId),
+                com.falconcore.survival.auction.EconomyHandler.depositOfflinePlayer(Bukkit.getOfflinePlayer(targetId),
                         amount,
                         "Payment from " + sender.getName());
 

@@ -1,6 +1,6 @@
 package com.h2ph.managers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class DeathMessageManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private FileConfiguration config;
     private FileConfiguration messages;
     private boolean radiusEnabled;
@@ -23,7 +23,7 @@ public class DeathMessageManager {
 
     private final Map<EntityDamageEvent.DamageCause, String> causeMapping = new HashMap<>();
 
-    public DeathMessageManager(PrismSurvival plugin) {
+    public DeathMessageManager(Falcon plugin) {
         this.plugin = plugin;
         loadConfigurations();
         setupCauseMappings();

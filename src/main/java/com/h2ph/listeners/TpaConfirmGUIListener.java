@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.managers.TpaRequestManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;

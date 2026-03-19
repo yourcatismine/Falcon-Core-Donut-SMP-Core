@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.TileState;
@@ -25,10 +25,10 @@ import java.io.IOException;
 
 public class CrateListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final org.bukkit.NamespacedKey crateKey;
 
-    public CrateListener(PrismSurvival plugin) {
+    public CrateListener(Falcon plugin) {
         this.plugin = plugin;
         this.crateKey = new org.bukkit.NamespacedKey(plugin, "crate_id");
     }
@@ -91,7 +91,7 @@ public class CrateListener implements Listener {
             event.setCancelled(true);
             String crateName = data.get(crateKey, PersistentDataType.STRING);
 
-            event.getPlayer().setMetadata("prism_active_crate",
+            event.getPlayer().setMetadata("falcon_active_crate",
                     new org.bukkit.metadata.FixedMetadataValue(plugin, crateName));
 
             openCrateGUI(event.getPlayer(), crateName);
@@ -154,8 +154,8 @@ public class CrateListener implements Listener {
 
             int slot = event.getSlot();
             if (slot >= 10 && slot <= 16) {
-                if (player.hasMetadata("prism_active_crate")) {
-                    String crateName = player.getMetadata("prism_active_crate").get(0).asString();
+                if (player.hasMetadata("falcon_active_crate")) {
+                    String crateName = player.getMetadata("falcon_active_crate").get(0).asString();
                     if (!playerHasKey(player, crateName)) {
                         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         return;
@@ -180,8 +180,8 @@ public class CrateListener implements Listener {
 
             int slot = event.getSlot();
             if (slot == 22) {
-                if (player.hasMetadata("prism_active_crate")) {
-                    String crateName = player.getMetadata("prism_active_crate").get(0).asString();
+                if (player.hasMetadata("falcon_active_crate")) {
+                    String crateName = player.getMetadata("falcon_active_crate").get(0).asString();
                     plugin.getCarouselManager().handleStartClick(player, crateName, event.getInventory());
                 }
             }
@@ -202,15 +202,15 @@ public class CrateListener implements Listener {
             int slot = event.getSlot();
 
             if (slot == 11) {
-                if (player.hasMetadata("prism_active_crate")) {
-                    String crateName = player.getMetadata("prism_active_crate").get(0).asString();
+                if (player.hasMetadata("falcon_active_crate")) {
+                    String crateName = player.getMetadata("falcon_active_crate").get(0).asString();
                     openCrateGUI(player, crateName);
                 } else {
                     player.closeInventory();
                 }
             } else if (slot == 15) {
-                if (player.hasMetadata("prism_active_crate")) {
-                    String crateName = player.getMetadata("prism_active_crate").get(0).asString();
+                if (player.hasMetadata("falcon_active_crate")) {
+                    String crateName = player.getMetadata("falcon_active_crate").get(0).asString();
                     ItemStack reward = event.getInventory().getItem(13);
                     if (reward != null) {
                         tryClaimReward(player, crateName, reward);
@@ -251,7 +251,7 @@ public class CrateListener implements Listener {
         FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
         String keyName = config.getString("key");
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         return data != null && data.getKeyCount(keyName) > 0;
     }
 
@@ -287,7 +287,7 @@ public class CrateListener implements Listener {
         FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
         String keyName = config.getString("key");
 
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data == null)
             return;
 
@@ -306,7 +306,7 @@ public class CrateListener implements Listener {
 
             data.removeKey(keyName);
             ItemStack toGive = reward.clone();
-            com.prismcore.survival.tools.ToolsManager toolsManager = com.prismcore.survival.tools.ToolsManager
+            com.falconcore.survival.tools.ToolsManager toolsManager = com.falconcore.survival.tools.ToolsManager
                     .getInstance();
             if (toolsManager != null) {
                 toolsManager.refreshExpiryForReward(toGive);

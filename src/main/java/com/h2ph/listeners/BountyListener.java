@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -14,10 +14,10 @@ import java.util.UUID;
 
 public class BountyListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final DecimalFormat DF = new DecimalFormat("#.#");
 
-    public BountyListener(PrismSurvival plugin) {
+    public BountyListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

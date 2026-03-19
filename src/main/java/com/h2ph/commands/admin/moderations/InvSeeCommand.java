@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.InvSeeGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -15,9 +15,9 @@ import java.util.List;
 
 public class InvSeeCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public InvSeeCommand(PrismSurvival plugin) {
+    public InvSeeCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

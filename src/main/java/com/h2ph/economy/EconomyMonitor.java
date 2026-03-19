@@ -1,19 +1,19 @@
 package com.h2ph.economy;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.OfflinePlayer;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class EconomyMonitor {
 
     private static EconomyMonitor instance;
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
     private final AtomicReference<Double> totalMoney = new AtomicReference<>(0.0);
     private final AtomicReference<Double> volume24h = new AtomicReference<>(0.0);
     private boolean initialized = false;
 
-    public EconomyMonitor(PrismSurvival plugin) {
+    public EconomyMonitor(Falcon plugin) {
         this.plugin = plugin;
         instance = this;
         startPolling();

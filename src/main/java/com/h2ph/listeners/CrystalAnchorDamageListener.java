@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,9 +10,9 @@ import org.bukkit.event.entity.EntityDamageEvent;
 
 public class CrystalAnchorDamageListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public CrystalAnchorDamageListener(PrismSurvival plugin) {
+    public CrystalAnchorDamageListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

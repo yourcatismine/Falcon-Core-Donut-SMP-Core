@@ -1,8 +1,8 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
-import com.prismcore.survival.orders.Utils;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
+import com.falconcore.survival.orders.Utils;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,9 +13,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class PlayerConnectionListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public PlayerConnectionListener(PrismSurvival plugin) {
+    public PlayerConnectionListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

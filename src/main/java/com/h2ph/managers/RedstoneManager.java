@@ -1,6 +1,6 @@
 package com.h2ph.managers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -35,7 +35,7 @@ public class RedstoneManager implements Listener {
     private static final int THRESHOLD_MASSIVE = 3000;
     private static final int THRESHOLD_WARNING = 1500;
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
     private final Map<UUID, Map<Long, AtomicInteger>> chunkRedstoneCounts = new ConcurrentHashMap<>();
     private final Map<UUID, Map<Long, Long>> temporarilyDisabledChunks = new ConcurrentHashMap<>();
@@ -125,7 +125,7 @@ public class RedstoneManager implements Listener {
     }
 
     public RedstoneManager(JavaPlugin plugin) {
-        this.plugin = (PrismSurvival) plugin;
+        this.plugin = (Falcon) plugin;
         this.dataFile = new File(plugin.getDataFolder(), "redstone_data.yml");
 
         loadData();

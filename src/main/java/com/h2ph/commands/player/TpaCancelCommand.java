@@ -68,12 +68,12 @@ public class TpaCancelCommand implements CommandExecutor, TabCompleter {
         org.bukkit.OfflinePlayer targetPlayer = org.bukkit.Bukkit.getOfflinePlayer(request.getTarget());
         String targetName = (targetPlayer.getName() != null) ? targetPlayer.getName() : "Unknown";
 
-        com.prismcore.survival.manager.PlayerData senderPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+        com.falconcore.survival.manager.PlayerData senderPD = com.h2ph.Falcon.getInstance().getPlayerDataManager()
                 .get(p.getUniqueId());
         if (senderPD != null) {
             senderPD.addHistory(
                     dateTime + " - TPA Cancel\nYou cancelled your " + typeLogStr + " request to " + targetName);
-            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(p.getUniqueId());
+            com.h2ph.Falcon.getInstance().getPlayerDataManager().savePlayerAsync(p.getUniqueId());
         }
 
         String feedback;

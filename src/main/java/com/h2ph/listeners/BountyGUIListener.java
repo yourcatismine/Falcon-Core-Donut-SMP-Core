@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.BountyGUI;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -13,9 +13,9 @@ import org.bukkit.inventory.ItemStack;
 
 public class BountyGUIListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public BountyGUIListener(PrismSurvival plugin) {
+    public BountyGUIListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

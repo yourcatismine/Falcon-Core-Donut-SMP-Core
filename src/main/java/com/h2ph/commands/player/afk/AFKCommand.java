@@ -1,6 +1,6 @@
 package com.h2ph.commands.player.afk;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
 
 public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final String GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&7ᴀꜰᴋ ᴀʀᴇᴀѕ");
 
     private final Map<UUID, BukkitTask> activeTeleports = new HashMap<>();
 
-    public AFKCommand(PrismSurvival plugin) {
+    public AFKCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

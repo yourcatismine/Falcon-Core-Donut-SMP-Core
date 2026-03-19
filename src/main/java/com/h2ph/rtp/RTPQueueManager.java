@@ -1,6 +1,6 @@
 package com.h2ph.rtp;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class RTPQueueManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
     private final List<RTPQueueRegion> cachedQueues = new ArrayList<>();
     private final java.util.Map<String, Integer> globalCountdowns = new java.util.concurrent.ConcurrentHashMap<>();
@@ -29,7 +29,7 @@ public class RTPQueueManager {
     private final java.util.Map<java.util.UUID, org.bukkit.Location> preCalculatedLocations = new java.util.concurrent.ConcurrentHashMap<>();
     private org.bukkit.scheduler.BukkitTask globalTimer;
 
-    public RTPQueueManager(PrismSurvival plugin) {
+    public RTPQueueManager(Falcon plugin) {
         this.plugin = plugin;
         loadQueues();
         startGlobalTimer();

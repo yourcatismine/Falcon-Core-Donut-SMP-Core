@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,9 +11,9 @@ import java.util.List;
 
 public class StoreCommand implements CommandExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public StoreCommand(PrismSurvival plugin) {
+    public StoreCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

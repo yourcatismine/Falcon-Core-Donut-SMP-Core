@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DuelQueueManager implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DuelStatsManager statsManager;
     private final DuelArenaManager arenaManager;
     private DuelRequestManager requestManager;
@@ -34,7 +34,7 @@ public class DuelQueueManager implements Listener {
 
     public static final String QUEUE_GUI_TITLE = ChatColor.translateAlternateColorCodes('&', "&8ᴅᴜᴇʟ ǫᴜᴇᴜᴇ & ᴄᴏɴꜰɪʀᴍ");
 
-    public DuelQueueManager(PrismSurvival plugin, DuelStatsManager statsManager, DuelArenaManager arenaManager) {
+    public DuelQueueManager(Falcon plugin, DuelStatsManager statsManager, DuelArenaManager arenaManager) {
         this.plugin = plugin;
         this.statsManager = statsManager;
         this.arenaManager = arenaManager;

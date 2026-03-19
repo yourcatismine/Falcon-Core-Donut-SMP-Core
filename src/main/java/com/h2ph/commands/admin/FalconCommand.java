@@ -1,9 +1,9 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.auction.GUIHandler;
-import com.prismcore.survival.orders.OrdersModule;
-import com.prismcore.survival.orders.gui.OrdersMainMenu;
+import com.h2ph.Falcon;
+import com.falconcore.survival.auction.GUIHandler;
+import com.falconcore.survival.orders.OrdersModule;
+import com.falconcore.survival.orders.gui.OrdersMainMenu;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 
 public class FalconCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public FalconCommand(PrismSurvival plugin) {
+    public FalconCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -81,7 +81,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage("§cPlayer not found.");
                     return true;
                 }
-                new com.prismcore.survival.orders.gui.AdminOrderDetailsMenu(OrdersModule.getInstance(), player, target)
+                new com.falconcore.survival.orders.gui.AdminOrderDetailsMenu(OrdersModule.getInstance(), player, target)
                         .open();
                 return true;
             }

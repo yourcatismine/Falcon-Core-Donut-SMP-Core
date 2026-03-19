@@ -1,9 +1,9 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.teams.Team;
-import com.prismcore.survival.orders.Utils;
-import com.prismcore.survival.orders.gui.MenuOwner;
+import com.falconcore.survival.orders.Utils;
+import com.falconcore.survival.orders.gui.MenuOwner;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -20,12 +20,12 @@ import java.util.List;
 
 public class TeamDisbandMenu implements InventoryHolder, MenuOwner {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Player player;
     private final Team team;
     private Inventory inventory;
 
-    public TeamDisbandMenu(PrismSurvival plugin, Player player, Team team) {
+    public TeamDisbandMenu(Falcon plugin, Player player, Team team) {
         this.plugin = plugin;
         this.player = player;
         this.team = team;

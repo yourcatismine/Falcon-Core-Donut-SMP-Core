@@ -1,6 +1,6 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.managers.HomeManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -33,14 +33,14 @@ public class HomeGUI {
         }
     }
 
-    public static void open(Player player, PrismSurvival plugin) {
+    public static void open(Player player, Falcon plugin) {
         HomeManager manager = plugin.getHomeManager();
 
         String title = color("&8\u029c\u1d0f\u1d0d\u1d07\u0455");
         Inventory inv = Bukkit.createInventory(new HomeHolder(), 36, title);
 
         com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         boolean isOwner = data != null && "OWNER".equalsIgnoreCase(data.getTeamRole());
 
         if (team == null) {

@@ -1,6 +1,6 @@
 package com.h2ph.rtp;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.commands.player.RTPCommand;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -41,7 +41,7 @@ public class RTPManager {
     }
 
     public static void teleport(Player player, String worldType) {
-        PrismSurvival main = JavaPlugin.getPlugin(PrismSurvival.class);
+        Falcon main = JavaPlugin.getPlugin(Falcon.class);
         teleport(player, main.getRTPRegionName(), worldType);
     }
 
@@ -95,7 +95,7 @@ public class RTPManager {
     }
 
     private static void startCountdown(Player player, String region, String worldType) {
-        PrismSurvival main = JavaPlugin.getPlugin(PrismSurvival.class);
+        Falcon main = JavaPlugin.getPlugin(Falcon.class);
 
         java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(5);
 
@@ -195,7 +195,7 @@ public class RTPManager {
 
     private static void findSafeLocation(Player player, String region, String worldType, int attempts,
             java.util.function.Consumer<Location> callback) {
-        PrismSurvival main = JavaPlugin.getPlugin(PrismSurvival.class);
+        Falcon main = JavaPlugin.getPlugin(Falcon.class);
         FileConfiguration rtpConfig = main.getRTPRegionConfig(region);
         FileConfiguration globalConfig = main.getGlobalRTPConfig();
 

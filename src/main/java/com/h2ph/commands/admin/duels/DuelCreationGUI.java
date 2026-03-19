@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class DuelCreationGUI implements InventoryHolder, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DuelRequestManager requestManager;
     private final Player creator;
     private final Player target;
@@ -32,7 +32,7 @@ public class DuelCreationGUI implements InventoryHolder, Listener {
     private final Map<String, Material> biomeIcons = new HashMap<>();
     private final List<String> availableBiomes = new ArrayList<>();
 
-    public DuelCreationGUI(PrismSurvival plugin, DuelRequestManager requestManager, Player creator, Player target) {
+    public DuelCreationGUI(Falcon plugin, DuelRequestManager requestManager, Player creator, Player target) {
         this.plugin = plugin;
         this.requestManager = requestManager;
         this.creator = creator;

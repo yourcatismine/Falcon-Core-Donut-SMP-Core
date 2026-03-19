@@ -1,17 +1,17 @@
 package com.h2ph.managers;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.DatabaseManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.DatabaseManager;
 
 public class DamageManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DatabaseManager databaseManager;
 
     private double crystalDamage = 6.0;
     private double anchorDamage = 6.0;
 
-    public DamageManager(PrismSurvival plugin, DatabaseManager databaseManager) {
+    public DamageManager(Falcon plugin, DatabaseManager databaseManager) {
         this.plugin = plugin;
         this.databaseManager = databaseManager;
         loadConfig();

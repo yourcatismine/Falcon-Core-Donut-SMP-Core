@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,11 +14,11 @@ import java.util.Set;
 
 public class CommandHideListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Set<String> allowedCommands;
     private boolean whitelistEnabled;
 
-    public CommandHideListener(PrismSurvival plugin) {
+    public CommandHideListener(Falcon plugin) {
         this.plugin = plugin;
         this.allowedCommands = new HashSet<>();
         loadConfig();
@@ -57,7 +57,7 @@ public class CommandHideListener implements Listener {
         commands.removeIf(command -> {
             String lowerCmd = command.toLowerCase();
 
-            if (lowerCmd.startsWith("prismcore:") || lowerCmd.startsWith("minecraft:")) {
+            if (lowerCmd.startsWith("falconcore:") || lowerCmd.startsWith("minecraft:")) {
                 return true;
             }
 

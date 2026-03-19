@@ -1,7 +1,7 @@
 package com.h2ph.commands.admin.economy;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerDataManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerDataManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class BaltopCommand implements CommandExecutor, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final Map<UUID, Integer> playerPages = new HashMap<>();
     private final Map<UUID, String> playerSearches = new HashMap<>();
 
@@ -38,7 +38,7 @@ public class BaltopCommand implements CommandExecutor, Listener {
     private long lastCacheTime = 0;
     private static final long CACHE_DURATION = 30000;
 
-    public BaltopCommand(PrismSurvival plugin) {
+    public BaltopCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

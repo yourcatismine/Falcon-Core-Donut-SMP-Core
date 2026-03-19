@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.commands.player.TpaCommand;
 import com.h2ph.utils.SmallCapsUtil;
 import org.bukkit.ChatColor;

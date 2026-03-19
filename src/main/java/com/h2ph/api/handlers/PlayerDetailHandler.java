@@ -1,9 +1,9 @@
 package com.h2ph.api.handlers;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.api.ApiServer;
 import com.h2ph.utils.LuckPermsUtils;
-import com.prismcore.survival.manager.PlayerData;
+import com.falconcore.survival.manager.PlayerData;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.bukkit.Location;
@@ -19,9 +19,9 @@ import java.util.*;
 
 public class PlayerDetailHandler implements HttpHandler {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public PlayerDetailHandler(PrismSurvival plugin) {
+    public PlayerDetailHandler(Falcon plugin) {
         this.plugin = plugin;
     }
 

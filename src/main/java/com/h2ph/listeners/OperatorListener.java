@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,9 +11,9 @@ import org.bukkit.event.server.ServerCommandEvent;
 
 public class OperatorListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public OperatorListener(PrismSurvival plugin) {
+    public OperatorListener(Falcon plugin) {
         this.plugin = plugin;
         startPeriodicCheck();
     }

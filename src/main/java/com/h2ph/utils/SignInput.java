@@ -1,6 +1,6 @@
 package com.h2ph.utils;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Sign;
@@ -70,7 +70,7 @@ public class SignInput implements Listener {
          * }
          */
 
-        ((PrismSurvival) plugin).getSchedulerAdapter().runEntityTaskLater(player, () -> {
+        ((Falcon) plugin).getSchedulerAdapter().runEntityTaskLater(player, () -> {
             if (!player.isOnline()) {
                 restoreBlocks(player.getUniqueId());
                 return;
@@ -104,7 +104,7 @@ public class SignInput implements Listener {
 
                 Consumer<String> callback = pendingCallbacks.remove(uuid);
                 if (callback != null) {
-                    ((PrismSurvival) plugin).getSchedulerAdapter().runEntityTask(p, () -> callback.accept(input));
+                    ((Falcon) plugin).getSchedulerAdapter().runEntityTask(p, () -> callback.accept(input));
                 }
 
                 restoreBlocks(uuid);

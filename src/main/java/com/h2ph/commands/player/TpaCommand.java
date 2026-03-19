@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.utils.SmallCapsUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -52,12 +52,12 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (target == null || !p.canSee(target)) {
-            PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
+            Falcon.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
                 boolean exists = offlineTarget.hasPlayedBefore();
                 boolean isOnlineButHidden = (target != null);
 
-                PrismSurvival.getInstance().getSchedulerAdapter().runTask(() -> {
+                Falcon.getInstance().getSchedulerAdapter().runTask(() -> {
                     String msg;
                     if (isOnlineButHidden) {
                         msg = ChatColor.translateAlternateColorCodes('&', "&cThis user is not online.");
@@ -99,7 +99,7 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData targetData = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && !targetData.isTpaRequests()) {
             String msg = ChatColor.translateAlternateColorCodes('&', "&cUser disabled tpa requests.");
@@ -118,7 +118,7 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData senderData = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(p.getUniqueId());
         if (senderData != null && !senderData.isTpaConfirmMenus()) {
             com.h2ph.managers.TpaRequestManager.getInstance().sendRequest(p, target,
@@ -190,8 +190,8 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
 
             String region = "Unknown";
             try {
-                if (PrismSurvival.getInstance().getSurvivalConfig().contains("region")) {
-                    List<String> regions = PrismSurvival.getInstance().getSurvivalConfig().getStringList("region");
+                if (Falcon.getInstance().getSurvivalConfig().contains("region")) {
+                    List<String> regions = Falcon.getInstance().getSurvivalConfig().getStringList("region");
                     if (!regions.isEmpty()) {
                         region = regions.get(0);
                     }

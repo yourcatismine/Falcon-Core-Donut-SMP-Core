@@ -139,7 +139,7 @@ public class TpaRequestManager {
 
         boolean isTpaHere = (type == RequestType.TPA_HERE);
 
-        com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData targetData = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && targetData.isTpAuto()) {
             acceptRequest(target, sender, type);
@@ -181,18 +181,18 @@ public class TpaRequestManager {
         String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
         String typeStr = (type == RequestType.TPA_HERE) ? "teleport here" : "teleport";
 
-        com.prismcore.survival.manager.PlayerData senderPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+        com.falconcore.survival.manager.PlayerData senderPD = com.h2ph.Falcon.getInstance().getPlayerDataManager()
                 .get(sender.getUniqueId());
         if (senderPD != null) {
             senderPD.addHistory(dateTime + " - TPA Request\nSent " + typeStr + " request to " + target.getName());
-            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+            com.h2ph.Falcon.getInstance().getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
         }
 
-        com.prismcore.survival.manager.PlayerData targetPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+        com.falconcore.survival.manager.PlayerData targetPD = com.h2ph.Falcon.getInstance().getPlayerDataManager()
                 .get(target.getUniqueId());
         if (targetPD != null) {
             targetPD.addHistory(dateTime + " - TPA Request\nReceived " + typeStr + " request from " + sender.getName());
-            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(target.getUniqueId());
+            com.h2ph.Falcon.getInstance().getPlayerDataManager().savePlayerAsync(target.getUniqueId());
         }
     }
 
@@ -232,20 +232,20 @@ public class TpaRequestManager {
         String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
         String typeLogStr = (type == RequestType.TPA_HERE) ? "teleport here" : "teleport";
 
-        com.prismcore.survival.manager.PlayerData acceptorPD = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData acceptorPD = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(acceptor.getUniqueId());
         if (acceptorPD != null) {
             acceptorPD.addHistory(
                     dateTime + " - TPA Accept\nAccepted " + typeLogStr + " request from " + sender.getName());
-            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(acceptor.getUniqueId());
+            com.h2ph.Falcon.getInstance().getPlayerDataManager().savePlayerAsync(acceptor.getUniqueId());
         }
 
-        com.prismcore.survival.manager.PlayerData senderPD = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+        com.falconcore.survival.manager.PlayerData senderPD = com.h2ph.Falcon.getInstance().getPlayerDataManager()
                 .get(sender.getUniqueId());
         if (senderPD != null) {
             senderPD.addHistory(
                     dateTime + " - TPA Accept\n" + acceptor.getName() + " accepted your " + typeLogStr + " request");
-            com.h2ph.PrismSurvival.getInstance().getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
+            com.h2ph.Falcon.getInstance().getPlayerDataManager().savePlayerAsync(sender.getUniqueId());
         }
 
         final java.util.concurrent.atomic.AtomicInteger seconds = new java.util.concurrent.atomic.AtomicInteger(5);
@@ -315,7 +315,7 @@ public class TpaRequestManager {
             }
         };
 
-        org.bukkit.scheduler.BukkitTask scheduledTask = com.h2ph.PrismSurvival.getInstance().getSchedulerAdapter()
+        org.bukkit.scheduler.BukkitTask scheduledTask = com.h2ph.Falcon.getInstance().getSchedulerAdapter()
                 .runEntityTaskTimer(teleporter,
                         runnable, 0L, 20L);
         task.set(scheduledTask);

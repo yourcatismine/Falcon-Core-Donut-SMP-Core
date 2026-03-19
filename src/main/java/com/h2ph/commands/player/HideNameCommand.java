@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -23,7 +23,7 @@ import java.util.UUID;
 
 public class HideNameCommand implements CommandExecutor, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
     private Method getHandleMethod;
     private Method getGameProfileMethod;
@@ -39,7 +39,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
         }
     }
 
-    public HideNameCommand(PrismSurvival plugin) {
+    public HideNameCommand(Falcon plugin) {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -58,7 +58,7 @@ public class HideNameCommand implements CommandExecutor, Listener {
         }
 
         UUID id = p.getUniqueId();
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(id);
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(id);
 
         if (data.isNameHidden()) {
             data.setNameHidden(false);

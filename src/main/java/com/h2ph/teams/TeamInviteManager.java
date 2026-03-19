@@ -1,7 +1,7 @@
 package com.h2ph.teams;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -14,9 +14,9 @@ import java.util.UUID;
 
 public class TeamInviteManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public TeamInviteManager(PrismSurvival plugin) {
+    public TeamInviteManager(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -33,22 +33,22 @@ public class TeamInviteManager {
 
                 target.playSound(target.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1f);
 
-                String msg = com.prismcore.survival.orders.Utils
+                String msg = com.falconcore.survival.orders.Utils
                         .formatColors("&d" + inviterName + "&7 has been invited you to " + teamName + ".");
                 target.sendMessage(msg);
                 target.sendActionBar(net.kyori.adventure.text.Component.text(msg));
 
                 TextComponent acceptMsg = new TextComponent(
-                        com.prismcore.survival.orders.Utils.formatColors("&7Type "));
+                        com.falconcore.survival.orders.Utils.formatColors("&7Type "));
                 TextComponent cmd = new TextComponent(
-                        com.prismcore.survival.orders.Utils.formatColors("&a/team join " + inviterName));
+                        com.falconcore.survival.orders.Utils.formatColors("&a/team join " + inviterName));
                 cmd.setClickEvent(
                         new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/team join " + inviterName));
                 cmd.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                        new ComponentBuilder(com.prismcore.survival.orders.Utils.formatColors("&aClick to join"))
+                        new ComponentBuilder(com.falconcore.survival.orders.Utils.formatColors("&aClick to join"))
                                 .create()));
                 acceptMsg.addExtra(cmd);
-                acceptMsg.addExtra(com.prismcore.survival.orders.Utils.formatColors(" &7to join."));
+                acceptMsg.addExtra(com.falconcore.survival.orders.Utils.formatColors(" &7to join."));
 
                 target.spigot().sendMessage(acceptMsg);
             }
@@ -68,7 +68,7 @@ public class TeamInviteManager {
 
                 plugin.getScoreboardManager().reloadScoreboard(target);
 
-                String msg = com.prismcore.survival.orders.Utils
+                String msg = com.falconcore.survival.orders.Utils
                         .formatColors("&7You were kicked from " + teamName + ".");
                 target.sendMessage(msg);
                 target.sendActionBar(net.kyori.adventure.text.Component.text(msg));

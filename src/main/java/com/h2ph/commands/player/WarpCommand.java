@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -14,9 +14,9 @@ import java.util.List;
 
 public class WarpCommand implements TabExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public WarpCommand(PrismSurvival plugin) {
+    public WarpCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

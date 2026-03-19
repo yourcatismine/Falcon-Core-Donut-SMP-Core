@@ -1,7 +1,7 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.orders.data.ItemKey;
+import com.h2ph.Falcon;
+import com.falconcore.survival.orders.data.ItemKey;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class WorthGUI {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final DecimalFormat DF = new DecimalFormat("#.##");
 
     public enum SortType {
@@ -61,7 +61,7 @@ public class WorthGUI {
 
     private final Player player;
 
-    public WorthGUI(PrismSurvival plugin, Player player) {
+    public WorthGUI(Falcon plugin, Player player) {
         this.plugin = plugin;
         this.player = player;
     }
@@ -71,7 +71,7 @@ public class WorthGUI {
     }
 
     public void open(int page, SortType sortType, FilterType filterType) {
-        Map<ItemKey, Double> pricesMap = plugin.getPrismSell().getPricesManager().getPrices();
+        Map<ItemKey, Double> pricesMap = plugin.getFalconSell().getPricesManager().getPrices();
         List<Map.Entry<ItemKey, Double>> items = new ArrayList<>(pricesMap.entrySet());
 
         items = items.stream().filter(entry -> matchesFilter(entry.getKey(), filterType)).collect(Collectors.toList());

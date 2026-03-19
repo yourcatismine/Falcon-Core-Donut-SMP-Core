@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
@@ -22,9 +22,9 @@ import java.util.List;
 
 public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public FlyCommand(PrismSurvival plugin) {
+    public FlyCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 
 public class CratesCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public CratesCommand(PrismSurvival plugin) {
+    public CratesCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

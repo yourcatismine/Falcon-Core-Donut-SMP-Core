@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.RespawnAnchor;
@@ -17,9 +17,9 @@ import org.bukkit.Sound;
 
 public class FastAnchorListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public FastAnchorListener(PrismSurvival plugin) {
+    public FastAnchorListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

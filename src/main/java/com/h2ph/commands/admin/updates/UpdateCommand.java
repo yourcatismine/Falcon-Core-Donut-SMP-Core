@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.updates;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -11,9 +11,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
 public class UpdateCommand implements CommandExecutor {
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public UpdateCommand(PrismSurvival plugin) {
+    public UpdateCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

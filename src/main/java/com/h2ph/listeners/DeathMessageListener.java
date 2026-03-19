@@ -1,8 +1,8 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.managers.DeathMessageManager;
-import com.prismcore.survival.manager.PlayerData;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,10 +24,10 @@ import java.util.ArrayList;
 
 public class DeathMessageListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DeathMessageManager deathManager;
 
-    public DeathMessageListener(PrismSurvival plugin) {
+    public DeathMessageListener(Falcon plugin) {
         this.plugin = plugin;
         this.deathManager = plugin.getDeathMessageManager();
     }

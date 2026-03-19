@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class AmethystCommand implements CommandExecutor, TabCompleter {
 
-    public AmethystCommand(PrismSurvival plugin) {
+    public AmethystCommand(Falcon plugin) {
     }
 
     @Override
@@ -54,14 +54,14 @@ public class AmethystCommand implements CommandExecutor, TabCompleter {
 
         long overrideTimer = 0;
         if (args.length >= 3) {
-            overrideTimer = com.prismcore.survival.tools.Utils.parseDuration(args[2]);
+            overrideTimer = com.falconcore.survival.tools.Utils.parseDuration(args[2]);
             if (overrideTimer <= 0) {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
         }
 
-        com.prismcore.survival.tools.ToolsManager manager = com.prismcore.survival.tools.ToolsManager.getInstance();
+        com.falconcore.survival.tools.ToolsManager manager = com.falconcore.survival.tools.ToolsManager.getInstance();
         if (manager == null) {
             return true;
         }

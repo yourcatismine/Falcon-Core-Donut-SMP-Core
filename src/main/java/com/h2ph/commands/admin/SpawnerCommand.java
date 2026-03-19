@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 
 public class SpawnerCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public SpawnerCommand(PrismSurvival plugin) {
+    public SpawnerCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -54,7 +54,7 @@ public class SpawnerCommand implements CommandExecutor, TabCompleter {
         }
         final int amount = amountArg;
 
-        com.prismcore.survival.spawners.mob.SpawnerType type = com.prismcore.survival.spawners.mob.SpawnerType.fromString(typeStr);
+        com.falconcore.survival.spawners.mob.SpawnerType type = com.falconcore.survival.spawners.mob.SpawnerType.fromString(typeStr);
         if (type == null) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
@@ -79,10 +79,10 @@ public class SpawnerCommand implements CommandExecutor, TabCompleter {
 
                 Player onlineTarget = offlineTarget.getPlayer();
                 if (onlineTarget != null) {
-                    ItemStack item = com.prismcore.survival.spawners.util.SpawnerItemUtil.createSpawnerItem(type, amount);
+                    ItemStack item = com.falconcore.survival.spawners.util.SpawnerItemUtil.createSpawnerItem(type, amount);
                     onlineTarget.getInventory().addItem(item);
 
-                    String msg = com.prismcore.survival.tools.Utils.formatColors("&7Given&a " + onlineTarget.getName() + "&7 spawner&a " + type.name() + "&7 " + amount);
+                    String msg = com.falconcore.survival.tools.Utils.formatColors("&7Given&a " + onlineTarget.getName() + "&7 spawner&a " + type.name() + "&7 " + amount);
                     player.sendMessage(msg);
                     player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             net.md_5.bungee.api.chat.TextComponent.fromLegacyText(msg));
@@ -105,7 +105,7 @@ public class SpawnerCommand implements CommandExecutor, TabCompleter {
                     .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            return Arrays.stream(com.prismcore.survival.spawners.mob.SpawnerType.values())
+            return Arrays.stream(com.falconcore.survival.spawners.mob.SpawnerType.values())
                     .map(type -> type.name().toLowerCase())
                     .filter(name -> name.startsWith(args[2].toLowerCase()))
                     .collect(Collectors.toList());

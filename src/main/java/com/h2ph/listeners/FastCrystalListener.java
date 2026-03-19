@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EnderCrystal;
@@ -18,9 +18,9 @@ import org.bukkit.GameMode;
 
 public class FastCrystalListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public FastCrystalListener(PrismSurvival plugin) {
+    public FastCrystalListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

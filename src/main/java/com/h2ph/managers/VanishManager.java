@@ -1,7 +1,7 @@
 package com.h2ph.managers;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.PlayerData;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -12,9 +12,9 @@ import java.util.UUID;
 
 public class VanishManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public VanishManager(PrismSurvival plugin) {
+    public VanishManager(Falcon plugin) {
         this.plugin = plugin;
         startVanishTask();
     }

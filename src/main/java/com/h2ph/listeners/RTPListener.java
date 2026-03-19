@@ -52,8 +52,8 @@ public class RTPListener implements Listener {
                 if (event.getPlayer() instanceof org.bukkit.entity.Player) {
                     org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getPlayer();
 
-                    com.h2ph.PrismSurvival plugin = org.bukkit.plugin.java.JavaPlugin
-                            .getPlugin(com.h2ph.PrismSurvival.class);
+                    com.h2ph.Falcon plugin = org.bukkit.plugin.java.JavaPlugin
+                            .getPlugin(com.h2ph.Falcon.class);
                     plugin.getSchedulerAdapter().runTaskLater(() -> {
                         if (com.h2ph.rtp.RTPManager.isTeleporting(player)
                                 || com.h2ph.rtp.RTPManager.isOnCooldown(player)) {

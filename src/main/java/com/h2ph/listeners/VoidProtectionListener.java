@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.VoidManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.VoidManager;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
@@ -14,9 +14,9 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 public class VoidProtectionListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public VoidProtectionListener(PrismSurvival plugin) {
+    public VoidProtectionListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

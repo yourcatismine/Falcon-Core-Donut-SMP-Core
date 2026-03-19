@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -9,10 +9,10 @@ import java.util.UUID;
 
 public class DuelStatsManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final File statsFolder;
 
-    public DuelStatsManager(PrismSurvival plugin) {
+    public DuelStatsManager(Falcon plugin) {
         this.plugin = plugin;
         this.statsFolder = new File(plugin.getDataFolder(), "survival/duels/stats");
         if (!statsFolder.exists()) {

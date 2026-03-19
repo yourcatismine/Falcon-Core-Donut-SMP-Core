@@ -1,7 +1,7 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.manager.BountyManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.manager.BountyManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class BountyGUI {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final DecimalFormat DF = new DecimalFormat("#.##");
 
     public enum SortType {
@@ -37,7 +37,7 @@ public class BountyGUI {
         }
     }
 
-    public BountyGUI(PrismSurvival plugin) {
+    public BountyGUI(Falcon plugin) {
         this.plugin = plugin;
     }
 

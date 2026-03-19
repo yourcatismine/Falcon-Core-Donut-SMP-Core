@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -21,11 +21,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class OtpCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final List<String> offlinePlayersCache = new ArrayList<>();
     private long lastCacheUpdate = 0;
 
-    public OtpCommand(PrismSurvival plugin) {
+    public OtpCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

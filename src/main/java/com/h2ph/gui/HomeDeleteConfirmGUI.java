@@ -1,6 +1,6 @@
 package com.h2ph.gui;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.managers.HomeManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -36,7 +36,7 @@ public class HomeDeleteConfirmGUI {
         }
     }
 
-    public static void open(Player player, PrismSurvival plugin, int homeIndex) {
+    public static void open(Player player, Falcon plugin, int homeIndex) {
         HomeManager manager = plugin.getHomeManager();
 
         String displayName;

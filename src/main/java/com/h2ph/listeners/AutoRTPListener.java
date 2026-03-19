@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -10,9 +10,9 @@ import org.bukkit.inventory.ItemStack;
 
 public class AutoRTPListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public AutoRTPListener(PrismSurvival plugin) {
+    public AutoRTPListener(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -32,7 +32,7 @@ public class AutoRTPListener implements Listener {
                     player.teleportAsync(spawn);
                 }
 
-                com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+                com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
                 if (data != null && data.isRespawnRTP()) {
                     for (ItemStack item : plugin.getRespawnGearManager().getItems()) {
                         if (item != null) {

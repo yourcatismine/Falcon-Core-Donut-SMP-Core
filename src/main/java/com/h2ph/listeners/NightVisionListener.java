@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,9 +11,9 @@ import org.bukkit.potion.PotionEffectType;
 
 public class NightVisionListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public NightVisionListener(PrismSurvival plugin) {
+    public NightVisionListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

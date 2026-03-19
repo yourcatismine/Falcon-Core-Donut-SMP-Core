@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.EnderChestGUI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnderChestCommand implements CommandExecutor {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public EnderChestCommand(PrismSurvival plugin) {
+    public EnderChestCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

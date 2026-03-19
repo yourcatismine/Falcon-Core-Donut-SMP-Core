@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.economy;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -33,7 +33,7 @@ import org.bukkit.command.TabCompleter;
 
 public class BillfordCommand implements CommandExecutor, Listener, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final String GUI_TITLE_PLAYER = ChatColor.translateAlternateColorCodes('&', "&8ʙɪʟʟꜰᴏʀᴅ");
     private final String GUI_TITLE_ADMIN = ChatColor.translateAlternateColorCodes('&', "&8ʙɪʟʟꜰᴏʀᴅ &cᴀᴅᴍɪɴ");
 
@@ -47,7 +47,7 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
     private final int OUTPUT_SLOT = 25;
     private final int SAVE_SLOT = 53;
 
-    public BillfordCommand(PrismSurvival plugin) {
+    public BillfordCommand(Falcon plugin) {
         this.plugin = plugin;
 
         tradeFile = new File(plugin.getDataFolder(), "survival/billford/billford.yml");
@@ -323,8 +323,8 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
                 continue;
             int needed = req.getAmount();
             boolean strict = hasCustomMeta(req);
-            com.prismcore.survival.orders.data.ItemKey key = strict ? null
-                    : com.prismcore.survival.orders.data.ItemKey.fromStack(req);
+            com.falconcore.survival.orders.data.ItemKey key = strict ? null
+                    : com.falconcore.survival.orders.data.ItemKey.fromStack(req);
 
             for (int i = 0; i < sim.length; i++) {
                 if (sim[i] == null || sim[i].getType() == Material.AIR)
@@ -365,8 +365,8 @@ public class BillfordCommand implements CommandExecutor, Listener, TabCompleter 
                 continue;
             int needed = req.getAmount();
             boolean strict = hasCustomMeta(req);
-            com.prismcore.survival.orders.data.ItemKey key = strict ? null
-                    : com.prismcore.survival.orders.data.ItemKey.fromStack(req);
+            com.falconcore.survival.orders.data.ItemKey key = strict ? null
+                    : com.falconcore.survival.orders.data.ItemKey.fromStack(req);
 
             for (int i = 0; i < contents.length; i++) {
                 if (contents[i] == null || contents[i].getType() == Material.AIR)

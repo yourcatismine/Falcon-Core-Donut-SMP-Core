@@ -29,7 +29,7 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
-        com.prismcore.survival.manager.PlayerData senderData = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData senderData = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(player.getUniqueId());
         if (senderData != null && senderData.isMuted()) {
             String reason = senderData.getMuteReason();
@@ -75,7 +75,7 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
 
         if (target == null) {
             final String finalTargetName = targetName;
-            com.h2ph.PrismSurvival.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
+            com.h2ph.Falcon.getInstance().getSchedulerAdapter().runTaskAsync(() -> {
                 org.bukkit.OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(finalTargetName);
                 if (offlineTarget.hasPlayedBefore()) {
                     String offlineMsg = ChatColor.RED + "This user is not online.";
@@ -91,7 +91,7 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        com.prismcore.survival.manager.PlayerData data = com.h2ph.PrismSurvival.getInstance().getPlayerDataManager()
+        com.falconcore.survival.manager.PlayerData data = com.h2ph.Falcon.getInstance().getPlayerDataManager()
                 .get(target.getUniqueId());
         if (data != null && !data.isPrivateMessages()) {
             String errorMsg = ChatColor.RED + "User disabled private messages.";
@@ -117,12 +117,12 @@ public class MsgCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(senderFormat);
         target.sendMessage(receiverFormat);
 
-        com.h2ph.managers.PrivateMessageManager pmManager = com.h2ph.PrismSurvival.getInstance()
+        com.h2ph.managers.PrivateMessageManager pmManager = com.h2ph.Falcon.getInstance()
                 .getPrivateMessageManager();
         pmManager.setReplyTarget(target.getUniqueId(), player.getUniqueId());
         pmManager.setReplyTarget(player.getUniqueId(), target.getUniqueId());
 
-        com.prismcore.survival.manager.PlayerData targetData = com.h2ph.PrismSurvival.getInstance()
+        com.falconcore.survival.manager.PlayerData targetData = com.h2ph.Falcon.getInstance()
                 .getPlayerDataManager().get(target.getUniqueId());
         if (targetData != null && targetData.isSoundNotifications()) {
         }

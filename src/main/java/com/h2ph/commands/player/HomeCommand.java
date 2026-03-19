@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.HomeGUI;
 import com.h2ph.managers.HomeManager;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -18,9 +18,9 @@ import java.util.Map;
 
 public class HomeCommand implements CommandExecutor, TabCompleter {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public HomeCommand(PrismSurvival plugin) {
+    public HomeCommand(Falcon plugin) {
         this.plugin = plugin;
     }
 

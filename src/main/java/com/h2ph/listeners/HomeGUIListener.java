@@ -1,6 +1,6 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.gui.HomeGUI;
 import com.h2ph.managers.HomeManager;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -18,9 +18,9 @@ import org.bukkit.inventory.ItemStack;
 
 public class HomeGUIListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public HomeGUIListener(PrismSurvival plugin) {
+    public HomeGUIListener(Falcon plugin) {
         this.plugin = plugin;
     }
 
@@ -162,7 +162,7 @@ public class HomeGUIListener implements Listener {
 
         if (slot == 10 || slot == 19) {
             com.h2ph.teams.Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
             boolean isOwner = data != null && "OWNER".equalsIgnoreCase(data.getTeamRole());
 
             if (team == null) {

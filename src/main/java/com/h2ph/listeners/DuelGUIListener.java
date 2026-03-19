@@ -33,7 +33,7 @@ public class DuelGUIListener implements Listener {
                         }
                     }
                     com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
-                            com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+                            com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class));
                     guiManager.openRegionsGUI(player);
                 }
             }
@@ -55,7 +55,7 @@ public class DuelGUIListener implements Listener {
                 }
 
                 com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
-                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class));
 
                 if (event.getCurrentItem().hasItemMeta()) {
                     org.bukkit.persistence.PersistentDataContainer pdc = event.getCurrentItem().getItemMeta()
@@ -86,7 +86,7 @@ public class DuelGUIListener implements Listener {
             }
 
             com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
-                    com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+                    com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class));
 
             if (!event.getCurrentItem().hasItemMeta())
                 return;
@@ -97,7 +97,7 @@ public class DuelGUIListener implements Listener {
 
             String regionName = pdc.get(guiManager.getRegionKey(), org.bukkit.persistence.PersistentDataType.STRING);
             java.io.File file = new java.io.File(
-                    com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDataFolder(),
+                    com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getDataFolder(),
                     "survival/regions/duels/" + regionName + ".yml");
             org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
                     .loadConfiguration(file);
@@ -194,7 +194,7 @@ public class DuelGUIListener implements Listener {
             }
 
             com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
-                    com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+                    com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class));
 
             if (!event.getCurrentItem().hasItemMeta())
                 return;
@@ -211,7 +211,7 @@ public class DuelGUIListener implements Listener {
                 guiManager.openRegionSettingsGUI(player, regionName);
             } else if (slot == 15) {
                 java.io.File file = new java.io.File(
-                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDataFolder(),
+                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getDataFolder(),
                         "survival/regions/duels/" + regionName + ".yml");
 
                 isRedirecting.add(player.getUniqueId());
@@ -220,14 +220,14 @@ public class DuelGUIListener implements Listener {
                 if (file.exists()) {
                     if (file.delete()) {
                         player.sendMessage(ChatColor.RED + "Region " + regionName + " deleted forever.");
-                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getLogger().info(
+                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getLogger().info(
                                 "Player " + player.getName() + " deleted duel region: " + regionName);
                         try {
                             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 1f, 1f);
                         } catch (Exception ignored) {
                         }
 
-                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDuelArenaManager()
+                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getDuelArenaManager()
                                 .reloadArena(regionName);
                     } else {
                         player.sendMessage(ChatColor.RED + "Failed to delete region file.");
@@ -236,7 +236,7 @@ public class DuelGUIListener implements Listener {
                     player.sendMessage(ChatColor.RED + "Region file not found (already deleted?).");
                 }
 
-                com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
+                com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getSchedulerAdapter()
                         .runEntityTaskLater(player, () -> guiManager.openRegionsGUI(player), 1L);
             }
         }
@@ -251,10 +251,10 @@ public class DuelGUIListener implements Listener {
             if (event.getPlayer() instanceof org.bukkit.entity.Player) {
                 org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getPlayer();
                 if (!isRedirecting.contains(player.getUniqueId())) {
-                    com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
+                    com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getSchedulerAdapter()
                             .runEntityTaskLater(player, () -> {
                                 com.h2ph.commands.admin.duels.DuelGUIManager guiManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
-                                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+                                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class));
                                 guiManager.openRegionsGUI(player);
                             }, 1L);
                 }
@@ -276,11 +276,11 @@ public class DuelGUIListener implements Listener {
                 String regionName = parts[0];
                 String path = parts[1];
 
-                com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getSchedulerAdapter()
+                com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getSchedulerAdapter()
                         .runEntityTask(player, () -> {
                             try {
                                 java.io.File file = new java.io.File(
-                                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDataFolder(),
+                                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getDataFolder(),
                                         "survival/regions/duels/" + regionName + ".yml");
                                 org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
                                         .loadConfiguration(file);
@@ -297,11 +297,11 @@ public class DuelGUIListener implements Listener {
                                 player.sendMessage(ChatColor.GREEN + "Position set successfully.");
                                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 
-                                com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class).getDuelArenaManager()
+                                com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class).getDuelArenaManager()
                                         .reloadArena(regionName);
 
                                 com.h2ph.commands.admin.duels.DuelGUIManager reopenManager = new com.h2ph.commands.admin.duels.DuelGUIManager(
-                                        com.h2ph.PrismSurvival.getPlugin(com.h2ph.PrismSurvival.class));
+                                        com.h2ph.Falcon.getPlugin(com.h2ph.Falcon.class));
                                 reopenManager.openRegionSettingsGUI(player, regionName);
 
                             } catch (Exception e) {

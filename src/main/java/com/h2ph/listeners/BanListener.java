@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
 import com.h2ph.commands.admin.moderations.OffendPlugin;
-import com.prismcore.survival.manager.DatabaseManager;
+import com.falconcore.survival.manager.DatabaseManager;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

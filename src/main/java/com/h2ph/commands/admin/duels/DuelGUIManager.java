@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class DuelGUIManager {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private static final Map<Character, Character> SMALL_CAPS_MAP = new HashMap<>();
 
     static {
@@ -31,7 +31,7 @@ public class DuelGUIManager {
 
     private final org.bukkit.NamespacedKey regionKey;
 
-    public DuelGUIManager(PrismSurvival plugin) {
+    public DuelGUIManager(Falcon plugin) {
         this.plugin = plugin;
         this.regionKey = new org.bukkit.NamespacedKey(plugin, "duel_region_name");
     }

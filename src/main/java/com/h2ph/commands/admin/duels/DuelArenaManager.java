@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.duels;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,10 +17,10 @@ public class DuelArenaManager {
         NORMAL, FORFEIT
     }
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private final DuelStatsManager statsManager;
 
-    public PrismSurvival getPlugin() {
+    public Falcon getPlugin() {
         return plugin;
     }
 
@@ -39,7 +39,7 @@ public class DuelArenaManager {
 
     private final java.util.Map<String, ArenaRegion> arenaMap = new java.util.HashMap<>();
 
-    public DuelArenaManager(PrismSurvival plugin, DuelStatsManager statsManager) {
+    public DuelArenaManager(Falcon plugin, DuelStatsManager statsManager) {
         this.plugin = plugin;
         this.statsManager = statsManager;
         loadConfig();

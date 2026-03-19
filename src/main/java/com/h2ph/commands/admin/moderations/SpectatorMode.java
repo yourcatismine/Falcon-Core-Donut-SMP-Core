@@ -1,6 +1,6 @@
 package com.h2ph.commands.admin.moderations;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -96,8 +96,8 @@ public class SpectatorMode implements CommandExecutor, Listener {
             return;
         }
 
-        if (plugin instanceof PrismSurvival) {
-            ((PrismSurvival) plugin).getSchedulerAdapter().runTaskLater(() -> {
+        if (plugin instanceof Falcon) {
+            ((Falcon) plugin).getSchedulerAdapter().runTaskLater(() -> {
                 for (UUID uuid : spectators) {
                     Player hiddenStaff = Bukkit.getPlayer(uuid);
                     if (hiddenStaff != null && !joinedPlayer.hasPermission("falcon.spectator")) {

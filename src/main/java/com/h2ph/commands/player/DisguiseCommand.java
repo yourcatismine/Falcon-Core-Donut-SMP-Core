@@ -1,6 +1,6 @@
 package com.h2ph.commands.player;
 
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -34,14 +34,14 @@ import net.luckperms.api.node.Node;
 
 public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     
     private Method getHandleMethod;
     private Field gameProfileField;
     private boolean reflectionEnabled = false;
     private String serverVersion;
 
-    public DisguiseCommand(PrismSurvival plugin) {
+    public DisguiseCommand(Falcon plugin) {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         initializeReflection();
@@ -250,7 +250,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
     private void applyDisguise(Player player, String targetName, String skinName) {
         UUID playerId = player.getUniqueId();
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerId);
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerId);
 
         if (targetName.equalsIgnoreCase(player.getName())) {
             player.sendMessage(ChatColor.RED + "You cannot disguise as yourself!");
@@ -321,7 +321,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
     private void removeDisguise(Player player) {
         UUID playerId = player.getUniqueId();
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerId);
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(playerId);
 
         if (!data.isDisguised()) {
             player.sendMessage(ChatColor.RED + "You are not disguised!");
@@ -348,7 +348,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         List<String> disguised = new ArrayList<>();
         
         for (Player online : Bukkit.getOnlinePlayers()) {
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
             if (data.isDisguised()) {
                 String realName = online.getName();
                 String disguiseName = data.getDisguiseName();
@@ -375,7 +375,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         player.sendMessage("  gameProfileField: " + (gameProfileField != null ? "✓" : "✗"));
         player.sendMessage("  reflectionEnabled: " + (reflectionEnabled ? "✓" : "✗"));
         
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         player.sendMessage(ChatColor.YELLOW + "Player Data:");
         player.sendMessage("  isDisguised: " + data.isDisguised());
         player.sendMessage("  disguiseName: " + data.getDisguiseName());
@@ -435,7 +435,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent evt) {
         Player player = evt.getPlayer();
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         
         if (data.isDisguised()) {
             String disguiseName = data.getDisguiseName();
@@ -484,7 +484,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         boolean modified = false;
 
         for (Player online : Bukkit.getOnlinePlayers()) {
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
             if (data.isDisguised()) {
                 String realName = online.getName();
                 String disguiseName = data.getDisguiseName();
@@ -508,7 +508,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent evt) {
         Player p = evt.getPlayer();
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
 
         if (data.isDisguised()) {
             evt.setJoinMessage(null);
@@ -529,7 +529,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.equals(p)) continue;
 
-                com.prismcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(player.getUniqueId());
+                com.falconcore.survival.manager.PlayerData playerData = plugin.getPlayerDataManager().get(player.getUniqueId());
                 if (playerData.isDisguised()) {
                     if (p.hasPermission("falcon.disguise.see")) {
                         continue;
@@ -748,7 +748,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         return null;
     }
 
-    private void backupOriginalPermissions(Player player, com.prismcore.survival.manager.PlayerData data) {
+    private void backupOriginalPermissions(Player player, com.falconcore.survival.manager.PlayerData data) {
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             return;
         }
@@ -807,7 +807,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
         }
     }
 
-    private void restoreOriginalPermissions(Player player, com.prismcore.survival.manager.PlayerData data) {
+    private void restoreOriginalPermissions(Player player, com.falconcore.survival.manager.PlayerData data) {
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             return;
         }
@@ -863,7 +863,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter, Listener 
 
     private String processMentions(String message) {
         for (Player online : Bukkit.getOnlinePlayers()) {
-            com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(online.getUniqueId());
             if (data.isDisguised()) {
                 String disguiseName = data.getDisguiseName();
                 String realName = online.getName();

@@ -1,7 +1,7 @@
 package com.h2ph.listeners;
 
-import com.h2ph.PrismSurvival;
-import com.prismcore.survival.utils.ItemSerializationManager;
+import com.h2ph.Falcon;
+import com.falconcore.survival.utils.ItemSerializationManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,9 +15,9 @@ import java.util.logging.Level;
 
 public class InventorySyncListener implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
 
-    public InventorySyncListener(PrismSurvival plugin) {
+    public InventorySyncListener(Falcon plugin) {
         this.plugin = plugin;
     }
 

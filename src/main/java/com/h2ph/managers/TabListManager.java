@@ -9,7 +9,7 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData;
-import com.h2ph.PrismSurvival;
+import com.h2ph.Falcon;
 import com.h2ph.utils.LuckPermsUtils;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class TabListManager implements Listener {
 
-    private final PrismSurvival plugin;
+    private final Falcon plugin;
     private FileConfiguration config;
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
     private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
@@ -51,7 +51,7 @@ public class TabListManager implements Listener {
     private boolean groupSortingEnabled = true;
     private Map<String, Integer> groupRankings = new HashMap<>();
 
-    public TabListManager(PrismSurvival plugin) {
+    public TabListManager(Falcon plugin) {
         this.plugin = plugin;
         tabEntries.clear();
         loadConfig();
@@ -139,7 +139,7 @@ public class TabListManager implements Listener {
                 plugin.getLogger().warning("Error handling disconnect for player: " + e.getMessage());
             }
         }
-        com.prismcore.survival.manager.PlayerData pdata = plugin.getPlayerDataManager().get(uuid);
+        com.falconcore.survival.manager.PlayerData pdata = plugin.getPlayerDataManager().get(uuid);
         if (pdata != null) {
             String disguiseName = pdata.getDisguiseName();
             if (disguiseName != null && !disguiseName.isEmpty()) {
@@ -249,7 +249,7 @@ public class TabListManager implements Listener {
 
                 String prefix = LuckPermsUtils.getPrefix(onlinePlayer);
                 
-                com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(onlineUUID);
+                com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(onlineUUID);
                 
                 boolean shouldShowDisguise = data.isDisguised() && 
                     (player.getUniqueId().equals(onlineUUID) ||
@@ -619,7 +619,7 @@ public class TabListManager implements Listener {
     public String getPlayerDisplayName(Player targetPlayer, Player observer) {
         if (targetPlayer == null) return "";
         
-        com.prismcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(targetPlayer.getUniqueId());
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(targetPlayer.getUniqueId());
         if (data.isDisguised()) {
             String disguiseName = data.getDisguiseName();
             

@@ -246,7 +246,7 @@ public class DuelQueueManager implements Listener {
             } else {
                 String estimatedTime = calculateEstimatedWait(queuedPlayers.size());
                 actionBarMsg = ChatColor.translateAlternateColorCodes('&',
-                        "&7Searching for a Casual Duel... Estimated Time:&#A9833D " + estimatedTime);
+                        "&7Searching for a Casual Duel... Estimated Time:&d " + estimatedTime);
             }
 
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,

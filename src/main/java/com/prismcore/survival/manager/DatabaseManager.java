@@ -1126,16 +1126,16 @@ public class DatabaseManager {
         List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
         if (!isConnected())
             return entries;
-        String query = "SELECT ps.uuid, ps.shards, COALESCE(pn.cached_name, ps.uuid) as name " +
-                "FROM player_stats ps " +
-                "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
-                "WHERE ps.shards > 0 ORDER BY ps.shards DESC LIMIT ?";
+        String query = "SELECT ps.uuid, ps.shards, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.shards > 0 ORDER BY ps.shards DESC LIMIT ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     entries.add(new PlayerDataManager.LeaderboardEntry(
-                            rs.getString("name"),
+                            rs.getString("cached_name"),
                             UUID.fromString(rs.getString("uuid")),
                             rs.getDouble("shards")));
                 }
@@ -1149,16 +1149,16 @@ public class DatabaseManager {
         List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
         if (!isConnected())
             return entries;
-        String query = "SELECT ps.uuid, ps.money, COALESCE(pn.cached_name, ps.uuid) as name " +
-                "FROM player_stats ps " +
-                "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
-                "WHERE ps.money > 0 ORDER BY ps.money DESC LIMIT ?";
+        String query = "SELECT ps.uuid, ps.money, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.money > 0 ORDER BY ps.money DESC LIMIT ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     entries.add(new PlayerDataManager.LeaderboardEntry(
-                            rs.getString("name"),
+                            rs.getString("cached_name"),
                             UUID.fromString(rs.getString("uuid")),
                             rs.getDouble("money")));
                 }

@@ -321,9 +321,9 @@ public class DuelArenaManager {
         String p2WinRate = statsManager.getWinRate(player2.getUniqueId());
 
         String p1ActionBar = ChatColor.translateAlternateColorCodes('&',
-                "&7Your opponent &a" + player2.getName() + "&7 has a &#A9833D" + p2WinRate + "&7 win rate. Good luck.");
+                "&7Your opponent &a" + player2.getName() + "&7 has a &d" + p2WinRate + "&7 win rate. Good luck.");
         String p2ActionBar = ChatColor.translateAlternateColorCodes('&',
-                "&7Your opponent &a" + player1.getName() + "&7 has a &#A9833D" + p1WinRate + "&7 win rate. Good luck.");
+                "&7Your opponent &a" + player1.getName() + "&7 has a &d" + p1WinRate + "&7 win rate. Good luck.");
 
         player1.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(p1ActionBar));
@@ -517,7 +517,7 @@ public class DuelArenaManager {
                 int mins = remaining / 60;
                 int secs = remaining % 60;
                 String actionMsg = ChatColor.translateAlternateColorCodes('&',
-                        "&7You have &#A9833D" + mins + "m " + secs + "s&7 to collect the loot");
+                        "&7You have &d" + mins + "m " + secs + "s&7 to collect the loot");
                 winner.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionMsg));
 
                 try {
@@ -590,7 +590,7 @@ public class DuelArenaManager {
             int s = loserSeconds.get();
             if (s > 0) {
                 String actionMsg = ChatColor.translateAlternateColorCodes('&',
-                        "&7Teleporting you back in &#A9833D" + s + " seconds");
+                        "&7Teleporting you back in &d" + s + " seconds");
                 loser.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionMsg));
                 try {
                     loser.playSound(loser.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);

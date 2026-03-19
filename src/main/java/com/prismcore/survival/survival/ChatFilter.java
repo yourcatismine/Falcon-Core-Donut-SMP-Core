@@ -11,6 +11,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.text.Normalizer;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -103,7 +105,9 @@ public class ChatFilter implements Listener {
             }
 
             if (config.getBoolean("chat-filter.block-repeats", true)) {
-                if (lastMessages.containsKey(uuid) && lastMessages.get(uuid).equalsIgnoreCase(message)) {
+                String normalized = normalizeMessage(message);
+                String last = lastMessages.get(uuid);
+                if (last != null && last.equals(normalized)) {
                     event.setCancelled(true);
                     player.sendMessage(ChatColor.RED + "Please do not repeat the same (or similar) message.");
                     return;
@@ -127,7 +131,7 @@ public class ChatFilter implements Listener {
         }
 
         chatCooldowns.put(uuid, currentTime);
-        lastMessages.put(uuid, message);
+        lastMessages.put(uuid, normalizeMessage(message));
 
         java.util.Iterator<Player> iterator = event.getRecipients().iterator();
         while (iterator.hasNext()) {
@@ -161,10 +165,6 @@ public class ChatFilter implements Listener {
         lastMessages.remove(uuid);
     }
 
-    /**
-     * MAGIC FUNCTION: Converts a simple word (e.g. "fuck") into a complex Regex
-     * that catches bypasses like "f-u.c_k", "f!ck", "phuck", "fuuuuck"
-     */
     private Pattern buildSmartPattern(String word) {
         StringBuilder sb = new StringBuilder();
 
@@ -177,10 +177,6 @@ public class ChatFilter implements Listener {
         return Pattern.compile(sb.toString(), Pattern.CASE_INSENSITIVE);
     }
 
-    /**
-     * Returns a Regex Character Class for a specific letter, including its Leet
-     * Speak variants.
-     */
     private String formatDuration(long seconds) {
         if (seconds <= 0)
             return "Expired";
@@ -237,5 +233,15 @@ public class ChatFilter implements Listener {
             default:
                 return Pattern.quote(String.valueOf(c));
         }
+    }
+
+    private String normalizeMessage(String message) {
+        if (message == null) return "";
+        String s = ChatColor.stripColor(message);
+        s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        s = s.toLowerCase(Locale.ROOT);
+        s = s.replaceAll("[^\\p{Alnum}]", "");
+        s = s.replaceAll("(.)\\1+", "$1");
+        return s;
     }
 }

@@ -14,7 +14,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.OnlineStatus;
 
 public class PrismSurvival extends JavaPlugin {
 
@@ -28,7 +33,7 @@ public class PrismSurvival extends JavaPlugin {
     private com.h2ph.commands.player.MediaCommand mediaCommand;
     private String motd;
     private boolean motdEnabled;
-
+    private org.bukkit.scheduler.BukkitTask discordStatusTask = null;
     private static PrismSurvival instance;
 
     public static PrismSurvival getInstance() {
@@ -132,6 +137,7 @@ public class PrismSurvival extends JavaPlugin {
         try {
             jda = JDABuilder.createDefault(TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT).build(); jda.awaitReady();
             discordManager = new com.h2ph.managers.DiscordManager(this, targetChannelId); jda.addEventListener(discordManager);
+            startDiscordStatusTask();
             getLogger().info("Discord has been started!");
         } catch (InterruptedException e) {
             getLogger().severe("Faild to start Discord " + e.getMessage());
@@ -680,6 +686,49 @@ public class PrismSurvival extends JavaPlugin {
         }
     }
 
+    private void startDiscordStatusTask() {
+        java.util.List<String> msgs = getSurvivalConfig().getStringList("discord-status.messages");
+        long intervalSec = getSurvivalConfig().getLong("discord-status.interval-seconds", 10L);
+        if (jda == null || msgs == null || msgs.isEmpty()) return;
+    
+        AtomicInteger idx = new AtomicInteger(0);
+        long ticks = Math.max(1L, intervalSec) * 20L;
+        discordStatusTask = getSchedulerAdapter().runTaskTimer(() -> {
+            try {
+                String template = msgs.get(idx.getAndUpdate(i -> (i + 1) % msgs.size()));
+                String status = replaceDiscordPlaceholders(template);
+                jda.getPresence().setActivity(Activity.playing(status));
+                jda.getPresence().setStatus(OnlineStatus.ONLINE);
+            } catch (Exception e) {
+                getLogger().warning("Failed to update discord status: " + e.getMessage());
+            }
+        }, 0L, ticks);
+    }
+
+    private String replaceDiscordPlaceholders(String template) {
+        int playercount = Bukkit.getOnlinePlayers().size();
+        int bannedcount = 0;
+        int mutecount = 0;
+        int totalplayers = 0;
+
+        try {
+            if (getDatabaseManager() != null) {
+                bannedcount = getDatabaseManager().getBannedPlayerNames().size();
+                mutecount = getDatabaseManager().getMutedPlayerNames().size();
+            }
+        } catch (Exception ignored) {}
+
+        // fallback for totalplayers
+        try {
+            totalplayers = Bukkit.getOfflinePlayers().length;
+        } catch (Exception ignored) {}
+
+        return template.replace("{playercount}", String.valueOf(playercount))
+                       .replace("{totalplayers}", String.valueOf(totalplayers))
+                       .replace("{bannedcount}", String.valueOf(bannedcount))
+                       .replace("{mutecount}", String.valueOf(mutecount));
+    }
+
     @Override
     public void onDisable() {
         if (jda != null) {
@@ -693,6 +742,7 @@ public class PrismSurvival extends JavaPlugin {
                 }
 
                 jda = null; discordManager = null;
+                stopDiscordStatusTask();
             }
         }
 
@@ -939,7 +989,7 @@ public class PrismSurvival extends JavaPlugin {
     private void saveAllResources() {
 
         saveResourceSafely("economy/shop/config.yml");
-
+        saveResourceSafely("economy/spawner/config.yml");
         saveResourceSafely("economy/shop/categories/end.yml");
         saveResourceSafely("economy/shop/categories/food.yml");
         saveResourceSafely("economy/shop/categories/gear.yml");
@@ -967,6 +1017,15 @@ public class PrismSurvival extends JavaPlugin {
                 }
             }
         }, 40L, 40L);
+    }
+
+    private void stopDiscordStatusTask() {
+        if (discordStatusTask != null) {
+            try {
+                discordStatusTask.cancel();
+            } catch (Exception ignored) {}
+            discordStatusTask = null;
+        }
     }
 
     private void saveResourceSafely(String path) {

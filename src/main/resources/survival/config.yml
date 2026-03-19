@@ -8,6 +8,14 @@ motd:
 TOKEN: ""
 ChannelID: ""
 
+discord-status:
+  interval-seconds: 30
+  messages:
+    - "Online: {playercount}"
+    - "Total players: {totalplayers}"
+    - "Banned: {bannedcount}"
+    - "Muted: {mutecount}"
+
 discord-webhooks:
   auction:
     enabled: false
@@ -54,10 +62,10 @@ disabled-fly:
   - world_the_end
 
 discord:
-  - "&fJoin our discord: &ahttps://discord.gg/psmp"
+  - "&fJoin our discord: &ahttps://discord.gg/store"
 
 store:
-  - "&fCheck out our store: &ahttps://prismsmp.tebex.io/"
+  - "&fCheck out our store: &ahttps://discord.gg/"
 
 command-whitelist:
   enabled: true

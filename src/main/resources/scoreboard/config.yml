@@ -23,7 +23,6 @@ TAB:
     MAX_ROWS: 20
     GROUP_SORTING:
       ENABLED: true
-      # Higher numbers = higher priority (appear first in TAB)
       RANKINGS:
         owner: 1000
         co-owner: 999

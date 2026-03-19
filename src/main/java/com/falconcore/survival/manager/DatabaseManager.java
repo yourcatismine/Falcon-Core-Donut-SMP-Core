@@ -306,6 +306,22 @@ public class DatabaseManager {
                 }
             }
 
+            // Migration: rename prism_orders to falcon_orders if it exists
+            try {
+                ResultSet rs = connection.getMetaData().getTables(null, null, "prism_orders", null);
+                if (rs.next()) {
+                    ResultSet rs2 = connection.getMetaData().getTables(null, null, "falcon_orders", null);
+                    if (!rs2.next()) {
+                        s.execute("RENAME TABLE prism_orders TO falcon_orders");
+                        plugin.getLogger().info("Successfully migrated prism_orders table to falcon_orders.");
+                    }
+                    rs2.close();
+                }
+                rs.close();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.WARNING, "Error during prism_orders migration check: " + e.getMessage());
+            }
+
             String ordersTable = "CREATE TABLE IF NOT EXISTS falcon_orders (" +
                     "id VARCHAR(36) NOT NULL PRIMARY KEY," +
                     "owner VARCHAR(36) NOT NULL," +

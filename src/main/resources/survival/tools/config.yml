@@ -4,7 +4,7 @@ drill:
   timer: 259200 # 3 days, in seconds
   update-interval: 30 # seconds between countdown updates for ALL tools (1 second for accurate display)
   material: NETHERITE_PICKAXE
-  display-name: "&dѕᴘʜʏɴх ᴘɪᴄᴋᴀхᴇ"
+  display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ᴘɪᴄᴋᴀхᴇ"
   lore:
     - "&7Breaks 9 Blocks at Once"
     - "&8Self Destruct: "
@@ -37,7 +37,7 @@ sellaxe:
   timer: 259200 # 3 days, in seconds
   update-interval: 30 # seconds between countdown updates for ALL tools (1 second for accurate display)
   material: NETHERITE_AXE
-  display-name: "&dѕᴘʜʏɴх ѕᴇʟʟ ᴀхᴇ"
+  display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ѕᴇʟʟ ᴀхᴇ"
   lore:
     - "&7Instantly Sells All Items in A Chest"
     - "&8Self Destruct: "
@@ -69,7 +69,7 @@ axe:
   use-countdown: true
   timer: 259200 # 3 days, in seconds
   material: NETHERITE_AXE
-  display-name: "&dѕᴘʜʏɴх ᴀхᴇ"
+  display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ᴀхᴇ"
   lore:
     - "&7Breaks Trees Instantly"
     - "&8Self Destruct: "
@@ -90,7 +90,7 @@ shovel:
   use-countdown: true
   timer: 259200 # 3 days, in seconds
   material: NETHERITE_SHOVEL
-  display-name: "&dѕᴘʜʏɴх ѕʜᴏᴠᴇʟ"
+  display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ѕʜᴏᴠᴇʟ"
   lore:
     - "&79 Blocks Per Break"
     - "&8Self Destruct: "
@@ -118,7 +118,7 @@ bucket:
   use-countdown: true
   material: BUCKET
   timer: 259200
-  display-name: "&dѕᴘʜʏɴх ʙᴜᴄᴋᴇᴛ"
+  display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ʙᴜᴄᴋᴇᴛ"
   lore:
     - "&7Drains 27 Water At Once"
     - "&8Self Destruct:"
@@ -137,7 +137,7 @@ shardbooster:
   material: POTION
   timer: 86400 # 24 hours in seconds
   multiplier: 4 # 4x shard production
-  display-name: "&dᴄᴀʀᴅ ʙᴏᴏѕᴛᴇʀ"
+  display-name: "&dѕʜᴀʀᴅ ʙᴏᴏѕᴛᴇʀ"
   lore:
     - "&f4x Shard Production for 24 hours"
     - "&8Self Destruct:"
@@ -151,7 +151,7 @@ multitool:
   material: NETHERITE_AXE
   timer: 259200
 
-  display-name: "&dѕᴘʜʏɴх ᴍᴜʟᴛɪᴛᴏᴏʟ"
+  display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ᴍᴜʟᴛɪᴛᴏᴏʟ"
   lore:
     - "&7Every Tool Inside a Tool"
     - "&8Self Destruct: "

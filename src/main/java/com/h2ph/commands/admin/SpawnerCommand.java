@@ -26,20 +26,23 @@ public class SpawnerCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("This command is only for players.");
-            return true;
-        }
-
-        Player player = (Player) sender;
-
-        if (!player.hasPermission("falcon.spawners")) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+        if (!sender.hasPermission("falcon.spawners")) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            } else {
+                sender.sendMessage("You don't have permission.");
+            }
             return true;
         }
 
         if (args.length < 3 || !args[0].equalsIgnoreCase("give")) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            } else {
+                sender.sendMessage(com.falconcore.survival.tools.Utils.formatColors("&cUsage: /spawner give <player> <type> [amount]"));
+            }
             return true;
         }
 
@@ -56,38 +59,48 @@ public class SpawnerCommand implements CommandExecutor, TabCompleter {
 
         com.falconcore.survival.spawners.mob.SpawnerType type = com.falconcore.survival.spawners.mob.SpawnerType.fromString(typeStr);
         if (type == null) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            } else {
+                sender.sendMessage(com.falconcore.survival.tools.Utils.formatColors("&cInvalid spawner type."));
+            }
             return true;
         }
 
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             @SuppressWarnings("deprecation")
             OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
-            boolean hasPlayed = offlineTarget.hasPlayedBefore();
             boolean isOnline = offlineTarget.isOnline();
             
-            plugin.getSchedulerAdapter().runAtLocation(player.getLocation(), () -> {
-                if (!hasPlayed && !isOnline) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return;
-                }
-                
-                if (!isOnline) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return;
-                }
+            if (!isOnline) {
+                plugin.getSchedulerAdapter().runTask(() -> {
+                    if (sender instanceof Player) {
+                        Player player = (Player) sender;
+                        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                        player.sendMessage(com.falconcore.survival.tools.Utils.formatColors("&cPlayer &7" + targetName + " &cis not online."));
+                    } else {
+                        sender.sendMessage(com.falconcore.survival.tools.Utils.formatColors("&cPlayer &7" + targetName + " &cis not online."));
+                    }
+                });
+                return;
+            }
 
-                Player onlineTarget = offlineTarget.getPlayer();
-                if (onlineTarget != null) {
+            Player onlineTarget = offlineTarget.getPlayer();
+            if (onlineTarget != null) {
+                plugin.getSchedulerAdapter().runAtLocation(onlineTarget.getLocation(), () -> {
                     ItemStack item = com.falconcore.survival.spawners.util.SpawnerItemUtil.createSpawnerItem(type, amount);
                     onlineTarget.getInventory().addItem(item);
 
                     String msg = com.falconcore.survival.tools.Utils.formatColors("&7Given&a " + onlineTarget.getName() + "&7 spawner&a " + type.name() + "&7 " + amount);
-                    player.sendMessage(msg);
-                    player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                            net.md_5.bungee.api.chat.TextComponent.fromLegacyText(msg));
-                }
-            });
+                    sender.sendMessage(msg);
+                    if (sender instanceof Player) {
+                        Player player = (Player) sender;
+                        player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                                net.md_5.bungee.api.chat.TextComponent.fromLegacyText(msg));
+                    }
+                });
+            }
         });
 
         return true;

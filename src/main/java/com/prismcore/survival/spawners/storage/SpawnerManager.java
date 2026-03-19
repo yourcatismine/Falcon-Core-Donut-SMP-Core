@@ -148,10 +148,15 @@ public class SpawnerManager {
     }
 
     public boolean isIsolated(Location loc) {
+        if (loc == null || loc.getWorld() == null) return true;
         int radius = plugin.getSpawnerConfig().getInt("settings.isolation_radius", 5);
+        double radiusSq = (double) radius * (double) radius;
         for (Location other : spawners.keySet()) {
-            if (!other.equals(loc) && other.distance(loc) <= radius) {
-                return false;
+            if (other == null || other.getWorld() == null) continue;
+            if (other.equals(loc)) continue;
+            if (!other.getWorld().equals(loc.getWorld())) continue;
+            if (other.distanceSquared(loc) <= radiusSq) {
+            return false;
             }
         }
         return true;

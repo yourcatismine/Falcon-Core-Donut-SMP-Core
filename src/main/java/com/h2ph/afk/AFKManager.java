@@ -93,7 +93,7 @@ public class AFKManager {
 
     public void loadRegions() {
         regions.clear();
-        if(!plugin.getDatabaseManager().isConnected()) return; //If database is not connected.
+        if(!plugin.getDatabaseManager().isConnected()) return;
 
         for (com.prismcore.survival.manager.DatabaseManager.AfkRegionRow row : plugin.getDatabaseManager().loadAllAfkRegions()) {
             if (row.world == null || Bukkit.getWorld(row.world) == null) continue;
@@ -134,32 +134,9 @@ public class AFKManager {
         }
     }
 
- //  public void createRegion(String name, String worldName, Vector min, Vector max) {
- //      File file = new File(regionsFolder, name + ".db");
- //      FileConfiguration data = new YamlConfiguration();
- //      data.set("world", worldName);
- //      data.set("min", min);
- //      data.set("max", max);
 
- //      try {
- //          data.save(file);
- //          regions.put(name.toLowerCase(), new AFKRegion(name, worldName, min, max));
- //      } catch (IOException e) {
- //          e.printStackTrace();
- //      }
- //  }
 
- //  public boolean deleteRegion(String name) {
- //      if (!regions.containsKey(name.toLowerCase()))
- //          return false;
 
- //      File file = new File(regionsFolder, name + ".db");
- //      if (file.exists()) {
- //          file.delete();
- //      }
- //      regions.remove(name.toLowerCase());
- //      return true;
- //  }
 
     public boolean regionExists(String name) {
         return regions.containsKey(name.toLowerCase());

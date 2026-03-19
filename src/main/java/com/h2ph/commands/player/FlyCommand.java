@@ -52,21 +52,15 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
         return true;
     }
 
-    // MONITOR priority = runs after ALL other plugins (including Multiverse) have processed the event
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
-        // In Folia the player's region context is still transitioning during this event,
-        // so immediate setAllowFlight/setFlying calls can be silently ignored.
-        // Schedule enforcement on the entity's own thread at 1 and 5 ticks to run
-        // after Multiverse has also finished its own next-tick world-apply tasks.
         if (!isFlightAllowed(player)) {
             enforceFlightLater(player, 1L);
             enforceFlightLater(player, 5L);
         }
     }
 
-    // Catches cross-world teleports (e.g. /mvtp, portals) before PlayerChangedWorldEvent
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
@@ -83,7 +77,6 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
         }
     }
 
-    // Catches direct flight-toggle attempts (double-jump) in blacklisted worlds
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onToggleFlight(PlayerToggleFlightEvent event) {
         Player player = event.getPlayer();
@@ -95,7 +88,6 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
 
     private void enforceFlightLater(Player player, long delayTicks) {
         try {
-            // Folia: must run on the entity's own region thread
             player.getScheduler().runDelayed(plugin, st -> {
                 if (player.isOnline() && !isFlightAllowed(player)) {
                     player.setFlying(false);
@@ -103,7 +95,6 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
                 }
             }, null, delayTicks);
         } catch (NoSuchMethodError | NoClassDefFoundError e) {
-            // Paper / Spigot fallback
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline() && !isFlightAllowed(player)) {
                     player.setFlying(false);
@@ -120,7 +111,6 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
 
         String worldName = player.getWorld().getName();
         List<String> disabledWorlds = plugin.getSurvivalConfig().getStringList("disabled-fly");
-        // Case-insensitive match to handle Multiverse world name casing differences
         return disabledWorlds.stream().noneMatch(w -> w.equalsIgnoreCase(worldName));
     }
 

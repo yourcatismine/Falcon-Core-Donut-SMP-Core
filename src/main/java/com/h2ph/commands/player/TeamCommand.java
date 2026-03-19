@@ -163,7 +163,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         Player onlineTarget = Bukkit.getPlayerExact(targetName);
 
         if (onlineTarget == null) {
-            // Player is not online - do blocking getOfflinePlayer lookup async to avoid TPS impact
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
                 boolean exists = offlineTarget.hasPlayedBefore();

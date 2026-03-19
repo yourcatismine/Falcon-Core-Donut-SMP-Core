@@ -26,12 +26,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
 
-import org.bukkit.event.inventory.InventoryOpenEvent; //
-import org.bukkit.event.inventory.InventoryCloseEvent; // 
-import org.bukkit.Sound; //
-import java.util.UUID; //
-import org.bukkit.entity.Item;//
-import org.bukkit.Location;//
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.Sound;
+import java.util.UUID;
+import org.bukkit.entity.Item;
+import org.bukkit.Location;
 
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
@@ -453,7 +453,6 @@ public class SpawnerListener implements Listener {
                     String stylizedFull = ""; 
                     skullMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dʟᴏᴏᴛ"));
                     List<String> skullLore = new ArrayList<>();
-                   // skullLore.add(ChatColor.translateAlternateColorCodes('&', ""));
                     String amountStr = String.valueOf(totalItems);
                     skullLore.add(ChatColor.translateAlternateColorCodes('&', "&d" + amountStr + "&f mob drops"));
                     skullMeta.setLore(skullLore);

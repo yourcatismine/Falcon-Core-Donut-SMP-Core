@@ -75,10 +75,9 @@ public class PvPSafeZoneManager {
             return false;
         }
         
-        // Check if zone already exists
         for (PvPSafeZone zone : safeZones) {
             if (zone.name.equals(name)) {
-                return false; // Zone already exists
+                return false;
             }
         }
         

@@ -93,7 +93,6 @@ public class OrderManager {
             ownerName, owner.toString(), o.key.displayName(), o.requested, o.priceEach, epoch
         );
 
-        // Log Order Creation
         String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
         String log = String.format("%s - Order Created\nCreated order for %s x%d for $%s each ($%s)",
                 timeStr, key.displayName(), amount, Utils.abbr(priceEach), Utils.abbr(amount * priceEach));
@@ -133,7 +132,6 @@ public class OrderManager {
 
             o.canceled = true;
             o.completed = true;
-           // o.requested = o.delivered; Removeed so I can get the refund...
         }
 
         int remaining = o.remainingAmount();
@@ -141,7 +139,7 @@ public class OrderManager {
         double refund = (double) remaining * price;
         OfflinePlayer owner = Bukkit.getOfflinePlayer(o.owner);
         OrdersModule.getInstance().vault().give(owner, refund, "Order Refund: " + o.key.displayName());
-        this.orders.put(o.id, o); //Update cache with the canceled state.......
+        this.orders.put(o.id, o);
         this.saveOrder(o, false);
     }
 
@@ -184,7 +182,6 @@ public class OrderManager {
             o.completed = freshOrder.completed;
             o.canceled = freshOrder.canceled;
 
-//Sync this storage so we can prevent the wiping of previous deliveriess.
             o.storage.clear();
             if (freshOrder.storage != null) {
                 o.storage.addAll(freshOrder.storage);
@@ -214,7 +211,6 @@ public class OrderManager {
                         int canAdd = stored.getMaxStackSize() - stored.getAmount();
                         if (canAdd > 0) {
                             int toAdd = Math.min(canAdd, it.getAmount());
-                            // Pause amethyst tool timers when adding to existing storage stacks
                             if (toAdd > 0) {
                                 ItemStack toAddStack = it.clone();
                                 toAddStack.setAmount(toAdd);
@@ -230,7 +226,6 @@ public class OrderManager {
                     }
                 }
                 if (!merged && it.getAmount() > 0) {
-                    // Pause amethyst tool timers when storing items in orders
                     com.prismcore.survival.tools.ToolsManager.getInstance().pauseOrdersTimers(it);
                     o.storage.add(it);
                 }
@@ -257,7 +252,7 @@ public class OrderManager {
             o.completed = true;
         }
         o.paid = (double) o.delivered * o.priceEach;
-        this.orders.put(o.id, o); //
+        this.orders.put(o.id, o);
         this.saveOrder(o, false);
 
         String formattedAmount = Utils.abbr(acceptedAmount);

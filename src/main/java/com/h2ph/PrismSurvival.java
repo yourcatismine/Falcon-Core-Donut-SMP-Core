@@ -123,7 +123,7 @@ public class PrismSurvival extends JavaPlugin {
         loadSurvivalConfig();
 
         motdEnabled = getSurvivalConfig().getBoolean("motd.enabled", false); motd = getSurvivalConfig()
-        .getString("motd.motd", "FALCON"); //Main MOTD
+        .getString("motd.motd", "FALCON");
         getServer().getPluginManager().registerEvents(new MotdListener(this), this);
 
         String TOKEN = getSurvivalConfig().getString("TOKEN");
@@ -250,6 +250,10 @@ public class PrismSurvival extends JavaPlugin {
         com.h2ph.commands.admin.crates.KeyCommand keyCommand = new com.h2ph.commands.admin.crates.KeyCommand(this);
         getCommand("key").setExecutor(keyCommand);
         getCommand("key").setTabCompleter(keyCommand);
+
+        com.h2ph.commands.admin.CratesCommand cratesCommand = new com.h2ph.commands.admin.CratesCommand(this);
+        getCommand("crate").setExecutor(cratesCommand);
+        getCommand("crate").setTabCompleter(cratesCommand);
 
         com.h2ph.commands.admin.economy.BillfordCommand billfordCommand = new com.h2ph.commands.admin.economy.BillfordCommand(
                 this);
@@ -718,7 +722,6 @@ public class PrismSurvival extends JavaPlugin {
             }
         } catch (Exception ignored) {}
 
-        // fallback for totalplayers
         try {
             totalplayers = Bukkit.getOfflinePlayers().length;
         } catch (Exception ignored) {}

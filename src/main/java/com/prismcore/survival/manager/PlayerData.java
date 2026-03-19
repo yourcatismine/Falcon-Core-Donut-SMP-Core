@@ -78,7 +78,6 @@ public class PlayerData {
         double old = this.shards;
         this.shards = shards;
         logEconomyChange(shards - old, "SHARDS", source);
-        // Invalidate shards leaderboard cache
         plugin.getPlayerDataManager().invalidateShardsLeaderboard();
     }
 
@@ -89,7 +88,6 @@ public class PlayerData {
     public synchronized void addShards(double amount, String source) {
         this.shards += amount;
         logEconomyChange(amount, "SHARDS", source);
-        // Invalidate shards leaderboard cache
         plugin.getPlayerDataManager().invalidateShardsLeaderboard();
     }
 
@@ -100,7 +98,6 @@ public class PlayerData {
     public synchronized void removeShards(double amount, String source) {
         this.shards -= amount;
         logEconomyChange(-amount, "SHARDS", source);
-        // Invalidate shards leaderboard cache
         plugin.getPlayerDataManager().invalidateShardsLeaderboard();
     }
 
@@ -118,7 +115,6 @@ public class PlayerData {
         double old = this.money;
         this.money = money;
         logEconomyChange(money - old, "MONEY", source);
-        // Invalidate money leaderboard cache
         plugin.getPlayerDataManager().invalidateMoneyLeaderboard();
     }
 
@@ -131,7 +127,6 @@ public class PlayerData {
             return;
         this.money += amount;
         logEconomyChange(amount, "MONEY", source);
-        // Invalidate money leaderboard cache
         plugin.getPlayerDataManager().invalidateMoneyLeaderboard();
     }
 
@@ -144,7 +139,6 @@ public class PlayerData {
             return;
         this.money -= amount;
         logEconomyChange(-amount, "MONEY", source);
-        // Invalidate money leaderboard cache
         plugin.getPlayerDataManager().invalidateMoneyLeaderboard();
     }
 

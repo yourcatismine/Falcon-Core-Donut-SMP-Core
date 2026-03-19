@@ -50,7 +50,6 @@ public class TpaRequestManager {
     private final Map<UUID, UUID> lastRequestSender = new HashMap<>();
     private final Map<UUID, UUID> senderToTarget = new HashMap<>();
     private final Map<UUID, Long> cooldowns = new HashMap<>();
-    // sender UUID -> (target UUID -> timestamp) for per-target 10s cooldown
     private final Map<UUID, Map<UUID, Long>> perTargetCooldowns = new HashMap<>();
 
     public static TpaRequestManager getInstance() {

@@ -48,8 +48,6 @@ public class BukkitSchedulerAdapter implements SchedulerAdapter {
                     .getMethod("getGlobalRegionScheduler")
                     .invoke(Bukkit.getServer());
 
-            // runAtFixedRate(Plugin plugin, Consumer<ScheduledTask> task, long
-            // initialDelayTicks, long periodTicks)
             Method runAtFixedRate = globalScheduler.getClass().getMethod(
                     "runAtFixedRate", Plugin.class, java.util.function.Consumer.class, long.class, long.class);
 

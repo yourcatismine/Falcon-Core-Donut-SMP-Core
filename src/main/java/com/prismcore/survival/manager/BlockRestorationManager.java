@@ -27,7 +27,6 @@ public class BlockRestorationManager implements Listener {
     private final DatabaseManager databaseManager;
     private final PvPSafeZoneManager pvpSafeZoneManager;
     
-    // 30 seconds in milliseconds
     private static final long RESTORATION_TIME = 30 * 1000L;
 
     public BlockRestorationManager(PrismSurvival plugin, DatabaseManager databaseManager, PvPSafeZoneManager pvpSafeZoneManager) {
@@ -35,14 +34,12 @@ public class BlockRestorationManager implements Listener {
         this.databaseManager = databaseManager;
         this.pvpSafeZoneManager = pvpSafeZoneManager;
         
-        // Start the restoration scheduler (runs every 30 seconds to check for blocks to restore)
         startRestorationScheduler();
         
-        // Restore any blocks that should have been restored during server downtime
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             restoreExpiredBlocks();
             plugin.getLogger().info("Restored any blocks that expired during server downtime");
-        }, 100L); // Run after 5 seconds (100 ticks) to ensure world loading is complete
+        }, 100L);
     }
 
     @EventHandler
@@ -51,21 +48,17 @@ public class BlockRestorationManager implements Listener {
         Block block = event.getBlock();
         Location location = block.getLocation();
 
-        // Get the block that was replaced (before the new block was placed)
         Block replacedBlock = event.getBlockReplacedState().getBlock();
         Material originalMaterial = event.getBlockReplacedState().getType();
         BlockData originalBlockData = event.getBlockReplacedState().getBlockData();
 
-        // Only restore in worlds that have a PvP safe zone configured
         if (!pvpSafeZoneManager.hasZonesInWorld(location.getWorld().getName())) {
             return;
         }
 
-        // Check if player is in PvP safe zone (sync check)
         boolean inSafeZone = pvpSafeZoneManager.isInSafeZone(location);
         
         if (!inSafeZone) {
-            // Player is outside safe zone, track this block for restoration
             trackBlockForRestoration(location, originalMaterial, originalBlockData);
         }
     }
@@ -76,52 +69,42 @@ public class BlockRestorationManager implements Listener {
         Block block = event.getBlock();
         Location location = block.getLocation();
         
-        // Get the block that is being broken
         Material brokenMaterial = block.getType();
         BlockData brokenBlockData = block.getBlockData();
         
-        // Skip AIR blocks (shouldn't happen but just in case)
         if (brokenMaterial == Material.AIR) {
             return;
         }
 
-        // Only restore in worlds that have a PvP safe zone configured
         if (!pvpSafeZoneManager.hasZonesInWorld(location.getWorld().getName())) {
             return;
         }
 
-        // Check if player is in PvP safe zone (sync check)
         boolean inSafeZone = pvpSafeZoneManager.isInSafeZone(location);
         
         if (!inSafeZone) {
-            // Player is outside safe zone, track this broken block for restoration
             trackBlockForRestoration(location, brokenMaterial, brokenBlockData);
         }
     }
 
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
-        // Track all blocks destroyed by explosions for restoration
         for (Block block : event.blockList()) {
             Location location = block.getLocation();
             Material blockMaterial = block.getType();
             BlockData blockData = block.getBlockData();
             
-            // Skip AIR blocks
             if (blockMaterial == Material.AIR) {
                 continue;
             }
 
-            // Only restore in worlds that have a PvP safe zone configured
             if (!pvpSafeZoneManager.hasZonesInWorld(location.getWorld().getName())) {
                 continue;
             }
             
-            // Check if location is in PvP safe zone
             boolean inSafeZone = pvpSafeZoneManager.isInSafeZone(location);
             
             if (!inSafeZone) {
-                // Explosion happened outside safe zone, track this block for restoration
                 trackBlockForRestoration(location, blockMaterial, blockData);
             }
         }
@@ -130,7 +113,6 @@ public class BlockRestorationManager implements Listener {
     private void trackBlockForRestoration(Location location, Material originalMaterial, BlockData originalBlockData) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try (Connection conn = databaseManager.getConnection()) {
-                // Check if there's already an entry for this location
                 String checkSQL = "SELECT id FROM temporary_blocks WHERE world = ? AND x = ? AND y = ? AND z = ?";
                 try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL)) {
                     checkStmt.setString(1, location.getWorld().getName());
@@ -140,13 +122,11 @@ public class BlockRestorationManager implements Listener {
                     
                     ResultSet rs = checkStmt.executeQuery();
                     if (rs.next()) {
-                        // Entry already exists, don't overwrite the original state
                         plugin.getLogger().fine("Location already tracked for restoration, keeping original state: " + location.toString());
                         return;
                     }
                 }
                 
-                // No existing entry, create new one with the original state
                 String originalDataString = originalBlockData.getAsString();
                 
                 String insertSQL = "INSERT INTO temporary_blocks (world, x, y, z, original_material, original_data, placed_time) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -171,7 +151,7 @@ public class BlockRestorationManager implements Listener {
     private void startRestorationScheduler() {
         plugin.getSchedulerAdapter().runTaskTimer(() -> {
             restoreExpiredBlocks();
-        }, 600L, 600L); // Run every 30 seconds (600 ticks)
+        }, 600L, 600L);
     }
 
     private void restoreExpiredBlocks() {
@@ -180,14 +160,12 @@ public class BlockRestorationManager implements Listener {
             long expirationTime = currentTime - RESTORATION_TIME;
 
             try (Connection conn = databaseManager.getConnection()) {
-                // Find all blocks that need to be restored and collect them by world
                 String selectSQL = "SELECT id, world, x, y, z, original_material, original_data, placed_time FROM temporary_blocks WHERE placed_time <= ?";
                 try (PreparedStatement selectStmt = conn.prepareStatement(selectSQL)) {
                     selectStmt.setLong(1, expirationTime);
                     
                     ResultSet rs = selectStmt.executeQuery();
                     
-                    // Collect all blocks to restore by world
                     Map<String, List<BlockRestoration>> blocksByWorld = new HashMap<>();
                     List<Integer> idsToDelete = new ArrayList<>();
                     
@@ -201,7 +179,6 @@ public class BlockRestorationManager implements Listener {
                         String originalData = rs.getString("original_data");
                         long placedTime = rs.getLong("placed_time");
                         
-                        // Add to restoration list
                         blocksByWorld.computeIfAbsent(worldName, k -> new ArrayList<>()).add(
                             new BlockRestoration(worldName, x, y, z, originalMaterial, originalData, placedTime)
                         );
@@ -209,14 +186,11 @@ public class BlockRestorationManager implements Listener {
                         idsToDelete.add(id);
                     }
                     
-                    // Restore all blocks for each world (only worlds that still have a PvP safe zone setup).
-                    // Worlds without zones: entries are still deleted from DB below to clean up.
                     if (!blocksByWorld.isEmpty()) {
                         plugin.getSchedulerAdapter().runTask(() -> {
                             for (Map.Entry<String, List<BlockRestoration>> entry : blocksByWorld.entrySet()) {
                                 String worldName = entry.getKey();
                                 List<BlockRestoration> blocks = entry.getValue();
-                                // Skip restoration if the setup was deleted for this world
                                 if (!pvpSafeZoneManager.hasZonesInWorld(worldName)) {
                                     plugin.getLogger().fine("Skipping restoration for world '" + worldName + "' — no PvP safe zones configured.");
                                     continue;
@@ -226,7 +200,6 @@ public class BlockRestorationManager implements Listener {
                         });
                     }
                     
-                    // Remove all restored blocks from database
                     if (!idsToDelete.isEmpty()) {
                         String deleteSQL = "DELETE FROM temporary_blocks WHERE id IN (" + 
                             String.join(",", Collections.nCopies(idsToDelete.size(), "?")) + ")";
@@ -260,7 +233,6 @@ public class BlockRestorationManager implements Listener {
         try {
             Material material = Material.valueOf(materialName);
             
-            // Special handling for AIR blocks - they don't need block data
             if (material == Material.AIR) {
                 block.setType(Material.AIR);
                 return;
@@ -268,32 +240,26 @@ public class BlockRestorationManager implements Listener {
             
             block.setType(material);
             
-            // Try to apply block data if available
             if (blockDataString != null && !blockDataString.isEmpty() 
                 && !blockDataString.equals("minecraft:air")) {
                 try {
-                    // Try to create block data from the string
                     BlockData blockData = Bukkit.createBlockData(blockDataString);
                     if (blockData.getMaterial() == material) {
                         block.setBlockData(blockData);
                     } else {
-                        // Material mismatch, just use the material without extra data
                         plugin.getLogger().fine("Block data material mismatch for " + materialName + ", using material only");
                     }
                 } catch (IllegalArgumentException e) {
-                    // If block data parsing fails, try creating from material only
                     try {
                         BlockData defaultData = Bukkit.createBlockData(material);
                         block.setBlockData(defaultData);
                     } catch (IllegalArgumentException e2) {
-                        // If even that fails, just keep the material (block.setType already called)
                         plugin.getLogger().fine("Could not create block data for: " + materialName);
                     }
                 }
             }
         } catch (IllegalArgumentException e) {
             plugin.getLogger().warning("Invalid material for block restoration: " + materialName);
-            // Default to AIR if material is invalid
             block.setType(Material.AIR);
         }
     }
@@ -328,18 +294,15 @@ public class BlockRestorationManager implements Listener {
             return;
         }
 
-        // Group blocks by location to restore them efficiently
         for (BlockRestoration blockData : blocks) {
             Location location = new Location(world, blockData.x, blockData.y, blockData.z);
             
-            // Use region scheduler for each location to ensure thread safety
             plugin.getSchedulerAdapter().runAtLocation(location, () -> {
                 Block block = location.getBlock();
                 
                 try {
                     Material material = Material.valueOf(blockData.originalMaterial);
                     
-                    // Special handling for AIR blocks
                     if (material == Material.AIR) {
                         block.setType(Material.AIR);
                         return;
@@ -347,7 +310,6 @@ public class BlockRestorationManager implements Listener {
                     
                     block.setType(material);
                     
-                    // Apply block data if available
                     if (blockData.originalData != null && !blockData.originalData.isEmpty() 
                         && !blockData.originalData.equals("minecraft:air")) {
                         try {
@@ -356,7 +318,6 @@ public class BlockRestorationManager implements Listener {
                                 block.setBlockData(blockDataObj);
                             }
                         } catch (IllegalArgumentException e) {
-                            // Just use the material if block data fails
                         }
                     }
                 } catch (IllegalArgumentException e) {

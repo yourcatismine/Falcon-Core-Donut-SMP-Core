@@ -84,7 +84,6 @@ public class ContainerScanner {
                 continue;
             }
             
-            // Skip if paused by any other system
             if (meta.getPersistentDataContainer().has(ToolsManager.ORDERS_PAUSED_KEY, PersistentDataType.LONG) ||
                 meta.getPersistentDataContainer().has(ToolsManager.SHOP_PAUSED_KEY, PersistentDataType.LONG) ||
                 meta.getPersistentDataContainer().has(ToolsManager.STORAGE_PAUSED_KEY, PersistentDataType.LONG)) {

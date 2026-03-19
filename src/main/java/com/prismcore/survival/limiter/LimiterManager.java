@@ -136,8 +136,6 @@ public class LimiterManager {
                 if (config.getIgnoredEntityTypes().contains(entity.getType()))
                     continue;
 
-                // Named entities go into their own separate bucket to prevent
-                // players abusing nametags to bypass the regular entity limit.
                 if (entity.getCustomName() != null) {
                     namedEntityGroups.computeIfAbsent(entity.getType(), k -> new ArrayList<>()).add(entity);
                     continue;
@@ -191,8 +189,6 @@ public class LimiterManager {
             }
         }
 
-        // Enforce named entity limits — applied regardless of protect-named-entities
-        // to prevent players from using nametags to bypass the regular entity limit.
         for (Map.Entry<EntityType, List<Entity>> entry : namedEntityGroups.entrySet()) {
             EntityType type = entry.getKey();
             List<Entity> namedEntities = entry.getValue();

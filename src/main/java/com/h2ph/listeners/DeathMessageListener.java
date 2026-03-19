@@ -93,7 +93,6 @@ public class DeathMessageListener implements Listener {
                 victim.getUniqueId().toString(),
                 customMessage);
 
-        // History Logging
         String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
         String historyMsg;
         if (killer != null) {
@@ -135,12 +134,10 @@ public class DeathMessageListener implements Listener {
         if (meta != null) {
             List<String> details = new ArrayList<>();
 
-            // Name
             if (meta.hasDisplayName()) {
                 details.add("Name: " + meta.getDisplayName());
             }
 
-            // Enchants
             if (meta.hasEnchants()) {
                 String enchants = meta.getEnchants().entrySet().stream()
                         .map(e -> e.getKey().getKey().getKey() + " " + e.getValue())
@@ -148,12 +145,10 @@ public class DeathMessageListener implements Listener {
                 details.add("Enchants: [" + enchants + "]");
             }
 
-            // Lore
             if (meta.hasLore()) {
                 details.add("Lore: [" + String.join(" | ", meta.getLore()) + "]");
             }
 
-            // Container contents (Shulker Boxes)
             if (meta instanceof BlockStateMeta) {
                 BlockStateMeta bsm = (BlockStateMeta) meta;
                 if (bsm.getBlockState() instanceof ShulkerBox) {

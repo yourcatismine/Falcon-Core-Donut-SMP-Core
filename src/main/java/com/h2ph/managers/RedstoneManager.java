@@ -74,13 +74,11 @@ public class RedstoneManager implements Listener {
                     if(block.getType() == Material.FARMLAND) {
                         farmlandCount++;
 
-                        //Check blocks if the crops is above
                         Block above = block.getRelative(0, 1, 0);
                         if (CROP_BLOCKS.contains(above.getType())) {
                             cropCount++;
                         }
 
-                        //Scan small area around farmland for water
                         boolean foundWaterHere = false;
                         for (int dx = -4; dx <= 4 && !foundWaterHere; dx++) {
                             for (int dz = -4; dz <= 4 && !foundWaterHere; dz++) {
@@ -165,8 +163,6 @@ public class RedstoneManager implements Listener {
 
                 if (count >= THRESHOLD_MASSIVE) {
                     if (shouldNotify(worldId, chunkKey, 60000)) {
-                      //  disableChunk(worldId, chunkKey, 60000);
-                      //  recordNotification(worldId, chunkKey);
                         int x = (int) (chunkKey >> 32);
                         int z = (int) chunkKey;
 
@@ -175,7 +171,7 @@ public class RedstoneManager implements Listener {
                                 return;
                             }
 
-                            disableChunk(worldId, chunkKey, 60000); //Moved it here so if its not a farm then disablee it
+                            disableChunk(worldId, chunkKey, 60000);
                             recordNotification(worldId, chunkKey);
 
                             Chunk chunk = world.getChunkAt(x, z);
@@ -222,8 +218,6 @@ public class RedstoneManager implements Listener {
                     }
                 } else if (count >= THRESHOLD_WARNING) {
                     if (shouldNotify(worldId, chunkKey, 20000)) {
-                      //  disableChunk(worldId, chunkKey, 20000);
-                      //  recordNotification(worldId, chunkKey);
                         int x = (int) (chunkKey >> 32);
                         int z = (int) chunkKey;
 
@@ -233,7 +227,7 @@ public class RedstoneManager implements Listener {
                               return;
                             }
 
-                            disableChunk(worldId, chunkKey, 20000); //Moved it here so if its not a farm then disablee it
+                            disableChunk(worldId, chunkKey, 20000);
                             recordNotification(worldId, chunkKey);
                             Chunk chunk = world.getChunkAt(x, z);
                             notifyNearbyPlayers(chunk, 20);

@@ -239,7 +239,6 @@ public class CollectItemsMenu
                     this.module.orders().saveOrder(this.order);
                     this.module.cfg().play(this.p, "sounds.click", "UI_BUTTON_CLICK", 1.0f, 1.0f);
 
-                    // Log Order Dropped Loot
                     for (ItemStack item : toDrop) {
                         if (item != null && item.getType() != Material.AIR) {
                             String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
@@ -291,7 +290,6 @@ public class CollectItemsMenu
                         int initialAmount = toAdd.getAmount();
 
                         if (action == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                            // Resume amethyst tool timers before moving to inventory
                             com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(toAdd);
 
                             HashMap<Integer, ItemStack> leftovers = this.p.getInventory().addItem(toAdd);
@@ -322,7 +320,6 @@ public class CollectItemsMenu
 
                                 ItemStack taking = toAdd.clone();
                                 taking.setAmount(toTake);
-                                // Resume amethyst tool timers when retrieving items
                                 com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(taking);
                                 e.getView().setCursor(taking);
 
@@ -342,7 +339,6 @@ public class CollectItemsMenu
                                     if (canTake > 0) {
                                         int toTake = Math.min(canTake, initialAmount);
 
-                                        // Resume amethyst tool timers for the amount being taken
                                         if (toTake > 0) {
                                             ItemStack takenStack = item.clone();
                                             takenStack.setAmount(toTake);
@@ -361,7 +357,6 @@ public class CollectItemsMenu
                                         this.module.cfg().play(this.p, "sounds.click", "ENTITY_ITEM_PICKUP", 0.5f,
                                                 1.0f);
 
-                                        // Log Order Collection
                                         String timeStr = LocalDateTime.now(ZoneId.of("UTC")).format(formatter);
                                         String log = String.format("%s - Order Collection\nCollected %s x%d from order",
                                                 timeStr, OrderManager.nice(toAdd.getType()), toTake);

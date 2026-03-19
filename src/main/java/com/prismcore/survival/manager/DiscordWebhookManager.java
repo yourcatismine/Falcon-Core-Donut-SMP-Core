@@ -13,11 +13,10 @@ public class DiscordWebhookManager {
 
     private static final String SKIN_URL = "https://mc-heads.net/avatar/%s/64";
 
-    // Embed colors (decimal)
-    private static final int COLOR_CHAT  = 0x5865F2; // Discord blurple
-    private static final int COLOR_JOIN  = 0x57F287; // Green
-    private static final int COLOR_LEAVE = 0xED4245; // Red
-    private static final int COLOR_DEATH = 0xFEE75C; // Yellow
+    private static final int COLOR_CHAT  = 0x5865F2;
+    private static final int COLOR_JOIN  = 0x57F287;
+    private static final int COLOR_LEAVE = 0xED4245;
+    private static final int COLOR_DEATH = 0xFEE75C;
 
     private final PrismSurvival plugin;
 
@@ -58,7 +57,6 @@ public class DiscordWebhookManager {
         serverIconUrl   = cfg.getString("discord-webhooks.server-icon-url", "");
     }
 
-    // ─── Public API ───────────────────────────────────────────────────────────
     public void sendChatMessage(String playerName, String uuid, String message) {
         if (!chatEnabled || chatWebhook.isEmpty()) return;
         String description = message;
@@ -81,7 +79,6 @@ public class DiscordWebhookManager {
         sendEmbed(deathWebhook, playerName, uuid, clean, COLOR_DEATH, "Death");
     }
 
-    // ─── Internal ─────────────────────────────────────────────────────────────
 
     public void sendAuctionListing(String playerName, String uuid, ItemStack item, double price, long epochSeconds) {
         if (!auctionEnabled || auctionWebhook == null || auctionWebhook.isEmpty()) return;
@@ -133,12 +130,9 @@ public class DiscordWebhookManager {
                            String description, int color, String title) {
         String skinUrl = String.format(SKIN_URL, uuid);
         String json = buildEmbedJson(playerName, skinUrl, description, color, title);
-        // Log attempt (host only) for debugging without exposing full webhook URL
         try {
             String host = new URL(webhookUrl).getHost();
-           // plugin.getLogger().info("[Discord] Sending webhook to " + host + " for player " + playerName);
         } catch (Exception ignored) {
-           // plugin.getLogger().info("[Discord] Sending webhook for player " + playerName);
         }
 
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {

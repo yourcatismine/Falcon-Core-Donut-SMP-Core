@@ -1,5 +1,5 @@
 name: Falcon
-version: "1.0.0"
+version: "5.0.0"
 main: com.h2ph.PrismSurvival
 api-version: "1.21"
 author: h2ph
@@ -135,6 +135,11 @@ commands:
     description: Manage crate keys
     permission: prism.admin.key
     usage: /key <give|set|remove|reset> ...
+
+  crate:
+    description: Manage crates
+    permission: falcon.crates
+    usage: /crate <create|edit|get|delete|effects> ...
 
   sus:
     description: Monitor suspicious activity
@@ -513,4 +518,8 @@ permissions:
     default: true
   prism.admin.warps:
     description: Permission to manage warps via /falcon warps
+    default: op
+
+  falcon.crates:
+    description: Permission to manage crates via /crate
     default: op

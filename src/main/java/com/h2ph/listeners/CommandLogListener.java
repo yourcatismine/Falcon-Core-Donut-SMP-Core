@@ -25,18 +25,14 @@ public class CommandLogListener implements Listener {
         Player player = event.getPlayer();
         String command = event.getMessage();
 
-        // 1. Get current UTC time
         String dateTime = LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss"));
 
-        // 2. Format history message
         String historyMsg = dateTime + " - Executed: " + command;
 
-        // 3. Add to player history
         PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null) {
             data.addHistory(historyMsg);
 
-            // 4. Save asynchronously
             plugin.getPlayerDataManager().savePlayerAsync(player.getUniqueId());
         }
     }

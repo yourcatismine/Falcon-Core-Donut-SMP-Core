@@ -65,9 +65,7 @@ public class PlayerDataManager {
 
         if (result != null && result.isError()) {
             data.setLoadingFailed(true);
-            // plugin.getLogger().severe("CRITICAL: Failed to load data for " + uuid + " due
-            // to DB error: " + result.getErrorMessage());
-            return data; // Return early with the flag set
+            return data;
         }
 
         DatabaseManager.PlayerDataStats stats = (result != null) ? result.getData() : null;
@@ -686,7 +684,6 @@ public class PlayerDataManager {
         });
     }
 
-    // Cache invalidation methods - call these when player data changes
     public void invalidateMoneyLeaderboard() {
         cachedMoneyTop = null;
         lastMoneyUpdate = 0;

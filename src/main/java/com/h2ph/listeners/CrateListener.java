@@ -312,7 +312,6 @@ public class CrateListener implements Listener {
                 toolsManager.refreshExpiryForReward(toGive);
             }
             player.getInventory().addItem(toGive);
-           // player.getInventory().addItem(toGive); //Remove double whoever added this is Fuck
 
             player.closeInventory();
         } else {

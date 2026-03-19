@@ -75,7 +75,6 @@ public class PlayerConnectionListener implements Listener {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f, 1f);
         }
 
-        // Discord webhook
         plugin.getDiscordWebhookManager().sendJoinMessage(
                 event.getPlayer().getName(),
                 event.getPlayer().getUniqueId().toString());
@@ -95,7 +94,6 @@ public class PlayerConnectionListener implements Listener {
 
         plugin.getEnderChestManager().unload(event.getPlayer().getUniqueId());
 
-        // Discord webhook
         plugin.getDiscordWebhookManager().sendLeaveMessage(
                 event.getPlayer().getName(),
                 event.getPlayer().getUniqueId().toString());

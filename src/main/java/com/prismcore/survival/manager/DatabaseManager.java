@@ -1085,11 +1085,9 @@ public class DatabaseManager {
                             rs.getDouble("shop_spent"), rs.getString("ip"), rs.getString("history"));
                     return new LoadResult<>(stats, false, null);
                 }
-                return new LoadResult<>(null, false, null); // Not found, but no error
+                return new LoadResult<>(null, false, null);
             }
         } catch (SQLException e) {
-            // Error logged silently to avoid console spam, safety flags will still kick the
-            // player
             return new LoadResult<>(null, true, e.getMessage());
         }
     }
@@ -1669,7 +1667,6 @@ public class DatabaseManager {
         setServerConfig(key, String.valueOf(value));
     }
 
-    // ---- Spawner persistence helpers ----
     public java.util.Map<Location, SpawnerData> loadAllSpawnersSync() {
         java.util.Map<Location, SpawnerData> result = new java.util.HashMap<>();
         if (!isConnected()) return result;

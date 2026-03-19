@@ -41,7 +41,6 @@ public class ChatFormatter implements Listener {
 
         event.setFormat(translateColorCodes(format));
 
-        // Discord webhook — send raw message text
         plugin.getDiscordWebhookManager().sendChatMessage(
                 player.getName(),
                 player.getUniqueId().toString(),

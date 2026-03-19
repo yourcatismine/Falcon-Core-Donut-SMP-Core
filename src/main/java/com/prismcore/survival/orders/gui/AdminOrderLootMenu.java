@@ -146,7 +146,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                         HashMap<Integer, ItemStack> leftovers = admin.getInventory()
                                 .addItem(Utils.stripOrderMetadata(targetItem.clone()));
                         
-                        // Resume amethyst tool timers when admin retrieves items
                         com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(targetItem);
                         
                         order.storage.remove(itemIndex);
@@ -208,7 +207,6 @@ public class AdminOrderLootMenu implements InventoryHolder, MenuOwner {
                 for (int i = end - 1; i >= start; i--) {
                     ItemStack item = order.storage.remove(i);
                     if (item != null && item.getType() != Material.AIR) {
-                        // Resume amethyst tool timers when dropping items from storage
                         com.prismcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(item);
                         toDrop.add(item);
                         droppedCount++;

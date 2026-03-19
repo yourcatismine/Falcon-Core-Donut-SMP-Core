@@ -259,8 +259,6 @@ public class TabListManager implements Listener {
                     String disguiseName = data.getDisguiseName();
                     String disguisePrefix = getPrefixForNameCached(disguiseName);
                     if (disguiseName != null) {
-                       // org.bukkit.OfflinePlayer disguiseTarget = org.bukkit.Bukkit.getOfflinePlayer(disguiseName);
-                       // String disguisePrefix = LuckPermsUtils.getPrefix(disguiseTarget);
                         populatePrefixAsync(disguiseName);
                     } else if (!disguisePrefix.isEmpty()) { prefix = disguisePrefix; }
                 }
@@ -432,7 +430,6 @@ public class TabListManager implements Listener {
         }
 
         if (modified) {
-            // sort entries so packet order matches group ranking + name tiebreaker
             entries.sort((d1, d2) -> {
                 UUID u1 = (d1.getUserProfile() != null) ? d1.getUserProfile().getUUID() : null;
                 UUID u2 = (d2.getUserProfile() != null) ? d2.getUserProfile().getUUID() : null;
@@ -441,7 +438,7 @@ public class TabListManager implements Listener {
                 Player p2 = Bukkit.getPlayer(u2);
                                 int r1 = (p1 != null) ? getGroupRanking(p1) : groupRankings.getOrDefault("default", 0);
                 int r2 = (p2 != null) ? getGroupRanking(p2) : groupRankings.getOrDefault("default", 0);
-                                int cmp = Integer.compare(r2, r1); // higher ranking first
+                                int cmp = Integer.compare(r2, r1);
                 if (cmp != 0) return cmp;
                                 String n1 = (p1 != null) ? sanitizePlayerName(p1.getName()) : sanitizePlayerName(realPlayerNames.getOrDefault(u1, ""));
                 String n2 = (p2 != null) ? sanitizePlayerName(p2.getName()) : sanitizePlayerName(realPlayerNames.getOrDefault(u2, ""));

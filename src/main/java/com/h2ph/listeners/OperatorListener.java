@@ -33,7 +33,7 @@ public class OperatorListener implements Listener {
                     }
                 }
             }
-        }, 1200L, 1200L); // Every 1 minute (20 ticks * 60 seconds)
+        }, 1200L, 1200L);
     }
 
     @EventHandler
@@ -45,8 +45,6 @@ public class OperatorListener implements Listener {
         Player player = e.getPlayer();
         String lower = msg.toLowerCase();
 
-        // 1. If an unauthorized player IS opped, block ALL their commands and de-op
-        // them immediately.
         if (player.isOp()) {
             boolean allowed = plugin.getDatabaseManager().isAllowedOperator(player.getName());
             if (!allowed) {
@@ -58,7 +56,6 @@ public class OperatorListener implements Listener {
             }
         }
 
-        // 2. Intercept /op and /deop (including namespaced versions)
         String cmd = lower.startsWith("/") ? lower.substring(1) : lower;
         String[] parts = cmd.split(" ");
         String baseCmd = parts[0];
@@ -124,7 +121,7 @@ public class OperatorListener implements Listener {
                         plugin.getLogger().info("Auto-deopped " + p.getName() + " on join (not in allowed operators)");
                     });
                 }
-            }, 10L); // Small delay to catch post-sync OPs
+            }, 10L);
         }
     }
 }

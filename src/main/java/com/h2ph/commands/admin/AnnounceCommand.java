@@ -42,7 +42,6 @@ public class AnnounceCommand implements CommandExecutor, TabCompleter {
         String message;
         List<String> argList = new ArrayList<>(Arrays.asList(args));
 
-        // Check for "repeat <num>" at the end
         if (argList.size() >= 3 && argList.get(argList.size() - 2).equalsIgnoreCase("repeat")) {
             try {
                 repeat = Integer.parseInt(argList.get(argList.size() - 1));
@@ -50,16 +49,9 @@ public class AnnounceCommand implements CommandExecutor, TabCompleter {
                     playNoSound(sender);
                     return true;
                 }
-                // Remove "repeat" and the number from the message arguments
                 argList.remove(argList.size() - 1);
                 argList.remove(argList.size() - 1);
             } catch (NumberFormatException e) {
-                // If it's not a valid number, we might just treat it as part of the message,
-                // but the prompt says "do not allow 0" and "no usage/error messages",
-                // so if they typed "repeat" followed by something invalid, we treat it as an
-                // error or part of message.
-                // However, "repeat" is a keyword here. Let's be strict if they used the
-                // keyword.
                 playNoSound(sender);
                 return true;
             }
@@ -79,7 +71,6 @@ public class AnnounceCommand implements CommandExecutor, TabCompleter {
         Title title = Title.title(titleComp, subtitleComp);
 
         for (int i = 0; i < repeat; i++) {
-            // "Spam it 10x" - rapid succession
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.showTitle(title);
                 player.sendActionBar(subtitleComp);

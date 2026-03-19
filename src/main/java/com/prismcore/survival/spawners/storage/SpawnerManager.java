@@ -9,9 +9,9 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
-import com.prismcore.survival.spawners.util.SchedulerAdapter; //
-import com.prismcore.survival.spawners.util.BukkitSchedulerAdapter; //
-import java.util.UUID; //
+import com.prismcore.survival.spawners.util.SchedulerAdapter;
+import com.prismcore.survival.spawners.util.BukkitSchedulerAdapter;
+import java.util.UUID;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,12 +22,12 @@ public class SpawnerManager {
     private final Map<Location, SpawnerData> spawners = new ConcurrentHashMap<>();
     private ProductionTask productionTask;
 
-    private final SchedulerAdapter scheduler; //
-    private Object productionHandle;  //
-    private Object hopperHandle;  //
+    private final SchedulerAdapter scheduler;
+    private Object productionHandle;
+    private Object hopperHandle;
 
-    private final Map<Location, Integer> hopperGuiOpenCount = new ConcurrentHashMap<>(); //For pausing
-    private final Map<Location, UUID> openGuiViewer = new ConcurrentHashMap<>(); //For tracking who has the GUI open
+    private final Map<Location, Integer> hopperGuiOpenCount = new ConcurrentHashMap<>();
+    private final Map<Location, UUID> openGuiViewer = new ConcurrentHashMap<>();
 
     public boolean isGuiOpen(SpawnerData data) {
         if (data == null || data.getLocation() == null) return false;
@@ -51,9 +51,9 @@ public class SpawnerManager {
 
     public SpawnerManager(PrismSurvival plugin) {
         this.plugin = plugin;
-        this.scheduler = new BukkitSchedulerAdapter(plugin); //
+        this.scheduler = new BukkitSchedulerAdapter(plugin);
         long autoSave = plugin.getSpawnerConfig().getLong("settings.auto_save_interval", 6000L);
-        scheduler.runRepeatingAsync(() -> saveSpawners(false), autoSave, autoSave); // periodic DB flush
+        scheduler.runRepeatingAsync(() -> saveSpawners(false), autoSave, autoSave);
     }
 
     public void loadSpawners() {
@@ -86,7 +86,6 @@ public class SpawnerManager {
             if (hopperHandle != null) { scheduler.cancel(hopperHandle); hopperHandle = null; }
         }
 
-        // Persist all spawners to DB asynchronously
         Map<Location, SpawnerData> snapshot = new HashMap<>(spawners);
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             for (SpawnerData data : snapshot.values()) {

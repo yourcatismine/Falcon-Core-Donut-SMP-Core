@@ -68,7 +68,6 @@ public class VaultHook {
             return false;
         }
         try {
-            // Set source context if using internal economy bridge
             com.prismcore.survival.auction.EconomyHandler.setSourceContext(source);
             try {
                 return this.econ.withdrawPlayer(p, amount).transactionSuccess();
@@ -96,7 +95,6 @@ public class VaultHook {
             return true;
         }
         try {
-            // Set source context if using internal economy bridge
             com.prismcore.survival.auction.EconomyHandler.setSourceContext(source);
             try {
                 return this.econ.depositPlayer(p, amount).transactionSuccess();

@@ -94,8 +94,6 @@ public class PlayerDataManagerDB {
 
             data.resetDirty();
         } catch (SQLException e) {
-            // this.plugin.getLogger().severe("Failed to load player data for " + uuid);
-            // e.printStackTrace();
             data.setLoadingFailed(true);
         }
         return data;

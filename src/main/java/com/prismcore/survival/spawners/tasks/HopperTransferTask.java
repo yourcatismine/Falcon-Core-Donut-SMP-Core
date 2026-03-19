@@ -69,7 +69,7 @@ public class HopperTransferTask extends BukkitRunnable {
     }
 
     private void processHopperTransfer(SpawnerData data, Location spawnerLoc) {
-        if (manager.isHopperPaused(data)) return; //
+        if (manager.isHopperPaused(data)) return;
         Block below = spawnerLoc.getBlock().getRelative(0, -1, 0);
         if (below == null || below.getType() != Material.HOPPER) return;
 

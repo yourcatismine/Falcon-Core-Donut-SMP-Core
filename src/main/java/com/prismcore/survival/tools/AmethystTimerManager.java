@@ -38,14 +38,11 @@ public class AmethystTimerManager {
         
         ItemMeta meta = item.getItemMeta();
         
-        // Check if this is an amethyst tool
         if (isAmethystTool(meta)) {
-            // Mark as paused with storage timestamp
             meta.getPersistentDataContainer().set(pauseKey, PersistentDataType.LONG, storageTimestamp);
             item.setItemMeta(meta);
         }
         
-        // Recursively handle shulker boxes
         if (item.getType().name().contains("SHULKER_BOX") && meta instanceof BlockStateMeta) {
             BlockStateMeta bsm = (BlockStateMeta) meta;
             if (bsm.getBlockState() instanceof ShulkerBox) {
@@ -58,7 +55,6 @@ public class AmethystTimerManager {
                     }
                 }
                 
-                // Update the shulker box with modified contents
                 bsm.setBlockState(shulker);
                 item.setItemMeta(bsm);
             }
@@ -78,14 +74,11 @@ public class AmethystTimerManager {
         
         ItemMeta meta = item.getItemMeta();
         
-        // Check if this is a paused amethyst tool
         if (isAmethystTool(meta) && meta.getPersistentDataContainer().has(pauseKey, PersistentDataType.LONG)) {
             long storageTimestamp = meta.getPersistentDataContainer().get(pauseKey, PersistentDataType.LONG);
             
-            // Remove pause marker
             meta.getPersistentDataContainer().remove(pauseKey);
             
-            // Adjust expiry time based on storage duration
             if (meta.getPersistentDataContainer().has(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG)) {
                 long currentExpiry = meta.getPersistentDataContainer().get(ToolsManager.EXPIRY_KEY,
                         PersistentDataType.LONG);
@@ -96,7 +89,6 @@ public class AmethystTimerManager {
                     meta.getPersistentDataContainer().set(ToolsManager.EXPIRY_KEY, PersistentDataType.LONG,
                             newExpiry);
                     
-                    // Update tool lore to reflect new countdown
                     updateToolLore(item, meta, newExpiry);
                 }
             }
@@ -104,7 +96,6 @@ public class AmethystTimerManager {
             item.setItemMeta(meta);
         }
         
-        // Recursively handle shulker boxes
         if (item.getType().name().contains("SHULKER_BOX") && meta instanceof BlockStateMeta) {
             BlockStateMeta bsm = (BlockStateMeta) meta;
             if (bsm.getBlockState() instanceof ShulkerBox) {
@@ -117,7 +108,6 @@ public class AmethystTimerManager {
                     }
                 }
                 
-                // Update the shulker box with modified contents
                 bsm.setBlockState(shulker);
                 item.setItemMeta(bsm);
             }

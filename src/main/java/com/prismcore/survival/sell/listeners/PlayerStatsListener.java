@@ -78,7 +78,6 @@ public class PlayerStatsListener implements Listener {
             PlayerData victimData = plugin.getPlayerDataManager().getPlayerData(victim.getUniqueId());
             if (victimData != null) {
                 victimData.setDeaths(victimData.getDeaths() + 1);
-                // Invalidate deaths leaderboard cache
                 plugin.getPlugin().getPlayerDataManager().invalidateDeathsLeaderboard();
             }
 
@@ -87,7 +86,6 @@ public class PlayerStatsListener implements Listener {
                 PlayerData killerData = plugin.getPlayerDataManager().getPlayerData(killer.getUniqueId());
                 if (killerData != null) {
                     killerData.setKills(killerData.getKills() + 1);
-                    // Invalidate kills leaderboard cache
                     plugin.getPlugin().getPlayerDataManager().invalidateKillsLeaderboard();
                 }
             }
@@ -111,7 +109,6 @@ public class PlayerStatsListener implements Listener {
                 PlayerData data = plugin.getPlayerDataManager().getPlayerData(uuid);
                 if (data != null) {
                     data.setPlaytime(data.getPlaytime() + sessionSeconds);
-                    // Invalidate playtime leaderboard cache
                     plugin.getPlugin().getPlayerDataManager().invalidatePlaytimeLeaderboard();
                     plugin.getPlayerDataManager().unloadPlayer(uuid);
                 }

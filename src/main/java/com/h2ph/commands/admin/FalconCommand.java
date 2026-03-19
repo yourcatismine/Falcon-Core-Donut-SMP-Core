@@ -125,82 +125,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
 
 
-        if (sub.equals("tools")) {
-            if (!player.hasPermission("prism.admin.tools")) {
-                player.sendMessage("§cYou do not have permission to use this command.");
-                return true;
-            }
-
-            if (args.length < 3) {
-                player.sendMessage("§cUsage: /falcon tools <tool> <player> [duration]");
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
-
-            String toolType = args[1].toLowerCase();
-            String playerName = args[2];
-            Player target = Bukkit.getPlayer(playerName);
-
-            if (target == null) {
-                player.sendMessage(com.prismcore.survival.tools.Utils.formatColors("&cThat player is not online."));
-                player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                        net.md_5.bungee.api.chat.TextComponent.fromLegacyText(
-                                com.prismcore.survival.tools.Utils.formatColors("&cThat player is not online.")));
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
-
-            if (target.getInventory().firstEmpty() == -1) {
-                player.sendMessage(com.prismcore.survival.tools.Utils.formatColors("&cThis player inventory is full!"));
-                player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                        net.md_5.bungee.api.chat.TextComponent.fromLegacyText(
-                                com.prismcore.survival.tools.Utils.formatColors("&cThis player inventory is full!")));
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
-
-            long overrideTimer = 0;
-            if (args.length >= 4) {
-                overrideTimer = com.prismcore.survival.tools.Utils.parseDuration(args[3]);
-                if (overrideTimer <= 0) {
-                    player.sendMessage("§cInvalid duration format. Use: 1d, 12h, 30m");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return true;
-                }
-            }
-
-            com.prismcore.survival.tools.ToolsManager manager = com.prismcore.survival.tools.ToolsManager.getInstance();
-            if (manager == null) {
-                player.sendMessage("§cToolsManager is not initialized.");
-                return true;
-            }
-
-            if (Arrays.asList("drill", "axe", "shovel").contains(toolType)) {
-                manager.giveTool(target, toolType, overrideTimer);
-                player.sendMessage("§aGiven " + toolType + " to §f" + target.getName());
-                return true;
-            } else if (toolType.equals("multitool")) {
-                manager.giveMultiTool(target, overrideTimer);
-                player.sendMessage("§aGiven multitool to §f" + target.getName());
-                return true;
-            } else if (toolType.equals("bucket")) {
-                manager.giveBucket(target, overrideTimer);
-                player.sendMessage("§aGiven countdown bucket to §f" + target.getName());
-                return true;
-            } else if (toolType.equals("shardbooster")) {
-                manager.giveShardBooster(target, overrideTimer);
-                player.sendMessage("§aGiven shard booster to §f" + target.getName());
-                return true;
-            } else if (toolType.equals("sellaxe")) {
-                manager.giveSellAxe(target, overrideTimer);
-                return true;
-            } else {
-                player.sendMessage(
-                        "§cInvalid tool type. Valid: drill, axe, shovel, multitool, bucket, shardbooster, sellaxe");
-                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return true;
-            }
-        }
 
         if (sub.equals("void")) {
             if (!player.hasPermission("falcon.void")) {
@@ -368,7 +292,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
 
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, tools, void, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, void, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
         return true;
     }
@@ -430,7 +354,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
-                    .asList("auction", "order", "rtpqueue", "tools", "void", "respawngear", "limiter",
+                    .asList("auction", "order", "rtpqueue", "void", "respawngear", "limiter",
                             "crystal", "anchor", "pvpsafe", "warps")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
@@ -445,11 +369,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return plugin.getPlayerNameCache().getCompletions(args[1]);
             } else if (args[0].equalsIgnoreCase("rtpqueue")) {
                 return Arrays.asList("create", "delete").stream()
-                        .filter(s -> s.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
-            } else if (args[0].equalsIgnoreCase("tools")) {
-                return Arrays.asList("drill", "axe", "shovel", "multitool", "bucket", "shardbooster", "sellaxe")
-                        .stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("void")) {
@@ -488,10 +407,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                             .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
                             .collect(Collectors.toList());
                 }
-            } else if (args[0].equalsIgnoreCase("tools")) {
-                return Bukkit.getOnlinePlayers().stream().map(Player::getName)
-                        .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
-                        .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("pvpsafe") && args[1].equalsIgnoreCase("setup")) {
                 return Arrays.asList("[zone_name]");
             } else if (args[0].equalsIgnoreCase("pvpsafe") && args[1].equalsIgnoreCase("delete")) {
@@ -503,8 +418,6 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                         .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
             }
-        } else if (args.length == 4 && args[0].equalsIgnoreCase("tools")) {
-            return Arrays.asList("1d", "12h", "30m", "1w");
         }
         return Collections.emptyList();
     }

@@ -152,6 +152,11 @@ commands:
     permission: falcon.speed
     usage: /speed <amount|normal>
 
+  amethyst:
+    description: Manage amethyst tools
+    permission: falcon.amethysts
+    usage: /amethyst <type> <player> [duration]
+
   sus:
     description: Monitor suspicious activity
     permission: prism.admin.sus
@@ -541,4 +546,8 @@ permissions:
 
   falcon.speed:
     description: Permission to manage speed via /speed
+    default: op
+
+  falcon.amethysts:
+    description: Permission to manage amethysts via /amethyst
     default: op

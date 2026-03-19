@@ -12,7 +12,17 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.ChatColor;
+import com.sk89q.worldedit.IncompleteRegionException;
+import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.regions.Region;
+import com.h2ph.afk.AFKManager;
+import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -83,9 +93,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             OrdersModule.getInstance().state().resetMain(player.getUniqueId());
             new OrdersMainMenu(OrdersModule.getInstance(), player).open();
             return true;
-        }
-
-        if (sub.equals("rtpqueue")) {
+        } else if (sub.equals("rtpqueue")) {
             if (!player.hasPermission("falcon.rtpqueue")) {
                 player.sendMessage("§cYou do not have permission to use this command.");
                 return true;
@@ -97,9 +105,9 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            String action = args[1].toLowerCase();
+            String rtpAction = args[1].toLowerCase();
 
-            if (action.equals("create")) {
+            if (rtpAction.equals("create")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon rtpqueue create <region>");
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
@@ -108,7 +116,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 String regionName = args[2];
                 plugin.getRTPQueueManager().createQueue(player, regionName);
                 return true;
-            } else if (action.equals("delete")) {
+            } else if (rtpAction.equals("delete")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon rtpqueue delete <region>");
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
@@ -122,11 +130,81 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
-        }
+        } else if (sub.equals("setafk")) {
+            if (!player.hasPermission("falcon.setafk")) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
 
+            if (args.length < 2) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
 
+            String afkAction = args[1].toLowerCase();
+            AFKManager afkManager = plugin.getAfkManager();
 
-        if (sub.equals("void")) {
+            if (afkAction.equals("confirm")) {
+                if (args.length < 3) {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return true;
+                }
+                String regionName = args[2];
+                try {
+                    com.sk89q.worldedit.entity.Player worldEditPlayer = BukkitAdapter.adapt(player);
+                    LocalSession session = WorldEdit.getInstance().getSessionManager().get(worldEditPlayer);
+                    Region region = session.getSelection(worldEditPlayer.getWorld());
+
+                    if (region == null) {
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                        return true;
+                    }
+
+                    BlockVector3 min = region.getMinimumPoint();
+                    BlockVector3 max = region.getMaximumPoint();
+                    String worldName = player.getWorld().getName();
+
+                    Vector minVec = new Vector(min.x(), min.y(), min.z());
+                    Vector maxVec = new Vector(max.x(), max.y(), max.z());
+
+                    afkManager.createRegion(regionName, worldName, minVec, maxVec);
+                    player.sendMessage(ChatColor.GREEN + "Created AFK region " + ChatColor.YELLOW + regionName +
+                            ChatColor.GREEN + " in world " + ChatColor.AQUA + worldName);
+
+                } catch (IncompleteRegionException e) {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                } catch (Exception e) {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    e.printStackTrace();
+                }
+                return true;
+            } else if (afkAction.equals("delete")) {
+                if (args.length < 3) {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return true;
+                }
+                String regionName = args[2];
+                if (afkManager.deleteRegion(regionName)) {
+                    player.sendMessage(ChatColor.GREEN + "Deleted AFK region: " + ChatColor.YELLOW + regionName);
+                } else {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                }
+                return true;
+            } else if (afkAction.equals("setspawn")) {
+                saveAfkSpawn(player);
+                return true;
+            } else if (afkAction.equals("remove")) {
+                if (args.length < 3) {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return true;
+                }
+                deleteAfkSpawn(player, args[2]);
+                return true;
+            } else {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
+            }
+        } else if (sub.equals("void")) {
             if (!player.hasPermission("falcon.void")) {
                 player.sendMessage("§cYou do not have permission to use this command.");
                 return true;
@@ -138,9 +216,9 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            String action = args[1].toLowerCase();
+            String voidAction = args[1].toLowerCase();
 
-            if (action.equals("create")) {
+            if (voidAction.equals("create")) {
                 if (args.length < 3) {
                     player.sendMessage("§cUsage: /falcon void create <name>");
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
@@ -178,8 +256,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 }
                 return true;
             }
-        }
-        if (sub.equals("respawngear")) {
+        } else if (sub.equals("respawngear")) {
             if (!player.hasPermission("falcon.respawngear")) {
                 player.sendMessage("§cYou do not have permission to use this command.");
                 return true;
@@ -191,11 +268,11 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            String action = args[1].toLowerCase();
-            if (action.equals("setup")) {
+            String respawnAction = args[1].toLowerCase();
+            if (respawnAction.equals("setup")) {
                 plugin.getRespawnGearGUI().open(player);
                 return true;
-            } else if (action.equals("delete")) {
+            } else if (respawnAction.equals("delete")) {
                 plugin.getRespawnGearManager().clearItems();
                 player.sendMessage("§aRespawn gear items have been deleted.");
                 return true;
@@ -204,9 +281,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
-        }
-
-        if (sub.equals("limiter")) {
+        } else if (sub.equals("limiter")) {
             if (!player.hasPermission("falcon.limiter")) {
                 player.sendMessage("§cYou do not have permission to use this command.");
                 return true;
@@ -218,12 +293,12 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            String action = args[1].toLowerCase();
+            String limiterAction = args[1].toLowerCase();
 
-            if (action.equals("reload")) {
+            if (limiterAction.equals("reload")) {
                 plugin.getLimiterManager().reload();
                 player.sendMessage("§aLimiter configuration and tasks have been reloaded.");
-            } else if (action.equals("stats")) {
+            } else if (limiterAction.equals("stats")) {
                 int radius = plugin.getLimiterConfig().getChunkCheckRadius();
                 org.bukkit.Location loc = player.getLocation();
 
@@ -271,28 +346,18 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             }
             return true;
-        }
-
-
-        if (sub.equals("crystal")) {
+        } else if (sub.equals("crystal")) {
             return handleCrystal(player, args);
-        }
-
-        if (sub.equals("anchor")) {
+        } else if (sub.equals("anchor")) {
             return handleAnchor(player, args);
-        }
-
-        if (sub.equals("pvpsafe")) {
+        } else if (sub.equals("pvpsafe")) {
             return handlePvPSafe(player, args);
-        }
-
-        if (sub.equals("warps")) {
+        } else if (sub.equals("warps")) {
             return handleWarps(player, args);
         }
 
-
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, void, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, void, setafk, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
         return true;
     }
@@ -354,7 +419,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
-                    .asList("auction", "order", "rtpqueue", "void", "respawngear", "limiter",
+                    .asList("auction", "order", "rtpqueue", "void", "setafk", "respawngear", "limiter",
                             "crystal", "anchor", "pvpsafe", "warps")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
@@ -391,6 +456,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return Arrays.asList("setup", "delete").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("setafk")) {
+                return Arrays.asList("confirm", "delete", "setspawn", "remove").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("warps")) {
                 return Arrays.asList("set", "delete", "list").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
@@ -417,6 +486,20 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return plugin.getWarpManager().listWarps().stream()
                         .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("setafk")) {
+                if (args.length == 3) {
+                    if (args[1].equalsIgnoreCase("delete") || args[1].equalsIgnoreCase("remove")) {
+                        List<String> completions = new ArrayList<>();
+                        if (args[1].equalsIgnoreCase("delete")) {
+                            completions.addAll(plugin.getAfkManager().getRegionNames());
+                        } else {
+                            completions.addAll(getMapNames());
+                        }
+                        return completions.stream()
+                                .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                }
             }
         }
         return Collections.emptyList();
@@ -575,5 +658,55 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
+    }
+    private void saveAfkSpawn(Player player) {
+        String worldName = player.getWorld().getName();
+        java.io.File folder = new java.io.File(plugin.getDataFolder(), "survival/AFK/maps");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
+        java.io.File file = new java.io.File(folder, worldName + ".yml");
+        org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
+                .loadConfiguration(file);
+
+        config.set("spawn", player.getLocation());
+        try {
+            config.save(file);
+            player.sendMessage(ChatColor.GREEN + "AFK spawn set for world " + ChatColor.YELLOW + worldName);
+        } catch (java.io.IOException e) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteAfkSpawn(Player player, String mapName) {
+        java.io.File folder = new java.io.File(plugin.getDataFolder(), "survival/AFK/maps");
+        java.io.File file = new java.io.File(folder, mapName + ".yml");
+
+        if (file.exists()) {
+            if (file.delete()) {
+                player.sendMessage(ChatColor.GREEN + "Removed AFK map: " + ChatColor.YELLOW + mapName);
+            } else {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            }
+        } else {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+        }
+    }
+
+    private List<String> getMapNames() {
+        List<String> maps = new ArrayList<>();
+        java.io.File folder = new java.io.File(plugin.getDataFolder(), "survival/AFK/maps");
+        if (folder.exists()) {
+            java.io.File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
+            if (files != null) {
+                for (java.io.File f : files) {
+                    maps.add(f.getName().replace(".yml", ""));
+                }
+                Collections.sort(maps);
+            }
+        }
+        return maps;
     }
 }

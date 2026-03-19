@@ -71,11 +71,6 @@ commands:
     description: Pay money to another player
     usage: /pay <player> <amount>
 
-  setafk:
-    description: Manage AFK regions
-    usage: /setafk <confirm|delete> <region_name>
-    permission: prismcore.admin.afk
-    permission-message: You do not have permission to use this command.
 
   update:
     description: Create a server update book to show to the next player
@@ -551,3 +546,8 @@ permissions:
   falcon.amethysts:
     description: Permission to manage amethysts via /amethyst
     default: op
+
+  falcon.setafk:
+    description: Permission to manage AFK regions and spawns via /falcon setafk
+    default: op
+

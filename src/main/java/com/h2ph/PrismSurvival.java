@@ -326,7 +326,6 @@ public class PrismSurvival extends JavaPlugin {
 
         if (getServer().getPluginManager().getPlugin("WorldEdit") != null ||
                 getServer().getPluginManager().getPlugin("FastAsyncWorldEdit") != null) {
-            getCommand("setafk").setExecutor(new com.h2ph.commands.admin.afk.SetAFKCommand(this));
 
             com.h2ph.commands.player.afk.AFKCommand afkCommand = new com.h2ph.commands.player.afk.AFKCommand(this);
             getCommand("afk").setExecutor(afkCommand);
@@ -335,7 +334,7 @@ public class PrismSurvival extends JavaPlugin {
 
             getLogger().info("WorldEdit found! AFK region features enabled.");
         } else {
-            getLogger().warning("WorldEdit/FAWE not found! /setafk and /afk commands disabled.");
+            getLogger().warning("WorldEdit/FAWE not found! /falcon setafk and /afk commands disabled.");
         }
 
         this.auctionController = new com.prismcore.survival.auction.AuctionController(this);

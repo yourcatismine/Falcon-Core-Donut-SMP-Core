@@ -47,58 +47,29 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
         Player player = (Player) sender;
 
         if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("setspawn")) {
-                if (!player.hasPermission("prismcore.admin.afk")) {
-                    player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
-                    return true;
-                }
+            try {
+                int slot = Integer.parseInt(args[0]);
+                int index = slot - 1;
 
-                if (args.length > 1 && args[1].equalsIgnoreCase("remove")) {
-                    if (args.length > 2) {
-                        deleteAfkSpawn(player, args[2]);
+                List<java.io.File> mapFiles = getMapFiles();
+                if (index >= 0 && index < mapFiles.size()) {
+                    String worldName = mapFiles.get(index).getName().replace(".yml", "");
+
+                    org.bukkit.World world = Bukkit.getWorld(worldName);
+                    int playerCount = (world != null) ? world.getPlayers().size() : 0;
+                    int maxPlayers = Bukkit.getMaxPlayers();
+                    boolean isFull = playerCount >= maxPlayers && maxPlayers > 0;
+
+                    if (isFull) {
+                        player.sendMessage(ChatColor.RED + "This area is full.");
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                         return true;
                     }
-                }
 
-                saveAfkSpawn(player);
-                return true;
-            } else if (args[0].equalsIgnoreCase("remove")) {
-                if (!player.hasPermission("prismcore.admin.afk")) {
-                    player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                    startTeleportTask(player, worldName);
                     return true;
                 }
-                if (args.length < 2) {
-                    player.sendMessage(ChatColor.RED + "Usage: /afk remove <map_name>");
-                    return true;
-                }
-                deleteAfkSpawn(player, args[1]);
-                return true;
-            }
-            else {
-                try {
-                    int slot = Integer.parseInt(args[0]);
-                    int index = slot - 1;
-
-                    List<java.io.File> mapFiles = getMapFiles();
-                    if (index >= 0 && index < mapFiles.size()) {
-                        String worldName = mapFiles.get(index).getName().replace(".yml", "");
-
-                        org.bukkit.World world = Bukkit.getWorld(worldName);
-                        int playerCount = (world != null) ? world.getPlayers().size() : 0;
-                        int maxPlayers = Bukkit.getMaxPlayers();
-                        boolean isFull = playerCount >= maxPlayers && maxPlayers > 0;
-
-                        if (isFull) {
-                            player.sendMessage(ChatColor.RED + "This area is full.");
-                            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                            return true;
-                        }
-
-                        startTeleportTask(player, worldName);
-                        return true;
-                    }
-                } catch (NumberFormatException ignored) {
-                }
+            } catch (NumberFormatException ignored) {
             }
         }
 
@@ -120,41 +91,6 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
         return fileList;
     }
 
-    private void saveAfkSpawn(Player player) {
-        String worldName = player.getWorld().getName();
-        java.io.File folder = new java.io.File(plugin.getDataFolder(), "survival/AFK/maps");
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
-
-        java.io.File file = new java.io.File(folder, worldName + ".yml");
-        org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
-                .loadConfiguration(file);
-
-        config.set("spawn", player.getLocation());
-        try {
-            config.save(file);
-            player.sendMessage(ChatColor.GREEN + "AFK spawn set for world " + ChatColor.YELLOW + worldName);
-        } catch (java.io.IOException e) {
-            player.sendMessage(ChatColor.RED + "Failed to save spawn location.");
-            e.printStackTrace();
-        }
-    }
-
-    private void deleteAfkSpawn(Player player, String mapName) {
-        java.io.File folder = new java.io.File(plugin.getDataFolder(), "survival/AFK/maps");
-        java.io.File file = new java.io.File(folder, mapName + ".yml");
-
-        if (file.exists()) {
-            if (file.delete()) {
-                player.sendMessage(ChatColor.GREEN + "Removed AFK map: " + ChatColor.YELLOW + mapName);
-            } else {
-                player.sendMessage(ChatColor.RED + "Failed to delete map file.");
-            }
-        } else {
-            player.sendMessage(ChatColor.RED + "Map not found: " + mapName);
-        }
-    }
 
     private void openAFKGui(Player player) {
         Inventory gui = Bukkit.createInventory(null, 54, GUI_TITLE);
@@ -367,43 +303,12 @@ public class AFKCommand implements CommandExecutor, TabCompleter, Listener {
                 completions.add(String.valueOf(i));
             }
 
-            if (sender.hasPermission("prismcore.admin.afk")) {
-                completions.add("setspawn");
-                completions.add("remove");
-            }
-
             return filterCompletions(completions, args[0]);
-        }
-
-        if (!sender.hasPermission("prismcore.admin.afk")) {
-            return Collections.emptyList();
-        }
-
-        if (args.length == 2 && args[0].equalsIgnoreCase("remove")) {
-            return filterCompletions(getMapNames(), args[1]);
-        }
-
-        if (args.length == 2 && args[0].equalsIgnoreCase("setspawn")) {
-            List<String> sub = new ArrayList<>();
-            sub.add("remove");
-            return filterCompletions(sub, args[1]);
-        }
-
-        if (args.length == 3 && args[0].equalsIgnoreCase("setspawn") && args[1].equalsIgnoreCase("remove")) {
-            return filterCompletions(getMapNames(), args[2]);
         }
 
         return Collections.emptyList();
     }
 
-    private List<String> getMapNames() {
-        List<String> maps = new ArrayList<>();
-        List<java.io.File> files = getMapFiles();
-        for (java.io.File f : files) {
-            maps.add(f.getName().replace(".yml", ""));
-        }
-        return maps;
-    }
 
     private List<String> filterCompletions(List<String> input, String arg) {
         return input.stream()

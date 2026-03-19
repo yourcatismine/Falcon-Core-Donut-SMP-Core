@@ -439,7 +439,17 @@ public class PlayerDataManager {
     }
 
     public List<LeaderboardEntry> getTopShards(int limit) {
-        return plugin.getDatabaseManager().getTopShards(limit);
+        if (cachedShardsTop != null && (System.currentTimeMillis() - lastShardsUpdate < CACHE_DURATION)) {
+            return cachedShardsTop.size() > limit ? cachedShardsTop.subList(0, limit) : cachedShardsTop;
+        }
+
+        if (!isUpdatingShards) {
+            triggerShardsUpdateAsync();
+        }
+
+        return cachedShardsTop != null
+                ? (cachedShardsTop.size() > limit ? cachedShardsTop.subList(0, limit) : cachedShardsTop)
+                : new ArrayList<>();
     }
 
     private void fetchVaultTopMoney() {
@@ -479,6 +489,7 @@ public class PlayerDataManager {
     }
 
     private boolean isUpdatingMoney = false;
+    private boolean isUpdatingShards = false;
     private boolean isUpdatingKills = false;
     private boolean isUpdatingDeaths = false;
     private boolean isUpdatingPlaytime = false;
@@ -680,6 +691,20 @@ public class PlayerDataManager {
                 lastSellUpdate = System.currentTimeMillis();
             } finally {
                 isUpdatingSell = false;
+            }
+        });
+    }
+
+    private void triggerShardsUpdateAsync() {
+        isUpdatingShards = true;
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                // Fetch top 100 for the cache
+                List<LeaderboardEntry> entries = plugin.getDatabaseManager().getTopShards(100);
+                cachedShardsTop = entries;
+                lastShardsUpdate = System.currentTimeMillis();
+            } finally {
+                isUpdatingShards = false;
             }
         });
     }

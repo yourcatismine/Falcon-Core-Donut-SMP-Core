@@ -762,7 +762,7 @@ public class GUIHandler {
             double totalSpent = controller.getTransactionManager().getTotalSpent(fullTx);
             double totalMade = controller.getTransactionManager().getTotalMade(fullTx);
 
-            Bukkit.getScheduler().runTask(controller.getPlugin(), () -> {
+            controller.getPlugin().getSchedulerAdapter().runTask(() -> {
                 if (!admin.isOnline())
                     return;
                 openAdminTransactionsGUI(admin, target, page, controller, fullTx, totalSpent, totalMade);

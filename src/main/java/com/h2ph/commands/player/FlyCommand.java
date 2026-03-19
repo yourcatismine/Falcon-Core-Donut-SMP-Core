@@ -87,21 +87,12 @@ public class FlyCommand implements CommandExecutor, TabCompleter, Listener {
     }
 
     private void enforceFlightLater(Player player, long delayTicks) {
-        try {
-            player.getScheduler().runDelayed(plugin, st -> {
-                if (player.isOnline() && !isFlightAllowed(player)) {
-                    player.setFlying(false);
-                    player.setAllowFlight(false);
-                }
-            }, null, delayTicks);
-        } catch (NoSuchMethodError | NoClassDefFoundError e) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline() && !isFlightAllowed(player)) {
-                    player.setFlying(false);
-                    player.setAllowFlight(false);
-                }
-            }, delayTicks);
-        }
+        plugin.getSchedulerAdapter().runTaskLater(() -> {
+            if (player.isOnline() && !isFlightAllowed(player)) {
+                player.setFlying(false);
+                player.setAllowFlight(false);
+            }
+        }, delayTicks);
     }
 
     private boolean isFlightAllowed(Player player) {

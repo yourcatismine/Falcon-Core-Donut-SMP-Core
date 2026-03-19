@@ -77,8 +77,12 @@ public class DatabaseManager {
             queryBuilder.append("`bounty` DOUBLE DEFAULT 0, ");
             queryBuilder.append("`tool_expiry` BIGINT DEFAULT 0, ");
             queryBuilder.append("`team` VARCHAR(36) DEFAULT NULL, ");
-            queryBuilder.append("`name_hidden` BOOLEAN DEFAULT FALSE");
-            queryBuilder.append("`spawners` BIGINT DEFAULT 0, ");
+            queryBuilder.append("`name_hidden` BOOLEAN DEFAULT FALSE, ");
+            queryBuilder.append("`disguised` BOOLEAN DEFAULT FALSE, ");
+            queryBuilder.append("`disguise_name` VARCHAR(16) DEFAULT NULL, ");
+            queryBuilder.append("`disguise_skin_texture` TEXT DEFAULT NULL, ");
+            queryBuilder.append("`disguise_skin_signature` TEXT DEFAULT NULL, ");
+            queryBuilder.append("`spawners` BIGINT DEFAULT 0");
             queryBuilder.append(")");
 
             stmt.execute(queryBuilder.toString());
@@ -174,7 +178,12 @@ public class DatabaseManager {
                     "bounty DOUBLE DEFAULT 0",
                     "tool_expiry BIGINT DEFAULT 0",
                     "team VARCHAR(36) DEFAULT NULL",
-                    "name_hidden BOOLEAN DEFAULT FALSE"
+                    "name_hidden BOOLEAN DEFAULT FALSE",
+                    "disguised BOOLEAN DEFAULT FALSE",
+                    "disguise_name VARCHAR(16) DEFAULT NULL",
+                    "disguise_skin_texture TEXT DEFAULT NULL",
+                    "disguise_skin_signature TEXT DEFAULT NULL",
+                    "spawners BIGINT DEFAULT 0"
             };
 
             for (String columnDef : statsColumns) {

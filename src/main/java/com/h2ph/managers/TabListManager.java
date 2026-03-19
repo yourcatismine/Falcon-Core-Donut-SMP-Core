@@ -315,19 +315,19 @@ public class TabListManager implements Listener {
         if (name == null || name.isEmpty()) return;
         if (!resolvingNames.add(name)) return;
 
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             try {
-            org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(name);
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                try {
-                    String prefix = LuckPermsUtils.getPrefix(off);
-                    namePrefixCache.put(name, prefix == null ? "" : prefix);
-                } finally {
-                    resolvingNames.remove(name);
-                }
-            });
+                org.bukkit.OfflinePlayer off = Bukkit.getOfflinePlayer(name);
+                plugin.getSchedulerAdapter().runTask(() -> {
+                    try {
+                        String prefix = LuckPermsUtils.getPrefix(off);
+                        namePrefixCache.put(name, prefix == null ? "" : prefix);
+                    } finally {
+                        resolvingNames.remove(name);
+                    }
+                });
             } catch (Exception e) {
-            resolvingNames.remove(name);
+                resolvingNames.remove(name);
             }
         });
     }

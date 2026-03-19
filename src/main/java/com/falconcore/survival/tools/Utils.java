@@ -23,6 +23,27 @@ public final class Utils {
             return null;
         }
 
+        try {
+            com.h2ph.Falcon instance = com.h2ph.Falcon.getInstance();
+            if (instance != null) {
+                org.bukkit.configuration.file.FileConfiguration config = instance.getSurvivalConfig();
+                if (config != null) {
+                    org.bukkit.configuration.ConfigurationSection themes = config.getConfigurationSection("themes");
+                    if (themes != null) {
+                        for (String key : themes.getKeys(false)) {
+                            if (input.contains(key)) {
+                                String value = themes.getString(key);
+                                if (value != null) {
+                                    input = input.replace(key, value);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
         Matcher m = HEX_PATTERN_AMP.matcher(input);
         StringBuffer buf = new StringBuffer(input.length() + 32);
         while (m.find()) {

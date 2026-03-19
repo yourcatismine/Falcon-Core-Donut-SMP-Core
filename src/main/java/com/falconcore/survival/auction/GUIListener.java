@@ -610,7 +610,7 @@ public class GUIListener
                     int idx = (page - 1) * perPage + slot;
                     if (idx < filtered.size()) {
                         Transaction tx = filtered.get(idx);
-                        Bukkit.getScheduler().runTask(this.controller.getPlugin(), () -> {
+                        this.controller.getPlugin().getSchedulerAdapter().runTask(() -> {
                             if (!p.isOnline())
                                 return;
                             GUIHandler.openTransactionManagementGUI(p, tx, this.controller);
@@ -851,9 +851,9 @@ public class GUIListener
             if (!p.hasMetadata("ah-switching")) {
                 if (p.hasMetadata("ah-admin-target")) {
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
-                    p.getScheduler().run(this.controller.getPlugin(), (task) -> {
+                    this.controller.getPlugin().getSchedulerAdapter().runTask(() -> {
                         GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
-                    }, null);
+                    });
                 }
             }
         }
@@ -862,9 +862,9 @@ public class GUIListener
             if (!p.hasMetadata("ah-switching")) {
                 if (p.hasMetadata("ah-admin-target")) {
                     String target = p.getMetadata("ah-admin-target").get(0).asString();
-                    p.getScheduler().run(this.controller.getPlugin(), (task) -> {
+                    this.controller.getPlugin().getSchedulerAdapter().runTask(() -> {
                         GUIHandler.openAdminPlayerDetailsGUI(p, target, this.controller);
-                    }, null);
+                    });
                 }
             }
         }

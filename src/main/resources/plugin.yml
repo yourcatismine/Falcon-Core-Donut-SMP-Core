@@ -141,6 +141,11 @@ commands:
     permission: falcon.crates
     usage: /crate <create|edit|get|delete|effects> ...
 
+  spawner:
+    description: Manage spawners
+    permission: falcon.spawners
+    usage: /spawner give <player> <type> [amount] ...
+
   sus:
     description: Monitor suspicious activity
     permission: prism.admin.sus
@@ -522,4 +527,8 @@ permissions:
 
   falcon.crates:
     description: Permission to manage crates via /crate
+    default: op
+
+  falcon.spawners:
+    description: Permission to manage spawners via /spawner
     default: op

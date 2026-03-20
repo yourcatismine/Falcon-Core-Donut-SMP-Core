@@ -201,6 +201,7 @@ public class Falcon extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventorySyncListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.FalconBundleDupeFix(), this);
 
         getSchedulerAdapter().runTaskTimer(() -> {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {

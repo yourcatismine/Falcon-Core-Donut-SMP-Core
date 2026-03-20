@@ -122,6 +122,10 @@ public class Falcon extends JavaPlugin {
         saveAllResources();
         loadSurvivalConfig();
 
+        this.schedulerAdapter = new SchedulerAdapter(this);
+        this.playerDataManager = new PlayerDataManager(this);
+        this.databaseManager = new DatabaseManager(this, getSurvivalConfig());
+
         motdEnabled = getSurvivalConfig().getBoolean("motd.enabled", false); motd = getSurvivalConfig()
         .getString("motd.motd", "FALCON");
         getServer().getPluginManager().registerEvents(new MotdListener(this), this);
@@ -174,9 +178,7 @@ public class Falcon extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
 
-        this.playerDataManager = new PlayerDataManager(this);
-        this.databaseManager = new DatabaseManager(this, getSurvivalConfig());
-        this.schedulerAdapter = new SchedulerAdapter(this);
+
         this.playerNameCache = new PlayerNameCache(this.schedulerAdapter);
         this.keyAllManager = new com.falconcore.survival.manager.KeyAllManager(this);
         this.carouselManager = new com.falconcore.survival.manager.CarouselManager(this);

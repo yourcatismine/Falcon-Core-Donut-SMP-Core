@@ -1124,9 +1124,13 @@ public class GUIListener
             } catch (Exception ignored) {
             }
         } else {
-            UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
-            this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
-                    ai.getPrice(), p.getName(), itemName);
+            double price = ai.getPrice();
+            String buyerName = p.getName();
+            this.controller.getPlugin().getSchedulerAdapter().runTaskAsync(() -> {
+                UUID sellerUUID = Bukkit.getOfflinePlayer(sellerName).getUniqueId();
+                this.controller.getPlugin().getDatabaseManager().addAuctionPendingPayment(sellerUUID,
+                        price, buyerName, itemName);
+            });
         }
 
         p.closeInventory();

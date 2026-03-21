@@ -146,20 +146,22 @@ public class EnderChestManager {
      * @param viewerCount 1 = open lid, 0 = close lid
      */
     private void sendBlockAction(Block block, int viewerCount) {
-        Vector3i pos = new Vector3i(block.getX(), block.getY(), block.getZ());
+        plugin.getSchedulerAdapter().runAtLocation(block.getLocation(), () -> {
+            Vector3i pos = new Vector3i(block.getX(), block.getY(), block.getZ());
 
-        WrappedBlockState wrappedState = SpigotConversionUtil.fromBukkitBlockData(block.getBlockData());
-        int blockTypeId = wrappedState.getGlobalId();
+            WrappedBlockState wrappedState = SpigotConversionUtil.fromBukkitBlockData(block.getBlockData());
+            int blockTypeId = wrappedState.getGlobalId();
 
-        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(
-                pos,
-                1,
-                viewerCount,
-                blockTypeId);
+            WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(
+                    pos,
+                    1,
+                    viewerCount,
+                    blockTypeId);
 
-        for (Player nearby : block.getWorld().getNearbyPlayers(block.getLocation(), 64)) {
-            PacketEvents.getAPI().getPlayerManager().sendPacket(nearby, packet);
-        }
+            for (Player nearby : block.getWorld().getNearbyPlayers(block.getLocation(), 64)) {
+                PacketEvents.getAPI().getPlayerManager().sendPacket(nearby, packet);
+            }
+        });
     }
 
 

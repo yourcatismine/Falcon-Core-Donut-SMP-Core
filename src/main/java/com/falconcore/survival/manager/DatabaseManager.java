@@ -895,6 +895,12 @@ public class DatabaseManager {
         }
     }
 
+    public void addAuctionPendingPaymentAsync(UUID uuid, double amount, String buyerName, String itemName) {
+        plugin.getSchedulerAdapter().runTaskAsync(() -> 
+            addAuctionPendingPayment(uuid, amount, buyerName, itemName)
+        );
+    }
+
     public List<com.falconcore.survival.auction.AuctionManager.OfflineSale> getAndClearDetailedPendingSales(UUID uuid) {
         List<com.falconcore.survival.auction.AuctionManager.OfflineSale> sales = new ArrayList<>();
         if (!isConnected())

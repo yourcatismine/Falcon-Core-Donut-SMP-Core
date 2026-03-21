@@ -77,17 +77,21 @@ public class SpawnerManager {
     }
 
     public void saveSpawners() {
-        saveSpawners(true);
+        saveSpawners(true, false);
     }
 
     public void saveSpawners(boolean stopTask) {
+        saveSpawners(stopTask, false);
+    }
+
+    public void saveSpawners(boolean stopTask, boolean sync) {
         if (stopTask) {
             if (productionHandle != null) { scheduler.cancel(productionHandle); productionHandle = null; }
             if (hopperHandle != null) { scheduler.cancel(hopperHandle); hopperHandle = null; }
         }
 
         Map<Location, SpawnerData> snapshot = new HashMap<>(spawners);
-        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+        Runnable saveRunnable = () -> {
             for (SpawnerData data : snapshot.values()) {
                 try {
                     plugin.getDatabaseManager().insertOrUpdateSpawnerSync(data);
@@ -95,7 +99,13 @@ public class SpawnerManager {
                     plugin.getLogger().warning("Failed to save spawner at " + data.getLocation() + ": " + e.getMessage());
                 }
             }
-        });
+        };
+
+        if (sync) {
+            saveRunnable.run();
+        } else {
+            plugin.getSchedulerAdapter().runTaskAsync(saveRunnable);
+        }
     }
 
     public void pauseHopperFor(SpawnerData data) {

@@ -770,7 +770,7 @@ public class Falcon extends JavaPlugin {
         }
 
         if (this.spawnerManager != null) {
-            this.spawnerManager.saveSpawners(true);
+            this.spawnerManager.saveSpawners(true, true);
         }
 
         if (this.enderChestManager != null) {

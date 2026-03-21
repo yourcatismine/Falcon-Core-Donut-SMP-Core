@@ -496,27 +496,18 @@ public class PlayerDataManager {
     private boolean isUpdatingSell = false;
 
     public List<LeaderboardEntry> getTopMoney(int limit) {
-        if (cachedMoneyTop != null && !cachedMoneyTop.isEmpty()) {
-            if (System.currentTimeMillis() - lastMoneyUpdate > CACHE_DURATION) {
+        if (cachedMoneyTop == null || cachedMoneyTop.isEmpty()) {
+            if (!isUpdatingMoney) {
                 triggerVaultUpdateAsync();
             }
-            return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
+            return new ArrayList<>();
         }
 
-        if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+        if (System.currentTimeMillis() - lastMoneyUpdate > CACHE_DURATION) {
             triggerVaultUpdateAsync();
         }
 
-        List<LeaderboardEntry> entries = plugin.getDatabaseManager().getTopMoney(limit);
-
-        if (cachedMoneyTop == null || cachedMoneyTop.isEmpty()) {
-            if (!entries.isEmpty()) {
-                cachedMoneyTop = entries;
-                lastMoneyUpdate = System.currentTimeMillis();
-            }
-        }
-
-        return entries;
+        return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
     }
 
     private void triggerVaultUpdateAsync() {
@@ -746,5 +737,20 @@ public class PlayerDataManager {
         invalidateDeathsLeaderboard();
         invalidatePlaytimeLeaderboard();
         invalidateSellLeaderboard();
+    }
+
+    public void initializeLeaderboards() {
+        plugin.getLogger().info("Initializing leaderboard caches...");
+        triggerVaultUpdateAsync();
+        triggerShardsUpdateAsync();
+        triggerKillsUpdateAsync();
+        triggerDeathsUpdateAsync();
+        triggerPlaytimeUpdateAsync();
+        triggerSellUpdateAsync();
+    }
+
+    public void startAutoRefreshTask() {
+        // Refresh all leaderboards every 5 minutes
+        plugin.getSchedulerAdapter().runTaskTimerAsync(this::initializeLeaderboards, 6000L, 6000L);
     }
 }

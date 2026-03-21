@@ -124,6 +124,8 @@ public class Falcon extends JavaPlugin {
 
         this.schedulerAdapter = new SchedulerAdapter(this);
         this.playerDataManager = new PlayerDataManager(this);
+        this.playerDataManager.initializeLeaderboards();
+        this.playerDataManager.startAutoRefreshTask();
         this.databaseManager = new DatabaseManager(this, getSurvivalConfig());
 
         motdEnabled = getSurvivalConfig().getBoolean("motd.enabled", false); motd = getSurvivalConfig()

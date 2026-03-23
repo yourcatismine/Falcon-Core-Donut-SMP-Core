@@ -30,12 +30,16 @@ public class DatabaseManager {
     private String connectionError = null;
 
     public DatabaseManager(Falcon plugin, FileConfiguration config) {
-        this.plugin = plugin;
-        this.config = config;
-        initializeDatabase();
+        this(plugin, config, 10);
     }
 
-    private void initializeDatabase() {
+    public DatabaseManager(Falcon plugin, FileConfiguration config, int poolSize) {
+        this.plugin = plugin;
+        this.config = config;
+        initializeDatabase(poolSize);
+    }
+
+    private void initializeDatabase(int poolSize) {
         try {
             String host = config.getString("database.host", "localhost");
             int port = config.getInt("database.port", 3306);
@@ -60,7 +64,7 @@ public class DatabaseManager {
             hikariConfig.setMaxLifetime(600000);
             hikariConfig.setKeepaliveTime(300000);
             hikariConfig.setMinimumIdle(2);
-            hikariConfig.setMaximumPoolSize(10);
+            hikariConfig.setMaximumPoolSize(poolSize);
 
             this.dataSource = new HikariDataSource(hikariConfig);
 

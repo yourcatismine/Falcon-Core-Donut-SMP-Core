@@ -56,7 +56,7 @@ public class BukkitSchedulerAdapter implements SchedulerAdapter {
                     Math.max(1, period));
             return foliaTask;
         } catch (Exception e) {
-            plugin.getLogger().severe("Eerror: " + e.getMessage());
+            plugin.getLogger().severe("Error: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -89,6 +89,7 @@ public class BukkitSchedulerAdapter implements SchedulerAdapter {
 
         try {
             Method cancelMethod = handle.getClass().getMethod("cancel");
+            cancelMethod.setAccessible(true);
             cancelMethod.invoke(handle);
         } catch (Exception e) {
             plugin.getLogger().warning("Could not cancel Folia task: " + e.getMessage());

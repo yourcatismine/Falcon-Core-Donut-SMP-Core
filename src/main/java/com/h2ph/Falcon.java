@@ -102,6 +102,7 @@ public class Falcon extends JavaPlugin {
     private com.falconcore.survival.manager.DiscordWebhookManager discordWebhookManager;
     private com.h2ph.listeners.MotdListener MotdListener;
     private com.h2ph.managers.DiscordManager discordManager;
+    private boolean luckPermsEnabled = false;
     
     private com.falconcore.survival.spawners.storage.SpawnerManager spawnerManager;
     private com.falconcore.survival.spawners.economy.EconomyHandler spawnerEconomyHandler;
@@ -122,32 +123,22 @@ public class Falcon extends JavaPlugin {
         saveAllResources();
         loadSurvivalConfig();
 
+        this.luckPermsEnabled = Bukkit.getPluginManager().isPluginEnabled("LuckPerms");
+        if (!luckPermsEnabled) {
+            getLogger().warning("LuckPerms not found! Disguise features and some name displays will be disabled.");
+        }
+
         this.schedulerAdapter = new SchedulerAdapter(this);
+        this.databaseManager = new DatabaseManager(this, getSurvivalConfig(), 10);
         this.playerDataManager = new PlayerDataManager(this);
         this.playerDataManager.initializeLeaderboards();
         this.playerDataManager.startAutoRefreshTask();
-        this.databaseManager = new DatabaseManager(this, getSurvivalConfig());
 
         motdEnabled = getSurvivalConfig().getBoolean("motd.enabled", false); motd = getSurvivalConfig()
         .getString("motd.motd", "FALCON");
         getServer().getPluginManager().registerEvents(new MotdListener(this), this);
 
-        String TOKEN = getSurvivalConfig().getString("TOKEN");
-        String targetChannelId = getSurvivalConfig().getString("ChannelID");
-        if (TOKEN == null || TOKEN.equals("TOKEN")) {
-            getLogger().warning("No Discord Token Detected"); return;
-        }
-        if (targetChannelId == null || targetChannelId.equals("ChannelID")) {
-            getLogger().warning("No ChannelID set!"); return;
-        }
-        try {
-            jda = JDABuilder.createDefault(TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT).build(); jda.awaitReady();
-            discordManager = new com.h2ph.managers.DiscordManager(this, targetChannelId); jda.addEventListener(discordManager);
-            startDiscordStatusTask();
-            getLogger().info("Discord has been started!");
-        } catch (InterruptedException e) {
-            getLogger().severe("Faild to start Discord " + e.getMessage());
-        }
+        initializeDiscord();
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
@@ -634,9 +625,11 @@ public class Falcon extends JavaPlugin {
 
         getCommand("hide").setExecutor(new com.h2ph.commands.player.HideNameCommand(this));
 
-        com.h2ph.commands.player.DisguiseCommand disguiseCommand = new com.h2ph.commands.player.DisguiseCommand(this);
-        getCommand("disguise").setExecutor(disguiseCommand);
-        getCommand("disguise").setTabCompleter(disguiseCommand);
+        if (luckPermsEnabled) {
+            registerDisguiseCommand();
+        } else {
+            getLogger().info("Skipping DisguiseCommand registration: LuckPerms is missing.");
+        }
 
         getCommand("ignore").setExecutor(new com.h2ph.commands.player.IgnoreCommand(this));
         getCommand("unignore").setExecutor(new com.h2ph.commands.player.UnignoreCommand(this));
@@ -703,6 +696,39 @@ public class Falcon extends JavaPlugin {
             rootLogger.addFilter(new com.h2ph.logger.Log4jFilter());
         } catch (Exception e) {
             getLogger().warning("Failed to register Log4j Filter: " + e.getMessage());
+        }
+    }
+
+    private void initializeDiscord() {
+        String token = getSurvivalConfig().getString("TOKEN");
+        String targetChannelId = getSurvivalConfig().getString("ChannelID");
+
+        if (token == null || token.isEmpty() || token.equalsIgnoreCase("TOKEN")) {
+            getLogger().warning("Discord integration is disabled: No valid token detected.");
+            return;
+        }
+
+        if (targetChannelId == null || targetChannelId.isEmpty() || targetChannelId.equalsIgnoreCase("ChannelID")) {
+            getLogger().warning("Discord integration is disabled: No valid ChannelID set.");
+            return;
+        }
+
+        try {
+            jda = JDABuilder.createDefault(token)
+                    .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                    .build();
+            jda.awaitReady();
+
+            discordManager = new com.h2ph.managers.DiscordManager(this, targetChannelId);
+            jda.addEventListener(discordManager);
+            
+            startDiscordStatusTask();
+            getLogger().info("Discord integration has been started successfully!");
+        } catch (IllegalArgumentException e) {
+            getLogger().severe("Failed to start Discord: Invalid token provided. Check your config.yml.");
+        } catch (Exception e) {
+            getLogger().severe("An unexpected error occurred while starting Discord: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -1339,6 +1365,14 @@ public class Falcon extends JavaPlugin {
                     org.bukkit.ChatColor.translateAlternateColorCodes('&', "&b  [+] &fModeration Core: &a&lONLINE"));
         }
 
+        if (jda != null && jda.getStatus() == net.dv8tion.jda.api.JDA.Status.CONNECTED) {
+            console.sendMessage(
+                    org.bukkit.ChatColor.translateAlternateColorCodes('&', "&b  [+] &fDiscord System: &a&lONLINE"));
+        } else {
+            console.sendMessage(
+                    org.bukkit.ChatColor.translateAlternateColorCodes('&', "&b  [-] &fDiscord System: &c&lOFFLINE"));
+        }
+
         if (getServer().getPluginManager().getPlugin("WorldEdit") != null
                 || getServer().getPluginManager().getPlugin("FastAsyncWorldEdit") != null) {
             console.sendMessage(
@@ -1354,5 +1388,11 @@ public class Falcon extends JavaPlugin {
                 org.bukkit.ChatColor.translateAlternateColorCodes('&', "&a&l  FALCON SUCCESSFULLY INITIALIZED"));
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                 "&8&m--------------------------------------------------"));
+    }
+
+    private void registerDisguiseCommand() {
+        com.h2ph.commands.player.DisguiseCommand disguiseCommand = new com.h2ph.commands.player.DisguiseCommand(this);
+        getCommand("disguise").setExecutor(disguiseCommand);
+        getCommand("disguise").setTabCompleter(disguiseCommand);
     }
 }

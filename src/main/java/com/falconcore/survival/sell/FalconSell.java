@@ -131,7 +131,7 @@ public class FalconSell {
     }
 
     public void onDisable() {
-        if (this.playerDataManager != null) {
+        if (this.playerDataManager != null && this.databaseManager != null && this.databaseManager.isConnected()) {
             this.playerDataManager.saveAllData();
         }
         if (this.databaseManager != null) {

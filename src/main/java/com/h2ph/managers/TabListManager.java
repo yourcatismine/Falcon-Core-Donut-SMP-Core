@@ -28,6 +28,7 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -37,19 +38,26 @@ public class TabListManager implements Listener {
     private final Falcon plugin;
     private FileConfiguration config;
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
-    private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
-    private final Map<UUID, String> lastSentHeaderFooter = new HashMap<>();
-    private final Map<UUID, Map<UUID, String>> playerDisplayNames = new HashMap<>();
+    private final Map<UUID, ScheduledTask> tasks = new ConcurrentHashMap<>();
+    private final Map<UUID, String> lastSentHeaderFooter = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<UUID, String>> playerDisplayNames = new ConcurrentHashMap<>();
     private final Map<UUID, LinkedHashSet<UUID>> tabEntries = new ConcurrentHashMap<>();
     private final Map<UUID, String> realPlayerNames = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> namePrefixCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, String> playerPrefixCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Long> playerPrefixCacheTime = new ConcurrentHashMap<>();
     private final Set<String> resolvingNames = ConcurrentHashMap.newKeySet();
     private final PacketListenerCommon tabPacketListener;
     private int maxColumns = 4;
     private int maxRows = 20;
     private int maxTabEntries = maxColumns * maxRows;
     private boolean groupSortingEnabled = true;
-    private Map<String, Integer> groupRankings = new HashMap<>();
+    private final Map<String, Integer> groupRankings = new ConcurrentHashMap<>();
+    private final List<Player> cachedSortedPlayers = new CopyOnWriteArrayList<>();
+    private long lastTPS = 0;
+    private double cachedTPS = 20.0;
+    private long lastMSPT = 0;
+    private double cachedMSPT = 50.0;
 
     public TabListManager(Falcon plugin) {
         this.plugin = plugin;
@@ -92,12 +100,14 @@ public class TabListManager implements Listener {
     public void reloadTabList() {
         tabEntries.clear();
         loadConfig();
+        updateCachedSortedPlayers();
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateTabList(player);
         }
     }
 
     public void setup() {
+        updateCachedSortedPlayers();
         for (Player player : Bukkit.getOnlinePlayers()) {
             initTabList(player);
             startTask(player);
@@ -121,6 +131,7 @@ public class TabListManager implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         realPlayerNames.put(player.getUniqueId(), player.getName());
+        updateCachedSortedPlayers();
         initTabList(player);
         startTask(player);
     }
@@ -152,6 +163,9 @@ public class TabListManager implements Listener {
         playerDisplayNames.remove(uuid);
         tabEntries.remove(uuid);
         realPlayerNames.remove(uuid);
+        playerPrefixCache.remove(uuid);
+        playerPrefixCacheTime.remove(uuid);
+        updateCachedSortedPlayers();
     }
 
     private void startTask(Player player) {
@@ -182,7 +196,7 @@ public class TabListManager implements Listener {
             return;
 
         updateHeaderFooter(player);
-        updatePlayerDisplayNames(player);
+        // Display names are now handled in the packet listener for efficiency
     }
 
     private void updateHeaderFooter(Player player) {
@@ -223,69 +237,36 @@ public class TabListManager implements Listener {
     }
 
     private void updatePlayerDisplayNames(Player player) {
-        synchronized (this) {
-            Map<UUID, String> playerNames = playerDisplayNames.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
+        // Display names are now handled in the handleTabPacketSend packet listener.
+        // This method is kept for legacy compatibility but is now a no-op to save CPU.
+    }
 
-            List<Player> sortedPlayers;
-            if (groupSortingEnabled) {
-                sortedPlayers = Bukkit.getOnlinePlayers().stream()
-                        .sorted(this::comparePlayersByGroupRanking)
-                        .collect(Collectors.toList());
-            } else {
-                sortedPlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
-            }
-
-            Set<UUID> currentPlayers = new HashSet<>();
-            
-            for (Player onlinePlayer : sortedPlayers) {
-                UUID onlineUUID = onlinePlayer.getUniqueId();
-                currentPlayers.add(onlineUUID);
-
-                if (onlinePlayer.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
-                    if (!player.hasPermission("falcon.see_spectators")) {
-                        continue;
-                    }
-                }
-
-                String prefix = LuckPermsUtils.getPrefix(onlinePlayer);
-                
-                com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(onlineUUID);
-                
-                boolean shouldShowDisguise = data.isDisguised() && 
-                    (player.getUniqueId().equals(onlineUUID) ||
-                     (player == null || !player.hasPermission("falcon.disguise.see")));
-                
-                if (shouldShowDisguise) {
-                    String disguiseName = data.getDisguiseName();
-                    String disguisePrefix = getPrefixForNameCached(disguiseName);
-                    if (disguiseName != null) {
-                        populatePrefixAsync(disguiseName);
-                    } else if (!disguisePrefix.isEmpty()) { prefix = disguisePrefix; }
-                }
-                
-                String playerDisplayName = getPlayerDisplayName(onlinePlayer, player);
-                String displayName;
-
-                if (prefix != null && !prefix.isEmpty()) {
-                    prefix = color(prefix);
-                    displayName = prefix + playerDisplayName;
-                } else {
-                    displayName = playerDisplayName;
-                }
-
-                String lastDisplayName = playerNames.get(onlineUUID);
-                if (lastDisplayName == null || !lastDisplayName.equals(displayName)) {
-                    try {
-                        onlinePlayer.setPlayerListName(displayName);
-                        playerNames.put(onlineUUID, displayName);
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("Failed to update display name for " + sanitizePlayerName(onlinePlayer.getName()) + ": " + e.getMessage());
-                    }
-                }
-            }
-            
-            playerNames.keySet().retainAll(currentPlayers);
+    private void updateCachedSortedPlayers() {
+        List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        if (groupSortingEnabled) {
+            players.sort(this::comparePlayersByGroupRanking);
+        } else {
+            players.sort(Comparator.comparing(p -> sanitizePlayerName(p.getName()), String.CASE_INSENSITIVE_ORDER));
         }
+        cachedSortedPlayers.clear();
+        cachedSortedPlayers.addAll(players);
+    }
+
+    private String getPrefixCached(Player player) {
+        long now = System.currentTimeMillis();
+        UUID uuid = player.getUniqueId();
+        String cached = playerPrefixCache.get(uuid);
+        Long lastUpdate = playerPrefixCacheTime.get(uuid);
+        
+        if (cached != null && lastUpdate != null && now - lastUpdate < 30000L) {
+            return cached;
+        }
+        
+        String prefix = LuckPermsUtils.getPrefix(player);
+        prefix = (prefix == null) ? "" : color(prefix);
+        playerPrefixCache.put(uuid, prefix);
+        playerPrefixCacheTime.put(uuid, now);
+        return prefix;
     }
 
     /**
@@ -358,6 +339,7 @@ public class TabListManager implements Listener {
         }
         
         playerDisplayNames.clear();
+        updateCachedSortedPlayers();
         
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateTabList(player);
@@ -430,18 +412,50 @@ public class TabListManager implements Listener {
         }
 
         if (modified) {
+            for (PlayerData data : entries) {
+                UUID uuid = extractUuid(data);
+                if (uuid == null) continue;
+                
+                Player target = Bukkit.getPlayer(uuid);
+                if (target == null) continue;
+                
+                String prefix = getPrefixCached(target);
+                com.falconcore.survival.manager.PlayerData dataObj = plugin.getPlayerDataManager().get(uuid);
+                
+                boolean shouldShowDisguise = dataObj.isDisguised() && 
+                    (viewerUuid.equals(uuid) || !viewer.hasPermission("falcon.disguise.see"));
+                
+                String displayName;
+                if (shouldShowDisguise) {
+                    String dName = dataObj.getDisguiseName();
+                    String dPrefix = namePrefixCache.getOrDefault(dName, "");
+                    displayName = (dPrefix.isEmpty() ? "" : color(dPrefix)) + sanitizePlayerName(dName);
+                    if (dName != null && !namePrefixCache.containsKey(dName)) {
+                        populatePrefixAsync(dName);
+                    }
+                } else {
+                    displayName = (prefix.isEmpty() ? "" : prefix) + getPlayerDisplayName(target, viewer);
+                }
+                
+                data.setDisplayName(LegacyComponentSerializer.legacySection().deserialize(displayName));
+            }
+
             entries.sort((d1, d2) -> {
-                UUID u1 = (d1.getUserProfile() != null) ? d1.getUserProfile().getUUID() : null;
-                UUID u2 = (d2.getUserProfile() != null) ? d2.getUserProfile().getUUID() : null;
+                UUID u1 = extractUuid(d1);
+                UUID u2 = extractUuid(d2);
                 if (u1 == null || u2 == null) return 0;
-                                Player p1 = Bukkit.getPlayer(u1);
+                
+                Player p1 = Bukkit.getPlayer(u1);
                 Player p2 = Bukkit.getPlayer(u2);
-                                int r1 = (p1 != null) ? getGroupRanking(p1) : groupRankings.getOrDefault("default", 0);
+                
+                int r1 = (p1 != null) ? getGroupRanking(p1) : groupRankings.getOrDefault("default", 0);
                 int r2 = (p2 != null) ? getGroupRanking(p2) : groupRankings.getOrDefault("default", 0);
-                                int cmp = Integer.compare(r2, r1);
+                
+                int cmp = Integer.compare(r2, r1);
                 if (cmp != 0) return cmp;
-                                String n1 = (p1 != null) ? sanitizePlayerName(p1.getName()) : sanitizePlayerName(realPlayerNames.getOrDefault(u1, ""));
-                String n2 = (p2 != null) ? sanitizePlayerName(p2.getName()) : sanitizePlayerName(realPlayerNames.getOrDefault(u2, ""));
+                
+                String n1 = (p1 != null) ? sanitizePlayerName(p1.getName()) : realPlayerNames.getOrDefault(u1, "");
+                String n2 = (p2 != null) ? sanitizePlayerName(p2.getName()) : realPlayerNames.getOrDefault(u2, "");
                 return n1.compareToIgnoreCase(n2);
             });
             wrapper.setPlayerDataList(entries);
@@ -538,11 +552,11 @@ public class TabListManager implements Listener {
         }
 
         if (text.contains("{tps}")) {
-            text = text.replace("{tps}", String.format("%.2f", getServerTPS()));
+            text = text.replace("{tps}", String.format("%.2f", getServerTPSCached()));
         }
 
         if (text.contains("{mspt}")) {
-            text = text.replace("{mspt}", String.format("%.2f", getServerMSPT()));
+            text = text.replace("{mspt}", String.format("%.2f", getServerMSPTCached()));
         }
 
         if (text.contains("%online%")) {
@@ -554,6 +568,22 @@ public class TabListManager implements Listener {
         }
 
         return color(text);
+    }
+
+    private double getServerTPSCached() {
+        long now = System.currentTimeMillis();
+        if (now - lastTPS < 1000L) return cachedTPS;
+        cachedTPS = getServerTPS();
+        lastTPS = now;
+        return cachedTPS;
+    }
+
+    private double getServerMSPTCached() {
+        long now = System.currentTimeMillis();
+        if (now - lastMSPT < 1000L) return cachedMSPT;
+        cachedMSPT = getServerMSPT();
+        lastMSPT = now;
+        return cachedMSPT;
     }
 
     private double getServerTPS() {

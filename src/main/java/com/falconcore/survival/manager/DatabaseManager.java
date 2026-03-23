@@ -310,7 +310,6 @@ public class DatabaseManager {
                 }
             }
 
-            // Migration: rename prism_orders to falcon_orders if it exists
             try {
                 ResultSet rs = connection.getMetaData().getTables(null, null, "prism_orders", null);
                 if (rs.next()) {

@@ -47,7 +47,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 1) {
-           // player.sendMessage(ChatColor.RED + "Usage: /crate <create|edit|get|delete|effects> ...");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -56,7 +55,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
 
         if (sub.equals("create")) {
             if (args.length < 3) {
-              //  player.sendMessage(ChatColor.RED + "Usage: /crate create <name> <key> [type] [container]");
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
@@ -71,29 +69,24 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
             return handleCrateCreate(player, args[1], args[2], type, container);
         } else if (sub.equals("edit")) {
             if (args.length < 2) {
-               // player.sendMessage(ChatColor.RED + "Usage: /crate edit <name>");
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateEdit(player, args[1]);
         } else if (sub.equals("get")) {
             if (args.length < 2) {
-              //  player.sendMessage(ChatColor.RED + "Usage: /crate get <name>");
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateGet(player, args[1]);
         } else if (sub.equals("delete")) {
             if (args.length < 2) {
-               // player.sendMessage(ChatColor.RED + "Usage: /crate delete <name>");
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
             return handleCrateDelete(player, args[1]);
         } else if (sub.equals("effects")) {
             if (args.length < 4) {
-               // player.sendMessage(
-                //        ChatColor.RED + "Usage: /crate effects <add|remove|set> <crate> <effect|all>");
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return true;
             }
@@ -106,16 +99,12 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
     private boolean handleCrateCreate(Player player, String crateName, String keyName, String typeStr,
             String containerStr) {
         if (!plugin.getKeyAllManager().isValidKey(keyName)) {
-        //    player.sendMessage(ChatColor.RED + "Invalid key: " + keyName);
-        //    player.sendMessage(
-        //            ChatColor.RED + "Available keys: " + String.join(", ", plugin.getKeyAllManager().getValidKeys()));
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
         String type = typeStr.toUpperCase();
         if (!type.equals("NORMAL") && !type.equals("CAROUSEL")) {
-          //  player.sendMessage(ChatColor.RED + "Invalid crate type. Options: NORMAL, CAROUSEL");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -124,15 +113,12 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
         Material containerMat = Material.getMaterial(container);
         if (containerMat == null || (!containerMat.equals(Material.CHEST) && !containerMat.equals(Material.ENDER_CHEST)
                 && !containerMat.name().endsWith("SHULKER_BOX"))) {
-          //  player.sendMessage(
-          //          ChatColor.RED + "Invalid container type. Must be CHEST, ENDER_CHEST, or SHULKER_BOX variant.");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (crateFile.exists()) {
-          //  player.sendMessage(ChatColor.RED + "A crate with that name already exists!");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -145,8 +131,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
             crateConfig.set("type", type);
             crateConfig.set("container", container);
             crateConfig.save(crateFile);
-          //  player.sendMessage(ChatColor.GREEN + "Crate config created: " + crateFile.getName() + " (" + type + ", "
-          //          + container + ")");
 
         } catch (IOException e) {
             player.sendMessage(ChatColor.RED + "Failed to create crate config file.");
@@ -161,7 +145,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
     private boolean handleCrateGet(Player player, String crateName) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists()) {
-         ///   player.sendMessage(ChatColor.RED + "Crate not found: " + crateName);
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -177,7 +160,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
     private boolean handleCrateDelete(Player player, String crateName) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists()) {
-           // player.sendMessage(ChatColor.RED + "Crate not found: " + crateName);
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -218,7 +200,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
     private boolean handleCrateEdit(Player player, String crateName) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists()) {
-         //   player.sendMessage(ChatColor.RED + "Crate not found: " + crateName);
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -258,7 +239,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
     private boolean handleCrateEffects(Player player, String sub, String crateName, String effectName) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists()) {
-           // player.sendMessage(ChatColor.RED + "Crate not found: " + crateName);
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
@@ -296,7 +276,6 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(ChatColor.GREEN + "Removed effect " + effectName + " from " + crateName);
             }
         } else {
-          //  player.sendMessage(ChatColor.RED + "Usage: /crate effects <add|remove|set> <crate> <effect|all>");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }

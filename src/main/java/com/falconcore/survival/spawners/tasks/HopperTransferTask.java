@@ -44,7 +44,6 @@ public class HopperTransferTask extends BukkitRunnable {
             Location spawnerLoc = data.getLocation();
             if (spawnerLoc == null || spawnerLoc.getWorld() == null) continue;
 
-            // Folia optimization: Only process if chunk is already loaded to avoid sync loads
             if (!spawnerLoc.getWorld().isChunkLoaded(spawnerLoc.getBlockX() >> 4, spawnerLoc.getBlockZ() >> 4)) {
                 continue;
             }

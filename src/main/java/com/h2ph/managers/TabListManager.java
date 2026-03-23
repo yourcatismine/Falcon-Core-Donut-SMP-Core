@@ -196,7 +196,6 @@ public class TabListManager implements Listener {
             return;
 
         updateHeaderFooter(player);
-        // Display names are now handled in the packet listener for efficiency
     }
 
     private void updateHeaderFooter(Player player) {
@@ -237,8 +236,6 @@ public class TabListManager implements Listener {
     }
 
     private void updatePlayerDisplayNames(Player player) {
-        // Display names are now handled in the handleTabPacketSend packet listener.
-        // This method is kept for legacy compatibility but is now a no-op to save CPU.
     }
 
     private void updateCachedSortedPlayers() {

@@ -1,8 +1,8 @@
 drill:
   play-sound: true
   use-countdown: true
-  timer: 259200 # 3 days, in seconds
-  update-interval: 30 # seconds between countdown updates for ALL tools (1 second for accurate display)
+  timer: 259200
+  update-interval: 30
   material: NETHERITE_PICKAXE
   display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ᴘɪᴄᴋᴀхᴇ"
   lore:
@@ -34,8 +34,8 @@ drill:
 sellaxe:
   play-sound: true
   use-countdown: true
-  timer: 259200 # 3 days, in seconds
-  update-interval: 30 # seconds between countdown updates for ALL tools (1 second for accurate display)
+  timer: 259200
+  update-interval: 30
   material: NETHERITE_AXE
   display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ѕᴇʟʟ ᴀхᴇ"
   lore:
@@ -67,7 +67,7 @@ sellaxe:
 axe:
   destory-leaves: true
   use-countdown: true
-  timer: 259200 # 3 days, in seconds
+  timer: 259200
   material: NETHERITE_AXE
   display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ᴀхᴇ"
   lore:
@@ -88,7 +88,7 @@ axe:
 
 shovel:
   use-countdown: true
-  timer: 259200 # 3 days, in seconds
+  timer: 259200
   material: NETHERITE_SHOVEL
   display-name: "&dᴀᴍᴇᴛʜʏѕᴛ ѕʜᴏᴠᴇʟ"
   lore:
@@ -133,16 +133,16 @@ bucket:
   disabled-blocks: []
 
 shardbooster:
-  use-countdown: false # Booster doesn't need countdown update (it's consumed)
+  use-countdown: false
   material: POTION
-  timer: 86400 # 24 hours in seconds
-  multiplier: 4 # 4x shard production
+  timer: 86400
+  multiplier: 4
   display-name: "&dѕʜᴀʀᴅ ʙᴏᴏѕᴛᴇʀ"
   lore:
     - "&f4x Shard Production for 24 hours"
     - "&8Self Destruct:"
     - "&8%countdown%"
-  potion-color: "8B5CF6" # Purple hex color
+  potion-color: "8B5CF6"
   activation-sound: ENTITY_PLAYER_LEVELUP
   activation-message: "&aYou have activated your &dShard Booster&a for 24h."
 

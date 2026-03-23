@@ -1,5 +1,5 @@
 keyall:
-  interval: 60 # Interval in minutes
+  interval: 60
   enabled: true
 
 reward:

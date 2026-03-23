@@ -1,5 +1,7 @@
+license-key: "YOUR_KEY_HERE"
+
 region:
-  - "EU"
+  - "Asia"
 
 motd:
   enabled: true
@@ -39,11 +41,11 @@ discord-webhooks:
     channel-id: "CHANNEL_ID"
 
 database:
-  host: "45.92.16.152"
-  port: 1024
-  database: "s7298_falcon_proxy_data"
-  username: "u7298_XcC4Csh9Se"
-  password: "oQbK3FXwFXp=5QT74HKik^Qm"
+  host: "localhost"
+  port: 3306
+  database: ""
+  username: ""
+  password: ""
 
 combat:
   - "rtp"

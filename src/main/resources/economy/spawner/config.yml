@@ -1,5 +1,4 @@
 
-# Production multipliers per spawner type (per 20 ticks)
 multipliers:
   COW: 1.0
   SPIDER: 1.0
@@ -9,29 +8,24 @@ multipliers:
   CREEPER: 1.0
   IRON_GOLEM: 1.0
 
-# Bonus multiplier when isolated (>5 blocks from other spawners)
 isolated_bonus: 0.5
 
-# General Settings
 settings:
   require_silk_touch: true
   natural_spawners_virtual: false
-  auto_save_interval: 6000 # How often to save (in ticks, 6000 = 5 min)
-  production_interval: 600 # How often spawners produce (in ticks, 600 = 30 sec)
-  isolation_radius: 5 # Radius for the isolation bonus
-  storage_capacity: 1000000 # Used for the storage fill percentage in main GUI
+  auto_save_interval: 6000
+  production_interval: 600
+  isolation_radius: 5
+  storage_capacity: 1000000
 
-# XP Settings
 xp:
   amount_per_cycle: 5
 
-# Hopper Configuration
 hopper:
   enabled: true
-  check_delay: 3s # Time between collection checks
-  stack_per_transfer: 5 # Number of item stacks transferred in one operation (max 5)
+  check_delay: 3s
+  stack_per_transfer: 5
 
-# Messages
 messages:
   no_permission: "&cYou don't have permission to do that."
   not_owner: "&cYou are not the owner of this spawner."
@@ -46,7 +40,6 @@ messages:
   spawner_stacked_multi: "&aYou stacked %count%x spawner, now at %amount%x"
   gui_title: "&8%stack% %type% SPAWNERS"
   gui_title_storage: "&8%stack% %type% (%page%/%pages%)"
-  # GUI Items
   gui_spawner_item_name: "&e%stack% %type% SPAWNERS"
   gui_click_to_sell: "&e&l•&r&fClick to sell items and collect xp"
   gui_storage_filled: "&estorage: &f%percent%% &eFilled"

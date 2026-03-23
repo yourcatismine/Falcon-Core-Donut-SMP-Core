@@ -1,4 +1,3 @@
-# 
 reasons:
   Racism/Harassment:
     delete_data: false
@@ -78,18 +77,15 @@ reasons:
       3: "permanent"
 
 messages:
-  # Admin feedback (Screenshot 1)
   admin_line_1: "&cPunishment executed with success. Offension: %count%"
   admin_line_2: "&cTemporarily banned player &f%player% &cfor &f%duration% &cwith reason: &f%reason%"
   
-  # Ban Screen Layout (Screenshot 2)
-  # %n is a new line
   ban_layout: |
     &cYou are banned from this server!
     
     &fBanned on: &f%banned_on%
     &fReason: &f%reason% (%count%%ordinal% offense)
-    &fBan ID: &b#%id%
+    &fBan ID: &b
     
     &fExpires in: &f%time_left%
     

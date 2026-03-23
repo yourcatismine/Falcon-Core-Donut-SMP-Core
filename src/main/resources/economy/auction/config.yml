@@ -1,6 +1,6 @@
 settings:
-  use-vault: true # Set to false to force use of internal economy (or if Vault is missing)
-  item-time: 86400 # how long until the auction item timer runs out/gets returned to the seller!
+  use-vault: true
+  item-time: 86400
 
   max-auction-listed: 25
 

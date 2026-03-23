@@ -1,4 +1,4 @@
-INTERVAL: 60 #Switcher 
+INTERVAL: 60
 
 SCOREBOARD:
   ENABLED: true
@@ -6,7 +6,7 @@ SCOREBOARD:
   SWITCHER: ["&#F97603☠ &fDeaths &#F97603%falconcore_deaths%", "&#FC0000🗡 &fKills &#FC0000%falconcore_kills%"]
   TEAMS: "&#5729DD🪓 &fTeam %team_name%"
   TITLE:
-    - "&d&lᴠᴀʟᴇѕᴍᴘ"
+    - "&d&lꜰᴀʟᴄᴏɴᴄᴏʀᴇ"
   LINES:
     - ""
     - "&c🔥 &c{gamertag} &7(&d{region_ping}ms&7)"
@@ -43,6 +43,5 @@ TAB:
       - ''
       - ''
       footer:
-     # - '&dᴘɪɴɢ: &f{ping} &dᴛᴘѕ: &f{tps} &dᴍѕᴘᴛ: &f{mspt}'
       - ''
       - '&d&nᴏɴʟɪɴᴇ: %online% ︱ ᴘɪɴɢ: {ping} ︱ ᴛᴘѕ: {tps}'

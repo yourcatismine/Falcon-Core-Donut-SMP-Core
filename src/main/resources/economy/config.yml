@@ -1,4 +1,2 @@
-# Economy Configuration
 
-# Toggle to enable FalconCore's custom Vault Economy hook.
 vault-enabled: false

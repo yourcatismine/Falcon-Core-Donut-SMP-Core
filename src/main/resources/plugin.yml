@@ -101,10 +101,6 @@ commands:
     permission: falcon.checkban
     usage: /checkban <player/ID>
 
-  # checkhistory:
-  #   description: Toggle block interaction history logging
-  #   permission: falcon.admin.checkhistory
-  #   usage: /checkhistory
 
   whowashere:
     description: Show who was previously in the current chunk

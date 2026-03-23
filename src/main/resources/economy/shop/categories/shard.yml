@@ -2,7 +2,6 @@ gui-title: "&8ѕʜᴏᴘ - ᴄᴀʀᴅ ѕʜᴏᴘ"
 
 items:
 
-#Keys
   rustic:
     material: TRIPWIRE_HOOK
     name: "&aʀᴜѕᴛɪᴄ ᴋᴇʏ"
@@ -43,7 +42,6 @@ items:
     price: 1500
     currency: SHARDS
 
-  # Spawners
   pig_spawner:
     material: SPAWNER
     spawner: "PIG"

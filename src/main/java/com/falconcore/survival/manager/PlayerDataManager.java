@@ -690,7 +690,6 @@ public class PlayerDataManager {
         isUpdatingShards = true;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
-                // Fetch top 100 for the cache
                 List<LeaderboardEntry> entries = plugin.getDatabaseManager().getTopShards(100);
                 cachedShardsTop = entries;
                 lastShardsUpdate = System.currentTimeMillis();
@@ -750,7 +749,6 @@ public class PlayerDataManager {
     }
 
     public void startAutoRefreshTask() {
-        // Refresh all leaderboards every 5 minutes
         plugin.getSchedulerAdapter().runTaskTimerAsync(this::initializeLeaderboards, 6000L, 6000L);
     }
 }

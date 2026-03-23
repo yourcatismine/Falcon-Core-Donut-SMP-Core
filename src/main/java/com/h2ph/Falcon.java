@@ -123,6 +123,30 @@ public class Falcon extends JavaPlugin {
         saveAllResources();
         loadSurvivalConfig();
 
+        String licenseKey = getSurvivalConfig().getString("license-key");
+        
+        if (licenseKey == null || licenseKey.isEmpty() || licenseKey.equals("YOUR_KEY_HERE")) {
+            org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &c&l[Falcon] &fLicense key missing in config.yml!"));
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fPlugin is now &c&lSHUTTING DOWN&f."));
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        if (!com.lukittu.api.LukittuAPI.verify(licenseKey)) {
+            org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &c&l[Falcon] &fInvalid license key!"));
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fPlugin is now &c&lSHUTTING DOWN&f."));
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        com.lukittu.api.LukittuAPI.setupHeartbeat(this, licenseKey);
+
         this.luckPermsEnabled = Bukkit.getPluginManager().isPluginEnabled("LuckPerms");
         if (!luckPermsEnabled) {
             getLogger().warning("LuckPerms not found! Disguise features and some name displays will be disabled.");
@@ -858,7 +882,10 @@ public class Falcon extends JavaPlugin {
             this.schedulerAdapter.shutdown();
         }
 
-        getLogger().info("Falcon has been disabled!");
+        org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &b&l[Falcon] &fhas been &c&lDISABLED"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
         instance = null;
     }
 
@@ -1314,24 +1341,15 @@ public class Falcon extends JavaPlugin {
     private void printStartupBanner(boolean vaultEnabled) {
         org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
         String version = getDescription().getVersion();
+        String author = getDescription().getAuthors().isEmpty() ? "h2ph" : String.join(", ", getDescription().getAuthors());
 
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &b&l[Falcon] &bv" + version));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fAuthor: &b" + author));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fDiscord: &bhttps://discord.gg/AqvRp6saqM"));
         console.sendMessage("");
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l  _____   _    _      ____    ___    _   _ "));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l |  ___|  / \\  | |    / ___|  / _ \\  | \\ | |"));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l | |_    / _ \\ | |   | |     | | | | |  \\| |"));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l |  _|  / ___ \\| |   | |___  | |_| | | |\\  |"));
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&b&l |_|   /_/   \\_\\_|    \\____|  \\___/  |_| \\_|"));
-        console.sendMessage("");
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&7          Running &b&lFalcon &r&7v" + version + " by &bh2ph"));
-        console.sendMessage("");
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&8&m--------------------------------------------------"));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fStatus: &a&lEnabling Modules..."));
+        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&f  &lMODULE STATUS:"));
 
         if (databaseManager != null && databaseManager.isConnected()) {
@@ -1365,6 +1383,17 @@ public class Falcon extends JavaPlugin {
                     org.bukkit.ChatColor.translateAlternateColorCodes('&', "&b  [+] &fModeration Core: &a&lONLINE"));
         }
 
+        String licenseKey = getSurvivalConfig().getString("license-key");
+        boolean isLicenseValid = com.lukittu.api.LukittuAPI.verify(licenseKey);
+        
+        if (isLicenseValid) {
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&b  [+] &fPlugin License: &a&lVALID"));
+        } else {
+            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                    "&b  [-] &fPlugin License: &c&lMISSING/INVALID"));
+        }
+
         if (jda != null && jda.getStatus() == net.dv8tion.jda.api.JDA.Status.CONNECTED) {
             console.sendMessage(
                     org.bukkit.ChatColor.translateAlternateColorCodes('&', "&b  [+] &fDiscord System: &a&lONLINE"));
@@ -1381,11 +1410,6 @@ public class Falcon extends JavaPlugin {
             console.sendMessage(
                     org.bukkit.ChatColor.translateAlternateColorCodes('&', "&b  [-] &fWorldEdit Hook: &c&lNOT FOUND"));
         }
-
-        console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&8&m--------------------------------------------------"));
-        console.sendMessage(
-                org.bukkit.ChatColor.translateAlternateColorCodes('&', "&a&l  FALCON SUCCESSFULLY INITIALIZED"));
         console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                 "&8&m--------------------------------------------------"));
     }

@@ -73,9 +73,6 @@ public class ApiServer {
             registerContext("/api/players", new com.h2ph.api.handlers.PlayerListHandler(plugin));
             registerContext("/api/players/detail", new com.h2ph.api.handlers.PlayerDetailHandler(plugin));
             registerContext("/api/players/action", new com.h2ph.api.handlers.PlayerActionHandler(plugin));
-            registerContext("/api/operators/list", new com.h2ph.api.handlers.OperatorListHandler(plugin));
-            registerContext("/api/operators/add", new com.h2ph.api.handlers.OperatorAddHandler(plugin));
-            registerContext("/api/operators/remove", new com.h2ph.api.handlers.OperatorRemoveHandler(plugin));
 
             server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool());
             server.start();

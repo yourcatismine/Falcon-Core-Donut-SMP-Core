@@ -189,11 +189,6 @@ public class DatabaseManager {
                     ")";
             s.execute(mutesTable);
 
-            String allowedOpsTable = "CREATE TABLE IF NOT EXISTS allowed_operators (" +
-                    "player_name VARCHAR(16) NOT NULL," +
-                    "PRIMARY KEY (player_name)" +
-                    ")";
-            s.execute(allowedOpsTable);
 
             String auctionPendingTable = "CREATE TABLE IF NOT EXISTS auction_pending_payments (" +
                     "uuid VARCHAR(36) NOT NULL," +
@@ -831,57 +826,6 @@ public class DatabaseManager {
         public String mutedBy;
     }
 
-    public void addAllowedOperator(String playerName) {
-        if (!isConnected())
-            return;
-        String query = "REPLACE INTO allowed_operators (player_name) VALUES (?)";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerName);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
-    public void removeAllowedOperator(String playerName) {
-        if (!isConnected())
-            return;
-        String query = "DELETE FROM allowed_operators WHERE player_name = ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerName);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-        }
-    }
-
-    public boolean isAllowedOperator(String playerName) {
-        if (!isConnected())
-            return false;
-        String query = "SELECT player_name FROM allowed_operators WHERE player_name = ? LIMIT 1";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, playerName);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-        }
-        return false;
-    }
-
-    public java.util.List<String> getAllowedOperators() {
-        java.util.List<String> names = new java.util.ArrayList<>();
-        if (!isConnected())
-            return names;
-        String query = "SELECT player_name FROM allowed_operators";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    names.add(rs.getString("player_name"));
-                }
-            }
-        } catch (SQLException e) {
-        }
-        return names;
-    }
 
     public void addAuctionPendingPayment(UUID uuid, double amount, String buyerName, String itemName) {
         if (!isConnected())

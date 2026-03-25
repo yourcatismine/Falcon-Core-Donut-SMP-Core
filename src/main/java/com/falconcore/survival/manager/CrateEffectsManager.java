@@ -163,7 +163,7 @@ public class CrateEffectsManager {
             double angle = 2 * Math.PI * i / 30;
             double x = r * Math.cos(angle);
             double z = r * Math.sin(angle);
-            center.getWorld().spawnParticle(Particle.WITCH, center.clone().add(x, -0.4, z), 0);
+            center.getWorld().spawnParticle(Particle.ENCHANTED_HIT, center.clone().add(x, -0.4, z), 0);
         }
     }
 
@@ -200,7 +200,7 @@ public class CrateEffectsManager {
 
     private void renderBeacon(Location center) {
         for (double y = 0; y < 4; y += 0.5) {
-            center.getWorld().spawnParticle(Particle.INSTANT_EFFECT, center.clone().add(0, y, 0), 0);
+            center.getWorld().spawnParticle(Particle.END_ROD, center.clone().add(0, y, 0), 0);
             center.getWorld().spawnParticle(Particle.WAX_OFF, center.clone().add(0.2, y, 0.2), 0);
             center.getWorld().spawnParticle(Particle.WAX_OFF, center.clone().add(-0.2, y, -0.2), 0);
             center.getWorld().spawnParticle(Particle.WAX_OFF, center.clone().add(0.2, y, -0.2), 0);
@@ -229,7 +229,7 @@ public class CrateEffectsManager {
             double z = 1.5 * Math.sin(angle);
             double y = Math.sin(time + i) * 0.5 + 0.5;
             center.getWorld().spawnParticle(Particle.DRAGON_BREATH, center.clone().add(x, y, z), 0, 0, 0, 0);
-            center.getWorld().spawnParticle(Particle.WITCH, center.clone().add(x, y, z), 0);
+            center.getWorld().spawnParticle(Particle.ENCHANTED_HIT, center.clone().add(x, y, z), 0);
         }
     }
 

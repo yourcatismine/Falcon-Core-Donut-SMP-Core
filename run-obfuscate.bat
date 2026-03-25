@@ -41,7 +41,7 @@ if %ERRORLEVEL% NEQ 0 (
 echo [OK] Maven build succeeded.
 
 REM --- Check output JAR exists ---
-set "INPUT_JAR=%~dp0target\Falcon-5.0.0.jar"
+set "INPUT_JAR=%~dp0target\Falcon-5.0.1.jar"
 if not exist "%INPUT_JAR%" (
     echo [ERROR] Expected JAR not found: %INPUT_JAR%
     echo         Check that the finalName in pom.xml matches.

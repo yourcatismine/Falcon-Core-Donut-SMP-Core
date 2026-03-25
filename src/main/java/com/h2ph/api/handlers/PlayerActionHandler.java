@@ -57,10 +57,8 @@ public class PlayerActionHandler implements HttpHandler {
                 uuid = UUID.fromString(uuidStr);
                 op = plugin.getServer().getOfflinePlayer(uuid);
             } catch (IllegalArgumentException e) {
-                if (!"register".equalsIgnoreCase(action)) {
-                    sendResponse(t, 400, "{\"error\": \"Invalid UUID format\"}");
-                    return;
-                }
+                sendResponse(t, 400, "{\"error\": \"Invalid UUID format\"}");
+                return;
             }
         }
         String playerName = (op != null && op.getName() != null) ? op.getName() : uuidStr;
@@ -138,30 +136,6 @@ public class PlayerActionHandler implements HttpHandler {
                 }
                 break;
 
-            case "register":
-                OfflinePlayer target = op;
-
-                if (target == null && nameParam != null) {
-                    target = Bukkit.getOfflinePlayer(nameParam);
-                }
-
-                if (target != null) {
-                    final OfflinePlayer finalTarget = target;
-                    plugin.getSchedulerAdapter().runTask(() -> finalTarget.setWhitelisted(true));
-
-                    PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
-                    if (pd.getName() == null && target.getName() != null) {
-                        pd.setName(target.getName());
-                    }
-                    plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
-
-                    success = true;
-                    message = "Resident " + (target.getName() != null ? target.getName() : target.getUniqueId())
-                            + " registered successfully.";
-                } else {
-                    message = "Could not resolve player to register.";
-                }
-                break;
 
             default:
                 message = "Unknown action: " + action;

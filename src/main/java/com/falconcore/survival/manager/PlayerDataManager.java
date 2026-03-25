@@ -30,7 +30,11 @@ public class PlayerDataManager {
         this.dataFolderCrates = new File(plugin.getDataFolder(), "crates/data");
 
         if (!dataFolderCrates.exists()) {
-            dataFolderCrates.mkdirs();
+            if (dataFolderCrates.mkdirs()) {
+                plugin.getLogger().info("Created crates data directory: " + dataFolderCrates.getPath());
+            } else {
+                plugin.getLogger().severe("FAILED to create crates data directory: " + dataFolderCrates.getPath() + ". Crates data saving WILL FAIL.");
+            }
         }
     }
 
@@ -350,6 +354,10 @@ public class PlayerDataManager {
             ignoredUuids.add(ignoredUuid.toString());
         }
         cratesConfig.set("ignored_players", ignoredUuids);
+
+        if (!dataFolderCrates.exists()) {
+            dataFolderCrates.mkdirs();
+        }
 
         try {
             cratesConfig.save(cratesFile);

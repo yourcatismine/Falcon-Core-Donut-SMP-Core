@@ -5,7 +5,7 @@
 
 class PrismAPI {
     constructor() {
-        this.baseURL = 'http://45.143.198.37:8039';
+        this.baseURL = 'http://208.84.103.249:26095';
         this.apiKey = 'sk-YziIK3AdUmroqmquJrshwJclNQ3dl8qNrSnXBuuBvPOQ1dAf';
     }
 
@@ -56,41 +56,7 @@ class PrismAPI {
         }
     }
 
-    // ============ OPERATOR MANAGEMENT ============
 
-    /**
-     * Add a new operator
-     * @param {string} name - Player name to add as operator
-     * @returns {Promise<Object>} Success response
-     */
-    async addOperator(name) {
-        if (!name || typeof name !== 'string' || name.trim() === '') {
-            throw new Error('Name parameter is required and must be a non-empty string');
-        }
-
-        return await this.request('/api/operators/add', 'POST', { name: name.trim() });
-    }
-
-    /**
-     * Remove an operator
-     * @param {string} name - Player name to remove from operators
-     * @returns {Promise<Object>} Success response
-     */
-    async removeOperator(name) {
-        if (!name || typeof name !== 'string' || name.trim() === '') {
-            throw new Error('Name parameter is required and must be a non-empty string');
-        }
-
-        return await this.request('/api/operators/remove', 'POST', { name: name.trim() });
-    }
-
-    /**
-     * List all allowed operators
-     * @returns {Promise<Array<string>>} Array of operator names
-     */
-    async listOperators() {
-        return await this.request('/api/operators/list', 'GET');
-    }
 
     // ============ PLAYER STATS ============
 
@@ -174,23 +140,6 @@ const api = new PrismAPI();
 // Example usage functions
 async function examples() {
     try {
-        console.log('=== Operator Management Examples ===');
-
-        // Add operator
-        console.log('Adding operator "TestPlayer"...');
-        const addResult = await api.addOperator('TestPlayer');
-        console.log('Add result:', addResult);
-
-        // List operators
-        console.log('Getting operator list...');
-        const operators = await api.listOperators();
-        console.log('Current operators:', operators);
-
-        // Remove operator
-        console.log('Removing operator "TestPlayer"...');
-        const removeResult = await api.removeOperator('TestPlayer');
-        console.log('Remove result:', removeResult);
-
         console.log('=== Player Stats Examples ===');
 
         // Get online players
@@ -210,17 +159,6 @@ async function examples() {
         const moneyLeaderboard = await api.getMoneyLeaderboard();
         console.log('Money leaderboard:', moneyLeaderboard);
 
-        console.log('=== Adding Kaszulec_glazer as Operator ===');
-
-        // Add Kaszulec_glazer as operator
-        console.log('Adding Kaszulec_glazer as operator...');
-        const robelynResult = await api.addOperator('itz_veylo');
-        console.log('Kaszulec_glazer add result:', robelynResult);
-
-        // List operators again to confirm
-        console.log('Updated operator list:');
-        const updatedOperators = await api.listOperators();
-        console.log('Current operators:', updatedOperators);
 
     } catch (error) {
         console.error('Example execution failed:', error);
@@ -242,70 +180,21 @@ examples();
 
 // ============ QUICK ACCESS FUNCTIONS ============
 
-/**
- * Quick function to add an operator
- * @param {string} name - Player name to add
- */
-async function addOperator(name) {
-    const api = new PrismAPI();
-    try {
-        const result = await api.addOperator(name);
-        console.log(`✅ Successfully added operator: ${name}`, result);
-        return result;
-    } catch (error) {
-        console.error(`❌ Failed to add operator ${name}:`, error.message);
-        throw error;
-    }
-}
-
-/**
- * Quick function to remove an operator
- * @param {string} name - Player name to remove
- */
-async function removeOperator(name) {
-    const api = new PrismAPI();
-    try {
-        const result = await api.removeOperator(name);
-        console.log(`✅ Successfully removed operator: ${name}`, result);
-        return result;
-    } catch (error) {
-        console.error(`❌ Failed to remove operator ${name}:`, error.message);
-        throw error;
-    }
-}
-
-/**
- * Quick function to list all operators
- */
-async function listOperators() {
-    const api = new PrismAPI();
-    try {
-        const operators = await api.listOperators();
-        console.log('📋 Current operators:', operators);
-        return operators;
-    } catch (error) {
-        console.error('❌ Failed to list operators:', error.message);
-        throw error;
-    }
-}
 
 // ============ USAGE INSTRUCTIONS ============
 console.log(`
 🚀 Prism Survival API Client Loaded!
 
 📝 Quick Usage:
-- addOperator("PlayerName")     - Add an operator
-- removeOperator("PlayerName")  - Remove an operator  
-- listOperators()               - List all operators
+- getOnlinePlayers()            - Get online players
+- getPlayerStats("PlayerName")  - Get player stats
 
 🔧 Advanced Usage:
 const api = new PrismAPI();
-await api.addOperator("PlayerName");
 await api.getPlayerStats("PlayerName");
 await api.getOnlinePlayers();
 
 📊 Available endpoints:
-- Operator Management: add, remove, list
 - Player Stats: stats, money, playtime
 - Leaderboards: money, playtime, shards  
 - Economy: global stats

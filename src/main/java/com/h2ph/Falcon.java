@@ -669,7 +669,6 @@ public class Falcon extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InvSeeListener(this), this);
 
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.OperatorListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CommandLogListener(this), this);
 
         new com.h2ph.economy.EconomyMonitor(this);
@@ -763,7 +762,7 @@ public class Falcon extends JavaPlugin {
     
         AtomicInteger idx = new AtomicInteger(0);
         long ticks = Math.max(1L, intervalSec) * 20L;
-        discordStatusTask = getSchedulerAdapter().runTaskTimer(() -> {
+        discordStatusTask = getSchedulerAdapter().runTaskTimerAsync(() -> {
             try {
                 String template = msgs.get(idx.getAndUpdate(i -> (i + 1) % msgs.size()));
                 String status = replaceDiscordPlaceholders(template);

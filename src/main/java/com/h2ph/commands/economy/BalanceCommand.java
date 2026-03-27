@@ -122,13 +122,13 @@ public class BalanceCommand implements CommandExecutor, TabCompleter {
 
     private String formatNumber(double number) {
         if (number >= 1_000_000_000_000.0) {
-            return formatWithSuffix(number, 1_000_000_000_000.0, "t");
+            return formatWithSuffix(number, 1_000_000_000_000.0, "T");
         } else if (number >= 1_000_000_000.0) {
-            return formatWithSuffix(number, 1_000_000_000.0, "b");
+            return formatWithSuffix(number, 1_000_000_000.0, "B");
         } else if (number >= 1_000_000.0) {
-            return formatWithSuffix(number, 1_000_000.0, "m");
+            return formatWithSuffix(number, 1_000_000.0, "M");
         } else if (number >= 1_000.0) {
-            return formatWithSuffix(number, 1_000.0, "k");
+            return formatWithSuffix(number, 1_000.0, "K");
         } else {
             return DF.format(Math.floor(number * 10) / 10.0);
         }

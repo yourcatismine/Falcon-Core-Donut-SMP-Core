@@ -354,10 +354,12 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
             return handlePvPSafe(player, args);
         } else if (sub.equals("warps")) {
             return handleWarps(player, args);
+        } else if (sub.equals("shards")) {
+            return handleShardsAdmin(player, args);
         }
 
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, void, setafk, respawngear, limiter, crystal, anchor, pvpsafe, or warps.");
+                "§cUnknown subcommand. Use auction, order, rtpqueue, void, setafk, respawngear, limiter, crystal, anchor, pvpsafe, warps, or shards.");
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
         return true;
     }
@@ -415,12 +417,149 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
     }
 
+    private boolean handleShardsAdmin(Player player, String[] args) {
+        if (!player.hasPermission("falcon.shards")) {
+            player.sendMessage("§cYou do not have permission to use this command.");
+            return true;
+        }
+
+        if (args.length < 4) {
+            player.sendMessage(ChatColor.RED + "Usage: /falcon shards <give|set|remove> <player> <amount>");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+        String targetName = args[2];
+        String amountStr = args[3];
+        int amount;
+
+        try {
+            amount = parseShardsAmount(amountStr);
+        } catch (NumberFormatException e) {
+            player.sendMessage(ChatColor.RED + "Invalid amount! Use numbers or suffixes (k, m, b, t). Example: 10k, 100m, 1t");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        if (!action.equals("give") && !action.equals("set") && !action.equals("remove")) {
+            player.sendMessage(ChatColor.RED + "Invalid action! Use: give, set, or remove");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return true;
+        }
+
+        plugin.getSchedulerAdapter().runTaskAsync(() -> {
+            try {
+                OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+                plugin.getSchedulerAdapter().runTask(() -> {
+                    if (!target.hasPlayedBefore() && !target.isOnline()) {
+                        player.sendMessage(ChatColor.RED + "That user does not exist.");
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                        return;
+                    }
+                    processShardsAdmin(player, target, action, amount);
+                });
+            } catch (Exception e) {
+                plugin.getSchedulerAdapter().runTask(() -> {
+                    player.sendMessage(ChatColor.RED + "An error occurred while looking up that player.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                });
+            }
+        });
+        return true;
+    }
+
+    private void processShardsAdmin(Player sender, OfflinePlayer target, String action, int amount) {
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(target.getUniqueId());
+        boolean wasLoaded = data != null;
+        if (data == null) {
+            data = plugin.getPlayerDataManager().loadPlayer(target.getUniqueId());
+        }
+
+        if (data == null) {
+            sender.sendMessage(ChatColor.RED + "Could not load data for " + target.getName());
+            return;
+        }
+
+        double currentShards = data.getShards();
+        double newShards = currentShards;
+
+        switch (action) {
+            case "give":
+                newShards = currentShards + amount;
+                data.setShards(newShards, "Admin Adjustment");
+                sender.sendMessage(ChatColor.GREEN + "Gave " + ChatColor.GOLD + amount +
+                        ChatColor.GREEN + " shards to " + ChatColor.YELLOW + (target.getName() != null ? target.getName() : target.getUniqueId()) +
+                        ChatColor.GREEN + ". New balance: " + ChatColor.GOLD + (int) newShards);
+                break;
+
+            case "set":
+                newShards = amount;
+                data.setShards(newShards, "Admin Adjustment");
+                sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + (target.getName() != null ? target.getName() : target.getUniqueId()) +
+                        ChatColor.GREEN + "'s shards to " + ChatColor.GOLD + amount);
+                break;
+
+            case "remove":
+                newShards = Math.max(0, currentShards - amount);
+                data.setShards(newShards, "Admin Adjustment");
+                int actualRemoved = (int) (currentShards - newShards);
+                sender.sendMessage(ChatColor.GREEN + "Removed " + ChatColor.GOLD + actualRemoved +
+                        ChatColor.GREEN + " shards from " + ChatColor.YELLOW + (target.getName() != null ? target.getName() : target.getUniqueId()) +
+                        ChatColor.GREEN + ". New balance: " + ChatColor.GOLD + (int) newShards);
+                break;
+        }
+
+        plugin.getPlayerDataManager().savePlayerAsync(target.getUniqueId());
+        if (!wasLoaded && !target.isOnline()) {
+            plugin.getPlayerDataManager().unload(target.getUniqueId());
+        }
+        sender.playSound(sender.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+
+        if (target.isOnline()) {
+            Player onlinePlayer = target.getPlayer();
+            if (onlinePlayer != null) {
+                onlinePlayer.sendMessage(ChatColor.GRAY + "Your shard balance has been updated to " +
+                        ChatColor.DARK_PURPLE + (int) newShards + " shards");
+            }
+        }
+    }
+
+    private int parseShardsAmount(String input) throws NumberFormatException {
+        input = input.toLowerCase().trim();
+        if (input.isEmpty()) throw new NumberFormatException("Empty amount");
+
+        char lastChar = input.charAt(input.length() - 1);
+        int multiplier = 1;
+        String numberPart = input;
+
+        if (Character.isLetter(lastChar)) {
+            numberPart = input.substring(0, input.length() - 1);
+            switch (lastChar) {
+                case 'k': multiplier = 1_000; break;
+                case 'm': multiplier = 1_000_000; break;
+                case 'b': multiplier = 1_000_000_000; break;
+                case 't':
+                    double base = Double.parseDouble(numberPart);
+                    long res = (long) (base * 1_000_000_000_000L);
+                    return res > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) res;
+                default: throw new NumberFormatException("Invalid suffix: " + lastChar);
+            }
+        }
+
+        double base = Double.parseDouble(numberPart);
+        long result = (long) (base * multiplier);
+        if (result > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        if (result < 0) return 0;
+        return (int) result;
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
                     .asList("auction", "order", "rtpqueue", "void", "setafk", "respawngear", "limiter",
-                            "crystal", "anchor", "pvpsafe", "warps")
+                            "crystal", "anchor", "pvpsafe", "warps", "shards")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -464,6 +603,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return Arrays.asList("set", "delete", "list").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            } else if (args[0].equalsIgnoreCase("shards")) {
+                return Arrays.asList("give", "set", "remove").stream()
+                        .filter(s -> s.startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
             }
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("rtpqueue")) {
@@ -486,7 +629,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                 return plugin.getWarpManager().listWarps().stream()
                         .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
-            } else if (args[0].equalsIgnoreCase("setafk")) {
+            } else if (args[0].equalsIgnoreCase("shards")) {
+                return plugin.getPlayerNameCache().getCompletions(args[2]);
+            }
+ else if (args[0].equalsIgnoreCase("setafk")) {
                 if (args.length == 3) {
                     if (args[1].equalsIgnoreCase("delete") || args[1].equalsIgnoreCase("remove")) {
                         List<String> completions = new ArrayList<>();
@@ -500,6 +646,13 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                                 .collect(Collectors.toList());
                     }
                 }
+            }
+        } else if (args.length == 4) {
+            if (args[0].equalsIgnoreCase("shards")) {
+                List<String> amounts = Arrays.asList("10", "50", "100", "500", "1000", "1k", "10k", "100k", "1m");
+                return amounts.stream()
+                        .filter(amount -> amount.startsWith(args[3].toLowerCase()))
+                        .collect(Collectors.toList());
             }
         }
         return Collections.emptyList();

@@ -46,7 +46,8 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "Usage: /pay <player> <amount>");
+            //sender.sendMessage(ChatColor.RED + "Usage: /pay <player> <amount>");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
             return true;
         }
 
@@ -57,12 +58,14 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         try {
             amount = parseAmount(amountStr);
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid amount format. Examples: 100, 1k, 1m");
+           // sender.sendMessage(ChatColor.RED + "Invalid amount format. Examples: 100, 1k, 1m");
+           player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
             return true;
         }
 
         if (amount <= 0 || !Double.isFinite(amount)) {
-            sender.sendMessage(ChatColor.RED + "Amount must be a positive number.");
+            //sender.sendMessage(ChatColor.RED + "Amount must be a positive number.");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
             return true;
         }
 
@@ -168,7 +171,7 @@ public class PayCommand implements CommandExecutor, TabCompleter {
             }
 
             String targetMsg = ChatColor.translateAlternateColorCodes('&',
-                    "&d" + sender.getName() + "&7 has paid you&a $" + moneyFormatted);
+                    "&d" + sender.getName() + "&7 paid you&a $" + moneyFormatted);
             targetOnline.sendMessage(targetMsg);
             targetOnline.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(targetMsg));
 
@@ -212,13 +215,13 @@ public class PayCommand implements CommandExecutor, TabCompleter {
 
     private String formatNumber(double number) {
         if (number >= 1_000_000_000_000.0) {
-            return formatWithSuffix(number, 1_000_000_000_000.0, "t");
+            return formatWithSuffix(number, 1_000_000_000_000.0, "T");
         } else if (number >= 1_000_000_000.0) {
-            return formatWithSuffix(number, 1_000_000_000.0, "b");
+            return formatWithSuffix(number, 1_000_000_000.0, "B");
         } else if (number >= 1_000_000.0) {
-            return formatWithSuffix(number, 1_000_000.0, "m");
+            return formatWithSuffix(number, 1_000_000.0, "M");
         } else if (number >= 1_000.0) {
-            return formatWithSuffix(number, 1_000.0, "k");
+            return formatWithSuffix(number, 1_000.0, "K");
         } else {
             return DF.format(Math.floor(number * 10) / 10.0);
         }
@@ -239,9 +242,9 @@ public class PayCommand implements CommandExecutor, TabCompleter {
         } else if (args.length == 2) {
             List<String> suggestions = new ArrayList<>();
             suggestions.add("100");
-            suggestions.add("1k");
-            suggestions.add("10k");
-            suggestions.add("1m");
+            suggestions.add("1K");
+            suggestions.add("10K");
+            suggestions.add("1M");
             return suggestions;
         }
         return Collections.emptyList();

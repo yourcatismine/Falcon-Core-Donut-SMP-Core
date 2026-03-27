@@ -1135,6 +1135,144 @@ public class DatabaseManager {
         return entries;
     }
 
+    public List<PlayerDataManager.LeaderboardEntry> getTopKills(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
+        String query = "SELECT ps.uuid, ps.kills, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.kills > 0 ORDER BY ps.kills DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("cached_name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("kills")));
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return entries;
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopDeaths(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
+        String query = "SELECT ps.uuid, ps.deaths, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.deaths > 0 ORDER BY ps.deaths DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("cached_name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("deaths")));
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return entries;
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopPlaytime(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
+        String query = "SELECT ps.uuid, ps.playtime, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.playtime > 0 ORDER BY ps.playtime DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("cached_name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("playtime")));
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return entries;
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopSell(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
+        String query = "SELECT ps.uuid, ps.sell_made, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.sell_made > 0 ORDER BY ps.sell_made DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("cached_name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("sell_made")));
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return entries;
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopBlocksBroken(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
+        String query = "SELECT ps.uuid, ps.break_blocks, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.break_blocks > 0 ORDER BY ps.break_blocks DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("cached_name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("break_blocks")));
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return entries;
+    }
+
+    public List<PlayerDataManager.LeaderboardEntry> getTopBlocksPlaced(int limit) {
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        if (!isConnected())
+            return entries;
+        String query = "SELECT ps.uuid, ps.placed_blocks, pn.cached_name as cached_name " +
+            "FROM player_stats ps " +
+            "LEFT JOIN player_names pn ON ps.uuid = pn.uuid " +
+            "WHERE ps.placed_blocks > 0 ORDER BY ps.placed_blocks DESC LIMIT ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new PlayerDataManager.LeaderboardEntry(
+                            rs.getString("cached_name"),
+                            UUID.fromString(rs.getString("uuid")),
+                            rs.getDouble("placed_blocks")));
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return entries;
+    }
+
     public void updateOfflineBalance(UUID uuid, double balance, boolean isShards) {
         if (!isConnected())
             return;

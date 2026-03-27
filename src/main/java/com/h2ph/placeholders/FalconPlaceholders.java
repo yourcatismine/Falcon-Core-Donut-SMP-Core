@@ -122,9 +122,10 @@ public class FalconPlaceholders extends PlaceholderExpansion {
             return "0";
         }
     
-        if (params.toLowerCase().startsWith("balance_number_")) {
+        if (params.toLowerCase().startsWith("balance_number_") || params.toLowerCase().startsWith("gettopmoney_")) {
             try {
-                int position = Integer.parseInt(params.substring(15));
+                String val = params.toLowerCase().startsWith("balance_number_") ? params.substring(15) : params.substring(12);
+                int position = Integer.parseInt(val);
                 return getLeaderboardPlayer("balance", position);
             } catch (NumberFormatException e) {
                 return "None";

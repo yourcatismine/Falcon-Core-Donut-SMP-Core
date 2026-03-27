@@ -476,8 +476,19 @@ public class PlayerDataManager {
             return;
         }
 
+        // OPTIMIZATION: If using FalconEconomy, use direct DB query
+        if (eco.getName().equalsIgnoreCase("FalconEconomy")) {
+            cachedMoneyTop = plugin.getDatabaseManager().getTopMoney(1000);
+            lastMoneyUpdate = System.currentTimeMillis();
+            return;
+        }
+
         List<LeaderboardEntry> entries = new ArrayList<>();
-        for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
+        // Fallback for other economy plugins (still limit it to some reasonable number if possible)
+        // Note: getOfflinePlayers() is still slow, but we only do it if not using FalconEconomy
+        org.bukkit.OfflinePlayer[] offlinePlayers = plugin.getServer().getOfflinePlayers();
+        int count = 0;
+        for (org.bukkit.OfflinePlayer p : offlinePlayers) {
             if (p.getName() == null)
                 continue;
             try {
@@ -489,6 +500,8 @@ public class PlayerDataManager {
                 }
             } catch (Exception ignored) {
             }
+            // If it's too much, maybe stop? But Vault doesn't provide a way to get top.
+            // Let's at least process it.
         }
 
         entries.sort((a, b) -> Double.compare(b.value, a.value));
@@ -508,6 +521,7 @@ public class PlayerDataManager {
             if (!isUpdatingMoney) {
                 triggerVaultUpdateAsync();
             }
+            // Return empty only if we have NO data AND NO update is running yet
             return new ArrayList<>();
         }
 
@@ -515,6 +529,7 @@ public class PlayerDataManager {
             triggerVaultUpdateAsync();
         }
 
+        // Return whatever we have (old cache is better than nothing)
         return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
     }
 
@@ -588,23 +603,11 @@ public class PlayerDataManager {
     }
 
     private void triggerKillsUpdateAsync() {
+        if (isUpdatingKills) return;
         isUpdatingKills = true;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
-                List<LeaderboardEntry> entries = new ArrayList<>();
-                for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                    if (p.getName() == null)
-                        continue;
-                    try {
-                        int kills = p.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
-                        if (kills > 0) {
-                            entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) kills));
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-                entries.sort((a, b) -> Double.compare(b.value, a.value));
-                cachedKillsTop = entries;
+                cachedKillsTop = plugin.getDatabaseManager().getTopKills(100);
                 lastKillsUpdate = System.currentTimeMillis();
             } finally {
                 isUpdatingKills = false;
@@ -613,23 +616,11 @@ public class PlayerDataManager {
     }
 
     private void triggerDeathsUpdateAsync() {
+        if (isUpdatingDeaths) return;
         isUpdatingDeaths = true;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
-                List<LeaderboardEntry> entries = new ArrayList<>();
-                for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                    if (p.getName() == null)
-                        continue;
-                    try {
-                        int deaths = p.getStatistic(org.bukkit.Statistic.DEATHS);
-                        if (deaths > 0) {
-                            entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) deaths));
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-                entries.sort((a, b) -> Double.compare(b.value, a.value));
-                cachedDeathsTop = entries;
+                cachedDeathsTop = plugin.getDatabaseManager().getTopDeaths(100);
                 lastDeathsUpdate = System.currentTimeMillis();
             } finally {
                 isUpdatingDeaths = false;
@@ -638,24 +629,11 @@ public class PlayerDataManager {
     }
 
     private void triggerPlaytimeUpdateAsync() {
+        if (isUpdatingPlaytime) return;
         isUpdatingPlaytime = true;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
-                List<LeaderboardEntry> entries = new ArrayList<>();
-                for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                    if (p.getName() == null)
-                        continue;
-                    try {
-                        int ticks = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
-                        if (ticks > 0) {
-                            long seconds = ticks / 20L;
-                            entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), (double) seconds));
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-                entries.sort((a, b) -> Double.compare(b.value, a.value));
-                cachedPlaytimeTop = entries;
+                cachedPlaytimeTop = plugin.getDatabaseManager().getTopPlaytime(100);
                 lastPlaytimeUpdate = System.currentTimeMillis();
             } finally {
                 isUpdatingPlaytime = false;
@@ -664,29 +642,11 @@ public class PlayerDataManager {
     }
 
     private void triggerSellUpdateAsync() {
+        if (isUpdatingSell) return;
         isUpdatingSell = true;
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             try {
-                List<LeaderboardEntry> entries = new ArrayList<>();
-                if (plugin.getFalconSell() != null && plugin.getFalconSell().getPlayerDataManager() != null) {
-                    for (org.bukkit.OfflinePlayer p : plugin.getServer().getOfflinePlayers()) {
-                        if (p.getName() == null)
-                            continue;
-                        try {
-                            com.falconcore.survival.sell.data.PlayerData sellPd = plugin.getFalconSell()
-                                    .getPlayerDataManager().getPlayerData(p.getUniqueId());
-                            if (sellPd != null) {
-                                double sellMade = sellPd.getSellMade();
-                                if (sellMade > 0) {
-                                    entries.add(new LeaderboardEntry(p.getName(), p.getUniqueId(), sellMade));
-                                }
-                            }
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
-                entries.sort((a, b) -> Double.compare(b.value, a.value));
-                cachedSellTop = entries;
+                cachedSellTop = plugin.getDatabaseManager().getTopSell(100);
                 lastSellUpdate = System.currentTimeMillis();
             } finally {
                 isUpdatingSell = false;

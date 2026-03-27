@@ -27,6 +27,10 @@ public class GUIHandler {
     public static final int ITEMS_PER_PAGE = 45;
 
     public static void openMainGUI(Player player, int page, AuctionController controller, int perPage) {
+        openMainGUI(player, page, controller, perPage, 0);
+    }
+
+    public static void openMainGUI(Player player, int page, AuctionController controller, int perPage, int flow) {
         String searchFilter;
         FileConfiguration cfg = controller.getConfig();
         String string = searchFilter = player.hasMetadata("ah-filter")

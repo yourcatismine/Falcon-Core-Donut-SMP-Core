@@ -123,29 +123,9 @@ public class Falcon extends JavaPlugin {
         saveAllResources();
         loadSurvivalConfig();
 
-        String licenseKey = getSurvivalConfig().getString("license-key");
-        
-        if (licenseKey == null || licenseKey.isEmpty() || licenseKey.equals("YOUR_KEY_HERE")) {
-            org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &c&l[Falcon] &fLicense key missing in config.yml!"));
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fPlugin is now &c&lSHUTTING DOWN&f."));
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
-            getServer().getPluginManager().disablePlugin(this);
+        if (!com.h2ph.utils.internal.LicenseVerification.verify(this)) {
             return;
         }
-
-        if (!com.lukittu.api.LukittuAPI.verify(licenseKey)) {
-            org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &c&l[Falcon] &fInvalid license key!"));
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', " &fPlugin is now &c&lSHUTTING DOWN&f."));
-            console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', "&8&m--------------------------------------------------"));
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-
-        com.lukittu.api.LukittuAPI.setupHeartbeat(this, licenseKey);
 
         this.luckPermsEnabled = Bukkit.getPluginManager().isPluginEnabled("LuckPerms");
         if (!luckPermsEnabled) {
@@ -1058,7 +1038,6 @@ public class Falcon extends JavaPlugin {
     }
 
     private void saveAllResources() {
-
         saveResourceSafely("economy/shop/config.yml");
         saveResourceSafely("economy/spawner/config.yml");
         saveResourceSafely("economy/shop/categories/end.yml");
@@ -1066,15 +1045,21 @@ public class Falcon extends JavaPlugin {
         saveResourceSafely("economy/shop/categories/gear.yml");
         saveResourceSafely("economy/shop/categories/nether.yml");
         saveResourceSafely("economy/shop/categories/redstone.yml");
-        saveResourceSafely("economy/shop/categories/redstone.yml");
         saveResourceSafely("economy/shop/categories/shard.yml");
         saveResourceSafely("survival/AFK/config.yml");
         saveResourceSafely("survival/death/config.yml");
         saveResourceSafely("survival/death/messages.yml");
+        saveResourceSafely("survival/api/config.yml");
         saveResourceSafely("economy/config.yml");
         saveResourceSafely("rtp/config.yml");
+        saveResourceSafely("rtp/asia/config.yml");
         saveResourceSafely("crates/keys/config.yml");
         saveResourceSafely("scoreboard/config.yml");
+
+        java.io.File queueFolder = new java.io.File(getDataFolder(), "rtp/queue");
+        if (!queueFolder.exists()) {
+            queueFolder.mkdirs();
+        }
     }
 
     private void startTeamChatTask() {

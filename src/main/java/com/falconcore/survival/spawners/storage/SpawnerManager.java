@@ -56,7 +56,12 @@ public class SpawnerManager {
         scheduler.runRepeatingAsync(() -> saveSpawners(false), autoSave, autoSave);
     }
 
+    private boolean isEnabled() {
+        return plugin.getSpawnerConfig().getBoolean("settings.enable", true);
+    }
+
     public void loadSpawners() {
+        if (!isEnabled()) return;
         try {
             Map<Location, SpawnerData> dbSpawners = plugin.getDatabaseManager().loadAllSpawnersSync();
             if (dbSpawners != null) spawners.putAll(dbSpawners);

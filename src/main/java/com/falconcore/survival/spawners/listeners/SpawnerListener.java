@@ -50,8 +50,13 @@ public class SpawnerListener implements Listener {
         this.plugin = plugin;
     }
 
+    private boolean isEnabled() {
+        return plugin.getSpawnerConfig().getBoolean("settings.enable", true);
+    }
+
     @EventHandler
-     public void onInventoryOpen(InventoryOpenEvent event) {
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        if (!isEnabled()) return;
         if (event.getInventory().getHolder() instanceof SpawnerGUIHolder) {
             SpawnerGUIHolder holder = (SpawnerGUIHolder) event.getInventory().getHolder();
             SpawnerData data = holder.getData();
@@ -64,6 +69,7 @@ public class SpawnerListener implements Listener {
     
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
+        if (!isEnabled()) return;
         if (event.getInventory().getHolder() instanceof SpawnerGUIHolder) {
             SpawnerGUIHolder holder = (SpawnerGUIHolder) event.getInventory().getHolder();
             SpawnerData data = holder.getData();
@@ -76,6 +82,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onSpawnerPlace(BlockPlaceEvent event) {
+        if (!isEnabled()) return;
         if (event.isCancelled()) return;
         ItemStack item = event.getItemInHand();
         if (item.getType() != Material.SPAWNER) return;
@@ -104,6 +111,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onSpawnerBreak(BlockBreakEvent event) {
+        if (!isEnabled()) return;
         if (event.isCancelled()) return;
         Block block = event.getBlock();
         if (block.getType() != Material.SPAWNER) return;
@@ -178,8 +186,10 @@ public class SpawnerListener implements Listener {
         }
     }
 
-@EventHandler
+    @EventHandler
     public void onSpawnerInteract(PlayerInteractEvent event) {
+        if (!isEnabled()) return;
+
         if (event.getHand() == org.bukkit.inventory.EquipmentSlot.OFF_HAND) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         Block block = event.getClickedBlock();
@@ -269,6 +279,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
+        if (!isEnabled()) return;
         if (event.getInventory().getHolder() instanceof SpawnerGUIHolder) {
             event.setCancelled(true);
             if (event.getClickedInventory() != event.getView().getTopInventory()) return;
@@ -521,6 +532,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onSpawnerSpawn(SpawnerSpawnEvent event) {
+        if (!isEnabled()) return;
         if (event.getSpawner() != null && plugin.getSpawnerManager().getSpawner(event.getSpawner().getLocation()) != null) {
             event.setCancelled(true);
         }

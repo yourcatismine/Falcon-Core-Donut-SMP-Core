@@ -26,6 +26,11 @@ public class SpawnerCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!plugin.getSpawnerConfig().getBoolean("settings.enable", true)) {
+            sender.sendMessage(com.falconcore.survival.tools.Utils.formatColors("&cThe spawner system is currently disabled."));
+            return true;
+        }
+
         if (!sender.hasPermission("falcon.spawners")) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;

@@ -1,5 +1,5 @@
 name: Falcon
-version: "5.0.1"
+version: "5.2"
 main: com.h2ph.Falcon
 api-version: "1.21"
 author: h2ph

@@ -605,7 +605,6 @@ public class Falcon extends JavaPlugin {
 
         startTeamChatTask();
 
-        getCommand("falconreload").setExecutor(new com.h2ph.commands.admin.ReloadCommand(this));
 
         this.voidManager = new com.falconcore.survival.manager.VoidManager(this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.VoidProtectionListener(this), this);

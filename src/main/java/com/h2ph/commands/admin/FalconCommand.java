@@ -48,6 +48,10 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
         String sub = args[0].toLowerCase();
 
+        if (sub.equals("reload")) {
+            return handleReload(sender);
+        }
+
         if (!(sender instanceof Player)) {
             sender.sendMessage("This command is only for players.");
             return true;
@@ -359,8 +363,140 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
         }
 
         player.sendMessage(
-                "§cUnknown subcommand. Use auction, order, rtpqueue, void, setafk, respawngear, limiter, crystal, anchor, pvpsafe, warps, or shards.");
+                "§cUnknown subcommand. Use reload, auction, order, rtpqueue, void, setafk, respawngear, limiter, crystal, anchor, pvpsafe, warps, or shards.");
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+        return true;
+    }
+
+    private String toSmallCaps(String input) {
+        String normal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘꞯʀꜱᴛᴜᴠᴡxʏᴢᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘꞯʀꜱᴛᴜᴠᴡxʏᴢ";
+        StringBuilder builder = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            int index = normal.indexOf(c);
+            builder.append(index != -1 ? small.charAt(index) : c);
+        }
+        return builder.toString();
+    }
+
+    private boolean handleReload(CommandSender sender) {
+        if (!sender.hasPermission("falcon.reload")) {
+            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("no permission"));
+            return true;
+        }
+
+        long start = System.currentTimeMillis();
+
+        try {
+            plugin.loadSurvivalConfig();
+
+            plugin.loadChatFilterConfig();
+            if (plugin.getChatFilter() != null) {
+                plugin.getChatFilter().loadConfigAndPatterns();
+            }
+
+            if (plugin.getCommandHideListener() != null) {
+                plugin.getCommandHideListener().reload();
+            }
+
+            plugin.loadUpdateFromConfig();
+
+            plugin.loadRTPConfig();
+            plugin.loadGlobalRTPConfig();
+
+            if (plugin.getOffendPlugin() != null) {
+                plugin.getOffendPlugin().loadOffendConfig();
+            }
+
+            if (plugin.getAfkManager() != null) {
+                plugin.getAfkManager().loadConfig();
+                plugin.getAfkManager().loadRegions();
+            }
+
+            if (plugin.getShardsManager() != null) {
+                plugin.getShardsManager().reloadConfig();
+            }
+
+            if (plugin.getShopCommand() != null) {
+                plugin.getShopCommand().reload();
+            }
+
+            if (plugin.getRulesCommand() != null) {
+                plugin.getRulesCommand().loadConfig();
+            }
+
+            plugin.loadAdvisorFromConfig();
+
+            if (plugin.getSpawnManager() != null) {
+                plugin.getSpawnManager().reloadConfig();
+            }
+
+            if (plugin.getKeyAllManager() != null) {
+                plugin.getKeyAllManager().loadConfig();
+            }
+
+            if (plugin.getScoreboardManager() != null) {
+                plugin.getScoreboardManager().loadConfig();
+            }
+
+            if (plugin.getTabListManager() != null) {
+                plugin.getTabListManager().reloadTabList();
+            }
+
+            if (plugin.getLimiterConfig() != null) {
+                plugin.getLimiterConfig().loadConfig();
+            }
+
+            if (plugin.getVoidManager() != null) {
+                plugin.getVoidManager().loadRegions();
+            }
+
+            if (plugin.getToolsManager() != null) {
+                plugin.getToolsManager().reloadConfig();
+            }
+
+            if (plugin.getFalconSell() != null) {
+                plugin.getFalconSell().reloadConfig();
+            }
+
+            if (plugin.getOrdersModule() != null && plugin.getOrdersModule().cfg() != null) {
+                plugin.getOrdersModule().cfg().reload();
+            }
+
+            if (plugin.getCrateLocationRegistry() != null) {
+                plugin.getCrateLocationRegistry().load();
+            }
+
+            if (plugin.getBountyManager() != null) {
+                plugin.getBountyManager().load();
+            }
+
+            if (plugin.getMediaCommand() != null) {
+                plugin.getMediaCommand().loadConfig();
+            }
+
+            if (plugin.getDeathMessageManager() != null) {
+                plugin.getDeathMessageManager().reload();
+            }
+
+            if (plugin.getRedstoneManager() != null) {
+                plugin.getRedstoneManager().reloadConfig();
+            }
+
+
+            long time = System.currentTimeMillis() - start;
+
+            sender.sendMessage("");
+            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("falcon") + " " + ChatColor.GREEN
+                    + toSmallCaps("reloaded successfully") + ChatColor.GRAY + " (" + time + "ms)");
+            sender.sendMessage("");
+
+        } catch (Exception e) {
+            sender.sendMessage(ChatColor.DARK_GRAY + toSmallCaps("falcon") + " " + ChatColor.RED
+                    + toSmallCaps("reload failed (check console)"));
+            e.printStackTrace();
+        }
+
         return true;
     }
 
@@ -558,7 +694,7 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             return Arrays
-                    .asList("auction", "order", "rtpqueue", "void", "setafk", "respawngear", "limiter",
+                    .asList("reload", "auction", "order", "rtpqueue", "void", "setafk", "respawngear", "limiter",
                             "crystal", "anchor", "pvpsafe", "warps", "shards")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))

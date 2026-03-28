@@ -1,5 +1,5 @@
 name: Falcon
-version: "5.2"
+version: "5.3"
 main: com.h2ph.Falcon
 api-version: "1.21"
 author: h2ph
@@ -200,12 +200,6 @@ commands:
     permission: falcon.duel.use
     permission-message: You do not have permission to use this command.
 
-  falconreload:
-    description: Reload all plugin configurations
-    permission: falcon.reload
-    aliases: [preload]
-    usage: /falconreload
-
   mute:
     description: Mute a player for a certain duration
     usage: /mute <player> <duration> [reason]
@@ -256,7 +250,7 @@ commands:
 
   falcon:
     description: Falcon admin and utility commands
-    usage: /falcon <auction|order> [player]
+    usage: /falcon <reload|auction|order|shards|...> [player]
     permission: falcon.use
     permission-message: You do not have permission to use this command.
 

@@ -1,0 +1,36 @@
+settings:
+  # Threshold for warning notification and short disable duration
+  warning-threshold: 1500
+  # Threshold for massive notification and longer disable duration
+  massive-threshold: 3000
+  # Duration to disable redstone for warning (in milliseconds)
+  warning-disable-duration: 20000
+  # Duration to disable redstone for massive (in milliseconds)
+  massive-disable-duration: 60000
+  # Cooldown between notifications for the same chunk (in milliseconds)
+  notification-cooldown: 20000
+  # Maximum distance to notify players
+  notify-distance: 48
+
+# List of blocks that count as redstone components
+# You can use partial names like "BUTTON" or exact names like "LEVER"
+redstone-components:
+  - REDSTONE_WIRE
+  - REPEATER
+  - COMPARATOR
+  - OBSERVER
+  - DAYLIGHT_DETECTOR
+  - REDSTONE_TORCH
+  - REDSTONE_WALL_TORCH
+  - BUTTON
+  - TRIPWIRE_HOOK
+  - TRIPWIRE
+  - PISTON
+  - HOPPER
+  - DROPPER
+  - DISPENSER
+  - PRESSURE_PLATE
+  - DOOR
+  - TRAPDOOR
+  - GATE
+  - LEVER

@@ -32,10 +32,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class RedstoneManager implements Listener {
 
-    private static final int THRESHOLD_MASSIVE = 3000;
-    private static final int THRESHOLD_WARNING = 1500;
-
     private final Falcon plugin;
+
+    private int massiveThreshold;
+    private int warningThreshold;
+    private long massiveDisableDuration;
+    private long warningDisableDuration;
+    private long notificationCooldown;
+    private int notifyDistance;
 
     private final Map<UUID, Map<Long, AtomicInteger>> chunkRedstoneCounts = new ConcurrentHashMap<>();
     private final Map<UUID, Map<Long, Long>> temporarilyDisabledChunks = new ConcurrentHashMap<>();
@@ -50,9 +54,11 @@ public class RedstoneManager implements Listener {
     private final Map<Long, Set<UUID>> chunkPlayers = new ConcurrentHashMap<>();
 
     private final File dataFile;
+    private final File configFile;
     private FileConfiguration dataConfig;
+    private FileConfiguration settingsConfig;
 
-    private static final EnumSet<Material> REDSTONE_COMPONENTS = EnumSet.noneOf(Material.class);
+    private final EnumSet<Material> REDSTONE_COMPONENTS = EnumSet.noneOf(Material.class);
 
     private static final EnumSet<Material> CROP_BLOCKS = EnumSet.of(
         Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS,
@@ -98,28 +104,52 @@ public class RedstoneManager implements Listener {
         return farmlandCount >= 32 && cropCount >= 16 && waterNearFarmland >= 4;
     }
 
-    static {
-        for (Material m : Material.values()) {
-            String name = m.name();
-            if (name.equals("REDSTONE_WIRE") ||
-                    name.equals("REPEATER") ||
-                    name.equals("COMPARATOR") ||
-                    name.equals("OBSERVER") ||
-                    name.equals("DAYLIGHT_DETECTOR") ||
-                    name.contains("REDSTONE_TORCH") ||
-                    name.contains("BUTTON") ||
-                    name.equals("TRIPWIRE_HOOK") ||
-                    name.equals("TRIPWIRE") ||
-                    name.contains("PISTON") ||
-                    name.equals("HOPPER") ||
-                    name.equals("DROPPER") ||
-                    name.equals("DISPENSER") ||
-                    name.contains("PRESSURE_PLATE") ||
-                    name.contains("DOOR") ||
-                    name.contains("TRAPDOOR") ||
-                    name.contains("GATE") ||
-                    name.equals("LEVER")) {
-                REDSTONE_COMPONENTS.add(m);
+    public void reloadConfig() {
+        loadSettings();
+    }
+
+    private void loadSettings() {
+        if (!configFile.exists()) {
+            plugin.saveResource("survival/limiter/redstone/config.yml", false);
+        }
+
+        settingsConfig = YamlConfiguration.loadConfiguration(configFile);
+        
+        warningThreshold = settingsConfig.getInt("settings.warning-threshold", 1500);
+        massiveThreshold = settingsConfig.getInt("settings.massive-threshold", 3000);
+        warningDisableDuration = settingsConfig.getLong("settings.warning-disable-duration", 20000);
+        massiveDisableDuration = settingsConfig.getLong("settings.massive-disable-duration", 60000);
+        notificationCooldown = settingsConfig.getLong("settings.notification-cooldown", 20000);
+        notifyDistance = settingsConfig.getInt("settings.notify-distance", 48);
+
+        REDSTONE_COMPONENTS.clear();
+        List<String> componentNames = settingsConfig.getStringList("redstone-components");
+        if (componentNames.isEmpty()) {
+            // Default components if config is empty
+            for (Material m : Material.values()) {
+                String name = m.name();
+                if (name.equals("REDSTONE_WIRE") || name.equals("REPEATER") || name.equals("COMPARATOR") || 
+                    name.equals("OBSERVER") || name.equals("DAYLIGHT_DETECTOR") || name.contains("REDSTONE_TORCH") || 
+                    name.contains("BUTTON") || name.equals("TRIPWIRE_HOOK") || name.equals("TRIPWIRE") || 
+                    name.contains("PISTON") || name.equals("HOPPER") || name.equals("DROPPER") || 
+                    name.equals("DISPENSER") || name.contains("PRESSURE_PLATE") || name.contains("DOOR") || 
+                    name.contains("TRAPDOOR") || name.contains("GATE") || name.equals("LEVER")) {
+                    REDSTONE_COMPONENTS.add(m);
+                }
+            }
+        } else {
+            for (String componentName : componentNames) {
+                Material mat = Material.matchMaterial(componentName);
+                if (mat != null) {
+                    REDSTONE_COMPONENTS.add(mat);
+                } else {
+                    // Support partial matches if defined in config
+                    for (Material m : Material.values()) {
+                        if (m.name().contains(componentName)) {
+                            REDSTONE_COMPONENTS.add(m);
+                        }
+                    }
+                }
             }
         }
     }
@@ -127,7 +157,9 @@ public class RedstoneManager implements Listener {
     public RedstoneManager(JavaPlugin plugin) {
         this.plugin = (Falcon) plugin;
         this.dataFile = new File(plugin.getDataFolder(), "redstone_data.yml");
+        this.configFile = new File(plugin.getDataFolder(), "survival/limiter/redstone/config.yml");
 
+        loadSettings();
         loadData();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -161,8 +193,8 @@ public class RedstoneManager implements Listener {
                 if (isChunkDisabled(worldId, chunkKey))
                     continue;
 
-                if (count >= THRESHOLD_MASSIVE) {
-                    if (shouldNotify(worldId, chunkKey, 60000)) {
+                if (count >= massiveThreshold) {
+                    if (shouldNotify(worldId, chunkKey, massiveDisableDuration)) {
                         int x = (int) (chunkKey >> 32);
                         int z = (int) chunkKey;
 
@@ -171,11 +203,11 @@ public class RedstoneManager implements Listener {
                                 return;
                             }
 
-                            disableChunk(worldId, chunkKey, 60000);
+                            disableChunk(worldId, chunkKey, massiveDisableDuration);
                             recordNotification(worldId, chunkKey);
 
                             Chunk chunk = world.getChunkAt(x, z);
-                            notifyNearbyPlayers(chunk, 60);
+                            notifyNearbyPlayers(chunk, (int) (massiveDisableDuration / 1000));
 
                             int blockX = x * 16 + 8;
                             int blockZ = z * 16 + 8;
@@ -202,7 +234,7 @@ public class RedstoneManager implements Listener {
 
                             RedstoneAlert alert = new RedstoneAlert(
                                     world.getName(), blockX, blockY, blockZ,
-                                    count, THRESHOLD_MASSIVE, nearPlayers,
+                                    count, massiveThreshold, nearPlayers,
                                     System.currentTimeMillis());
 
                             globalAlertHistory.add(0, alert);
@@ -210,14 +242,14 @@ public class RedstoneManager implements Listener {
                                 globalAlertHistory.remove(globalAlertHistory.size() - 1);
                             }
 
-                            if (System.currentTimeMillis() - lastBroadcastTime > 20000) {
-                                broadcastAlert("Massive high threshold detected", alert, 60);
+                            if (System.currentTimeMillis() - lastBroadcastTime > notificationCooldown) {
+                                broadcastAlert("Massive high threshold detected", alert, (int) (massiveDisableDuration / 1000));
                                 lastBroadcastTime = System.currentTimeMillis();
                             }
                         });
                     }
-                } else if (count >= THRESHOLD_WARNING) {
-                    if (shouldNotify(worldId, chunkKey, 20000)) {
+                } else if (count >= warningThreshold) {
+                    if (shouldNotify(worldId, chunkKey, warningDisableDuration)) {
                         int x = (int) (chunkKey >> 32);
                         int z = (int) chunkKey;
 
@@ -227,10 +259,10 @@ public class RedstoneManager implements Listener {
                               return;
                             }
 
-                            disableChunk(worldId, chunkKey, 20000);
+                            disableChunk(worldId, chunkKey, warningDisableDuration);
                             recordNotification(worldId, chunkKey);
                             Chunk chunk = world.getChunkAt(x, z);
-                            notifyNearbyPlayers(chunk, 20);
+                            notifyNearbyPlayers(chunk, (int) (warningDisableDuration / 1000));
 
                             int blockX = x * 16 + 8;
                             int blockZ = z * 16 + 8;
@@ -257,7 +289,7 @@ public class RedstoneManager implements Listener {
 
                             RedstoneAlert alert = new RedstoneAlert(
                                     world.getName(), blockX, blockY, blockZ,
-                                    count, THRESHOLD_WARNING, nearPlayers,
+                                    count, warningThreshold, nearPlayers,
                                     System.currentTimeMillis());
 
                             globalAlertHistory.add(0, alert);
@@ -265,8 +297,8 @@ public class RedstoneManager implements Listener {
                                 globalAlertHistory.remove(globalAlertHistory.size() - 1);
                             }
 
-                            if (System.currentTimeMillis() - lastBroadcastTime > 20000) {
-                                broadcastAlert("High threshold detected", alert, 20);
+                            if (System.currentTimeMillis() - lastBroadcastTime > notificationCooldown) {
+                                broadcastAlert("High threshold detected", alert, (int) (warningDisableDuration / 1000));
                                 lastBroadcastTime = System.currentTimeMillis();
                             }
                         });
@@ -292,7 +324,11 @@ public class RedstoneManager implements Listener {
     }
 
     private long getChunkKey(Chunk chunk) {
-        return (long) chunk.getX() << 32 | (chunk.getZ() & 0xFFFFFFFFL);
+        return getChunkKey(chunk.getX(), chunk.getZ());
+    }
+
+    private long getChunkKey(int x, int z) {
+        return (long) x << 32 | (z & 0xFFFFFFFFL);
     }
 
     private boolean isChunkDisabled(UUID worldId, long chunkKey) {
@@ -321,10 +357,10 @@ public class RedstoneManager implements Listener {
                 .put(chunkKey, System.currentTimeMillis());
     }
 
-    private void incrementCount(Chunk chunk) {
+    private void incrementCount(org.bukkit.World world, int chunkX, int chunkZ) {
         chunkRedstoneCounts
-                .computeIfAbsent(chunk.getWorld().getUID(), k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(getChunkKey(chunk), k -> new AtomicInteger(0))
+                .computeIfAbsent(world.getUID(), k -> new ConcurrentHashMap<>())
+                .computeIfAbsent(getChunkKey(chunkX, chunkZ), k -> new AtomicInteger(0))
                 .incrementAndGet();
     }
 
@@ -498,8 +534,6 @@ public class RedstoneManager implements Listener {
      */
     private void notifyNearbyPlayers(Chunk chunk, int seconds) {
         long now = System.currentTimeMillis();
-        long cooldown = 30000;
-        int maxDist = 48;
 
         org.bukkit.Location chunkCenter = new org.bukkit.Location(
                 chunk.getWorld(),
@@ -512,9 +546,9 @@ public class RedstoneManager implements Listener {
                 continue;
 
             try {
-                if (player.getLocation().distance(chunkCenter) <= maxDist) {
+                if (player.getLocation().distance(chunkCenter) <= notifyDistance) {
                     Long lastNotified = playerNotificationCooldown.get(player.getUniqueId());
-                    if (lastNotified != null && now - lastNotified < cooldown)
+                    if (lastNotified != null && now - lastNotified < 30000)
                         continue;
 
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&',
@@ -585,18 +619,18 @@ public class RedstoneManager implements Listener {
      */
     @EventHandler
     public void onRedstone(BlockRedstoneEvent event) {
-        Chunk chunk = event.getBlock().getChunk();
-        UUID worldId = chunk.getWorld().getUID();
-        long chunkKey = getChunkKey(chunk);
+        Block block = event.getBlock();
+        int cx = block.getX() >> 4;
+        int cz = block.getZ() >> 4;
+        UUID worldId = block.getWorld().getUID();
+        long chunkKey = getChunkKey(cx, cz);
 
         if (isChunkDisabled(worldId, chunkKey)) {
             event.setNewCurrent(0);
-            if (event.getOldCurrent() > 0)
-                event.setNewCurrent(0);
             return;
         }
 
-        incrementCount(chunk);
+        incrementCount(block.getWorld(), cx, cz);
     }
 
     /**
@@ -604,15 +638,17 @@ public class RedstoneManager implements Listener {
      */
     @EventHandler
     public void onPistonExtend(org.bukkit.event.block.BlockPistonExtendEvent event) {
-        Chunk chunk = event.getBlock().getChunk();
-        UUID worldId = chunk.getWorld().getUID();
-        long chunkKey = getChunkKey(chunk);
+        Block block = event.getBlock();
+        int cx = block.getX() >> 4;
+        int cz = block.getZ() >> 4;
+        UUID worldId = block.getWorld().getUID();
+        long chunkKey = getChunkKey(cx, cz);
 
         if (isChunkDisabled(worldId, chunkKey)) {
             event.setCancelled(true);
             return;
         }
-        incrementCount(chunk);
+        incrementCount(block.getWorld(), cx, cz);
     }
 
     /**
@@ -620,15 +656,17 @@ public class RedstoneManager implements Listener {
      */
     @EventHandler
     public void onPistonRetract(org.bukkit.event.block.BlockPistonRetractEvent event) {
-        Chunk chunk = event.getBlock().getChunk();
-        UUID worldId = chunk.getWorld().getUID();
-        long chunkKey = getChunkKey(chunk);
+        Block block = event.getBlock();
+        int cx = block.getX() >> 4;
+        int cz = block.getZ() >> 4;
+        UUID worldId = block.getWorld().getUID();
+        long chunkKey = getChunkKey(cx, cz);
 
         if (isChunkDisabled(worldId, chunkKey)) {
             event.setCancelled(true);
             return;
         }
-        incrementCount(chunk);
+        incrementCount(block.getWorld(), cx, cz);
     }
 
     /**
@@ -639,12 +677,23 @@ public class RedstoneManager implements Listener {
         if (temporarilyDisabledChunks.isEmpty())
             return;
 
-        if (!REDSTONE_COMPONENTS.contains(event.getBlock().getType())) {
+        Block block = event.getBlock();
+        UUID worldId = block.getWorld().getUID();
+        
+        Map<Long, Long> worldDisabled = temporarilyDisabledChunks.get(worldId);
+        if (worldDisabled == null || worldDisabled.isEmpty())
+            return;
+
+        int cx = block.getX() >> 4;
+        int cz = block.getZ() >> 4;
+        long chunkKey = getChunkKey(cx, cz);
+
+        Long expiry = worldDisabled.get(chunkKey);
+        if (expiry == null || System.currentTimeMillis() >= expiry) {
             return;
         }
 
-        Chunk chunk = event.getBlock().getChunk();
-        if (isChunkDisabled(chunk.getWorld().getUID(), getChunkKey(chunk))) {
+        if (REDSTONE_COMPONENTS.contains(block.getType())) {
             event.setCancelled(true);
         }
     }

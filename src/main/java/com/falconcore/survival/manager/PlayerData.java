@@ -41,6 +41,14 @@ public class PlayerData {
     private String originalPrefix = null;
     private String ip;
     private String history = "";
+    private long breakBlocks;
+    private long placedBlocks;
+    private long mobKills;
+    private double sellMade;
+    private long playtime;
+    private long deaths;
+    private long kills;
+    private long toolExpiry;
     private boolean unloading = false;
     private boolean loadingFailed = false;
 
@@ -677,6 +685,70 @@ public class PlayerData {
 
     public void setHistory(String history) {
         this.history = history;
+    }
+
+    public long getBreakBlocks() {
+        return breakBlocks;
+    }
+
+    public void setBreakBlocks(long breakBlocks) {
+        this.breakBlocks = breakBlocks;
+    }
+
+    public long getPlacedBlocks() {
+        return placedBlocks;
+    }
+
+    public void setPlacedBlocks(long placedBlocks) {
+        this.placedBlocks = placedBlocks;
+    }
+
+    public long getMobKills() {
+        return mobKills;
+    }
+
+    public void setMobKills(long mobKills) {
+        this.mobKills = mobKills;
+    }
+
+    public double getSellMade() {
+        return sellMade;
+    }
+
+    public void setSellMade(double sellMade) {
+        this.sellMade = sellMade;
+    }
+
+    public long getPlaytime() {
+        return playtime;
+    }
+
+    public void setPlaytime(long playtime) {
+        this.playtime = playtime;
+    }
+
+    public long getDeaths() {
+        return deaths;
+    }
+
+    public void setDeaths(long deaths) {
+        this.deaths = deaths;
+    }
+
+    public long getKills() {
+        return kills;
+    }
+
+    public void setKills(long kills) {
+        this.kills = kills;
+    }
+
+    public long getToolExpiry() {
+        return toolExpiry;
+    }
+
+    public void setToolExpiry(long toolExpiry) {
+        this.toolExpiry = toolExpiry;
     }
 
     public void addHistory(String message) {

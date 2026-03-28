@@ -18,6 +18,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import com.falconcore.survival.utils.ItemSerializationManager;
+
 public class PlayerDataManager {
 
     private final Falcon plugin;
@@ -81,6 +86,14 @@ public class PlayerDataManager {
             data.setShopSpent(stats.shopSpent);
             data.setIp(stats.ip);
             data.setHistory(stats.history != null ? stats.history : "");
+            data.setBreakBlocks(stats.breakBlocks);
+            data.setPlacedBlocks(stats.placedBlocks);
+            data.setMobKills(stats.mobKills);
+            data.setSellMade(stats.sellMade);
+            data.setPlaytime(stats.playtime);
+            data.setDeaths(stats.deaths);
+            data.setKills(stats.kills);
+            data.setToolExpiry(stats.toolExpiry);
         }
 
         File legacyShardsFolder = new File(plugin.getDataFolder(), "economy/shards/players");
@@ -378,6 +391,26 @@ public class PlayerDataManager {
                         data.getDisguiseSkinTexture(),
                         data.getDisguiseSkinSignature());
             }
+        }
+
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null && player.isOnline()) {
+            try {
+                ItemStack[] contents = player.getInventory().getContents();
+                ItemStack[] armor = player.getInventory().getArmorContents();
+                String invBase64 = ItemSerializationManager.itemStackArrayToBase64(contents);
+                String armorBase64 = ItemSerializationManager.itemStackArrayToBase64(armor);
+                plugin.getDatabaseManager().saveInventory(uuid, invBase64, armorBase64);
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save inventory for " + player.getName() + " during regular save", e);
+            }
+        }
+    }
+
+    public void savePlayerSync(UUID uuid) {
+        PlayerData data = playerDataMap.get(uuid);
+        if (data != null) {
+            savePlayer(uuid, data);
         }
     }
 
@@ -707,7 +740,7 @@ public class PlayerDataManager {
     }
 
     public void initializeLeaderboards() {
-        plugin.getLogger().info("Initializing leaderboard caches...");
+        //plugin.getLogger().info("Initializing leaderboard caches...");
         triggerVaultUpdateAsync();
         triggerShardsUpdateAsync();
         triggerKillsUpdateAsync();

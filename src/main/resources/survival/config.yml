@@ -5,7 +5,7 @@ region:
 
 motd:
   enabled: true
-  motd: "                  \u00A7k\u00A7k\u00A7k\u00A7e★ \u00A76\u00A7lѕᴘʜʏɴхѕᴍᴘ\u00A7e ★\u00A7k\u00A7k\u00A7k\u00A7r\n                \u00A7b- \u00A77\u00A7nѕᴘʜʏɴхѕᴍᴘ.хʏᴢ\u00A7b -"
+  motd: "FALCONCORE"
 
 TOKEN: ""
 ChannelID: ""
@@ -28,19 +28,17 @@ discord-webhooks:
   chat-log:
     enabled: false
     webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
-    channel-id: "CHANNEL_ID"
-
   death-log:
     enabled: false
     webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
-    channel-id: "CHANNEL_ID"
-
   join-leave:
     enabled: false
     webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
-    channel-id: "CHANNEL_ID"
+  spawner:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
 
-database:
+database: #MysQL
   host: "localhost"
   port: 3306
   database: ""
@@ -105,3 +103,4 @@ command-whitelist:
     - "nv"
     - "nightvision"
     - "store"
+    - "bounty"

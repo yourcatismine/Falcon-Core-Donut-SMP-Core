@@ -126,6 +126,10 @@ public class ReloadCommand implements CommandExecutor {
                 plugin.getDeathMessageManager().reload();
             }
 
+            if (plugin.getRedstoneManager() != null) {
+                plugin.getRedstoneManager().reloadConfig();
+            }
+
 
             long time = System.currentTimeMillis() - start;
 

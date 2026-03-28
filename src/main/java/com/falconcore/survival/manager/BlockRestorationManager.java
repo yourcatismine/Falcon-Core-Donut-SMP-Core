@@ -38,7 +38,7 @@ public class BlockRestorationManager implements Listener {
         
         plugin.getSchedulerAdapter().runTaskLater(() -> {
             restoreExpiredBlocks();
-            plugin.getLogger().info("Restored any blocks that expired during server downtime");
+        //    plugin.getLogger().info("Restored any blocks that expired during server downtime");
         }, 100L);
     }
 

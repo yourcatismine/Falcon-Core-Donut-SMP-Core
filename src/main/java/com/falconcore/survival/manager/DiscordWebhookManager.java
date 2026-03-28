@@ -6,7 +6,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class DiscordWebhookManager {
@@ -33,6 +32,9 @@ public class DiscordWebhookManager {
     private final String auctionWebhook;
     private final boolean ordersEnabled;
     private final String ordersWebhook;
+    private final boolean spawnerEnabled;
+    private final String  spawnerWebhook;
+
     private final String serverIconUrl;
 
     public DiscordWebhookManager(Falcon plugin) {
@@ -53,6 +55,9 @@ public class DiscordWebhookManager {
 
         ordersEnabled   = cfg.getBoolean("discord-webhooks.orders.enabled", false);
         ordersWebhook   = cfg.getString("discord-webhooks.orders.webhook-url", "");
+
+        spawnerEnabled  = cfg.getBoolean("discord-webhooks.spawner.enabled", false);
+        spawnerWebhook  = cfg.getString("discord-webhooks.spawner.webhook-url", "");
 
         serverIconUrl   = cfg.getString("discord-webhooks.server-icon-url", "");
     }
@@ -126,19 +131,99 @@ public class DiscordWebhookManager {
         sendEmbed(ordersWebhook, delivererName, delivererUuid, desc, color, "Order Delivery");
     }
 
+    public void sendSpawnerPlaced(org.bukkit.entity.Player player, com.falconcore.survival.spawners.mob.SpawnerType type, int quantity, org.bukkit.Location loc) {
+        if (!spawnerEnabled || spawnerWebhook.isEmpty()) return;
+        String title = "Spawner Placed";
+        String description = "**" + player.getName() + "** placed a **" + type.getDisplayName() + "** spawner";
+        String fields = "["
+                + buildField("Player", player.getName(), true) + ","
+                + buildField("Entity", type.getDisplayName(), true) + ","
+                + buildField("Location", formatLoc(loc), false) + ","
+                + buildField("Quantity", String.valueOf(quantity), true)
+                + "]";
+        sendEmbedWithFields(spawnerWebhook, player.getName(), player.getUniqueId().toString(), description, 0x57F287, title, fields);
+    }
+
+    public void sendSpawnerBroken(org.bukkit.entity.Player player, com.falconcore.survival.spawners.mob.SpawnerType type, int quantity, org.bukkit.Location loc) {
+        if (!spawnerEnabled || spawnerWebhook.isEmpty()) return;
+        String title = "Spawner Broken";
+        String description = "**" + player.getName() + "** broke a **" + type.getDisplayName() + "** spawner";
+        String fields = "["
+                + buildField("Player", player.getName(), true) + ","
+                + buildField("Entity", type.getDisplayName(), true) + ","
+                + buildField("Location", formatLoc(loc), false) + ","
+                + buildField("Quantity", String.valueOf(quantity), true)
+                + "]";
+        sendEmbedWithFields(spawnerWebhook, player.getName(), player.getUniqueId().toString(), description, 0xED4245, title, fields);
+    }
+
+    public void sendSpawnerXpClaimed(org.bukkit.entity.Player player, long amount, org.bukkit.Location loc) {
+        if (!spawnerEnabled || spawnerWebhook.isEmpty()) return;
+        String title = "Experience Claimed";
+        String description = "**" + player.getName() + "** collected experience from a spawner";
+        String fields = "["
+                + buildField("Player", player.getName(), true) + ","
+                + buildField("Location", formatLoc(loc), true) + ","
+                + buildField("XP Amount", String.valueOf(amount), false)
+                + "]";
+        sendEmbedWithFields(spawnerWebhook, player.getName(), player.getUniqueId().toString(), description, 0x57F287, title, fields);
+    }
+
+    public void sendSpawnerItemsSold(org.bukkit.entity.Player player, double revenue, long itemsSold, org.bukkit.Location loc) {
+        if (!spawnerEnabled || spawnerWebhook.isEmpty()) return;
+        String title = "Items Sold";
+        String description = "**" + player.getName() + "** sold items from a spawner";
+        String fields = "["
+                + buildField("Player", player.getName(), true) + ","
+                + buildField("Location", formatLoc(loc), true) + ","
+                + buildField("Revenue", "$" + String.format("%.2f", revenue), true) + ","
+                + buildField("Items Sold", String.valueOf(itemsSold), true)
+                + "]";
+        sendEmbedWithFields(spawnerWebhook, player.getName(), player.getUniqueId().toString(), description, 0x57F287, title, fields);
+    }
+
+    public void sendSpawnerPageDropped(org.bukkit.entity.Player player, com.falconcore.survival.spawners.mob.SpawnerType type, int dropped, int page, org.bukkit.Location loc) {
+        if (!spawnerEnabled || spawnerWebhook.isEmpty()) return;
+        String title = "Items Dropped";
+        String description = "**" + player.getName() + "** dropped items from a storage page";
+        String fields = "["
+                + buildField("Player", player.getName(), true) + ","
+                + buildField("Entity", type.getDisplayName(), true) + ","
+                + buildField("Location", formatLoc(loc), false) + ","
+                + buildField("Total Dropped", String.valueOf(dropped), true) + ","
+                + buildField("Storage Page", String.valueOf(page), true)
+                + "]";
+        sendEmbedWithFields(spawnerWebhook, player.getName(), player.getUniqueId().toString(), description, 0x22A379, title, fields);
+    }
+
+    private String formatLoc(org.bukkit.Location loc) {
+        if (loc == null) return "Unknown";
+        return loc.getWorld().getName() + " (" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ")";
+    }
+
+    private String buildField(String name, String value, boolean inline) {
+        return "{\"name\":\"" + escapeJson(name) + "\",\"value\":\"" + escapeJson(value) + "\",\"inline\":" + inline + "}";
+    }
+
+    private void sendEmbedWithFields(String webhookUrl, String playerName, String uuid,
+                                     String description, int color, String title, String fieldsJson) {
+        String skinUrl = String.format(SKIN_URL, uuid);
+        String json = buildEmbedJsonWithFields(playerName, skinUrl, description, color, title, fieldsJson);
+        executeWebhook(webhookUrl, playerName, json);
+    }
+
     private void sendEmbed(String webhookUrl, String playerName, String uuid,
                            String description, int color, String title) {
         String skinUrl = String.format(SKIN_URL, uuid);
         String json = buildEmbedJson(playerName, skinUrl, description, color, title);
-        try {
-            String host = new URL(webhookUrl).getHost();
-        } catch (Exception ignored) {
-        }
+        executeWebhook(webhookUrl, playerName, json);
+    }
 
+    private void executeWebhook(String webhookUrl, String playerName, String json) {
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             HttpURLConnection conn = null;
             try {
-                conn = (HttpURLConnection) new URL(webhookUrl).openConnection();
+                conn = (HttpURLConnection) new java.net.URL(webhookUrl).openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("User-Agent", "Falcon-Bot/1.0");
@@ -161,12 +246,9 @@ public class DiscordWebhookManager {
                     } catch (Exception ignored) {
                     }
                     plugin.getLogger().warning("[Discord] Webhook returned status " + status + " for player " + playerName + ": " + resp);
-                } else {
-                    plugin.getLogger().fine("[Discord] Webhook sent successfully for player " + playerName + " (status " + status + ")");
                 }
             } catch (Exception e) {
                 plugin.getLogger().warning("[Discord] Failed to send webhook: " + e.getMessage());
-                plugin.getLogger().log(java.util.logging.Level.FINE, "[Discord] Webhook JSON: " + json, e);
             } finally {
                 if (conn != null) conn.disconnect();
             }
@@ -175,6 +257,11 @@ public class DiscordWebhookManager {
 
     private String buildEmbedJson(String playerName, String skinUrl,
                                   String description, int color, String title) {
+        return buildEmbedJsonWithFields(playerName, skinUrl, description, color, title, null);
+    }
+
+    private String buildEmbedJsonWithFields(String playerName, String skinUrl,
+                                            String description, int color, String title, String fieldsJson) {
         String safeDesc = escapeJson(description);
         String safeName = escapeJson(playerName);
         String safeSkin = escapeJson(skinUrl);
@@ -182,6 +269,10 @@ public class DiscordWebhookManager {
 
         String titlePart = (title != null && !title.isEmpty())
                 ? "\"title\":\"" + escapeJson(title) + "\","
+                : "";
+        
+        String fieldsPart = (fieldsJson != null && !fieldsJson.isEmpty())
+                ? "\"fields\":" + fieldsJson + ","
                 : "";
 
         return "{"
@@ -193,9 +284,15 @@ public class DiscordWebhookManager {
              +     "\"icon_url\":\"" + safeSkin + "\""
              +   "},"
              +   titlePart
+             +   fieldsPart
              +   "\"thumbnail\":{\"url\":\"" + thumb + "\"},"
              +   "\"description\":\"" + safeDesc + "\","
-             +   "\"color\":" + color
+             +   "\"color\":" + color + ","
+             +   "\"footer\":{"
+             +     "\"text\":\"Falcon - " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date()) + "\","
+             +     "\"icon_url\":\"" + safeSkin + "\""
+             +   "},"
+             +   "\"timestamp\":\"" + java.time.Instant.now().toString() + "\""
              + "}]}";
     }
 

@@ -1045,13 +1045,26 @@ public class DatabaseManager {
     public LoadResult<PlayerDataStats> loadPlayerStats(UUID uuid) {
         if (!isConnected())
             return new LoadResult<>(null, true, "Database not connected");
-        String query = "SELECT money, shards, shop_spent, ip, history FROM player_stats WHERE uuid = ?";
+        String query = "SELECT money, shards, shop_spent, ip, history, break_blocks, placed_blocks, mob_kills, sell_made, playtime, deaths, kills, tool_expiry FROM player_stats WHERE uuid = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    PlayerDataStats stats = new PlayerDataStats(rs.getDouble("money"), rs.getDouble("shards"),
-                            rs.getDouble("shop_spent"), rs.getString("ip"), rs.getString("history"));
+                    PlayerDataStats stats = new PlayerDataStats(
+                            rs.getDouble("money"),
+                            rs.getDouble("shards"),
+                            rs.getDouble("shop_spent"),
+                            rs.getString("ip"),
+                            rs.getString("history"),
+                            rs.getLong("break_blocks"),
+                            rs.getLong("placed_blocks"),
+                            rs.getLong("mob_kills"),
+                            rs.getDouble("sell_made"),
+                            rs.getLong("playtime"),
+                            rs.getLong("deaths"),
+                            rs.getLong("kills"),
+                            rs.getLong("tool_expiry")
+                    );
                     return new LoadResult<>(stats, false, null);
                 }
                 return new LoadResult<>(null, false, null);
@@ -1067,13 +1080,31 @@ public class DatabaseManager {
         public double shopSpent;
         public String ip;
         public String history;
+        public long breakBlocks;
+        public long placedBlocks;
+        public long mobKills;
+        public double sellMade;
+        public long playtime;
+        public long deaths;
+        public long kills;
+        public long toolExpiry;
 
-        public PlayerDataStats(double money, double shards, double shopSpent, String ip, String history) {
+        public PlayerDataStats(double money, double shards, double shopSpent, String ip, String history,
+                               long breakBlocks, long placedBlocks, long mobKills, double sellMade,
+                               long playtime, long deaths, long kills, long toolExpiry) {
             this.money = money;
             this.shards = shards;
             this.shopSpent = shopSpent;
             this.ip = ip;
             this.history = history;
+            this.breakBlocks = breakBlocks;
+            this.placedBlocks = placedBlocks;
+            this.mobKills = mobKills;
+            this.sellMade = sellMade;
+            this.playtime = playtime;
+            this.deaths = deaths;
+            this.kills = kills;
+            this.toolExpiry = toolExpiry;
         }
     }
 

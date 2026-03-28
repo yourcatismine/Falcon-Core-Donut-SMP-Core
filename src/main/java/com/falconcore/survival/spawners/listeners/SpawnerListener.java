@@ -30,7 +30,6 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.Sound;
 import java.util.UUID;
-import org.bukkit.entity.Item;
 import org.bukkit.Location;
 
 import org.bukkit.Bukkit;
@@ -96,6 +95,7 @@ public class SpawnerListener implements Listener {
 
         SpawnerData data = new SpawnerData(event.getBlock().getLocation(), player.getUniqueId(), type, stack);
         plugin.getSpawnerManager().addSpawner(data);
+        plugin.getDiscordWebhookManager().sendSpawnerPlaced(player, type, stack, event.getBlock().getLocation());
 
         CreatureSpawner cs = (CreatureSpawner) event.getBlock().getState();
         try {
@@ -148,10 +148,12 @@ public class SpawnerListener implements Listener {
                     ItemStack item = SpawnerItemUtil.createSpawnerItem(data.getType(), 64);
                     block.getWorld().dropItemNaturally(block.getLocation(), item);
                     data.setStackSize(currentStack - 64);
+                    plugin.getDiscordWebhookManager().sendSpawnerBroken(player, data.getType(), 64, block.getLocation());
                     event.setCancelled(true);
                 } else {
                     ItemStack item = SpawnerItemUtil.createSpawnerItem(data.getType(), currentStack);
                     block.getWorld().dropItemNaturally(block.getLocation(), item);
+                    plugin.getDiscordWebhookManager().sendSpawnerBroken(player, data.getType(), currentStack, block.getLocation());
                     plugin.getSpawnerManager().removeSpawner(block.getLocation());
                 }
             } else {
@@ -159,10 +161,12 @@ public class SpawnerListener implements Listener {
                     data.setStackSize(data.getStackSize() - 1);
                     ItemStack item = SpawnerItemUtil.createSpawnerItem(data.getType(), 1);
                     block.getWorld().dropItemNaturally(block.getLocation(), item);
+                    plugin.getDiscordWebhookManager().sendSpawnerBroken(player, data.getType(), 1, block.getLocation());
                     event.setCancelled(true);
                 } else {
                     ItemStack item = SpawnerItemUtil.createSpawnerItem(data.getType(), 1);
                     block.getWorld().dropItemNaturally(block.getLocation(), item);
+                    plugin.getDiscordWebhookManager().sendSpawnerBroken(player, data.getType(), 1, block.getLocation());
                     plugin.getSpawnerManager().removeSpawner(block.getLocation());
                 }
             }
@@ -300,8 +304,10 @@ public class SpawnerListener implements Listener {
                     new SpawnerGUI(plugin, data, true, targetPage).open(player);
                     return;
                 } else if (slot == 15) {
+                    long totalItems = data.getAccumulatedDrops().values().stream().mapToLong(Long::longValue).sum();
                     double sold = plugin.getEconomyHandler().sellItems(player, data.getAccumulatedDrops());
                     data.getAccumulatedDrops().clear();
+                    plugin.getDiscordWebhookManager().sendSpawnerItemsSold(player, sold, totalItems, data.getLocation());
 
                     String moneyChat = ChatColor.translateAlternateColorCodes('&', "&a+$" + String.format("%.2f", sold));
                     player.sendMessage(moneyChat);
@@ -417,6 +423,9 @@ public class SpawnerListener implements Listener {
                         }
                         if (itemsDroppedOnPage >= 45) break;
                     }
+                    if (itemsDroppedOnPage > 0) {
+                        plugin.getDiscordWebhookManager().sendSpawnerPageDropped(player, data.getType(), itemsDroppedOnPage, currentPage, data.getLocation());
+                    }
 
                     for (Map.Entry<Material, Long> entry : toRemove.entrySet()) {
                         Material mat = entry.getKey();
@@ -460,8 +469,6 @@ public class SpawnerListener implements Listener {
                     confirmInv.setItem(11, cancelItem);
                     ItemStack skull = new ItemStack(data.getType().getHeadMaterial());
                     ItemMeta skullMeta = skull.getItemMeta();
-                    String typeAndPlural = data.getType().getDisplayName() + " spawners";
-                    String stylizedFull = ""; 
                     skullMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dʟᴏᴏᴛ"));
                     List<String> skullLore = new ArrayList<>();
                     String amountStr = String.valueOf(totalItems);
@@ -494,6 +501,7 @@ public class SpawnerListener implements Listener {
                     } else {
                         player.giveExp((int) xpToCollect);
                         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
+                        plugin.getDiscordWebhookManager().sendSpawnerXpClaimed(player, xpToCollect, data.getLocation());
                         data.setAccumulatedXP(0);
                         player.closeInventory();
                     }
@@ -517,8 +525,10 @@ public class SpawnerListener implements Listener {
 
                         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
 
+                        plugin.getDiscordWebhookManager().sendSpawnerItemsSold(player, sold, totalItems, data.getLocation());
                         if (xp > 0) {
                             player.giveExp((int) xp);
+                            plugin.getDiscordWebhookManager().sendSpawnerXpClaimed(player, xp, data.getLocation());
                         }
 
                         data.getAccumulatedDrops().clear();

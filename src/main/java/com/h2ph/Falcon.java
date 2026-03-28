@@ -15,9 +15,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.OnlineStatus;
 
@@ -104,6 +102,10 @@ public class Falcon extends JavaPlugin {
     private com.h2ph.managers.DiscordManager discordManager;
     private boolean luckPermsEnabled = false;
     
+    public com.falconcore.survival.manager.DiscordWebhookManager getDiscordWebhookManager() {
+        return discordWebhookManager;
+    }
+
     private com.falconcore.survival.spawners.storage.SpawnerManager spawnerManager;
     private com.falconcore.survival.spawners.economy.EconomyHandler spawnerEconomyHandler;
     private org.bukkit.configuration.file.FileConfiguration spawnerConfig;
@@ -220,7 +222,7 @@ public class Falcon extends JavaPlugin {
                     }
                 });
             }
-        }, 12000L, 12000L);
+        }, 6000L, 6000L);
 
         getServer().getPluginManager()
                 .registerEvents(new com.falconcore.survival.listeners.PlayerNameCacheListener(this), this);
@@ -796,7 +798,7 @@ public class Falcon extends JavaPlugin {
 
         if (this.playerDataManager != null) {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                this.playerDataManager.savePlayer(player.getUniqueId());
+                this.playerDataManager.savePlayerSync(player.getUniqueId());
             }
         }
 
@@ -1016,9 +1018,6 @@ public class Falcon extends JavaPlugin {
         return chatFilter;
     }
 
-    public com.falconcore.survival.manager.DiscordWebhookManager getDiscordWebhookManager() {
-        return discordWebhookManager;
-    }
 
     public com.h2ph.listeners.CommandHideListener getCommandHideListener() {
         return commandHideListener;

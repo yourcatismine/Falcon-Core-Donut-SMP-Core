@@ -23,7 +23,9 @@ public class MobSpawnListener implements Listener {
         }
 
         boolean isTargetMob = (event.getEntity() instanceof Monster)
-        || (event.getEntity() instanceof Slime) || event.getEntityType() == EntityType.PHANTOM;
+        || (event.getEntity() instanceof Slime) || event.getEntityType() == EntityType.PHANTOM
+        || event.getEntityType() == EntityType.GHAST || event.getEntityType() == EntityType.HOGLIN
+        || event.getEntityType() == EntityType.SQUID || event.getEntityType() == EntityType.GLOW_SQUID;
 
         if (!isTargetMob) {
             return;

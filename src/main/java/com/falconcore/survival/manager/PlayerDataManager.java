@@ -28,6 +28,8 @@ public class PlayerDataManager {
     private final Falcon plugin;
     private final Map<UUID, PlayerData> playerDataMap = new ConcurrentHashMap<>();
     private final Map<UUID, CompletableFuture<Void>> savingFutures = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastAsyncSaveTime = new ConcurrentHashMap<>();
+    private static final long SAVE_DEBOUNCE_MILLIS = 5000L;
     private final File dataFolderCrates;
 
     public PlayerDataManager(Falcon plugin) {
@@ -306,6 +308,14 @@ public class PlayerDataManager {
     public void savePlayerAsync(UUID uuid) {
         PlayerData data = playerDataMap.get(uuid);
         if (data != null) {
+            long now = System.currentTimeMillis();
+            long last = lastAsyncSaveTime.getOrDefault(uuid, 0L);
+            
+            if (now - last < SAVE_DEBOUNCE_MILLIS) {
+                return; // Debounce
+            }
+            
+            lastAsyncSaveTime.put(uuid, now);
             plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayer(uuid, data));
         }
     }
@@ -445,6 +455,7 @@ public class PlayerDataManager {
 
                     if (data.isUnloading()) {
                         playerDataMap.remove(uuid, data);
+                        lastAsyncSaveTime.remove(uuid);
                     }
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.SEVERE, "Error in unload cleanup for " + uuid, e);
@@ -488,7 +499,8 @@ public class PlayerDataManager {
             triggerShardsUpdateAsync();
         }
 
-        return cachedShardsTop != null
+        // Return old cache even if it's dirty, instead of empty list
+        return (cachedShardsTop != null)
                 ? (cachedShardsTop.size() > limit ? cachedShardsTop.subList(0, limit) : cachedShardsTop)
                 : new ArrayList<>();
     }
@@ -554,7 +566,6 @@ public class PlayerDataManager {
             if (!isUpdatingMoney) {
                 triggerVaultUpdateAsync();
             }
-            // Return empty only if we have NO data AND NO update is running yet
             return new ArrayList<>();
         }
 
@@ -562,7 +573,6 @@ public class PlayerDataManager {
             triggerVaultUpdateAsync();
         }
 
-        // Return whatever we have (old cache is better than nothing)
         return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
     }
 
@@ -701,32 +711,26 @@ public class PlayerDataManager {
     }
 
     public void invalidateMoneyLeaderboard() {
-        cachedMoneyTop = null;
         lastMoneyUpdate = 0;
     }
 
     public void invalidateShardsLeaderboard() {
-        cachedShardsTop = null;
         lastShardsUpdate = 0;
     }
 
     public void invalidateKillsLeaderboard() {
-        cachedKillsTop = null;
         lastKillsUpdate = 0;
     }
 
     public void invalidateDeathsLeaderboard() {
-        cachedDeathsTop = null;
         lastDeathsUpdate = 0;
     }
 
     public void invalidatePlaytimeLeaderboard() {
-        cachedPlaytimeTop = null;
         lastPlaytimeUpdate = 0;
     }
 
     public void invalidateSellLeaderboard() {
-        cachedSellTop = null;
         lastSellUpdate = 0;
     }
 

@@ -1050,7 +1050,6 @@ public class Falcon extends JavaPlugin {
         saveResourceSafely("survival/api/config.yml");
         saveResourceSafely("economy/config.yml");
         saveResourceSafely("rtp/config.yml");
-        saveResourceSafely("rtp/asia/config.yml");
         saveResourceSafely("crates/keys/config.yml");
         saveResourceSafely("scoreboard/config.yml");
 
@@ -1273,14 +1272,11 @@ public class Falcon extends JavaPlugin {
     private org.bukkit.configuration.file.FileConfiguration rtpConfig;
 
     public String getRTPRegionName() {
-        java.io.File apiFile = new java.io.File(getDataFolder(), "survival/api/config.yml");
-        org.bukkit.configuration.file.YamlConfiguration apiCfg = org.bukkit.configuration.file.YamlConfiguration
-                .loadConfiguration(apiFile);
-        return apiCfg.getString("region", "europe").toLowerCase();
+        return getGlobalRTPConfig().getString("region", "europe");
     }
 
     public void loadRTPConfig() {
-        java.io.File file = new java.io.File(getDataFolder(), "rtp/" + getRTPRegionName() + "/config.yml");
+        java.io.File file = new java.io.File(getDataFolder(), "rtp/" + getRTPRegionName().toLowerCase() + "/config.yml");
         rtpConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
     }
 
@@ -1292,7 +1288,7 @@ public class Falcon extends JavaPlugin {
     }
 
     public org.bukkit.configuration.file.FileConfiguration getRTPRegionConfig(String regionName) {
-        java.io.File file = new java.io.File(getDataFolder(), "rtp/" + regionName + "/config.yml");
+        java.io.File file = new java.io.File(getDataFolder(), "rtp/" + regionName.toLowerCase() + "/config.yml");
         if (file.exists()) {
             return org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
         }

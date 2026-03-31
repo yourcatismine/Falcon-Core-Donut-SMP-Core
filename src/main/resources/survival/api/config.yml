@@ -3,3 +3,28 @@ port: 12001
 api_key: "sk-YziIK3AdUmroqmquJrshwJclNQ3dl8qNrSnXBuuBvPOQ1dAf"
 region: "Asia"
 
+# GET /players/offend/?search={BANID}
+# GET /players/offend/playerlive
+# GET /players/filter/playerlive
+# GET /players/commands/playerlive
+# GET /players/signs/playerlive
+# GET /players/stats/onlineplayers
+# GET /players/stats/?player=gamertag
+# GET /players/money/?player=<name>
+# GET /players/shards/?player=<name>
+# GET /players/blocks_break/?player=<name>
+# GET /players/blocks_placed/?player=<name>
+# GET /players/mobs_killed/?player=<name>
+# GET /players/kill/?player=<name>
+# GET /players/death/?player=<name>
+# GET /leaderboard/money/list
+# GET /leaderboard/shards/list
+# GET /api/players
+# GET /api/players/detail?uuid=<UUID>
+
+# POST /players/offend/unban?player=<NAME>
+# POST /players/offend/ban?player=<NAME>&reason=<REASON>&duration=<DURATION>
+# POST /players/money/add?player=<NAME>&amount=<AMOUNT>
+# POST /players/money/remove?player=<NAME>&amount=<AMOUNT>
+# POST /players/money/set?player=<NAME>&amount=<AMOUNT>
+# POST /api/players/action?uuid=<UUID>&action=<kick|ban|mute|unmute|wipe>&reason=<REASON>&duration=<DURATION>

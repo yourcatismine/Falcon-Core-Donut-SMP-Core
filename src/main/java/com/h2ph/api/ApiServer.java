@@ -60,6 +60,9 @@ public class ApiServer {
             registerContext("/players/signs/playerlive", new SignFeedHandler());
             registerContext("/players/stats/", new StatsHandler());
             registerContext("/players/money", new MoneyHandler());
+            registerContext("/players/money/add", new MoneyActionHandler("ADD"));
+            registerContext("/players/money/remove", new MoneyActionHandler("REMOVE"));
+            registerContext("/players/money/set", new MoneyActionHandler("SET"));
             registerContext("/economy", new com.h2ph.api.handlers.EconomyGlobalHandler());
             registerContext("/leaderboard/money/list", new MoneyLeaderboardHandler());
             registerContext("/leaderboard/shards/list", new ShardsLeaderboardHandler());
@@ -67,6 +70,8 @@ public class ApiServer {
             registerContext("/leaderboard/playtime/list", new PlaytimeLeaderboardHandler());
             registerContext("/players/kill", new KillHandler());
             registerContext("/players/death", new DeathHandler());
+            registerContext("/leaderboard/kills/list", new KillsLeaderboardHandler());
+            registerContext("/leaderboard/deaths/list", new DeathsLeaderboardHandler());
             registerContext("/players/blocks_break", new BlocksBrokenHandler());
             registerContext("/players/blocks_placed", new BlocksPlacedHandler());
             registerContext("/players/mobs_killed", new MobsKilledHandler());
@@ -816,6 +821,94 @@ public class ApiServer {
         }
     }
 
+    private class MoneyActionHandler implements HttpHandler {
+        private final String actionType;
+
+        public MoneyActionHandler(String actionType) {
+            this.actionType = actionType;
+        }
+
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if (ApiServer.this.isRateLimited(t)) {
+                sendResponse(t, 429, "{\"error\": \"Too Many Requests\"}");
+                return;
+            }
+            if (!ApiServer.this.isAuthorized(t)) {
+                sendResponse(t, 401, "{\"error\": \"Unauthorized\"}");
+                return;
+            }
+            if (!"POST".equalsIgnoreCase(t.getRequestMethod()) && !"GET".equalsIgnoreCase(t.getRequestMethod())) {
+                sendResponse(t, 405, "Method Not Allowed");
+                return;
+            }
+
+            String query = t.getRequestURI().getQuery();
+            String playerName = null;
+            double amount = -1;
+
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    String[] pair = param.split("=");
+                    if (pair.length >= 2) {
+                        if (pair[0].equalsIgnoreCase("player")) {
+                            playerName = pair[1];
+                        } else if (pair[0].equalsIgnoreCase("amount")) {
+                            try {
+                                amount = Double.parseDouble(pair[1]);
+                            } catch (NumberFormatException ignored) {
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (playerName == null || playerName.isEmpty() || amount < 0) {
+                sendResponse(t, 400, "{\"error\": \"Missing player or invalid amount parameter\"}");
+                return;
+            }
+
+            net.milkbowl.vault.economy.Economy eco = getEconomy();
+            if (eco == null) {
+                sendResponse(t, 500, "{\"error\": \"Economy plugin not found\"}");
+                return;
+            }
+
+            double oldBalance = eco.getBalance(playerName);
+            net.milkbowl.vault.economy.EconomyResponse res = null;
+
+            switch (actionType) {
+                case "ADD":
+                    res = eco.depositPlayer(playerName, amount);
+                    break;
+                case "REMOVE":
+                    res = eco.withdrawPlayer(playerName, amount);
+                    break;
+                case "SET":
+                    double delta = amount - oldBalance;
+                    if (delta > 0) {
+                        res = eco.depositPlayer(playerName, delta);
+                    } else if (delta < 0) {
+                        res = eco.withdrawPlayer(playerName, Math.abs(delta));
+                    } else {
+                        res = new net.milkbowl.vault.economy.EconomyResponse(0, oldBalance,
+                                net.milkbowl.vault.economy.EconomyResponse.ResponseType.SUCCESS, null);
+                    }
+                    break;
+            }
+
+            if (res != null && res.transactionSuccess()) {
+                String response = String.format(
+                        "{\"status\": \"success\", \"player\": \"%s\", \"action\": \"%s\", \"amount\": %.2f, \"old_balance\": %.2f, \"new_balance\": %.2f}",
+                        escape(playerName), actionType, amount, oldBalance, res.balance);
+                sendResponse(t, 200, response);
+            } else {
+                String error = (res != null) ? res.errorMessage : "Transaction failed";
+                sendResponse(t, 400, String.format("{\"error\": \"%s\"}", escape(error)));
+            }
+        }
+    }
+
     private class MoneyLeaderboardHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -864,6 +957,64 @@ public class ApiServer {
             for (int i = 0; i < top.size(); i++) {
                 com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
                 json.append(String.format("{\"rank\": %d, \"player\": \"%s\", \"shards\": %.2f}",
+                        i + 1, escape(entry.name), entry.value));
+                if (i < top.size() - 1)
+                    json.append(",");
+            }
+            json.append("]");
+
+            sendResponse(t, 200, json.toString());
+        }
+    }
+
+    private class KillsLeaderboardHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if (ApiServer.this.isRateLimited(t)) {
+                sendResponse(t, 429, "{\"error\": \"Too Many Requests\"}");
+                return;
+            }
+            if (!ApiServer.this.isAuthorized(t)) {
+                sendResponse(t, 401, "{\"error\": \"Unauthorized\"}");
+                return;
+            }
+
+            java.util.List<com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry> top = plugin
+                    .getPlayerDataManager().getTopKills(10);
+
+            StringBuilder json = new StringBuilder("[");
+            for (int i = 0; i < top.size(); i++) {
+                com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
+                json.append(String.format("{\"rank\": %d, \"player\": \"%s\", \"kills\": %.0f}",
+                        i + 1, escape(entry.name), entry.value));
+                if (i < top.size() - 1)
+                    json.append(",");
+            }
+            json.append("]");
+
+            sendResponse(t, 200, json.toString());
+        }
+    }
+
+    private class DeathsLeaderboardHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if (ApiServer.this.isRateLimited(t)) {
+                sendResponse(t, 429, "{\"error\": \"Too Many Requests\"}");
+                return;
+            }
+            if (!ApiServer.this.isAuthorized(t)) {
+                sendResponse(t, 401, "{\"error\": \"Unauthorized\"}");
+                return;
+            }
+
+            java.util.List<com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry> top = plugin
+                    .getPlayerDataManager().getTopDeaths(10);
+
+            StringBuilder json = new StringBuilder("[");
+            for (int i = 0; i < top.size(); i++) {
+                com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry = top.get(i);
+                json.append(String.format("{\"rank\": %d, \"player\": \"%s\", \"deaths\": %.0f}",
                         i + 1, escape(entry.name), entry.value));
                 if (i < top.size() - 1)
                     json.append(",");

@@ -68,6 +68,14 @@ public class OrderManager {
         return null;
     }
 
+    public java.util.concurrent.CompletableFuture<Order> getOrderAsync(UUID orderId) {
+        java.util.concurrent.CompletableFuture<Order> future = new java.util.concurrent.CompletableFuture<>();
+        Falcon.getInstance().getSchedulerAdapter().runTaskAsynchronously(() -> {
+            future.complete(this.getOrder(orderId));
+        });
+        return future;
+    }
+
     public Order create(UUID owner, Material chosenMaterial, int amount, double priceEach) {
         return this.create(owner, ItemKey.of(chosenMaterial), amount, priceEach);
     }
@@ -253,7 +261,7 @@ public class OrderManager {
         }
         o.paid = (double) o.delivered * o.priceEach;
         this.orders.put(o.id, o);
-        this.saveOrder(o, false);
+        this.saveOrder(o, true);
 
         String formattedAmount = Utils.abbr(acceptedAmount);
         String itemName = o.key.displayName();

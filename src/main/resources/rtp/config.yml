@@ -1,3 +1,5 @@
+region: Asia
+
 blacklisted-blocks:
   - LAVA
   - WATER

@@ -2,20 +2,21 @@ INTERVAL: 60
 
 SCOREBOARD:
   ENABLED: true
-  SHARD-BOOSTER: "&#A303F9⚡ &fBooster &#A303F9%falconcore_shard_booster%"
+  SHARD-BOOSTER: "&5⚡ &fBooster &5%falconcore_shard_booster%"
   SWITCHER: ["&#F97603☠ &fDeaths &#F97603%falconcore_deaths%", "&#FC0000🗡 &fKills &#FC0000%falconcore_kills%"]
-  TEAMS: "&#5729DD🪓 &fTeam %team_name%"
+  TEAMS: "&d🪓 &fTeam %team_name%"
   TITLE:
-    - "&d&lꜰᴀʟᴄᴏɴᴄᴏʀᴇ"
+    - "&b&lFalconSMP"
   LINES:
     - ""
-    - "&c🔥 &c{gamertag} &7(&d{region_ping}ms&7)"
-    - "&e&l$ &fBucks &e%falconcore_balance%"
-    - "&5⭐ &fCards &5%falconcore_shards%"
-    - "{switcher}"
-    - "&#B300FF☄ &fKeyall &#B300FF%falconcore_keyall%"
-    - "&#FF00CF⌚ &fPlaytime &#FF00CF%falconcore_playtime%"
+    - " &7{gamertag}"
+    - " &a&l$ &fMoney &a%falconcore_balance%"
+    - " &5⭐ &fShards &5%falconcore_shards%"
+    - " {switcher}"
+    - " &b☄ &fKeyall &b%falconcore_keyall%"
+    - " &e⌚ &fPlaytime &e%falconcore_playtime%"
     - ""
+    - " &7Asia (&b{region_ping}ms&7)"
 
 TAB:
     ENABLED: true
@@ -24,24 +25,12 @@ TAB:
     GROUP_SORTING:
       ENABLED: true
       RANKINGS:
-        owner: 1000
-        co-owner: 999
-        headmanager: 998
-        manager: 997
-        dev: 996
-        sradmin: 995
-        admin: 994
-        srmod: 993
-        mod: 992
-        tmod: 991
-        favourite: 990
-        sphynx+: 100
         default: 1
     TITLE:
       header:
-      - '&d&lᴠᴀʟᴇѕᴍᴘ'
-      - ''
+      - '&b&lFalconSMP'
+      - '&f%online% players'
       - ''
       footer:
       - ''
-      - '&d&nᴏɴʟɪɴᴇ: %online% ︱ ᴘɪɴɢ: {ping} ︱ ᴛᴘѕ: {tps}'
+      - '&7Tps:&b {tps}&7&l |&r&7 Mspt:&b {mspt}&7&l |&r&7 Ping:&b {ping}ms'

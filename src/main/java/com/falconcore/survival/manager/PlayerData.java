@@ -40,7 +40,8 @@ public class PlayerData {
     private java.util.List<String> originalGroups = null;
     private String originalPrefix = null;
     private String ip;
-    private String history = "";
+    private final java.util.List<String> historyList = new java.util.ArrayList<>();
+    private static final int MAX_HISTORY_SIZE = 500;
     private long breakBlocks;
     private long placedBlocks;
     private long mobKills;
@@ -680,11 +681,23 @@ public class PlayerData {
     }
 
     public String getHistory() {
-        return history;
+        return String.join("\n", historyList);
     }
 
     public void setHistory(String history) {
-        this.history = history;
+        this.historyList.clear();
+        if (history != null && !history.isEmpty()) {
+            String[] split = history.split("\n");
+            for (String entry : split) {
+                if (entry != null && !entry.isEmpty()) {
+                    this.historyList.add(entry);
+                }
+            }
+            // Ensure we stay within limits if loaded data is somehow larger
+            while (this.historyList.size() > MAX_HISTORY_SIZE) {
+                this.historyList.remove(0);
+            }
+        }
     }
 
     public long getBreakBlocks() {
@@ -752,10 +765,13 @@ public class PlayerData {
     }
 
     public void addHistory(String message) {
-        if (this.history == null || this.history.isEmpty()) {
-            this.history = message;
-        } else {
-            this.history = this.history + "\n" + message;
+        if (message == null || message.isEmpty()) return;
+
+        this.historyList.add(message);
+
+        // Limit history size to prevent massive memory usage and save/load issues
+        while (this.historyList.size() > MAX_HISTORY_SIZE) {
+            this.historyList.remove(0);
         }
     }
 

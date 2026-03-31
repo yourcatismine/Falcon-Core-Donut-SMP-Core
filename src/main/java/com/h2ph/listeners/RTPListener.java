@@ -20,9 +20,7 @@ public class RTPListener implements Listener {
                         if (event.getClickedInventory().getItem(13) != null && event.getClickedInventory().getItem(13)
                                 .getType() == org.bukkit.Material.NETHERRACK) {
                             if (event.getSlot() == 11) {
-                                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f,
-                                        1f);
-                                com.h2ph.commands.player.RTPCommand.openOverworldGUI(player);
+                                com.h2ph.rtp.RTPManager.teleport(player, "overworld");
                             }
                             else if (event.getSlot() == 13) {
                                 com.h2ph.rtp.RTPManager.teleport(player, "nether");
@@ -31,38 +29,11 @@ public class RTPListener implements Listener {
                                 com.h2ph.rtp.RTPManager.teleport(player, "end");
                             }
                         }
-                        else if (event.getClickedInventory().getItem(10) != null
-                                && event.getClickedInventory().getItem(10)
-                                        .getType() == org.bukkit.Material.GRASS_BLOCK) {
-                            if (event.getSlot() == 10) {
-                                com.h2ph.rtp.RTPManager.teleport(player, "overworld");
-                            }
-                        }
                     }
                 }
             }
         }
     }
 
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getView().getTitle().equals(com.h2ph.commands.player.RTPCommand.GUI_TITLE)) {
-            if (event.getInventory().getItem(10) != null
-                    && event.getInventory().getItem(10).getType() == org.bukkit.Material.GRASS_BLOCK) {
-                if (event.getPlayer() instanceof org.bukkit.entity.Player) {
-                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getPlayer();
 
-                    com.h2ph.Falcon plugin = org.bukkit.plugin.java.JavaPlugin
-                            .getPlugin(com.h2ph.Falcon.class);
-                    plugin.getSchedulerAdapter().runTaskLater(() -> {
-                        if (com.h2ph.rtp.RTPManager.isTeleporting(player)
-                                || com.h2ph.rtp.RTPManager.isOnCooldown(player)) {
-                            return;
-                        }
-                        com.h2ph.commands.player.RTPCommand.openRTPGUI(player);
-                    }, 1L);
-                }
-            }
-        }
-    }
 }

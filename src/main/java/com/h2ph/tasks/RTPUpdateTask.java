@@ -16,9 +16,6 @@ public class RTPUpdateTask implements Runnable {
                 if (topInventory.getItem(13) != null
                         && topInventory.getItem(13).getType() == org.bukkit.Material.NETHERRACK) {
                     RTPCommand.updateItems(topInventory, player);
-                } else if (topInventory.getItem(10) != null
-                        && topInventory.getItem(10).getType() == org.bukkit.Material.GRASS_BLOCK) {
-                    RTPCommand.updateOverworldItems(topInventory, player);
                 }
             }
         }

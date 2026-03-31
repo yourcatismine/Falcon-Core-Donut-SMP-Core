@@ -1,18 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.Material
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.Player
- *  org.bukkit.event.inventory.InventoryClickEvent
- *  org.bukkit.event.inventory.InventoryCloseEvent
- *  org.bukkit.inventory.Inventory
- *  org.bukkit.inventory.InventoryHolder
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.plugin.Plugin
- */
 package com.falconcore.survival.orders.gui;
 
 import java.util.ArrayList;
@@ -181,66 +166,66 @@ public class ConfirmDeliveryMenu
                 return;
             }
 
-            try {
-                this.finalized = true;
+            this.finalized = true;
+            this.module.orders().getOrderAsync(this.order.id).thenAccept(freshOrder -> {
+                TaskUtil.runEntity((Plugin) this.module.getPlugin(), (org.bukkit.entity.Entity) this.p, () -> {
+                    try {
+                        if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
+                            this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                            this.p.sendMessage(Utils.formatColors("&cThis order is no longer active!"));
 
-                Order freshOrder = this.module.orders().getOrder(this.order.id);
-                if (freshOrder == null || freshOrder.canceled || freshOrder.completed) {
-                    this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
-                    this.p.sendMessage(Utils.formatColors("&cThis order is no longer active!"));
+                            for (ItemStack shulker : this.originalShulkers) {
+                                this.giveBackOrDrop(shulker);
+                            }
+                            for (ItemStack directItem : this.acceptedDirect) {
+                                this.giveBackOrDrop(directItem);
+                            }
 
-                    for (ItemStack shulker : this.originalShulkers) {
-                        this.giveBackOrDrop(shulker);
+                            this.p.closeInventory();
+                            return;
+                        }
+
+                        this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+
+                        List<ItemStack> allAccepted = new ArrayList<>();
+                        allAccepted.addAll(this.acceptedDirect);
+                        allAccepted.addAll(this.acceptedFromShulkers);
+
+                        try {
+                            this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount,
+                                    this.p.getUniqueId());
+                        } catch (IllegalStateException ex) {
+                            this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
+                            this.p.sendMessage(Utils.formatColors("&cDelivery failed: " + ex.getMessage()));
+
+                            for (ItemStack shulker : this.originalShulkers) {
+                                this.giveBackOrDrop(shulker);
+                            }
+                            for (ItemStack directItem : this.acceptedDirect) {
+                                this.giveBackOrDrop(directItem);
+                            }
+
+                            this.p.closeInventory();
+                            return;
+                        }
+
+                        for (ItemStack processedShulker : this.processedShulkers) {
+                            com.falconcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(processedShulker);
+                            this.giveBackOrDrop(processedShulker);
+                        }
+
+                        this.p.removeMetadata("falconorder.deliveryStartTime", this.module.getPlugin());
+
+                        if (this.order.remainingAmount() > 0) {
+                            new DeliverItemsMenu(this.module, this.p, this.order).open();
+                        } else {
+                            new OrdersMainMenu(this.module, this.p).open();
+                        }
+                    } finally {
+                        processingOrders.remove(this.order.id);
                     }
-                    for (ItemStack directItem : this.acceptedDirect) {
-                        this.giveBackOrDrop(directItem);
-                    }
-
-                    this.p.closeInventory();
-                    return;
-                }
-
-                this.module.cfg().play(this.p, "sounds.confirm", "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
-
-                List<ItemStack> allAccepted = new ArrayList<>();
-                allAccepted.addAll(this.acceptedDirect);
-                allAccepted.addAll(this.acceptedFromShulkers);
-
-                try {
-                    this.module.orders().applyDelivery(this.order, allAccepted, this.acceptedAmount,
-                            this.p.getUniqueId());
-                } catch (IllegalStateException ex) {
-                    this.module.cfg().play(this.p, "sounds.error", "ENTITY_VILLAGER_NO", 1.0f, 1.0f);
-                    this.p.sendMessage(Utils.formatColors("&cDelivery failed: " + ex.getMessage()));
-
-                    for (ItemStack shulker : this.originalShulkers) {
-                        this.giveBackOrDrop(shulker);
-                    }
-                    for (ItemStack directItem : this.acceptedDirect) {
-                        this.giveBackOrDrop(directItem);
-                    }
-
-                    this.p.closeInventory();
-                    return;
-                }
-
-                for (ItemStack processedShulker : this.processedShulkers) {
-                    com.falconcore.survival.tools.ToolsManager.getInstance().resumeOrdersTimers(processedShulker);
-                    this.giveBackOrDrop(processedShulker);
-                }
-
-                this.p.removeMetadata("falconorder.deliveryStartTime", this.module.getPlugin());
-
-                if (this.order.remainingAmount() > 0) {
-                    TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                            () -> new DeliverItemsMenu(this.module, this.p, this.order).open(), 1L);
-                } else {
-                    TaskUtil.runEntityLater((Plugin) this.module.getPlugin(), (Entity) this.p,
-                            () -> new OrdersMainMenu(this.module, this.p).open(), 1L);
-                }
-            } finally {
-                processingOrders.remove(this.order.id);
-            }
+                });
+            });
         }
     }
 

@@ -78,47 +78,33 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
         player.openInventory(gui);
     }
 
-    public static void openOverworldGUI(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        updateOverworldItems(gui, player);
-
-        player.openInventory(gui);
-    }
-
-    public static void updateOverworldItems(Inventory gui, Player player) {
-        String count = formatCount(getPlayerCount("overworld"));
-        String ping = getPing(player);
-
-        gui.setItem(10, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
-                "&fClick to randomly teleport",
-                "",
-                "&7Players (&d" + count + "&7)",
-                "&7Europe (&d" + ping + "ms&7)"));
-    }
 
     public static void updateItems(Inventory gui, Player player) {
         String overworldCount = formatCount(getPlayerCount("overworld"));
         String netherCount = formatCount(getPlayerCount("nether"));
         String endCount = formatCount(getPlayerCount("end"));
         String ping = getPing(player);
+        com.h2ph.Falcon main = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.h2ph.Falcon.class);
+        String region = main.getRTPRegionName();
 
         gui.setItem(11, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
-                "&fClick to select a region",
+                "&fClick to randomly teleport",
                 "",
-                "&7Players (&d" + overworldCount + "&7)"));
+                "&7Players (&d" + overworldCount + "&7)",
+                "&7" + region + " (&d" + ping + "ms&7)"));
 
         gui.setItem(13, createItem(org.bukkit.Material.NETHERRACK, "&aɴᴇᴛʜᴇʀ",
                 "&fClick to randomly teleport",
                 "",
                 "&7Players (&d" + netherCount + "&7)",
-                "&7Europe (&d" + ping + "ms&7)"));
+                "&7" + region + " (&d" + ping + "ms&7)"));
 
         gui.setItem(15, createItem(org.bukkit.Material.END_STONE, "&aᴇɴᴅ",
                 "&fClick to randomly teleport",
                 "",
                 "&7Players (&d" + endCount + "&7)",
-                "&7Europe (&d" + ping + "ms&7)"));
+                "&7" + region + " (&d" + ping + "ms&7)"));
     }
 
     private static int getPlayerCount(String type) {

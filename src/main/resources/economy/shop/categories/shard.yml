@@ -1,53 +1,55 @@
-gui-title: "&8ѕʜᴏᴘ - ᴄᴀʀᴅ ѕʜᴏᴘ"
+gui-title: "&8ѕʜᴏᴘ - ѕʜᴀʀᴅ ѕʜᴏᴘ"
 
 items:
 
-  rustic:
+#Keys
+  common:
     material: TRIPWIRE_HOOK
-    name: "&aʀᴜѕᴛɪᴄ ᴋᴇʏ"
+    name: "&aᴄᴏᴍᴍᴏɴ ᴋᴇʏ"
     slot: 2
-    command: "keys give {gamertag} rustic 1"
+    command: "key give {gamertag} common 1"
     price: 200
     currency: SHARDS
 
-  arcane:
+  prime:
     material: TRIPWIRE_HOOK
-    name: "&9ᴀʀᴄᴀɴᴇ ᴋᴇʏ"
+    name: "&9ᴘʀɪᴍᴇ ᴋᴇʏ"
     slot: 3
-    command: "keys give {gamertag} arcane 1"
+    command: "key give {gamertag} prime 1"
     price: 300
+    currency: SHARDS
+
+  gold:
+    material: TRIPWIRE_HOOK
+    name: "&eɢᴏʟᴅ ᴋᴇʏ"
+    slot: 4
+    command: "key give {gamertag} gold 1"
+    price: 800
+    currency: SHARDS
+
+  vale:
+    material: TRIPWIRE_HOOK
+    name: "&5ᴀᴍᴇᴛʜʏѕᴛ ᴋᴇʏ"
+    slot: 5
+    command: "key give {gamertag} vale 1"
+    price: 1000
     currency: SHARDS
 
   mythic:
     material: TRIPWIRE_HOOK
-    name: "&dᴍʏᴛʜɪᴄ ᴋᴇʏ"
-    slot: 4
-    command: "keys give {gamertag} mythic 1"
-    price: 800
-    currency: SHARDS
-
-  sphynx:
-    material: TRIPWIRE_HOOK
-    name: "&dꜱᴘʜʏɴx ᴋᴇʏ"
-    slot: 5
-    command: "keys give {gamertag} sphynx 1"
-    price: 1000
-    currency: SHARDS
-
-  aetherium:
-    material: TRIPWIRE_HOOK
-    name: "&4ᴀᴇᴛʜᴇʀɪᴜᴍ ᴋᴇʏ"
+    name: "&4ᴍʏᴛʜɪᴄ ᴋᴇʏ"
     slot: 6
-    command: "keys give {gamertag} aetherium 1"
+    command: "key give {gamertag} mythic 1"
     price: 1500
     currency: SHARDS
 
+  # Spawners
   pig_spawner:
     material: SPAWNER
     spawner: "PIG"
     name: "&dᴘɪɢ ѕᴘᴀᴡɴᴇʀ"
     slot: 9
-    command: "smartspawner give spawner {gamertag} pig {value}"
+    command: "ss give {gamertag} pig {value}"
     price: 100
     values: [1,10,64]
     currency: SHARDS
@@ -57,7 +59,7 @@ items:
     spawner: "COW"
     name: "&cᴄᴏᴡ ѕᴘᴀᴡɴᴇʀ"
     slot: 10
-    command: "smartspawner give spawner {gamertag} cow {value}"
+    command: "ss give {gamertag} cow {value}"
     price: 150
     values: [1,10,64]
     currency: SHARDS
@@ -67,7 +69,7 @@ items:
     spawner: "SKELETON"
     name: "&fsᴋᴇʟᴇᴛᴏɴ ѕᴘᴀᴡɴᴇʀ"
     slot: 11
-    command: "smartspawner give spawner {gamertag} skeleton {value}"
+    command: "ss give {gamertag} skeleton {value}"
     price: 1000
     values: [1,10,64]
     currency: SHARDS
@@ -77,7 +79,7 @@ items:
     spawner: "CREEPER"
     name: "&cᴄʀᴇᴇᴘᴇʀ ѕᴘᴀᴡɴᴇʀ"
     slot: 12
-    command: "smartspawner give spawner {gamertag} creeper {value}"
+    command: "ss give {gamertag} creeper {value}"
     price: 800
     values: [1,10,64]
     currency: SHARDS
@@ -87,7 +89,7 @@ items:
     spawner: "SPIDER"
     name: "&csᴘɪᴅᴇʀ ѕᴘᴀᴡɴᴇʀ"
     slot: 13
-    command: "smartspawner give spawner {gamertag} spider {value}"
+    command: "ss give {gamertag} spider {value}"
     price: 300
     values: [1,10,64]
     currency: SHARDS
@@ -97,7 +99,7 @@ items:
     spawner: "ZOMBIFIED_PIGLIN"
     name: "&eᴢᴏᴍʙɪꜰɪᴇᴅ ᴘɪɢʟɪɴ ѕᴘᴀᴡɴᴇʀ"
     slot: 14
-    command: "smartspawner give spawner {gamertag} zombified_piglin {value}"
+    command: "ss give {gamertag} zombified_piglin {value}"
     price: 450
     values: [1,10,64]
     currency: SHARDS
@@ -107,7 +109,7 @@ items:
     spawner: "evoker_spawner"
     name: "&eᴇᴠᴏᴋᴇʀ &aꜱᴘᴀᴡɴᴇʀ"
     slot: 15
-    command: "smartspawner give spawner {gamertag} evoker {value}"
+    command: "ss give {gamertag} evoker {value}"
     price: 800
     values: [1,10,64]
     currency: SHARDS
@@ -117,7 +119,7 @@ items:
     spawner: "BLAZE"
     name: "&dʙʟᴀᴢᴇ ѕᴘᴀᴡɴᴇʀ"
     slot: 16
-    command: "smartspawner give spawner {gamertag} blaze {value}"
+    command: "ss give {gamertag} blaze {value}"
     price: 500
     values: [1,10,64]
     currency: SHARDS
@@ -127,7 +129,7 @@ items:
     spawner: "witch_spawner"
     name: "&dᴡɪᴛᴄʜ ꜱᴘᴀᴡɴᴇʀ"
     slot: 17
-    command: "smartspawner give spawner {gamertag} witch {value}"
+    command: "ss give {gamertag} witch {value}"
     price: 300
     values: [1,10,64]
     currency: SHARDS
@@ -137,7 +139,7 @@ items:
     spawner: "IRON_GOLEM"
     name: "&fɪʀᴏɴ ɢᴏʟᴇᴍ ѕᴘᴀᴡɴᴇʀ"
     slot: 20
-    command: "smartspawner give spawner {gamertag} iron_golem {value}"
+    command: "ss give {gamertag} iron_golem {value}"
     price: 1000
     values: [1,10,64]
     currency: SHARDS
@@ -147,7 +149,7 @@ items:
     spawner: "drowned_spawner"
     name: "&3ᴅʀᴏᴡɴᴇᴅ ꜱᴘᴀᴡɴᴇʀ"
     slot: 21
-    command: "smartspawner give spawner {gamertag} drowned {value}"
+    command: "ss give {gamertag} drowned {value}"
     price: 500
     values: [1,10,64]
     currency: SHARDS
@@ -157,7 +159,7 @@ items:
     spawner: "wither_skelleton_spawner"
     name: "&8ᴡɪᴛʜᴇʀ ꜱᴋᴇʟᴇᴛᴏɴ ꜱᴘᴀɴᴡᴇʀ"
     slot: 22
-    command: "smartspawner give spawner {gamertag} wither_skeleton {value}"
+    command: "ss give {gamertag} wither_skeleton {value}"
     price: 800
     values: [1,10,64]
     currency: SHARDS
@@ -167,17 +169,17 @@ items:
     spawner: "ELDER_GUARDIAN"
     name: "&aᴇʟᴅᴇʀ ɢᴜᴀʀᴅɪᴀɴ ꜱᴘᴀᴡɴᴇʀ"
     slot: 23
-    command: "smartspawner give spawner {gamertag} elder_guardian {value}"
+    command: "ss give {gamertag} elder_guardian {value}"
     price: 800
     values: [1,10,64]
     currency: SHARDS
-
+    
   panda_spawner:
     material: SPAWNER
     spawner: "PANDA"
     name: "&eᴘᴀɴᴅᴀ ꜱᴘᴀᴡɴᴇʀ"
     slot: 24
-    command: "smartspawner give spawner {gamertag} panda {value}"
+    command: "ss give {gamertag} panda {value}"
     price: 3000
     values: [1,10,64]
     currency: SHARDS

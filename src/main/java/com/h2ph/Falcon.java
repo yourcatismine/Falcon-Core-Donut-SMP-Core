@@ -1066,7 +1066,7 @@ public class Falcon extends JavaPlugin {
                 if (data != null && data.isTeamChat() && data.getTeamId() != null) {
                     player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             new net.md_5.bungee.api.chat.TextComponent(
-                                    com.falconcore.survival.orders.Utils.formatColors("&dYou have team chat on.")));
+                                    com.falconcore.survival.orders.Utils.formatColors("&bYou have team chat on.")));
                 }
             }
         }, 40L, 40L);

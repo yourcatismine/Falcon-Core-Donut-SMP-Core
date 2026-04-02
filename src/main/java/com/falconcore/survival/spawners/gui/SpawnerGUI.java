@@ -79,18 +79,18 @@ public class SpawnerGUI {
     
         String typeAndPlural = data.getType().getDisplayName() + " spawners";
         String stylizedFull = stylizeSmallCaps(typeAndPlural);
-        String skullName = "&d" + data.getStackSize() + " " + stylizedFull;
+        String skullName = "&b" + data.getStackSize() + " " + stylizedFull;
         skullMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', skullName));
     
         List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.translateAlternateColorCodes('&', "&d\u25CF&f Click to sell items and collect xp"));
+        lore.add(ChatColor.translateAlternateColorCodes('&', "&b\u25CF&f Click to sell items and collect xp"));
     
         long storedItems = data.getAccumulatedDrops().values().stream().mapToLong(Long::longValue).sum();
         long storageCapacity = Math.max(1L, plugin.getSpawnerConfig().getLong("settings.storage_capacity", 1_000_000L));
         double fillPercent = Math.min(100.0D, (storedItems * 100.0D) / storageCapacity);
         String percentStr = String.format(Locale.ENGLISH, "%.1f", fillPercent);
     
-        String storageLine = "&dStorage:&f " + percentStr + "%&d Filled";
+        String storageLine = "&bStorage:&f " + percentStr + "%&b Filled";
         lore.add(ChatColor.translateAlternateColorCodes('&', storageLine));
     
         skullMeta.setLore(lore);
@@ -99,7 +99,7 @@ public class SpawnerGUI {
     
         ItemStack storageItem = new ItemStack(Material.CHEST);
         ItemMeta storageMeta = storageItem.getItemMeta();
-        String storageTitle = "&d" + stylizeSmallCaps("Spawner Storage");
+        String storageTitle = "&b" + stylizeSmallCaps("Spawner Storage");
         storageMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', storageTitle));
         List<String> storageLore = new ArrayList<>();
         data.getAccumulatedDrops().entrySet().stream()
@@ -109,7 +109,7 @@ public class SpawnerGUI {
                 .forEach(entry -> {
                     String amount = formatCompactAmountWithDecimal(entry.getValue());
                     String itemName = capitalizeWords(entry.getKey().name());
-                    storageLore.add(ChatColor.translateAlternateColorCodes('&', "&d" + amount + "&f " + itemName));
+                    storageLore.add(ChatColor.translateAlternateColorCodes('&', "&b" + amount + "&f " + itemName));
                 });
     
         if (storageLore.isEmpty()) {
@@ -149,7 +149,7 @@ public class SpawnerGUI {
         if (page > 1) {
             ItemStack previousArrow = new ItemStack(Material.ARROW);
             ItemMeta previousMeta = previousArrow.getItemMeta();
-            previousMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dᴘʀᴇᴠɪᴏᴜs"));
+            previousMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bᴘʀᴇᴠɪᴏᴜs"));
             List<String> previousLore = new ArrayList<>();
             previousLore.add(ChatColor.translateAlternateColorCodes('&', "&fClick to go back a page"));
             previousMeta.setLore(previousLore);
@@ -160,9 +160,9 @@ public class SpawnerGUI {
 
         ItemStack spawnerCollectItem = new ItemStack(Material.SPECTRAL_ARROW);
         ItemMeta spawnerCollectMeta = spawnerCollectItem.getItemMeta();
-        spawnerCollectMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dѕᴘᴀᴡɴᴇʀ"));
+        spawnerCollectMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bѕᴘᴀᴡɴᴇʀ"));
         List<String> spawnerCollectLore = new ArrayList<>();
-        spawnerCollectLore.add(ChatColor.translateAlternateColorCodes('&', "&d● &fCollect your loot from the storage"));
+        spawnerCollectLore.add(ChatColor.translateAlternateColorCodes('&', "&b● &fCollect your loot from the storage"));
         spawnerCollectMeta.setLore(spawnerCollectLore);
         spawnerCollectItem.setItemMeta(spawnerCollectMeta);
         inventory.setItem(49, spawnerCollectItem);
@@ -170,7 +170,7 @@ public class SpawnerGUI {
         if (page < totalPages) {
             ItemStack nextArrow = new ItemStack(Material.ARROW);
             ItemMeta nextMeta = nextArrow.getItemMeta();
-            nextMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dɴᴇxᴛ"));
+            nextMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bɴᴇxᴛ"));
             List<String> nextLore = new ArrayList<>();
             nextLore.add(ChatColor.translateAlternateColorCodes('&', "&fClick to go to next page"));
             nextMeta.setLore(nextLore);
@@ -181,7 +181,7 @@ public class SpawnerGUI {
 
         ItemStack dropper = new ItemStack(Material.DROPPER);
         ItemMeta dropperMeta = dropper.getItemMeta();
-        dropperMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dᴅʀᴏᴘ ʟᴏᴏᴛ"));
+        dropperMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bᴅʀᴏᴘ ʟᴏᴏᴛ"));
         List<String> dropLore = new ArrayList<>();
         dropLore.add(ChatColor.translateAlternateColorCodes('&', "&fClick to drop all loot on the page"));
         dropperMeta.setLore(dropLore);
@@ -190,7 +190,7 @@ public class SpawnerGUI {
 
         ItemStack goldIngot = new ItemStack(Material.GOLD_INGOT);
         ItemMeta goldMeta = goldIngot.getItemMeta();
-        goldMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&dѕᴇʟʟ ᴀʟʟ"));
+        goldMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bѕᴇʟʟ ᴀʟʟ"));
         List<String> sellAllLore = new ArrayList<>();
         sellAllLore.add(ChatColor.translateAlternateColorCodes('&', "&fClick to sell all mob drops!"));
         goldMeta.setLore(sellAllLore);

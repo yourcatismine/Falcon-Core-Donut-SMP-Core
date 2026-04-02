@@ -79,11 +79,11 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
 
         if (st.page > 0) {
             this.inv.setItem(45,
-                    makeItem(Material.ARROW, "&dʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
+                    makeItem(Material.ARROW, "&bʙᴀᴄᴋ", List.of("&fClick to go to the previous page")));
         }
 
         if (st.page < maxPage) {
-            this.inv.setItem(53, makeItem(Material.ARROW, "&dɴᴇхᴛ", List.of("&fClick to go to the next page")));
+            this.inv.setItem(53, makeItem(Material.ARROW, "&bɴᴇхᴛ", List.of("&fClick to go to the next page")));
         }
 
         List<String> sortLore = new ArrayList<>();
@@ -91,7 +91,7 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         sortLore.add(isSort(st.sort, SortType.MOST_DELIVERED) + "Most Delivered");
         sortLore.add(isSort(st.sort, SortType.RECENTLY_LISTED) + "Recently Listed");
         sortLore.add(isSort(st.sort, SortType.MOST_MONEY_PER_ITEM) + "Most Money Per Item");
-        this.inv.setItem(47, makeItem(Material.CAULDRON, "&dѕᴏʀᴛ", sortLore));
+        this.inv.setItem(47, makeItem(Material.CAULDRON, "&bѕᴏʀᴛ", sortLore));
 
         List<String> filterLore = new ArrayList<>();
         List<String> cats = new ArrayList<>();
@@ -100,13 +100,13 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         for (String c : cats) {
             filterLore.add(isFilter(st.filter, c) + c);
         }
-        this.inv.setItem(48, makeItem(Material.HOPPER, "&dꜰɪʟᴛᴇʀ", filterLore));
+        this.inv.setItem(48, makeItem(Material.HOPPER, "&bꜰɪʟᴛᴇʀ", filterLore));
 
-        this.inv.setItem(49, makeItem(Material.MAP, "&dᴏʀᴅᴇʀꜱ", List.of("&fClick to refresh")));
+        this.inv.setItem(49, makeItem(Material.MAP, "&bᴏʀᴅᴇʀꜱ", List.of("&fClick to refresh")));
 
-        this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&dѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
+        this.inv.setItem(50, makeItem(Material.OAK_SIGN, "&bѕᴇᴀʀᴄʜ", List.of("&fClick to search")));
 
-        this.inv.setItem(51, makeItem(Material.CHEST, "&dʏᴏᴜʀ ᴏʀᴅᴇʀꜱ", List.of("&fClick to view your orders")));
+        this.inv.setItem(51, makeItem(Material.CHEST, "&bʏᴏᴜʀ ᴏʀᴅᴇʀꜱ", List.of("&fClick to view your orders")));
 
         int from = st.page * perPage;
         int to = Math.min(from + perPage, list.size());
@@ -178,8 +178,8 @@ public class OrdersMainMenu implements InventoryHolder, MenuOwner {
         }
         lore.add(Utils.formatColors("&a$" + Utils.abbr(o.priceEach) + "&f each"));
         lore.add("");
-        lore.add(Utils.formatColors("&d" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + "&7 Delivered"));
-        lore.add(Utils.formatColors("&d$" + Utils.abbr((double) o.delivered * o.priceEach) + "/&a$"
+        lore.add(Utils.formatColors("&b" + Utils.abbr(o.delivered) + "/&a" + Utils.abbr(o.requested) + "&7 Delivered"));
+        lore.add(Utils.formatColors("&b$" + Utils.abbr((double) o.delivered * o.priceEach) + "/&a$"
                 + Utils.abbr(o.totalPrice()) + "&7 Paid"));
         lore.add("");
         lore.add(Utils.formatColors("&fClick to deliver &a" + ownerName + "&f " + o.key.displayName()));

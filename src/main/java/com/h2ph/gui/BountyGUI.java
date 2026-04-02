@@ -84,7 +84,7 @@ public class BountyGUI {
             if (meta != null) {
                 String name = Bukkit.getOfflinePlayer(targetId).getName();
                 meta.setOwningPlayer(Bukkit.getOfflinePlayer(targetId));
-                meta.setDisplayName(color("&d" + (name != null ? name : "Unknown")));
+                meta.setDisplayName(color("&b" + (name != null ? name : "Unknown")));
                 List<String> lore = new ArrayList<>();
                 lore.add(color("&fBounty:&7 $" + formatNumber(amount)));
                 meta.setLore(lore);
@@ -106,16 +106,16 @@ public class BountyGUI {
         } else {
             sortLore.add(color("&fClick to sort (Amount)"));
         }
-        inv.setItem(48, createItem(Material.HOPPER, "&dѕᴏʀᴛ", sortLore));
+        inv.setItem(48, createItem(Material.HOPPER, "&bѕᴏʀᴛ", sortLore));
 
         List<String> infoLore = new ArrayList<>();
         infoLore.add(color("&fClick to refresh"));
         infoLore.add("");
         infoLore.add(color("&7Set a bounty using this:"));
         infoLore.add(color("&7&o/bounty add (player) (amount)"));
-        inv.setItem(49, createItem(Material.SKELETON_SKULL, "&dʙᴏᴜɴᴛɪᴇѕ", infoLore));
+        inv.setItem(49, createItem(Material.SKELETON_SKULL, "&bʙᴏᴜɴᴛɪᴇѕ", infoLore));
 
-        inv.setItem(50, createItem(Material.OAK_SIGN, "&dѕᴇᴀʀᴄʜ", "&fClick to search"));
+        inv.setItem(50, createItem(Material.OAK_SIGN, "&bѕᴇᴀʀᴄʜ", "&fClick to search"));
 
         player.openInventory(inv);
     }

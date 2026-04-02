@@ -3,7 +3,12 @@ INTERVAL: 60
 SCOREBOARD:
   ENABLED: true
   SHARD-BOOSTER: "&5⚡ &fBooster &5%falconcore_shard_booster%"
-  SWITCHER: ["&#F97603☠ &fDeaths &#F97603%falconcore_deaths%", "&#FC0000🗡 &fKills &#FC0000%falconcore_kills%"]
+  VIP: "&fꜰᴀʟᴄᴏɴ+"
+  SWITCHER:
+    [
+      "&#F97603☠ &fDeaths &#F97603%falconcore_deaths%",
+      "&#FC0000🗡 &fKills &#FC0000%falconcore_kills%",
+    ]
   TEAMS: "&d🪓 &fTeam %team_name%"
   TITLE:
     - "&b&lFalconSMP"
@@ -19,18 +24,18 @@ SCOREBOARD:
     - " &7Asia (&b{region_ping}ms&7)"
 
 TAB:
+  ENABLED: true
+  MAX_COLUMNS: 4
+  MAX_ROWS: 20
+  GROUP_SORTING:
     ENABLED: true
-    MAX_COLUMNS: 4
-    MAX_ROWS: 20
-    GROUP_SORTING:
-      ENABLED: true
-      RANKINGS:
-        default: 1
-    TITLE:
-      header:
-      - '&b&lFalconSMP'
-      - '&f%online% players'
-      - ''
-      footer:
-      - ''
-      - '&7Tps:&b {tps}&7&l |&r&7 Mspt:&b {mspt}&7&l |&r&7 Ping:&b {ping}ms'
+    RANKINGS:
+      default: 1
+  TITLE:
+    header:
+      - "&b&lFalconSMP"
+      - "&f%online% players"
+      - ""
+    footer:
+      - ""
+      - "&7Tps:&b {tps}&7&l |&r&7 Mspt:&b {mspt}&7&l |&r&7 Ping:&b {ping}ms"

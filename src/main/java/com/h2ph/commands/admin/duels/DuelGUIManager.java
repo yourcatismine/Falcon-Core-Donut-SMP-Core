@@ -204,8 +204,9 @@ public class DuelGUIManager {
                 "&7Streak: " + streak);
         gui.setItem(13, statsItem);
 
+        String regionName = formatRegionName(plugin.getRTPRegionName());
         ItemStack regionItem = createItem(Material.FEATHER, "&aʀᴇɢɪᴏɴ", null,
-                "&7Europe (&d--&7)");
+            "&7" + regionName + " (&b--&7)");
         gui.setItem(14, regionItem);
 
         ItemStack confirmItem = createItem(Material.GREEN_STAINED_GLASS_PANE, "&aᴄᴏɴꜰɪʀᴍ", null,
@@ -213,6 +214,32 @@ public class DuelGUIManager {
         gui.setItem(16, confirmItem);
 
         player.openInventory(gui);
+    }
+
+    private String formatRegionName(String regionName) {
+        if (regionName == null || regionName.trim().isEmpty()) {
+            return "Unknown";
+        }
+
+        String[] parts = regionName.trim().replace('_', ' ').split("\\s+");
+        StringBuilder formatted = new StringBuilder();
+
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+
+            if (formatted.length() > 0) {
+                formatted.append(' ');
+            }
+
+            formatted.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                formatted.append(part.substring(1).toLowerCase());
+            }
+        }
+
+        return formatted.length() == 0 ? "Unknown" : formatted.toString();
     }
 
     private ItemStack createItem(Material material, String name, String storedRegionName, String... lore) {

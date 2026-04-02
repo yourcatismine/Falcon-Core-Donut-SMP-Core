@@ -91,20 +91,20 @@ public class RTPCommand implements org.bukkit.command.TabExecutor {
         gui.setItem(11, createItem(org.bukkit.Material.GRASS_BLOCK, "&aᴏᴠᴇʀᴡᴏʀʟᴅ",
                 "&fClick to randomly teleport",
                 "",
-                "&7Players (&d" + overworldCount + "&7)",
-                "&7" + region + " (&d" + ping + "ms&7)"));
+                "&7Players (&b" + overworldCount + "&7)",
+                "&7" + region + " (&b" + ping + "ms&7)"));
 
         gui.setItem(13, createItem(org.bukkit.Material.NETHERRACK, "&aɴᴇᴛʜᴇʀ",
                 "&fClick to randomly teleport",
                 "",
-                "&7Players (&d" + netherCount + "&7)",
-                "&7" + region + " (&d" + ping + "ms&7)"));
+                "&7Players (&b" + netherCount + "&7)",
+                "&7" + region + " (&b" + ping + "ms&7)"));
 
         gui.setItem(15, createItem(org.bukkit.Material.END_STONE, "&aᴇɴᴅ",
                 "&fClick to randomly teleport",
                 "",
-                "&7Players (&d" + endCount + "&7)",
-                "&7" + region + " (&d" + ping + "ms&7)"));
+                "&7Players (&b" + endCount + "&7)",
+                "&7" + region + " (&b" + ping + "ms&7)"));
     }
 
     private static int getPlayerCount(String type) {

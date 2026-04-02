@@ -43,7 +43,11 @@ public class CarouselManager {
 
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (crateFile.exists()) {
-            FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+            FileConfiguration config = loadConfig(crateFile);
+            if (config == null) {
+                player.sendMessage(ChatColor.RED + "Error: Crate config corrupted. Check console.");
+                return;
+            }
 
             if (config.contains("contents")) {
                 ConfigurationSection contents = config.getConfigurationSection("contents");
@@ -154,6 +158,10 @@ public class CarouselManager {
 
         deductKey(player, crateName);
         ItemStack reward = pickReward(crateName);
+        if (reward == null) {
+             player.sendMessage(ChatColor.RED + "Error: Failed to pick reward. Check console.");
+             return;
+        }
         pendingRewards.put(player.getUniqueId(), reward);
 
         startBackgroundAnimation(player, gui, 2L);
@@ -163,7 +171,8 @@ public class CarouselManager {
 
     private void startVariableSpeedAnimation(Player player, String crateName, Inventory gui, ItemStack finalReward) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) return;
         List<ItemStack> contents = getCrateContents(config);
 
         Runnable animationStep = new Runnable() {
@@ -325,7 +334,8 @@ public class CarouselManager {
 
     private ItemStack pickReward(String crateName) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) return null;
         List<ItemStack> contents = getCrateContents(config);
         return getRandomItem(contents);
     }
@@ -334,7 +344,8 @@ public class CarouselManager {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists())
             return false;
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) return false;
         String keyName = config.getString("key");
 
         com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
@@ -345,12 +356,24 @@ public class CarouselManager {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
         if (!crateFile.exists())
             return;
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) return;
         String keyName = config.getString("key");
 
         com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (data != null)
             data.removeKey(keyName);
+    }
+
+    private FileConfiguration loadConfig(File file) {
+        try {
+            return YamlConfiguration.loadConfiguration(file);
+        } catch (Exception e) {
+            plugin.getLogger().severe("§c[Falcon] FAILED TO LOAD CRATE CONFIG: " + file.getName());
+            plugin.getLogger().severe("§cThis is usually caused by a corrupted item in the crate (Material cannot be null).");
+            plugin.getLogger().severe("§cThe crate will not be accessible until this is fixed.");
+            return null;
+        }
     }
 
     public boolean isSpinning(Player player) {

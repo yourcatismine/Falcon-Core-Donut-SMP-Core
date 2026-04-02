@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.command.Command
- *  org.bukkit.command.CommandExecutor
- *  org.bukkit.command.CommandSender
- *  org.bukkit.command.TabCompleter
- *  org.bukkit.entity.Player
- */
 package com.falconcore.survival.orders.cmd;
 
 import java.util.Collections;

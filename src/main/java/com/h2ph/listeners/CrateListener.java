@@ -105,7 +105,8 @@ public class CrateListener implements Listener {
             return;
         }
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) return;
         String type = config.getString("type", "NORMAL");
 
         if (type.equalsIgnoreCase("CAROUSEL")) {
@@ -228,7 +229,8 @@ public class CrateListener implements Listener {
                 String crateName = ChatColor.stripColor(title).replace("Editing: ", "");
                 File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
                 if (crateFile.exists()) {
-                    FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+                    FileConfiguration config = loadConfig(crateFile);
+                    if (config == null) return;
                     if (config.getString("type", "NORMAL").equalsIgnoreCase("CAROUSEL")) {
                         if (slot == 4 || slot == 22) {
                             event.setCancelled(true);
@@ -248,7 +250,8 @@ public class CrateListener implements Listener {
         if (!crateFile.exists())
             return false;
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) return false;
         String keyName = config.getString("key");
 
         com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
@@ -284,7 +287,12 @@ public class CrateListener implements Listener {
             return;
         }
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) {
+            player.sendMessage(ChatColor.RED + "Error: Crate config corrupted.");
+            player.closeInventory();
+            return;
+        }
         String keyName = config.getString("key");
 
         com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
@@ -354,7 +362,8 @@ public class CrateListener implements Listener {
             String crateName = ChatColor.stripColor(title).replace("Editing: ", "");
             File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
             if (crateFile.exists()) {
-                FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+                FileConfiguration config = loadConfig(crateFile);
+                if (config == null) return;
                 if (config.getString("type", "NORMAL").equalsIgnoreCase("CAROUSEL")) {
                     for (int slot : event.getRawSlots()) {
                         if (slot == 4 || slot == 22) {
@@ -371,7 +380,11 @@ public class CrateListener implements Listener {
 
     private void saveCrateContents(String crateName, Inventory inv) {
         File crateFile = new File(plugin.getDataFolder(), "crates/crate/" + crateName + "-crate.yml");
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) {
+            plugin.getLogger().severe("ABORTING SAVE for crate " + crateName + " to prevent data loss due to corruption.");
+            return;
+        }
 
         config.set("contents", null);
 
@@ -392,6 +405,17 @@ public class CrateListener implements Listener {
         } catch (IOException e) {
             plugin.getLogger().severe("Could not save crate config for " + crateName);
             e.printStackTrace();
+        }
+    }
+
+    private FileConfiguration loadConfig(File file) {
+        try {
+            return YamlConfiguration.loadConfiguration(file);
+        } catch (Exception e) {
+            plugin.getLogger().severe("§c[Falcon] FAILED TO LOAD CRATE CONFIG: " + file.getName());
+            plugin.getLogger().severe("§cThis is usually caused by a corrupted item in the crate (Material cannot be null).");
+            plugin.getLogger().severe("§cThe crate will not be accessible until this is fixed.");
+            return null;
         }
     }
 }

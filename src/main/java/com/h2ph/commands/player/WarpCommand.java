@@ -57,8 +57,8 @@ public class WarpCommand implements TabExecutor {
                 player,
                 dest,
                 5,
-                "&7Teleporting in &d%s",
-                "&7You were teleported to warp &d" + name + "&7.");
+                "&7Teleporting in &b%s",
+                "&7You were teleported to warp &b" + name + "&7.");
 
         return true;
     }

@@ -250,13 +250,38 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
 
                     plugin.getVoidManager().addRegion(name, worldName, min.x(), min.y(), min.z(), max.x(),
                             max.y(), max.z());
-                    player.sendMessage("§aVoid protection region list '" + name + "' has been created!");
+                    player.sendMessage("§aVoid protection region '" + name + "' has been created!");
 
                 } catch (com.sk89q.worldedit.IncompleteRegionException e) {
                     player.sendMessage("§cPlease make a complete selection (pos1 and pos2) first.");
                 } catch (Exception e) {
                     player.sendMessage("§cError accessing WorldEdit selection: " + e.getMessage());
                     e.printStackTrace();
+                }
+                return true;
+            } else if (voidAction.equals("delete")) {
+                if (args.length < 3) {
+                    player.sendMessage("§cUsage: /falcon void delete <name>");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return true;
+                }
+                String name = args[2];
+                if (plugin.getVoidManager().deleteRegion(name)) {
+                    player.sendMessage("§aVoid protection region '" + name + "' deleted.");
+                } else {
+                    player.sendMessage("§cVoid protection region '" + name + "' not found.");
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                }
+                return true;
+            } else if (voidAction.equals("list")) {
+                List<com.falconcore.survival.manager.VoidManager.VoidRegion> regions = plugin.getVoidManager().getRegions();
+                if (regions.isEmpty()) {
+                    player.sendMessage("§cNo void protection regions found.");
+                } else {
+                    player.sendMessage("§6Void Protection Regions:");
+                    for (com.falconcore.survival.manager.VoidManager.VoidRegion region : regions) {
+                        player.sendMessage("§e- " + region.name + " §7(" + region.worldName + ": " + (int) region.minX + "," + (int) region.minY + "," + (int) region.minZ + " to " + (int) region.maxX + "," + (int) region.maxY + "," + (int) region.maxZ + ")");
+                    }
                 }
                 return true;
             }
@@ -712,9 +737,15 @@ public class FalconCommand implements CommandExecutor, TabCompleter {
                         .filter(s -> s.startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             } else if (args[0].equalsIgnoreCase("void")) {
-                return Arrays.asList("create").stream()
-                        .filter(s -> s.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                if (args.length == 2) {
+                    return Arrays.asList("create", "delete", "list").stream()
+                            .filter(s -> s.startsWith(args[1].toLowerCase()))
+                            .collect(Collectors.toList());
+                } else if (args.length == 3 && args[1].equalsIgnoreCase("delete")) {
+                    return plugin.getVoidManager().getRegionNames().stream()
+                            .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
+                            .collect(Collectors.toList());
+                }
             } else if (args[0].equalsIgnoreCase("limiter")) {
                 return Arrays.asList("reload", "stats").stream()
                         .filter(s -> s.startsWith(args[1].toLowerCase()))

@@ -148,14 +148,14 @@ public class TpaRequestManager {
 
         if (isTpaHere) {
             String senderMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&7You sent &d" + smallCapsTarget + "&7 a teleport here request.");
+                    "&7You sent &b" + smallCapsTarget + "&7 a teleport here request.");
             sender.sendMessage(senderMsg);
             sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(senderMsg));
             sender.playSound(sender.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
 
             String targetMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&d" + smallCapsSender + "&7 sent you a teleport here request.");
+                    "&b" + smallCapsSender + "&7 sent you a teleport here request.");
             target.sendMessage(targetMsg);
             target.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(targetMsg));
@@ -163,14 +163,14 @@ public class TpaRequestManager {
                     1f);
         } else {
             String senderMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&7You sent &d" + smallCapsTarget + "&7 a teleport request.");
+                    "&7You sent &b" + smallCapsTarget + "&7 a teleport request.");
             sender.sendMessage(senderMsg);
             sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(senderMsg));
             sender.playSound(sender.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_COW_BELL, 1f, 1f);
 
             String targetMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&d" + smallCapsSender + "&7 sent you a teleport request.");
+                    "&b" + smallCapsSender + "&7 sent you a teleport request.");
             target.sendMessage(targetMsg);
             target.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(targetMsg));
@@ -219,13 +219,13 @@ public class TpaRequestManager {
         String typeMsg = (type == RequestType.TPA_HERE) ? "teleport here request" : "teleport request";
 
         String senderMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&d" + smallCapsAcceptor + " &7accepted your " + typeMsg + ".");
+                "&b" + smallCapsAcceptor + " &7accepted your " + typeMsg + ".");
         sender.sendMessage(senderMsg);
         sender.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(senderMsg));
 
         String acceptorMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                "&7You accepted &d" + smallCapsSender + "&7's " + typeMsg + ".");
+                "&7You accepted &b" + smallCapsSender + "&7's " + typeMsg + ".");
         acceptor.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                 new net.md_5.bungee.api.chat.TextComponent(acceptorMsg));
 
@@ -286,7 +286,7 @@ public class TpaRequestManager {
 
                 if (seconds.get() > 0) {
                     String msg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                            "&7Teleporting in &d" + seconds.get() + "s");
+                            "&7Teleporting in &b" + seconds.get() + "s");
                     teleporter.sendMessage(msg);
                     teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                             new net.md_5.bungee.api.chat.TextComponent(msg));
@@ -299,7 +299,7 @@ public class TpaRequestManager {
                     teleporter.teleportAsync(destination.getLocation()).thenAccept(success -> {
                         if (success) {
                             String successMsg = org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                                    "&7You were teleported to &d" + destinationName);
+                                    "&7You were teleported to &b" + destinationName);
                             teleporter.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                                     new net.md_5.bungee.api.chat.TextComponent(successMsg));
 

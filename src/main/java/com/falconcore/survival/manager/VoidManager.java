@@ -73,6 +73,27 @@ public class VoidManager {
         return false;
     }
 
+    public boolean deleteRegion(String name) {
+        config.set("regions." + name, null);
+        if (save()) {
+            regions.removeIf(region -> region.name.equalsIgnoreCase(name));
+            return true;
+        }
+        return false;
+    }
+
+    public List<String> getRegionNames() {
+        List<String> names = new ArrayList<>();
+        for (VoidRegion region : regions) {
+            names.add(region.name);
+        }
+        return names;
+    }
+
+    public List<VoidRegion> getRegions() {
+        return new ArrayList<>(regions);
+    }
+
     public boolean isInVoid(Location loc) {
         if (loc == null || loc.getWorld() == null)
             return false;

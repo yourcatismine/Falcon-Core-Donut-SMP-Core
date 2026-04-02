@@ -51,14 +51,13 @@ public class AFKManager {
 
         config = YamlConfiguration.loadConfiguration(configFile);
 
-        title = ChatColor.translateAlternateColorCodes('&', config.getString("title", "&dᴀꜰᴋ"));
+        title = ChatColor.translateAlternateColorCodes('&', config.getString("title", "&bᴀꜰᴋ"));
         subtitle = ChatColor.translateAlternateColorCodes('&',
                 config.getString("subtitle", "&fEarn one shard per minute"));
         actionbar = ChatColor.translateAlternateColorCodes('&',
-                config.getString("actionbar", "&7Next card in &d<COUNTDOWN>s"));
+                config.getString("actionbar", "&7Next card in &b<COUNTDOWN>s"));
         countdownSeconds = config.getInt("countdown", 60);
         rewardAmount = config.getInt("reward-amount", 1);
-
         String soundName = config.getString("entry-sound.sound", "");
         if (!soundName.isEmpty()) {
             try {
@@ -76,9 +75,9 @@ public class AFKManager {
     private void saveDefaultConfig() {
         try {
             YamlConfiguration c = new YamlConfiguration();
-            c.set("title", "&dᴀꜰᴋ");
+            c.set("title", "&bᴀꜰᴋ");
             c.set("subtitle", "&fEarn one shard per minute");
-            c.set("actionbar", "&7Next card in &d<COUNTDOWN>");
+            c.set("actionbar", "&7Next card in &b<COUNTDOWN>");
             c.set("countdown", 60);
             c.set("reward-amount", 1);
             c.set("entry-sound.sound", "minecraft:block.amethyst_block.chime");
@@ -250,7 +249,7 @@ public class AFKManager {
 
             player.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
                     new net.md_5.bungee.api.chat.TextComponent(
-                            ChatColor.translateAlternateColorCodes('&', "&d+" + amountGained)));
+                            ChatColor.translateAlternateColorCodes('&', "&b+" + amountGained)));
 
             resetPlayerCountdown(uuid);
         } else {

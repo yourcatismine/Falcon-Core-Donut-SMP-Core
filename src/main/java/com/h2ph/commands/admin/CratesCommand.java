@@ -149,7 +149,11 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) {
+            player.sendMessage(ChatColor.RED + "Error: Crate config corrupted. Check console.");
+            return true;
+        }
         String keyName = config.getString("key", "unknown");
         String container = config.getString("container", "CHEST");
 
@@ -207,7 +211,11 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
         Inventory inv = org.bukkit.Bukkit.createInventory(player, 27,
                 ChatColor.translateAlternateColorCodes('&', "&eEditing: " + crateName));
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) {
+            player.sendMessage(ChatColor.RED + "Error: Crate config corrupted. Check console.");
+            return true;
+        }
         String type = config.getString("type", "NORMAL");
 
         if (type.equalsIgnoreCase("CAROUSEL")) {
@@ -243,7 +251,11 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(crateFile);
+        FileConfiguration config = loadConfig(crateFile);
+        if (config == null) {
+            player.sendMessage(ChatColor.RED + "Error: Crate config corrupted. Check console.");
+            return true;
+        }
         List<String> effects = config.getStringList("effects");
 
         if (sub.equalsIgnoreCase("add")) {
@@ -293,6 +305,17 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private FileConfiguration loadConfig(File file) {
+        try {
+            return YamlConfiguration.loadConfiguration(file);
+        } catch (Exception e) {
+            plugin.getLogger().severe("§c[Falcon] FAILED TO LOAD CRATE CONFIG: " + file.getName());
+            plugin.getLogger().severe("§cThis is usually caused by a corrupted item in the crate (Material cannot be null).");
+            plugin.getLogger().severe("§cThe crate will not be accessible until this is fixed.");
+            return null;
+        }
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
@@ -312,9 +335,12 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
                 File cratesDir = new File(plugin.getDataFolder(), "crates/crate");
                 if (cratesDir.exists() && cratesDir.isDirectory()) {
                     List<String> crates = new ArrayList<>();
-                    for (File file : cratesDir.listFiles()) {
-                        if (file.getName().endsWith("-crate.yml")) {
-                            crates.add(file.getName().replace("-crate.yml", ""));
+                    File[] files = cratesDir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            if (file.getName().endsWith("-crate.yml")) {
+                                crates.add(file.getName().replace("-crate.yml", ""));
+                            }
                         }
                     }
                     return crates.stream()
@@ -326,9 +352,12 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
                 File cratesDir = new File(plugin.getDataFolder(), "crates/crate");
                 if (cratesDir.exists() && cratesDir.isDirectory()) {
                     List<String> crates = new ArrayList<>();
-                    for (File file : cratesDir.listFiles()) {
-                        if (file.getName().endsWith("-crate.yml")) {
-                            crates.add(file.getName().replace("-crate.yml", ""));
+                    File[] files = cratesDir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            if (file.getName().endsWith("-crate.yml")) {
+                                crates.add(file.getName().replace("-crate.yml", ""));
+                            }
                         }
                     }
                     return crates.stream()
@@ -341,9 +370,12 @@ public class CratesCommand implements CommandExecutor, TabCompleter {
                 File cratesDir = new File(plugin.getDataFolder(), "crates/crate");
                 if (cratesDir.exists() && cratesDir.isDirectory()) {
                     List<String> crates = new ArrayList<>();
-                    for (File file : cratesDir.listFiles()) {
-                        if (file.getName().endsWith("-crate.yml")) {
-                            crates.add(file.getName().replace("-crate.yml", ""));
+                    File[] files = cratesDir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            if (file.getName().endsWith("-crate.yml")) {
+                                crates.add(file.getName().replace("-crate.yml", ""));
+                            }
                         }
                     }
                     return crates.stream()

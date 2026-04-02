@@ -5,16 +5,16 @@ gui:
     info:
       slot: 13
       material: PAPER
-      name: "&d&lᴍᴇᴅɪᴀ ʀᴀɴᴋ"
+      name: "&b&lᴍᴇᴅɪᴀ ʀᴀɴᴋ"
       lore:
-        - "&dRequirements: (only one needed)"
-        - "&d -&f 25 average viewers on tiktok live"
-        - "&d -&f 15 average on twitch or YouTube"
-        - "&d -&f 10k views on tiktok video or YouTube short"
-        - "&d -&f 700 views for a normal youtube video"
+        - "&bRequirements: (only one needed)"
+        - "&b -&f 25 average viewers on tiktok live"
+        - "&b -&f 15 average on twitch or YouTube"
+        - "&b -&f 10k views on tiktok video or YouTube short"
+        - "&b -&f 700 views for a normal youtube video"
         - ""
-        - "&dReminders:"
-        - "&d -&f Must have the IP on screen"
-        - "&d -&f Must be from the new season"
-        - "&d -&f Create a ticket in discord for the rank"
-        - "&d -&f It lasts 90 days and has all top ranks perks"
+        - "&bReminders:"
+        - "&b -&f Must have the IP on screen"
+        - "&b -&f Must be from the new season"
+        - "&b -&f Create a ticket in discord for the rank"
+        - "&b -&f It lasts 90 days and has all top ranks perks"

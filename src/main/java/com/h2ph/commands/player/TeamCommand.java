@@ -48,7 +48,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
             }
-            sendHelp(player);
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return true;
         }
 
@@ -113,7 +113,8 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sendSilentError(player);
+           // player.sendMessage(ChatColor.RED + "Usage: /team create <name>");
+                        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
@@ -123,7 +124,8 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (name.length() < 3 || name.length() > 32) {
-            player.sendMessage(ChatColor.RED + "Team name must be between 3 and 16 characters (ignoring colors).");
+           // player.sendMessage(ChatColor.RED + "Team name must be between 3 and 16 characters (ignoring colors).");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
@@ -155,7 +157,8 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sendSilentError(player);
+          //  player.sendMessage(ChatColor.RED + "Usage: /team invite <player>");
+                        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
@@ -290,12 +293,14 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
     private void handleKick(Player player, PlayerData data, String[] args) {
         if (data.getTeamId() == null || !"OWNER".equals(data.getTeamRole())) {
-            player.sendMessage(ChatColor.RED + "Only the owner can kick members!");
+          //  player.sendMessage(ChatColor.RED + "Only the owner can kick members!");
+                        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
         if (args.length < 2) {
-            sendSilentError(player);
+          //  player.sendMessage(ChatColor.RED + "Usage: /team kick <player>");
+                        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
@@ -311,7 +316,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
         if (!target.hasPlayedBefore() && !target.isOnline()) {
-            sendSilentError(player);
+            player.sendMessage(ChatColor.RED + "That player does not exist.");
             return;
         }
 
@@ -345,7 +350,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendSilentError(Player player) {
-        sendAlert(player, null, Sound.ENTITY_VILLAGER_NO);
+        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
     }
 
     private void sendAlert(Player player, String message, Sound sound) {
@@ -357,28 +362,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         if (sound != null) {
             player.playSound(player.getLocation(), sound, 1f, 1f);
         }
-    }
-
-    private void sendHelp(Player player) {
-        PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
-        player.sendMessage(Utils.formatColors("&8&m----------------------------------------"));
-        player.sendMessage(Utils.formatColors("&d&lTEAM COMMANDS"));
-
-        if (data.getTeamId() == null) {
-            player.sendMessage(Utils.formatColors("&d/team create <name> &7- Create a team"));
-            player.sendMessage(Utils.formatColors("&d/team join <player> &7- Join a team"));
-        } else {
-            if ("OWNER".equals(data.getTeamRole())) {
-                player.sendMessage(Utils.formatColors("&d/team invite <player> &7- Invite a player"));
-            }
-            player.sendMessage(Utils.formatColors("&d/team leave &7- Leave current team"));
-            if ("OWNER".equals(data.getTeamRole())) {
-                player.sendMessage(Utils.formatColors("&d/team kick <player> &7- Kick a member"));
-                player.sendMessage(Utils.formatColors("&d/team disband &7- Disband the team"));
-            }
-            player.sendMessage(Utils.formatColors("&d/team chat &7- Toggle team chat"));
-        }
-        player.sendMessage(Utils.formatColors("&8&m----------------------------------------"));
     }
 
     @Override

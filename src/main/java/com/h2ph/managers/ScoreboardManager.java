@@ -64,6 +64,10 @@ public class ScoreboardManager implements Listener {
         switcherInterval = config.getInt("INTERVAL", 20);
     }
 
+    public String getVipLabel() {
+        return config != null ? config.getString("SCOREBOARD.VIP", "&fꜰᴀʟᴄᴏɴ+") : "&fꜰᴀʟᴄᴏɴ+";
+    }
+
     public void setup() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             initScoreboard(player);

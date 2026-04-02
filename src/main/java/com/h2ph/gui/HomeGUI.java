@@ -82,8 +82,7 @@ public class HomeGUI {
             }
 
             if (homeNumber >= 3 && !player.hasPermission("falcon.home." + homeNumber) && !player.hasPermission("falcon.home.all")) {
-                List<String> lockedLore = List.of(
-                        color("&fBuy &dѕᴘʜʏɴх&f in /store for more homes"));
+                List<String> lockedLore = List.of(getLockedHomeMessage(plugin));
                 inv.setItem(bedSlot, make(Material.RED_BED,
                         color("&4\u0274\u1d0f \u1d18\u1d07\u0280\u1d0d\u026a\u0455\u0455\u26a4\u1d0f\u0274"),
                         lockedLore));
@@ -136,5 +135,17 @@ public class HomeGUI {
 
     public static String color(String s) {
         return ChatColor.translateAlternateColorCodes('&', s);
+    }
+
+    public static String getLockedHomeMessage(Falcon plugin) {
+        String vipLabel = "&fꜰᴀʟᴄᴏɴ+";
+        if (plugin != null && plugin.getScoreboardManager() != null) {
+            String configuredVip = plugin.getScoreboardManager().getVipLabel();
+            if (configuredVip != null && !configuredVip.isBlank()) {
+                vipLabel = configuredVip;
+            }
+        }
+
+        return color("&fBuy " + vipLabel + "&f in /store for more homes");
     }
 }

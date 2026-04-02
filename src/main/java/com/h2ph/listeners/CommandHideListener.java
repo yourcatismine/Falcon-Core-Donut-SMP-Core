@@ -57,16 +57,11 @@ public class CommandHideListener implements Listener {
         commands.removeIf(command -> {
             String lowerCmd = command.toLowerCase();
 
-            if (lowerCmd.startsWith("falconcore:") || lowerCmd.startsWith("minecraft:")) {
+            if (lowerCmd.contains(":")) {
                 return true;
             }
 
-            String baseCommand = lowerCmd;
-            if (lowerCmd.contains(":")) {
-                baseCommand = lowerCmd.substring(lowerCmd.indexOf(":") + 1);
-            }
-
-            return !isAllowed(player, baseCommand);
+            return !isAllowed(player, lowerCmd);
         });
     }
 

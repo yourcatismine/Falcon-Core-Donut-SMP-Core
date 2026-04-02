@@ -19,6 +19,8 @@ region: "Asia"
 # GET /players/death/?player=<name>
 # GET /leaderboard/money/list
 # GET /leaderboard/shards/list
+# GET /leaderboard/deaths/list
+# GET /leaderboard/kills/list
 # GET /api/players
 # GET /api/players/detail?uuid=<UUID>
 

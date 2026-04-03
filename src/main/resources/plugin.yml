@@ -1,5 +1,5 @@
 name: Falcon
-version: "5.4"
+version: "5.5"
 main: com.h2ph.Falcon
 api-version: "1.21"
 author: h2ph
@@ -71,7 +71,6 @@ commands:
     description: Pay money to another player
     usage: /pay <player> <amount>
 
-
   update:
     description: Create a server update book to show to the next player
     usage: /update
@@ -100,7 +99,6 @@ commands:
     description: Check ban status of a player
     permission: falcon.checkban
     usage: /checkban <player/ID>
-
 
   whowashere:
     description: Show who was previously in the current chunk
@@ -540,4 +538,3 @@ permissions:
   falcon.setafk:
     description: Permission to manage AFK regions and spawns via /falcon setafk
     default: op
-

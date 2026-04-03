@@ -197,6 +197,15 @@ public class SpawnerGUI {
         goldIngot.setItemMeta(goldMeta);
         inventory.setItem(53, goldIngot);
 
+        ItemStack filterItem = new ItemStack(Material.HOPPER);
+        ItemMeta filterMeta = filterItem.getItemMeta();
+        filterMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bꜰɪʟᴛᴇʀ"));
+        List<String> filterLore = new ArrayList<>();
+        filterLore.add(ChatColor.translateAlternateColorCodes('&', "&fClick to manage loot filters"));
+        filterMeta.setLore(filterLore);
+        filterItem.setItemMeta(filterMeta);
+        inventory.setItem(46, filterItem);
+
         int slot = 0;
         int startIndex = (page - 1) * 45;
         int endIndex = startIndex + 45;

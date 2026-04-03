@@ -1808,7 +1808,8 @@ public class DatabaseManager {
     public java.util.Map<Location, SpawnerData> loadAllSpawnersSync() {
         java.util.Map<Location, SpawnerData> result = new java.util.HashMap<>();
         if (!isConnected()) return result;
-        String q = "SELECT world,x,y,z,owner_uuid,type,stack,accumulated_xp,drops FROM spawners WHERE lost_at IS NULL";
+        checkAndAddBlacklistColumn();
+        String q = "SELECT world,x,y,z,owner_uuid,type,stack,accumulated_xp,drops,blacklist FROM spawners WHERE lost_at IS NULL";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 String world = rs.getString("world");
@@ -1820,18 +1821,30 @@ public class DatabaseManager {
                 d.setStackSize(rs.getInt("stack"));
                 d.setAccumulatedXP(rs.getLong("accumulated_xp"));
                 d.setAccumulatedDrops(deserializeDrops(rs.getString("drops")));
+                d.setBlacklistedLoot(deserializeBlacklist(rs.getString("blacklist")));
                 result.put(loc, d);
             }
         } catch (SQLException ignored) {}
         return result;
     }
 
+    private void checkAndAddBlacklistColumn() {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+            stmt.execute("ALTER TABLE spawners ADD COLUMN IF NOT EXISTS blacklist TEXT AFTER drops");
+        } catch (SQLException e) {
+            // Some older MySQL versions don't support ADD COLUMN IF NOT EXISTS
+            try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute("ALTER TABLE spawners ADD COLUMN blacklist TEXT AFTER drops");
+            } catch (SQLException ignored) {}
+        }
+    }
+
     public void insertOrUpdateSpawnerSync(SpawnerData data) throws SQLException {
         if (!isConnected() || data == null || data.getLocation() == null) return;
-        String q = "INSERT INTO spawners (world,x,y,z,owner_uuid,previous_owner_uuid,last_owner_change_at,type,stack,accumulated_xp,drops,created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+        String q = "INSERT INTO spawners (world,x,y,z,owner_uuid,previous_owner_uuid,last_owner_change_at,type,stack,accumulated_xp,drops,blacklist,created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE owner_uuid=VALUES(owner_uuid), previous_owner_uuid=VALUES(previous_owner_uuid), last_owner_change_at=VALUES(last_owner_change_at), " +
-                "type=VALUES(type), stack=VALUES(stack), accumulated_xp=VALUES(accumulated_xp), drops=VALUES(drops), lost_at=NULL, lost_reason=NULL, lost_by_uuid=NULL";
+                "type=VALUES(type), stack=VALUES(stack), accumulated_xp=VALUES(accumulated_xp), drops=VALUES(drops), blacklist=VALUES(blacklist), lost_at=NULL, lost_reason=NULL, lost_by_uuid=NULL";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(q)) {
             Location loc = data.getLocation();
             int i = 1;
@@ -1846,6 +1859,7 @@ public class DatabaseManager {
             ps.setInt(i++, data.getStackSize());
             ps.setLong(i++, data.getAccumulatedXP());
             ps.setString(i++, serializeDrops(data.getAccumulatedDrops()));
+            ps.setString(i++, serializeBlacklist(data.getBlacklistedLoot()));
             ps.setLong(i++, System.currentTimeMillis());
             ps.executeUpdate();
         }
@@ -1877,5 +1891,29 @@ public class DatabaseManager {
             }
         } catch (Exception ignored) {}
         return map;
+    }
+
+    private static String serializeBlacklist(java.util.Set<Material> blacklist) {
+        if (blacklist == null || blacklist.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (Material mat : blacklist) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(mat.name());
+        }
+        return sb.toString();
+    }
+
+    private static java.util.Set<Material> deserializeBlacklist(String raw) {
+        java.util.Set<Material> set = new java.util.HashSet<>();
+        if (raw == null || raw.isEmpty()) return set;
+        try {
+            String[] parts = raw.split(",");
+            for (String p : parts) {
+                try {
+                    set.add(Material.valueOf(p));
+                } catch (IllegalArgumentException ignored) {}
+            }
+        } catch (Exception ignored) {}
+        return set;
     }
 }

@@ -113,6 +113,168 @@ public enum SpawnerType {
         }
     }
 
+    public java.util.List<Material> getPossibleDrops() {
+        java.util.List<Material> drops = new java.util.ArrayList<>();
+        switch (this) {
+            case SKELETON:
+            case STRAY:
+                drops.add(Material.BONE);
+                drops.add(Material.ARROW);
+                break;
+            case ZOMBIE:
+            case ZOGLIN:
+            case ZOMBIE_HORSE:
+            case HUSK:
+                drops.add(Material.ROTTEN_FLESH);
+                break;
+            case SPIDER:
+            case CAVE_SPIDER:
+                drops.add(Material.STRING);
+                drops.add(Material.SPIDER_EYE);
+                break;
+            case CREEPER:
+                drops.add(Material.GUNPOWDER);
+                break;
+            case ENDERMAN:
+            case ENDERMITE:
+                drops.add(Material.ENDER_PEARL);
+                break;
+            case BLAZE:
+                drops.add(Material.BLAZE_ROD);
+                break;
+            case GHAST:
+                drops.add(Material.GHAST_TEAR);
+                break;
+            case WITCH:
+                drops.add(Material.STICK);
+                drops.add(Material.GLASS_BOTTLE);
+                break;
+            case PIGLIN:
+                drops.add(Material.GOLD_INGOT);
+                break;
+            case PIGLIN_BRUTE:
+                drops.add(Material.GOLDEN_SWORD);
+                break;
+            case HOGLIN:
+                drops.add(Material.COOKED_PORKCHOP);
+                break;
+            case STRIDER:
+            case CAT:
+                drops.add(Material.STRING);
+                break;
+            case MAGMA_CUBE:
+                drops.add(Material.MAGMA_CREAM);
+                break;
+            case SLIME:
+                drops.add(Material.SLIME_BALL);
+                break;
+            case PHANTOM:
+                drops.add(Material.PHANTOM_MEMBRANE);
+                break;
+            case DROWNED:
+                drops.add(Material.ROTTEN_FLESH);
+                drops.add(Material.TRIDENT);
+                break;
+            case WITHER_SKELETON:
+                drops.add(Material.BONE);
+                drops.add(Material.COAL);
+                break;
+            case PILLAGER:
+                drops.add(Material.ARROW);
+                break;
+            case VINDICATOR:
+                drops.add(Material.EMERALD);
+                break;
+            case EVOKER:
+                drops.add(Material.TOTEM_OF_UNDYING);
+                break;
+            case RAVAGER:
+                drops.add(Material.SADDLE);
+                break;
+            case GUARDIAN:
+                drops.add(Material.PRISMARINE_SHARD);
+                break;
+            case ELDER_GUARDIAN:
+                drops.add(Material.PRISMARINE_CRYSTALS);
+                break;
+            case SHULKER:
+                drops.add(Material.SHULKER_SHELL);
+                break;
+            case IRON_GOLEM:
+                drops.add(Material.IRON_INGOT);
+                break;
+            case SNOW_GOLEM:
+            case POLAR_BEAR:
+                drops.add(Material.SNOWBALL);
+                break;
+            case HORSE:
+            case DONKEY:
+            case MULE:
+            case LLAMA:
+            case TRADER_LLAMA:
+            case COW:
+                drops.add(Material.LEATHER);
+                if (this == COW) drops.add(Material.BEEF);
+                break;
+            case SKELETON_HORSE:
+                drops.add(Material.BONE);
+                break;
+            case PARROT:
+            case CHICKEN:
+                drops.add(Material.FEATHER);
+                if (this == CHICKEN) drops.add(Material.CHICKEN);
+                break;
+            case COD:
+            case DOLPHIN:
+                drops.add(Material.COD);
+                break;
+            case SALMON:
+                drops.add(Material.SALMON);
+                break;
+            case PUFFERFISH:
+                drops.add(Material.PUFFERFISH);
+                break;
+            case TROPICAL_FISH:
+                drops.add(Material.TROPICAL_FISH);
+                break;
+            case SQUID:
+                drops.add(Material.INK_SAC);
+                break;
+            case GLOW_SQUID:
+                drops.add(Material.GLOW_INK_SAC);
+                break;
+            case TURTLE:
+                drops.add(Material.SEAGRASS);
+                break;
+            case PANDA:
+                drops.add(Material.BAMBOO);
+                break;
+            case BEE:
+                drops.add(Material.HONEYCOMB);
+                break;
+            case PIG:
+                drops.add(Material.PORKCHOP);
+                break;
+            case SHEEP:
+                drops.add(Material.WHITE_WOOL);
+                drops.add(Material.MUTTON);
+                break;
+            case RABBIT:
+                drops.add(Material.RABBIT);
+                drops.add(Material.RABBIT_FOOT);
+                break;
+            case WARDEN:
+                drops.add(Material.SCULK);
+                break;
+            default:
+                if (material != null && material != Material.AIR) {
+                    drops.add(material);
+                }
+                break;
+        }
+        return drops;
+    }
+
     public static SpawnerType fromString(String name) {
         for (SpawnerType type : values()) {
             if (type.name().equalsIgnoreCase(name) || type.getDisplayName().equalsIgnoreCase(name)) {

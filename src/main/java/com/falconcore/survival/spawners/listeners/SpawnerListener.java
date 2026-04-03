@@ -76,6 +76,10 @@ public class SpawnerListener implements Listener {
             if (event.getPlayer() instanceof Player) {
                 plugin.getSpawnerManager().clearGuiViewer(data, ((Player) event.getPlayer()).getUniqueId());
             }
+
+            if (holder.getPage() == 888) {
+                plugin.getSpawnerManager().saveSpawners(false, false); // Silently save on close
+            }
         }
     }
 
@@ -122,9 +126,10 @@ public class SpawnerListener implements Listener {
         boolean isVirtual = plugin.getSpawnerConfig().getBoolean("settings.natural_spawners_virtual", false);
         boolean requireSilk = plugin.getSpawnerConfig().getBoolean("settings.require_silk_touch", true);
         boolean hasSilk = player.getInventory().getItemInMainHand().containsEnchantment(Enchantment.SILK_TOUCH);
+        boolean bypassSilk = player.getGameMode() == org.bukkit.GameMode.CREATIVE;
 
         if (data != null) {
-            if (requireSilk && !hasSilk) {
+            if (requireSilk && !bypassSilk && !hasSilk) {
                 player.spigot().sendMessage(
                 ChatMessageType.ACTION_BAR,
                 TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&cYou need silk touch to mine this spawner.")));
@@ -172,7 +177,7 @@ public class SpawnerListener implements Listener {
             }
 
         } else if (isVirtual) {
-            if (requireSilk && !hasSilk) {
+            if (requireSilk && !bypassSilk && !hasSilk) {
                 player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getSpawnerConfig().getString("messages.cannot_mine_without_silk")));
                 event.setCancelled(true);
                 return;
@@ -326,6 +331,28 @@ public class SpawnerListener implements Listener {
                 }
             }
 
+            if (!holder.isStorage() && holder.getPage() == 888) {
+                // Filter GUI
+                if (slot == 18) { // Back
+                    new SpawnerGUI(plugin, data, true, 1).open(player);
+                    plugin.getSpawnerManager().saveSpawners(false, false); // Silently save
+                    return;
+                }
+
+                ItemStack clicked = event.getCurrentItem();
+                if (clicked != null && (slot < 4 || (slot > 8 && slot < 13) || (slot > 18 && slot < 22) ||
+                                       (slot > 4 && slot < 9) || (slot > 13 && slot < 18) || (slot > 22 && slot < 27))) {
+                    Material mat = clicked.getType();
+                    if (data.getBlacklistedLoot().contains(mat)) {
+                        data.getBlacklistedLoot().remove(mat);
+                    } else {
+                        data.getBlacklistedLoot().add(mat);
+                    }
+                    new com.falconcore.survival.spawners.gui.FilterGUI(plugin, data).open(player);
+                }
+                return;
+            }
+
             if (holder.isStorage()) {
                 int currentPage = 1;
                 ItemStack closeItem = event.getInventory().getItem(45);
@@ -438,6 +465,8 @@ public class SpawnerListener implements Listener {
                         }
                     }
                     new SpawnerGUI(plugin, data, true, currentPage).open(player);
+                } else if (slot == 46) {
+                    new com.falconcore.survival.spawners.gui.FilterGUI(plugin, data).open(player);
                 } else if (slot == 53) {
                     long totalItems = data.getAccumulatedDrops().values().stream().mapToLong(Long::longValue).sum();
                     if (totalItems <= 0) {

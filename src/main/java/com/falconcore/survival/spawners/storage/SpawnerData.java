@@ -15,6 +15,7 @@ public class SpawnerData {
     private int stackSize;
     private Map<Material, Long> accumulatedDrops;
     private long accumulatedXP;
+    private java.util.Set<Material> blacklistedLoot;
 
     public SpawnerData(Location location, UUID owner, SpawnerType type) {
         this(location, owner, type, 1);
@@ -27,6 +28,7 @@ public class SpawnerData {
         this.stackSize = stackSize;
         this.accumulatedDrops = new ConcurrentHashMap<>();
         this.accumulatedXP = 0;
+        this.blacklistedLoot = java.util.concurrent.ConcurrentHashMap.newKeySet();
     }
 
     public Location getLocation() { return location; }
@@ -48,6 +50,12 @@ public class SpawnerData {
 
     public long getAccumulatedXP() { return accumulatedXP; }
     public void setAccumulatedXP(long accumulatedXP) { this.accumulatedXP = accumulatedXP; }
+
+    public java.util.Set<Material> getBlacklistedLoot() { return blacklistedLoot; }
+    public void setBlacklistedLoot(java.util.Set<Material> blacklistedLoot) {
+        this.blacklistedLoot = java.util.concurrent.ConcurrentHashMap.newKeySet();
+        this.blacklistedLoot.addAll(blacklistedLoot);
+    }
 
     public void addDrops(Map<Material, Long> drops) {
         for (Map.Entry<Material, Long> entry : drops.entrySet()) {

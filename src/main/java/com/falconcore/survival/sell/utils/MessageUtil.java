@@ -11,6 +11,7 @@
  */
 package com.falconcore.survival.sell.utils;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -23,6 +24,7 @@ import org.bukkit.entity.Player;
 
 public class MessageUtil {
     private static final Pattern HEX_PATTERN = Pattern.compile("#([A-Fa-f0-9]{6})");
+    private static final DecimalFormat DF = new DecimalFormat("#.##");
 
     public static String colorize(String message) {
         if (message == null) {
@@ -60,19 +62,26 @@ public class MessageUtil {
         return colorized;
     }
 
-    public static String formatMoney(double amount) {
-        if (amount >= 1.0E9) {
-            return String.format("%.0fB", amount / 1.0E9);
+    public static String formatMoney(double number) {
+        if (number >= 1_000_000_000_000.0) {
+            return formatWithSuffix(number, 1_000_000_000_000.0, "T");
+        } else if (number >= 1_000_000_000.0) {
+            return formatWithSuffix(number, 1_000_000_000.0, "B");
+        } else if (number >= 1_000_000.0) {
+            return formatWithSuffix(number, 1_000_000.0, "M");
+        } else if (number >= 1_000.0) {
+            return formatWithSuffix(number, 1_000.0, "K");
+        } else {
+            return DF.format(Math.floor(number * 100) / 100.0);
         }
-        if (amount >= 1000000.0) {
-            return String.format("%.0fM", amount / 1000000.0);
+    }
+
+    private static String formatWithSuffix(double number, double divisor, String suffix) {
+        double scaled = number / divisor;
+        scaled = Math.floor(scaled * 10) / 10.0;
+        if (scaled == (long) scaled) {
+            return String.valueOf((long) scaled) + suffix;
         }
-        if (amount >= 1000.0) {
-            return String.format("%.0fK", amount / 1000.0);
-        }
-        if (amount < 1.0) {
-            return String.format("%.2f", amount);
-        }
-        return String.format("%.0f", amount);
+        return DF.format(scaled) + suffix;
     }
 }

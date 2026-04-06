@@ -126,10 +126,9 @@ public class SpawnerListener implements Listener {
         boolean isVirtual = plugin.getSpawnerConfig().getBoolean("settings.natural_spawners_virtual", false);
         boolean requireSilk = plugin.getSpawnerConfig().getBoolean("settings.require_silk_touch", true);
         boolean hasSilk = player.getInventory().getItemInMainHand().containsEnchantment(Enchantment.SILK_TOUCH);
-        boolean bypassSilk = player.getGameMode() == org.bukkit.GameMode.CREATIVE;
 
         if (data != null) {
-            if (requireSilk && !bypassSilk && !hasSilk) {
+            if (player.getGameMode() != org.bukkit.GameMode.CREATIVE && requireSilk && !hasSilk) {
                 player.spigot().sendMessage(
                 ChatMessageType.ACTION_BAR,
                 TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&cYou need silk touch to mine this spawner.")));
@@ -177,7 +176,7 @@ public class SpawnerListener implements Listener {
             }
 
         } else if (isVirtual) {
-            if (requireSilk && !bypassSilk && !hasSilk) {
+            if (player.getGameMode() != org.bukkit.GameMode.CREATIVE && requireSilk && !hasSilk) {
                 player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getSpawnerConfig().getString("messages.cannot_mine_without_silk")));
                 event.setCancelled(true);
                 return;

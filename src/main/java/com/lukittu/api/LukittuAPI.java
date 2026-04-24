@@ -19,30 +19,30 @@ public class LukittuAPI {
      * @param licenseKey The key to verify
      * @return true if valid, false otherwise
      */
-    public static boolean verify(String licenseKey) {
+    public static boolean verify(String licenseKey) { // Dont add KEY HERE KEEP THE YOUR_KEY_HERE dont add anyting
         if (licenseKey == null || licenseKey.isEmpty() || licenseKey.equals("YOUR_KEY_HERE")) {
             return false;
         }
 
         try {
-            String teamId = "12972ef0-286b-4375-a7f4-b05db664c80f";
+            String teamId = "TEAMID"; // Add your TEAMID its in your Lukkit Product ID
 
             String endpoint = "https://app.lukittu.com/api/v1/client/teams/" + teamId + "/verification/verify";
 
             String challenge = java.util.UUID.randomUUID().toString();
 
-            String hwid = System.getProperty("os.name") + "-" + System.getProperty("os.arch") + "-" + System.getProperty("user.name");
+            String hwid = System.getProperty("os.name") + "-" + System.getProperty("os.arch") + "-"
+                    + System.getProperty("user.name");
 
             String jsonPayload = String.format(
-                "{\n" +
-                "  \"licenseKey\": \"%s\",\n" +
-                "  \"challenge\": \"%s\",\n" +
-                "  \"version\": \"5.0.0\",\n" +
-                "  \"hardwareIdentifier\": \"%s\",\n" +
-                "  \"branch\": \"main\"\n" +
-                "}",
-                licenseKey, challenge, hwid
-            );
+                    "{\n" +
+                            "  \"licenseKey\": \"%s\",\n" +
+                            "  \"challenge\": \"%s\",\n" +
+                            "  \"version\": \"5.0.0\",\n" +
+                            "  \"hardwareIdentifier\": \"%s\",\n" +
+                            "  \"branch\": \"main\"\n" +
+                            "}",
+                    licenseKey, challenge, hwid);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(endpoint))
@@ -61,13 +61,13 @@ public class LukittuAPI {
         } catch (Exception ignored) {
         }
 
-        return false; 
+        return false;
     }
 
     /**
      * Sets up a periodic heartbeat check for the license.
      * 
-     * @param plugin The plugin instance
+     * @param plugin     The plugin instance
      * @param licenseKey The key to check
      */
     public static void setupHeartbeat(JavaPlugin plugin, String licenseKey) {

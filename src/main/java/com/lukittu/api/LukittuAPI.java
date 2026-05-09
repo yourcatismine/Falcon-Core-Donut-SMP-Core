@@ -25,7 +25,7 @@ public class LukittuAPI {
         }
 
         try {
-            String teamId = "TEAMID"; // Add your TEAMID its in your Lukkit Product ID
+            String teamId = "46b2a3be-dddf-49ce-b8b3-dbfd6dfeb37b"; // Add your TEAMID its in your Lukkit Product ID
 
             String endpoint = "https://app.lukittu.com/api/v1/client/teams/" + teamId + "/verification/verify";
 

@@ -1,6 +1,6 @@
 # FalconH2
 
-FalconH2 is a custom Minecraft server plugin codebase for the **Falcon** network.  
+FalconH2 is a custom Minecraft server plugin codebase for Minecraft Servers like Donut SMP.  
 It targets modern Paper/Folia-compatible servers and bundles gameplay, economy, moderation, utility, and GUI-driven systems in one plugin.
 
 ## Plugin metadata

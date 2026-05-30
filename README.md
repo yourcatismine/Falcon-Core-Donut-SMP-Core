@@ -13,7 +13,7 @@ It targets modern Paper/Folia-compatible servers and bundles gameplay, economy, 
 - **Hard dependencies:** Vault, packetevents
 - **Soft dependencies:** PlaceholderAPI, WorldEdit, FastAsyncWorldEdit, LuckPerms
 
-Source: `/tmp/workspace/yourcatismine/FalconH2/src/main/resources/plugin.yml`
+Source: `src/main/resources/plugin.yml`
 
 ## Included systems (high level)
 
@@ -25,13 +25,12 @@ Source: `/tmp/workspace/yourcatismine/FalconH2/src/main/resources/plugin.yml`
 
 ## Repository structure
 
-- `/tmp/workspace/yourcatismine/FalconH2/src/main/java/com/h2ph` – core plugin modules
-- `/tmp/workspace/yourcatismine/FalconH2/src/main/java/com/falconcore/survival` – survival/economy-related components
-- `/tmp/workspace/yourcatismine/FalconH2/src/main/resources` – plugin resources and feature configs
-- `/tmp/workspace/yourcatismine/FalconH2/mappings-cloud` – mapping data
-- `/tmp/workspace/yourcatismine/FalconH2/libs` – local dependency jars (e.g., `server.jar`)
+- `src/main/java/com/h2ph` – core plugin modules
+- `src/main/java/com/falconcore/survival` – survival/economy-related components
+- `src/main/resources` – plugin resources and feature configs
+- `mappings-cloud` – mapping data
+- `libs` – local dependency jars (e.g., `server.jar`)
 
 ## Build/test status in this snapshot
 
 This repository snapshot does **not** currently include a Maven/Gradle project file (`pom.xml`/`build.gradle`), so standard build/test commands cannot be run directly from this root checkout.
-

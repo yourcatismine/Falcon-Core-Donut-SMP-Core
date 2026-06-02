@@ -1,0 +1,21 @@
+
+disabled-items:
+  - SPAWNER
+  - SPAWNER_EGGS
+  - COMMAND_BLOCK
+  - COMMAND_BLOCK_MINECART
+  - STRUCTURE_BLOCK
+  - STRUCTURE_VOID
+  - JIGSAW 
+  - BARRIER 
+  - DEBUG_STICK
+  - BEDROCK 
+  - END_PORTAL
+  - END_PORTAL_FRAME 
+  - TEST_BLOCK 
+  - LIGHT
+  - KNOWLEDGE_BOOK 
+
+
+droplootlocked:
+  - spawn

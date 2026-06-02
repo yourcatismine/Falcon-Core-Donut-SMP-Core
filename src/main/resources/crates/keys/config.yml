@@ -1,0 +1,14 @@
+keyall:
+  interval: 60
+  enabled: true
+
+reward:
+  key: common
+  amount: 1
+
+keys:
+  - common
+  - crimson
+  - gold
+  - prime
+  - amethyst

@@ -1,0 +1,32 @@
+pending-timeout: 60
+request-cooldown: 10
+
+ignored-commands:
+  - "duel"
+  - "shop"
+  - "sell"
+  - "ah"
+  - "auction"
+  - "order"
+  - "orders"
+  - "msg"
+  - "kill"
+  - "tell"
+  - "r"
+  - "reply"
+  - "cf"
+  - "coinflip"
+
+banned-commands:
+  - "fly"
+  - "home"
+  - "rtp"
+  - "spawn"
+  - "tpa"
+  - "tpahere"
+  - "tpaccept"
+  - "tpacancel"
+  - "tpask"
+  - "tpauto"
+  - "tpadeny"
+  - "tpall"

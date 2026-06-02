@@ -1,0 +1,48 @@
+gui:
+  title: "&8ʀᴜʟᴇѕ"
+  size: 27
+  items:
+    rules_book:
+      slot: 12
+      material: BOOK
+      name: "&bServer Rules"
+      lore:
+        - "&b●&f No Hacked Clients"
+        - "&b●&f No Movement Mods"
+        - "&b●&f No Inventory Mods"
+        - "&b●&f No Health Indicators"
+        - "&b●&f No Radar"
+        - "&b●&f No Freecam"
+        - "&b●&f No ESP"
+        - "&b●&f No Auto or Easy Place"
+        - "&b●&f No Macros or Skripts"
+        - "&b●&f No Abusing Bugs"
+        - "&b●&f No Using dupe methods"
+        - "&b●&f No Irl trading"
+        - "&b●&f No Invite Rewards"
+        - "&b●&f No Cross Server Trading"
+        - "&b●&f No Finding or Using the seed"
+        - "&b●&f No Using More Than 3 Accounts"
+        - "&b●&f No Mouse Tweaks / Scrollers"
+        - "&b●&f No Crafting Modifications"
+        - "&b●&f No Staff Impersonation"
+        - "&b●&f No External Gambling"
+        - ""
+        - "&fReport all bugs, glitches, and cheaters."
+
+    chat_rules_book:
+      slot: 14
+      material: BOOK
+      name: "&b&lChat Rules"
+      lore:
+        - "&b●&f No Spamming or getting others to spam"
+        - "&b●&f No Harassing"
+        - "&b●&f No Advertising or Promotion"
+        - "&b●&f No Discrimination or Hate Speech"
+        - "&b●&f No Death Threats"
+        - "&b●&f No Sharing Others Private Information"
+        - "&b●&f No Pretending to be someone else"
+        - "&b●&f No Ban Evasion"
+        - "&b●&f No Lying to Staff Members"
+        - ""
+        - "&fReport all bugs, glitches, and cheaters."

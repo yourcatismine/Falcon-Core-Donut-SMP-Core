@@ -1,0 +1,576 @@
+package com.h2ph.managers;
+
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisplayScoreboard;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTeams;
+import com.github.retrooper.packetevents.protocol.score.ScoreFormat;
+
+import com.h2ph.Falcon;
+import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ScoreboardManager implements Listener {
+
+    private final Falcon plugin;
+    private FileConfiguration config;
+    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
+    private final Map<UUID, Integer> titleIndexMap = new HashMap<>();
+    private final Map<UUID, Integer> lineCountMap = new HashMap<>();
+    private final Map<UUID, List<String>> lastSentLines = new HashMap<>();
+    private final Map<UUID, String> lastSentTitle = new HashMap<>();
+    private final Map<UUID, Component[]> lastSentComponents = new HashMap<>();
+    private String cachedRegion = null;
+    private int switcherInterval = 20;
+    private long lastSwitcherUpdate = 0;
+    private int currentSwitcherIndex = 0;
+
+    public ScoreboardManager(Falcon plugin) {
+        this.plugin = plugin;
+        loadConfig();
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
+
+    public void loadConfig() {
+        File configFile = new File(plugin.getDataFolder(), "scoreboard/config.yml");
+        if (!configFile.exists()) {
+            plugin.saveResource("scoreboard/config.yml", false);
+        }
+        config = YamlConfiguration.loadConfiguration(configFile);
+
+        java.util.List<String> regionList = plugin.getSurvivalConfig().getStringList("region");
+        cachedRegion = regionList.isEmpty() ? "EU" : regionList.get(0);
+
+        switcherInterval = config.getInt("INTERVAL", 20);
+    }
+
+    public String getVipLabel() {
+        return config != null ? config.getString("SCOREBOARD.VIP", "&fꜰᴀʟᴄᴏɴ+") : "&fꜰᴀʟᴄᴏɴ+";
+    }
+
+    public void setup() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            initScoreboard(player);
+            startTask(player);
+        }
+    }
+
+    public void shutdown() {
+        for (ScheduledTask task : tasks.values()) {
+            task.cancel();
+        }
+        tasks.clear();
+        titleIndexMap.clear();
+        lineCountMap.clear();
+    }
+
+    /**
+     * Reload a player's scoreboard - useful when team status changes
+     */
+    public void reloadScoreboard(Player player) {
+        if (!config.getBoolean("SCOREBOARD.ENABLED", true))
+            return;
+
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && !data.isShowScoreboard()) {
+            return;
+        }
+
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        int oldLineCount = lineCountMap.getOrDefault(player.getUniqueId(), 16);
+
+        for (int i = 0; i < oldLineCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+
+            WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
+                    "FalconCore",
+                    Optional.empty());
+            user.sendPacket(removeScorePacket);
+
+            WrapperPlayServerTeams removeFromTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE_ENTITIES,
+                    Optional.empty(),
+                    Collections.singletonList(entry));
+            user.sendPacket(removeFromTeamPacket);
+
+            WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE,
+                    Optional.empty(),
+                    Collections.emptyList());
+            user.sendPacket(removeTeamPacket);
+        }
+
+        WrapperPlayServerScoreboardObjective removePacket = new WrapperPlayServerScoreboardObjective(
+                "FalconCore",
+                WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
+                Component.empty(),
+                WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                ScoreFormat.blankScore());
+        user.sendPacket(removePacket);
+
+        titleIndexMap.remove(player.getUniqueId());
+        lineCountMap.remove(player.getUniqueId());
+
+        initScoreboard(player);
+        startTask(player);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        initScoreboard(event.getPlayer());
+        startTask(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        stopTask(event.getPlayer());
+        UUID uuid = event.getPlayer().getUniqueId();
+        titleIndexMap.remove(uuid);
+        lineCountMap.remove(uuid);
+        lastSentLines.remove(uuid);
+        lastSentTitle.remove(uuid);
+        lastSentComponents.remove(uuid);
+    }
+
+    private void startTask(Player player) {
+        stopTask(player);
+        long delay = (long) Math.floorMod(player.getUniqueId().hashCode(), 40) + 1L;
+        ScheduledTask task = player.getScheduler().runAtFixedRate(plugin, (t) -> {
+            updateScoreboard(player);
+        }, null, delay, 40L);
+        tasks.put(player.getUniqueId(), task);
+    }
+
+    private void stopTask(Player player) {
+        ScheduledTask task = tasks.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    public void removeScoreboard(Player player) {
+        stopTask(player);
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        int oldLineCount = lineCountMap.getOrDefault(player.getUniqueId(), 0);
+
+        for (int i = 0; i < oldLineCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+
+            WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
+                    "FalconCore",
+                    Optional.empty());
+            user.sendPacket(removeScorePacket);
+
+            WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE,
+                    Optional.empty(),
+                    Collections.emptyList());
+            user.sendPacket(removeTeamPacket);
+        }
+
+        WrapperPlayServerScoreboardObjective removePacket = new WrapperPlayServerScoreboardObjective(
+                "FalconCore",
+                WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
+                Component.empty(),
+                WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                ScoreFormat.blankScore());
+        user.sendPacket(removePacket);
+
+        titleIndexMap.remove(player.getUniqueId());
+        lineCountMap.remove(player.getUniqueId());
+    }
+
+    private void initScoreboard(Player player) {
+        if (!config.getBoolean("SCOREBOARD.ENABLED", true))
+            return;
+
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && !data.isShowScoreboard()) {
+            return;
+        }
+
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        titleIndexMap.put(player.getUniqueId(), 0);
+
+        List<String> titles = config.getStringList("SCOREBOARD.TITLE");
+        String title = titles.isEmpty() ? "FalconSMP" : color(titles.get(0));
+        Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
+
+        WrapperPlayServerScoreboardObjective objectivePacket = new WrapperPlayServerScoreboardObjective(
+                "FalconCore",
+                WrapperPlayServerScoreboardObjective.ObjectiveMode.CREATE,
+                titleComp,
+                WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                ScoreFormat.blankScore());
+        user.sendPacket(objectivePacket);
+
+        WrapperPlayServerDisplayScoreboard displayPacket = new WrapperPlayServerDisplayScoreboard(
+                1,
+                "FalconCore");
+        user.sendPacket(displayPacket);
+
+        List<String> lines = buildLines(player);
+        List<String> parsedLines = new ArrayList<>();
+        for (String line : lines) {
+            parsedLines.add(parsePlaceholders(player, line));
+        }
+
+        lineCountMap.put(player.getUniqueId(), parsedLines.size());
+        createTeams(user, 0, parsedLines.size());
+
+        lastSentLines.put(player.getUniqueId(), new ArrayList<>(parsedLines));
+        sendScores(player, user, parsedLines);
+    }
+
+    public void updateScoreboard(Player player) {
+        if (!config.getBoolean("SCOREBOARD.ENABLED", true))
+            return;
+
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null && !data.isShowScoreboard()) {
+            return;
+        }
+
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        if (user == null)
+            return;
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastSwitcherUpdate >= switcherInterval * 50) {
+            List<String> switchers = config.getStringList("SCOREBOARD.SWITCHER");
+            if (!switchers.isEmpty()) {
+                currentSwitcherIndex = (currentSwitcherIndex + 1) % switchers.size();
+                lastSwitcherUpdate = currentTime;
+            }
+        }
+
+        List<String> titles = config.getStringList("SCOREBOARD.TITLE");
+        if (!titles.isEmpty()) {
+            int currentIndex = titleIndexMap.getOrDefault(player.getUniqueId(), 0);
+            String rawTitle = titles.get(currentIndex);
+            String lastTitle = lastSentTitle.get(player.getUniqueId());
+
+            if (lastTitle == null || !lastTitle.equals(rawTitle)) {
+                String title = color(rawTitle);
+                Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title);
+
+                WrapperPlayServerScoreboardObjective updateTitlePacket = new WrapperPlayServerScoreboardObjective(
+                        "FalconCore",
+                        WrapperPlayServerScoreboardObjective.ObjectiveMode.UPDATE,
+                        titleComp,
+                        WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                        ScoreFormat.blankScore());
+                user.sendPacket(updateTitlePacket);
+                lastSentTitle.put(player.getUniqueId(), rawTitle);
+            }
+
+            int nextIndex = (currentIndex + 1) % titles.size();
+            titleIndexMap.put(player.getUniqueId(), nextIndex);
+        }
+
+        List<String> lines = buildLines(player);
+        List<String> parsedLines = new ArrayList<>();
+        for (String line : lines) {
+            parsedLines.add(parsePlaceholders(player, line));
+        }
+
+        List<String> lastLines = lastSentLines.get(player.getUniqueId());
+
+        if (lastLines != null && parsedLines.equals(lastLines)) {
+            return;
+        }
+
+        int currentLineCount = parsedLines.size();
+        int cachedCount = lineCountMap.getOrDefault(player.getUniqueId(), 0);
+
+        if (currentLineCount > cachedCount) {
+            createTeams(user, cachedCount, currentLineCount);
+        } else if (currentLineCount < cachedCount) {
+            removeExcessLines(user, currentLineCount, cachedCount);
+        }
+
+        lineCountMap.put(player.getUniqueId(), currentLineCount);
+        lastSentLines.put(player.getUniqueId(), new ArrayList<>(parsedLines));
+
+        sendScoresDifferential(player, user, parsedLines, lastLines);
+    }
+
+    private void sendScoresDifferential(Player player, User user, List<String> parsedLines, List<String> lastLines) {
+        int lineCount = parsedLines.size();
+        int score = lineCount;
+        Component[] lastComponents = lastSentComponents.computeIfAbsent(player.getUniqueId(), k -> new Component[16]);
+
+        for (int i = 0; i < lineCount; i++) {
+            String text = parsedLines.get(i);
+
+            if (lastLines != null && i < lastLines.size() && text.equals(lastLines.get(i))
+                    && lastComponents[i] != null) {
+                score--;
+                continue;
+            }
+
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+            Component prefixComp = LegacyComponentSerializer.legacySection().deserialize(text);
+            lastComponents[i] = prefixComp;
+
+            WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                    Component.text(teamName),
+                    prefixComp,
+                    Component.empty(),
+                    WrapperPlayServerTeams.NameTagVisibility.ALWAYS,
+                    WrapperPlayServerTeams.CollisionRule.NEVER,
+                    NamedTextColor.WHITE,
+                    WrapperPlayServerTeams.OptionData.NONE);
+
+            WrapperPlayServerTeams teamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.UPDATE,
+                    Optional.of(teamInfo),
+                    Collections.emptyList());
+            user.sendPacket(teamPacket);
+
+            WrapperPlayServerUpdateScore scorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
+                    "FalconCore",
+                    Optional.of(score));
+            user.sendPacket(scorePacket);
+
+            score--;
+        }
+    }
+
+    private List<String> buildLines(Player player) {
+        List<String> lines = new ArrayList<>(config.getStringList("SCOREBOARD.LINES"));
+
+        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+        if (data != null) {
+            int playtimeIndex = -1;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).contains("Playtime")) {
+                    playtimeIndex = i;
+                    break;
+                }
+            }
+
+            String teamFormat = config.getString("SCOREBOARD.TEAMS");
+            if (teamFormat != null && !teamFormat.isEmpty() && data.getTeamId() != null) {
+                if (playtimeIndex != -1) {
+                    lines.add(playtimeIndex + 1, teamFormat);
+                    playtimeIndex++;
+                } else {
+                    if (lines.size() > 2) {
+                        lines.add(lines.size() - 2, teamFormat);
+                    } else {
+                        lines.add(teamFormat);
+                    }
+                }
+            }
+
+            String boosterFormat = config.getString("SCOREBOARD.SHARD-BOOSTER");
+            if (boosterFormat != null && !boosterFormat.isEmpty() && data.hasActiveShardBooster()) {
+                if (playtimeIndex != -1) {
+                    lines.add(playtimeIndex + 1, boosterFormat);
+                } else {
+                    if (lines.size() > 2) {
+                        lines.add(lines.size() - 2, boosterFormat);
+                    } else {
+                        lines.add(boosterFormat);
+                    }
+                }
+            }
+        }
+        return lines;
+    }
+
+    private void sendScores(Player player, User user, List<String> parsedLines) {
+        int lineCount = parsedLines.size();
+        int score = lineCount;
+
+        for (int i = 0; i < lineCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+            String text = parsedLines.get(i);
+            Component prefixComp = LegacyComponentSerializer.legacySection().deserialize(text);
+
+            WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                    Component.text(teamName),
+                    prefixComp,
+                    Component.empty(),
+                    WrapperPlayServerTeams.NameTagVisibility.ALWAYS,
+                    WrapperPlayServerTeams.CollisionRule.NEVER,
+                    NamedTextColor.WHITE,
+                    WrapperPlayServerTeams.OptionData.NONE);
+
+            WrapperPlayServerTeams teamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.UPDATE,
+                    Optional.of(teamInfo),
+                    Collections.emptyList());
+            user.sendPacket(teamPacket);
+
+            WrapperPlayServerUpdateScore scorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
+                    "FalconCore",
+                    Optional.of(score));
+            user.sendPacket(scorePacket);
+
+            score--;
+        }
+    }
+
+    private void removeExcessLines(User user, int newCount, int oldCount) {
+        for (int i = newCount; i < oldCount; i++) {
+            String entry = ChatColor.values()[i].toString();
+            String teamName = "line_" + i;
+
+            WrapperPlayServerUpdateScore removeScorePacket = new WrapperPlayServerUpdateScore(
+                    entry,
+                    WrapperPlayServerUpdateScore.Action.REMOVE_ITEM,
+                    "FalconCore",
+                    Optional.empty());
+            user.sendPacket(removeScorePacket);
+
+            WrapperPlayServerTeams removeFromTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE_ENTITIES,
+                    Optional.empty(),
+                    Collections.singletonList(entry));
+            user.sendPacket(removeFromTeamPacket);
+
+            WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.REMOVE,
+                    Optional.empty(),
+                    Collections.emptyList());
+            user.sendPacket(removeTeamPacket);
+        }
+    }
+
+    private void createTeams(User user, int start, int end) {
+        for (int i = start; i < end; i++) {
+            String teamName = "line_" + i;
+            String entry = ChatColor.values()[i].toString();
+
+            WrapperPlayServerTeams.ScoreBoardTeamInfo teamInfo = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                    Component.text(teamName),
+                    Component.empty(),
+                    Component.empty(),
+                    WrapperPlayServerTeams.NameTagVisibility.ALWAYS,
+                    WrapperPlayServerTeams.CollisionRule.NEVER,
+                    NamedTextColor.WHITE,
+                    WrapperPlayServerTeams.OptionData.NONE);
+
+            WrapperPlayServerTeams teamPacket = new WrapperPlayServerTeams(
+                    teamName,
+                    WrapperPlayServerTeams.TeamMode.CREATE,
+                    Optional.of(teamInfo),
+                    Arrays.asList(entry));
+            user.sendPacket(teamPacket);
+        }
+    }
+
+    private String parsePlaceholders(Player player, String text) {
+        if (text.contains("{region}")) {
+            text = text.replace("{region}", cachedRegion != null ? cachedRegion : "EU");
+        }
+
+        if (text.contains("{region_ping}")) {
+            text = text.replace("{region_ping}", String.valueOf(player.getPing()));
+        }
+
+        if (text.contains("{gamertag}")) {
+            text = text.replace("{gamertag}", player.getName());
+        }
+
+        if (text.contains("{switcher}")) {
+            List<String> switchers = config.getStringList("SCOREBOARD.SWITCHER");
+            if (!switchers.isEmpty()) {
+                String switcherText = switchers.get(currentSwitcherIndex);
+                text = text.replace("{switcher}", switcherText);
+            } else {
+                text = text.replace("{switcher}", "");
+            }
+        }
+
+        if (text.contains("%team_name%")) {
+            com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+            if (data != null && data.getTeamId() != null) {
+                com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(data.getTeamId());
+                if (team != null) {
+                    String teamName = team.getName();
+                    if (!teamName.contains("&") && !teamName.contains("§") && !teamName.contains("#")) {
+                        teamName = "&d" + teamName;
+                    }
+                    text = text.replace("%team_name%", teamName);
+                } else {
+                    text = text.replace("%team_name%", "&dNone");
+                }
+            } else {
+                text = text.replace("%team_name%", "&dNone");
+            }
+        }
+
+        if (text.contains("%") && plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            text = PlaceholderAPI.setPlaceholders(player, text);
+        }
+        return color(text);
+    }
+
+    private String color(String text) {
+        if (text == null || text.isEmpty())
+            return "";
+
+        if (!text.contains("&#")) {
+            return ChatColor.translateAlternateColorCodes('&', text);
+        }
+
+        Matcher matcher = HEX_PATTERN.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(buffer, net.md_5.bungee.api.ChatColor.of("#" + matcher.group(1)).toString());
+        }
+        return ChatColor.translateAlternateColorCodes('&', matcher.appendTail(buffer).toString());
+    }
+
+}

@@ -1,0 +1,41 @@
+MESSAGES:
+  ENABLED: true
+  PREFIX: "&c☠ "
+  BLOCK-EXPLOSION: "{player} ɢᴏᴛ ʙʟᴏᴡɴ ᴛᴏ ᴘɪᴇᴄᴇѕ"
+  CONTACT: "{player} ᴡᴀѕ ᴘʀɪᴄᴋᴇᴅ ᴛᴏ ᴅᴇᴀᴛʜ"
+  DROWNING:
+    NORMAL: "{player} drowned!"
+    PVP: "{player} ᴅʀᴏᴡɴᴇᴅ ᴡʜɪʟѕᴛ ᴛʀʏɪɴɢ ᴛᴏ ᴇѕᴄᴀᴘᴇ {killer}"
+  ENTITY-ATTACK:
+    NORMAL: "{player} ᴡᴀѕ ѕʟᴀɪɴ ʙʏ ᴀ {killer}"
+    PVP: "{player} ᴡᴀѕ ѕʟᴀɪɴ ʙʏ {killer}"
+  FALL:
+    NORMAL: "{player} ʜɪᴛ ᴛʜᴇ ɢʀᴏᴜɴᴅ ᴛᴏᴏ ʜᴀʀᴅ"
+    PVP: "{player} ᴡᴀѕ ᴅᴏᴏᴍᴇᴅ ᴛᴏ ꜰᴀʟʟ ʙʏ {killer}"
+  FALLING-BLOCK: "{player} ɢᴏᴛ ꜰʀᴇᴀᴋɪɴɢ ѕǫᴜᴀѕʜᴇᴅ ʙʏ ᴀ ʙʟᴏᴄᴋ"
+  FIRE:
+    NORMAL: "{player} ᴡᴇɴᴛ ᴜᴘ ɪɴ ꜰʟᴀᴍᴇѕ"
+    PVP: "{player} ᴡᴀʟᴋᴇᴅ ɪɴᴛᴏ ᴀ ꜰɪʀᴇ ᴡʜɪʟѕᴛ ꜰɪɢʜᴛɪɴɢ {killer}"
+  FIRE-TICK:
+    NORMAL: "{player} ʙᴜʀɴᴇᴅ ᴛᴏ ᴅᴇᴀᴛʜ"
+    PVP: "{player} ᴡᴀѕ ʙᴜʀɴᴛ ᴛᴏ ᴀ ᴄʀɪѕᴘ ᴡʜɪʟѕᴛ ꜰɪɢʜᴛɪɴɢ {killer}"
+  LAVA:
+    NORMAL: "{player} ᴛʀɪᴇᴅ ᴛᴏ ѕᴡɪᴍ ɪɴ ʟᴀᴠᴀ"
+    PVP: "{player} ᴛʀɪᴇᴅ ᴛᴏ ѕᴡɪᴍ ɪɴ ʟᴀᴠᴀ ᴡʜɪʟᴇ ᴛʀʏɪɴɢ ᴛᴏ ᴇѕᴄᴀᴘᴇ {killer}"
+  LIGHTNING: "{player} ɢᴏᴛ ʟɪᴛ ᴛʜᴇ ʜᴇʟʟ ᴜᴘ ʙʏ ᴀ ʟɪɢʜᴛɴɪɴɢ"
+  POISON: "{player} ᴡᴀѕ ᴘᴏɪѕᴏɴᴇᴅ"
+  PROJECTILE:
+    NORMAL: "{player} ᴡᴀѕ ѕʜᴏᴛ"
+    PVP: "{player} ᴡᴀѕ ѕʜᴏᴛ ʙʏ {killer}"
+  STARVATION: "{player} ѕᴛᴀʀᴠᴇᴅ ᴛᴏ ᴅᴇᴀᴛʜ"
+  SUFFOCATION: "{player} ѕᴜꜰꜰᴏᴄᴀᴛᴇᴅ ɪɴ ᴀ ᴡᴀʟʟ"
+  SUICIDE: "{player} ᴛᴏᴏᴋ ʜɪѕ ᴏᴡɴ ʟɪꜰᴇ ʟɪᴋᴇ ᴀ ᴘᴇᴀѕᴀɴᴛ"
+  THORNS: "{player} ᴋɪʟʟᴇᴅ ᴛʜᴇᴍѕᴇʟꜰ ʙʏ ᴛʀʏɪɴɢ ᴛᴏ ᴋɪʟʟ ѕᴏᴍᴇᴏɴᴇ"
+  VOID:
+    NORMAL: "{player} ꜰᴇʟʟ ᴏᴜᴛ ᴏꜰ ᴛʜᴇ ᴡᴏʀʟᴅ"
+    PVP: "{player} ᴡᴀѕ ᴋɴᴏᴄᴋᴇᴅ ɪɴᴛᴏ ᴛʜᴇ ᴠᴏɪᴅ ʙʏ {killer}"
+  WITHER: "{player} ᴡɪᴛʜᴇʀᴇᴅ ᴀᴡᴀʏ"
+  ENTITY-EXPLOSION:
+    NORMAL: "{player} ᴡᴀѕ ʙʟᴏᴡɴ ᴜᴘ"
+    PVP: "{player} ᴡᴀѕ ʙʟᴏᴡɴ ᴜᴘ ʙʏ {killer}"
+  DEFAULT: "{player} ᴅɪᴇᴅ"

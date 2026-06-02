@@ -1,0 +1,191 @@
+gui-title: "&8ѕʜᴏᴘ - ʀᴇᴅѕᴛᴏɴᴇ"
+
+items:
+  hopper:
+    slot: 0
+    material: HOPPER
+    price: 450
+    currency: MONEY
+    values: [1, 10, 64]
+
+  redstone:
+    slot: 1
+    material: REDSTONE
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+
+  redstone_torch:
+    slot: 2
+    material: REDSTONE_TORCH
+    price: 85
+    currency: MONEY
+    values: [1, 10, 64]
+
+  redstone_repeater:
+    slot: 3
+    material: REPEATER
+    price: 200
+    currency: MONEY
+    values: [1, 10, 64]
+
+  redstone_comparator:
+    slot: 4
+    material: COMPARATOR
+    price: 120
+    currency: MONEY
+    values: [1, 10, 64]
+
+  target:
+    slot: 5
+    material: TARGET
+    price: 450
+    currency: MONEY
+    values: [1, 10, 64]
+
+  lever:
+    slot: 6
+    material: LEVER
+    price: 80
+    currency: MONEY
+    values: [1, 10, 64]
+
+  piston:
+    slot: 7
+    material: PISTON
+    price: 300
+    currency: MONEY
+    values: [1, 10, 64]
+
+  sticky_piston:
+    slot: 8
+    material: STICKY_PISTON
+    price: 250
+    currency: MONEY
+    values: [1, 10, 64]
+
+  slime_block:
+    slot: 9
+    material: SLIME_BLOCK
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+
+  honey_block:
+    slot: 10
+    material: HONEY_BLOCK
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+
+  dispenser:
+    slot: 11
+    material: DISPENSER
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+
+  dropper:
+    slot: 12
+    material: DROPPER
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+
+  observer:
+    slot: 13
+    material: OBSERVER
+    price: 500
+    currency: MONEY
+    values: [1, 10, 64]
+
+  rail:
+    slot: 14
+    material: RAIL
+    price: 300
+    currency: MONEY
+    values: [1, 10, 64]
+
+  hopper_minecart:
+    slot: 15
+    material: HOPPER_MINECART
+    price: 600
+    currency: MONEY
+    values: [1, 10, 64]
+
+  redstone_block:
+    slot: 16
+    material: REDSTONE_BLOCK
+    price: 800
+    currency: MONEY
+    values: [1, 4, 16]
+
+  tripwire_hook:
+    slot: 17
+    material: TRIPWIRE_HOOK
+    price: 60
+    currency: MONEY
+    values: [1, 10, 64]
+
+  detector_rail:
+    slot: 18
+    material: DETECTOR_RAIL
+    price: 250
+    currency: MONEY
+    values: [1, 4, 16]
+
+  activator_rail:
+    slot: 19
+    material: ACTIVATOR_RAIL
+    price: 270
+    currency: MONEY
+    values: [1, 4, 16]
+
+  powered_rail:
+    slot: 20
+    material: POWERED_RAIL
+    price: 300
+    currency: MONEY
+    values: [1, 4, 16]
+
+  note_block:
+    slot: 21
+    material: NOTE_BLOCK
+    price: 90
+    currency: MONEY
+    values: [1, 4, 16]
+
+  chest_minecart:
+    slot: 22
+    material: CHEST_MINECART
+    price: 200
+    currency: MONEY
+    values: [1, 10, 64]
+
+  chest:
+    slot: 23
+    material: CHEST
+    price: 200
+    currency: MONEY
+    values: [1, 10, 64]
+
+  packed_ice:
+    slot: 24
+    material: PACKED_ICE
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+
+  ice:
+    slot: 25
+    material: ICE
+    price: 150
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  CRAFTER:
+    slot: 26
+    material: CRAFTER
+    price: 550
+    currency: MONEY
+    values: [1, 10, 64]

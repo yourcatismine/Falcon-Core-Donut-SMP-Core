@@ -1,0 +1,23 @@
+package com.h2ph.tasks;
+
+import com.h2ph.commands.player.RTPCommand;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+
+public class RTPUpdateTask implements Runnable {
+
+    @Override
+    public void run() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getOpenInventory().getTitle().equals(RTPCommand.GUI_TITLE)) {
+                Inventory topInventory = player.getOpenInventory().getTopInventory();
+
+                if (topInventory.getItem(13) != null
+                        && topInventory.getItem(13).getType() == org.bukkit.Material.NETHERRACK) {
+                    RTPCommand.updateItems(topInventory, player);
+                }
+            }
+        }
+    }
+}

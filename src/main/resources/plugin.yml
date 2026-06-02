@@ -1,0 +1,540 @@
+name: Falcon
+version: "5.5"
+main: com.h2ph.Falcon
+api-version: "1.7"
+author: h2ph
+folia-supported: true
+description: Falcon was tamed by h2ph
+depend: [Vault, packetevents]
+softdepend: [PlaceholderAPI, WorldEdit, FastAsyncWorldEdit, LuckPerms]
+
+commands:
+  shop:
+    description: Open the shop GUI
+    usage: /<command>
+    aliases: []
+  shards:
+    description: Admin command to manage player shards
+    usage: /<command> <give|set|remove> <player> <amount>
+
+  billford:
+    description: Open the Billford trade GUI
+    usage: /billford [admin]
+    permission: falcon.billford
+    permission-message: You do not have permission to use this command.
+
+  rules:
+    description: View the server rules
+    usage: /rules
+    aliases: []
+
+  media:
+    description: View media rank requirements
+    usage: /media
+    aliases: []
+
+  advisor:
+    description: View or edit the advisor book
+    usage: /advisor [admin]
+    aliases: []
+
+  setspawn:
+    description: Set a spawn point
+    usage: /setspawn <name>
+    aliases: []
+
+  spawn:
+    description: Teleport to a spawn
+    usage: /spawn [name]
+    aliases: []
+
+  warp:
+    description: Teleport to a warp point
+    usage: /warp <name>
+    default: true
+
+  economy:
+    description: Manage player balances
+    usage: /economy <give|set|remove> <player> <amount>
+    permission: falcon.economy
+
+  baltop:
+    description: View the top balances
+    usage: /baltop
+
+  balance:
+    description: View player balance
+    usage: /balance [player]
+    aliases: [bal]
+
+  pay:
+    description: Pay money to another player
+    usage: /pay <player> <amount>
+
+  update:
+    description: Create a server update book to show to the next player
+    usage: /update
+    permission: falcon.update
+    permission-message: You do not have permission to use this command.
+
+  afk:
+    description: Open the AFK areas GUI
+    usage: /afk
+
+  rtp:
+    description: Open the Random Teleport GUI
+    usage: /rtp
+
+  offend:
+    description: Ban a player with a reason
+    permission: falcon.offend
+    usage: /offend <player> <reason> [duration]
+    aliases: [ban]
+  unban:
+    description: Unban a player
+    permission: falcon.unban
+    usage: /unban <player>
+    aliases: [pardon]
+  checkban:
+    description: Check ban status of a player
+    permission: falcon.checkban
+    usage: /checkban <player/ID>
+
+  whowashere:
+    description: Show who was previously in the current chunk
+    permission: falcon.whowashere
+    usage: /whowashere
+
+  checkalt:
+    description: Check alternative accounts of a player by IP
+    permission: falcon.checkalt
+    usage: /checkalt <player>
+
+  checkplayers:
+    description: List all online players and their current worlds
+    permission: falcon.checkplayers
+    usage: /checkplayers
+
+  checktotem:
+    description: Remove totem from a player's offhand
+    permission: falcon.checktotem
+    usage: /checktotem <player>
+
+  key:
+    description: Manage crate keys
+    permission: falcon.key
+    usage: /key <give|set|remove|reset> ...
+
+  crate:
+    description: Manage crates
+    permission: falcon.crates
+    usage: /crate <create|edit|get|delete|effects>
+
+  spawner:
+    description: Manage spawners
+    permission: falcon.spawners
+    usage: /spawner give <player> <type> [amount]
+    aliases: [ss]
+
+  speed:
+    description: Manage flying speed
+    permission: falcon.speed
+    usage: /speed <amount|normal>
+
+  amethyst:
+    description: Manage amethyst tools
+    permission: falcon.amethysts
+    usage: /amethyst <type> <player> [duration]
+
+  sus:
+    description: Monitor suspicious activity
+    permission: falcon.sus
+    usage: /sus
+
+  gmsp:
+    description: Silent spectator mode
+    permission: falcon.spectator
+    usage: /gmsp
+
+  gmc:
+    description: Quick creative mode
+    permission: falcon.creative
+    usage: /gmc
+
+  gms:
+    description: Quick survival mode
+    permission: falcon.survival
+    usage: /gms
+
+  gma:
+    description: Quick adventure mode
+    permission: falcon.adventure
+    usage: /gma
+
+  fly:
+    description: Toggle flight mode
+    permission: falcon.fly
+    permission-message: ""
+    usage: /fly
+
+  nv:
+    description: Toggle night vision
+    aliases: [nightvision]
+    usage: /nv
+
+  discord:
+    description: View the server discord link
+    usage: /discord
+    aliases: []
+
+  store:
+    description: View the server store link
+    usage: /store
+    aliases: []
+
+  duel:
+    description: Manage duel regions and settings
+    usage: /duel <player|create|settings>
+    permission: falcon.duel.use
+    permission-message: You do not have permission to use this command.
+
+  mute:
+    description: Mute a player for a certain duration
+    usage: /mute <player> <duration> [reason]
+    permission: falcon.mute
+
+  unmute:
+    description: Unmute a player
+    usage: /unmute <player>
+    permission: falcon.mute
+
+  checkmute:
+    description: Check the mute details of a player
+    usage: /checkmute <player>
+    permission: falcon.mute
+
+  ah:
+    description: Open the auction house
+    usage: /ah <search>
+    aliases: []
+
+  auction:
+    description: Admin commands for the auction system
+    usage: /auction <reload>
+    permission: falcon.auction
+    permission-message: You do not have permission to use this command.
+
+  profile:
+    description: View a player's profile
+    usage: /profile <playername>
+    permission: falcon.profile
+    permission-message: You do not have permission to use this command.
+
+  maintenance:
+    description: Toggle maintenance mode
+    usage: /maintenance
+    permission: falcon.maintenance
+    permission-message: You do not have permission to use this command.
+
+  redstone:
+    description: Open the redstone manager GUI
+    usage: /redstone
+    permission: falcon.redstone
+
+  order:
+    description: Open the orders GUI
+    usage: /order
+    aliases: [orders]
+
+  falcon:
+    description: Falcon admin and utility commands
+    usage: /falcon <reload|auction|order|shards|...> [player]
+    permission: falcon.use
+    permission-message: You do not have permission to use this command.
+
+  announce:
+    description: Broadcast an announcement to all players
+    usage: /announce <message> [repeat <count>]
+    permission: falcon.announce
+
+  tpa:
+    description: Request to teleport to another player
+    usage: /tpa <player>
+
+  tpahere:
+    description: Request another player to teleport to you
+    usage: /tpahere <player>
+
+  tpaccept:
+    description: Accept a teleport request
+    usage: /tpaccept [player]
+
+  tpacancel:
+    description: Cancel a sent teleport request
+    usage: /tpacancel
+
+  tpadeny:
+    description: Deny a teleport request
+    usage: /tpadeny [player]
+
+  msg:
+    description: Send a private message to a player
+    usage: /msg <player> <message>
+    aliases: [tell, w, wisper]
+
+  reply:
+    description: Reply to the last private message
+    usage: /reply <message> or /reply <player> <message>
+    aliases: [r]
+
+  tpauto:
+    description: Automatically accept teleport requests
+    usage: /tpauto
+
+  tp:
+    description: Teleport to a player
+    usage: /tp <player>
+    permission: falcon.teleport
+
+  settings:
+    description: Open the settings GUI
+    usage: /settings
+    aliases: []
+
+  stats:
+    description: View your player statistics
+    usage: /stats [player]
+
+  hide:
+    description: Hide your nametag overhead and in chat
+    usage: /hide
+    permission: falcon.hidename
+
+  disguise:
+    description: Disguise as another player with custom name and skin
+    usage: /disguise <playername> [skin] | /disguise off | /disguise list
+    permission: falcon.disguise
+    aliases: [dis]
+
+  bounty:
+    description: Manage player bounties
+    usage: /bounty [add <player> <amount>]
+    aliases: [bounties]
+
+  sell:
+    description: Open the sell GUI
+    usage: /sell
+    aliases: []
+
+  sellhistory:
+    description: View your aggregated sell history
+    usage: /sellhistory
+    aliases: [history]
+
+  worth:
+    description: View item prices in a GUI
+    usage: /worth
+    aliases: []
+
+  echest:
+    description: Open your personal ender chest
+    usage: /echest
+    aliases: [enderchest]
+    permission: falcon.enderchest
+    permission-message: ""
+
+  anvil:
+    description: Open a virtual anvil
+    usage: /anvil
+    permission: falcon.anvil
+
+  craftingtable:
+    description: Open a virtual crafting table
+    usage: /craftingtable
+    permission: falcon.craftingtable
+
+  smithingtable:
+    description: Open a virtual smithing table
+    usage: /smithingtable
+    permission: falcon.smithingtable
+
+  minigames:
+    description: Transfer to the minigame server
+    usage: /minigames
+    aliases: []
+
+  invsee:
+    description: View another player's inventory
+    usage: /invsee <player>
+    permission: falcon.invsee
+    permission-message: You do not have permission to use this command.
+
+  endersee:
+    description: View another player's ender chest
+    usage: /endersee <player>
+    permission: falcon.endersee
+    permission-message: You do not have permission to use this command.
+
+  home:
+    description: Open the homes GUI
+    usage: /home
+    permission: falcon.home.use
+    default: true
+
+  whereami:
+    description: Check where a player is located
+    usage: /whereami [player]
+    default: true
+
+  vanish:
+    description: Toggle your visibility to other players
+    usage: /vanish
+    permission: falcon.vanish
+
+  team:
+    description: Manage your team
+    usage: /team <subcommand>
+
+  otp:
+    description: Teleport to an offline player's last logout location
+    usage: /otp <player>
+    permission: falcon.teleport
+
+  tab:
+    description: Manage TAB list settings and group rankings
+    usage: /tab <reload|refresh|rankings|setranking|toggle|info>
+    permission: falcon.tab
+
+  ignore:
+    description: Ignore a player to block all their requests and messages
+    usage: /ignore <player>
+    default: true
+
+  unignore:
+    description: Unignore a previously ignored player
+    usage: /unignore <player>
+    default: true
+
+permissions:
+  falcon.redstone:
+    description: Permission to use /redstone admin commands
+    default: false
+  falcon.combat.bypass:
+    description: Allows bypassing combat logging restrictions
+    default: false
+  falcon.bypass.combat:
+    description: Allows bypassing combat logging restrictions
+    default: false
+  falcon.shards:
+    description: Allows administration of player shards
+    default: op
+  falcon.shop:
+    description: Allows administration of the shop
+    default: op
+  falcon.economy:
+    description: Allows administration of player balances
+    default: op
+  falcon.antixray:
+    description: Permission to use the /antixray admin command
+    default: op
+  falcon.billford:
+    description: Permission to use /billford admin
+    default: op
+  falcon.advisor:
+    description: Permission to use /advisor admin
+    default: op
+  falcon.tab:
+    description: Permission to manage TAB list settings and group rankings
+    default: op
+  falcon.setspawn:
+    description: Permission to use /setspawn
+    default: op
+  falcon.spawn:
+    description: Permission to use /spawn
+    default: true
+  falcon.anvil:
+    description: Allows opening the virtual anvil
+    default: true
+  falcon.craftingtable:
+    description: Allows opening the virtual crafting table
+    default: true
+  falcon.smithingtable:
+    description: Allows opening the virtual smithing table
+    default: true
+  falcon.minigames:
+    description: Allows transfer to minigame server
+    default: true
+  falcon.afk:
+    description: Allows administration of AFK regions
+    default: op
+  falcon.duel:
+    description: Allows administration of duels
+    default: op
+  falcon.duel.use:
+    description: Allows use of duel requests
+    default: true
+  falcon.creative:
+    description: Permission to use /gmc
+    default: op
+  falcon.survival:
+    description: Permission to use /gms
+    default: op
+  falcon.adventure:
+    description: Permission to use /gma
+    default: op
+  falcon.fly:
+    description: Permission to use /fly
+    default: op
+  falcon.enderchest:
+    description: Permission to use /echest
+    default: op
+  falcon.home.3:
+    description: Access to home slot 3
+    default: op
+  falcon.home.4:
+    description: Access to home slot 4
+    default: op
+  falcon.home.5:
+    description: Access to home slot 5
+    default: op
+  falcon.invsee:
+    description: Allows viewing other players' inventories
+    default: op
+  falcon.endersee:
+    description: Allows viewing other players' ender chests
+    default: op
+  falcon.home.use:
+    description: Access to the home system
+    default: true
+  falcon.hidename.see:
+    description: Allows seeing real names of hidden players
+    default: op
+  falcon.teleport:
+    description: Allows use of the custom /tp command
+    default: op
+  falcon.warp:
+    description: Permission to use /warp
+    default: true
+  falcon.warps:
+    description: Permission to manage warps via /falcon warps
+    default: op
+
+  falcon.crates:
+    description: Permission to manage crates via /crate
+    default: op
+
+  falcon.spawners:
+    description: Permission to manage spawners via /spawner
+    default: op
+
+  falcon.speed:
+    description: Permission to manage speed via /speed
+    default: op
+
+  falcon.amethysts:
+    description: Permission to manage amethysts via /amethyst
+    default: op
+
+  falcon.setafk:
+    description: Permission to manage AFK regions and spawns via /falcon setafk
+    default: op

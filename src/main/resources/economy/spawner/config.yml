@@ -1,0 +1,66 @@
+
+multipliers:
+  COW: 1.0
+  SPIDER: 1.0
+  ZOMBIFIED_PIGLIN: 1.0
+  SKELETON: 1.0
+  BLAZE: 1.0
+  CREEPER: 1.0
+  IRON_GOLEM: 1.0
+
+isolated_bonus: 0.5
+
+settings:
+  enable: true # Requires Server Restart
+  require_silk_touch: true
+  natural_spawners_virtual: false
+  auto_save_interval: 6000
+  production_interval: 600
+  isolation_radius: 5
+  storage_capacity: 1000000
+
+xp:
+  amount_per_cycle: 5
+
+hopper:
+  enabled: true
+  check_delay: 3s
+  stack_per_transfer: 5
+
+messages:
+  no_permission: "&cYou don't have permission to do that."
+  not_owner: "&cYou are not the owner of this spawner."
+  spawner_given: "&aSpawner given to %player%."
+  invalid_type: "&cInvalid spawner type."
+  merged: "&aSpawners merged."
+  collected: "&aCollected %amount% items and %xp% XP."
+  sold: "&aSold items for %money%."
+  cannot_mine_without_silk: "&cYou need a tool with Silk Touch to mine this spawner."
+  spawner_broken: "&aSpawner broken."
+  spawner_stacked: "&aYou stacked a spawner, now at %amount%x"
+  spawner_stacked_multi: "&aYou stacked %count%x spawner, now at %amount%x"
+  gui_title: "&8%stack% %type% SPAWNERS"
+  gui_title_storage: "&8%stack% %type% (%page%/%pages%)"
+  gui_spawner_item_name: "&e%stack% %type% SPAWNERS"
+  gui_click_to_sell: "&e&l•&r&fClick to sell items and collect xp"
+  gui_storage_filled: "&estorage: &f%percent%% &eFilled"
+  gui_open_storage: "&6SPAWNER STORAGE"
+  gui_storage_preview_entry: "&6%amount% &f%item%"
+  gui_storage_preview_empty: "&7Empty"
+  gui_collect_xp: "&aCOLLECT XP"
+  gui_collect_xp_points: "&a%xp% &fXP Points"
+  gui_close: "&cClose"
+  gui_previous_page: "&aPREVIOUS"
+  gui_previous_page_lore: "&fClick to go back a page"
+  gui_back: "&cBACK"
+  gui_back_lore: "&fClick to return to the spawner"
+  gui_sell_items: "&aSell Items"
+  gui_storage_collect: "&6SPAWNER"
+  gui_storage_collect_lore: "&fCollect your loot from the storage"
+  gui_drop_all: "&aDROP LOOT"
+  gui_drop_all_lore: "&fClick to drop all loot on the page"
+  gui_sell_xp: "&6Sell XP"
+  gui_sell_all: "&aSELL ALL"
+  gui_sell_all_lore: "&7click to sell all mob drops!"
+  gui_next_page: "&eNext Page"
+  gui_next_page_lore: "&fClick to go to next page"

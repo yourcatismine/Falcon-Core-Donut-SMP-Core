@@ -1,0 +1,68 @@
+gui-title: "&8ѕʜᴏᴘ - ɢᴇᴀʀ"
+
+items:
+  obsidian:
+    slot: 9
+    material: OBSIDIAN
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+
+  end_crystal:
+    slot: 10
+    material: END_CRYSTAL
+    price: 350
+    currency: MONEY
+    values: [1, 10, 64]
+      
+  respawn_anchor:
+    slot: 11
+    material: RESPAWN_ANCHOR
+    price: 1000
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  glowstone:
+    slot: 12
+    material: GLOWSTONE
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+    
+  totem_of_undying:
+    slot: 13
+    material: TOTEM_OF_UNDYING
+    price: 1500
+    currency: MONEY
+    values: []
+
+  ender_pearl:
+    slot: 14
+    material: ENDER_PEARL
+    price: 75
+    currency: MONEY
+    values: [1, 10, 16]
+  
+  golden_apple:
+    slot: 15
+    material: GOLDEN_APPLE
+    price: 250
+    currency: MONEY
+    values: [1, 10, 64]
+
+  experience_bottle:
+    slot: 16
+    material: EXPERIENCE_BOTTLE
+    price: 100
+    currency: MONEY
+    values: [1, 10, 64]
+
+  arrow:
+    slot: 17
+    material: ARROW
+    price: 150
+    currency: MONEY
+    effects: [SLOW_FALLING]
+    effect_duration: 30
+    effect_level: 1
+    values: [1, 10, 64]

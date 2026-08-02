@@ -1,0 +1,105 @@
+region:
+  - "Asia"
+
+motd:
+  enabled: true
+  motd: "FALCONCORE"
+
+TOKEN: ""
+ChannelID: ""
+
+discord-status:
+  interval-seconds: 30
+  messages:
+    - "Online: {playercount}"
+    - "Total players: {totalplayers}"
+    - "Banned: {bannedcount}"
+    - "Muted: {mutecount}"
+
+discord-webhooks:
+  auction:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+  orders:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+  chat-log:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+  death-log:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+  join-leave:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+  spawner:
+    enabled: false
+    webhook-url: "https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+
+database: #MysQL
+  enabled: false
+  host: "localhost"
+  port: 3306
+  database: ""
+  username: ""
+  password: ""
+
+combat:
+  - "rtp"
+  - "tpa"
+  - "tpahere"
+  - "tpaccept"
+  - "home"
+  - "spawn"
+  - "fly"
+  - "duel"
+  - "afk"
+
+disabled-fly:
+  - world
+  - world_nether
+  - world_the_end
+
+discord:
+  - "&fJoin our discord: &ahttps://discord.gg/store"
+
+store:
+  - "&fCheck out our store: &ahttps://discord.gg/"
+
+command-whitelist:
+  enabled: true
+  allowed-commands:
+    - "spawn"
+    - "r"
+    - "reply"
+    - "home"
+    - "kit"
+    - "rtp"
+    - "order"
+    - "ah"
+    - "auction"
+    - "afk"
+    - "baltop"
+    - "duel"
+    - "media"
+    - "rules"
+    - "msg"
+    - "sell"
+    - "settings"
+    - "shards"
+    - "shop"
+    - "tpa"
+    - "tpacancel"
+    - "tpaccept"
+    - "tpahere"
+    - "tpadeny"
+    - "tpauto"
+    - "bal"
+    - "balance"
+    - "discord"
+    - "advisory"
+    - "pay"
+    - "nv"
+    - "nightvision"
+    - "store"
+    - "bounty"

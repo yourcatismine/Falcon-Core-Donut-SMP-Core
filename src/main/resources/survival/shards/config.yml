@@ -1,0 +1,17 @@
+interval: 60
+amount: 2
+permission: "falcon.shards.passive"
+
+kill-reward:
+  amount: 3
+  cooldown: 300
+
+messages:
+  passive:
+    chat: "&7You have received &d{shard} shards."
+    actionbar: "&7You have received &d{shard} shards."
+  active:
+    actionbar: "&d+{shards} shards&7 for killing &f{PLAYER}"
+
+sounds:
+  passive: "BLOCK_AMETHYST_BLOCK_CHIME"      

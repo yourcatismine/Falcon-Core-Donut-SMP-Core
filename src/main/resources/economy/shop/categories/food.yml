@@ -1,0 +1,65 @@
+gui-title: "&8ѕʜᴏᴘ - ꜰᴏᴏᴅ"
+
+items:
+  potato:
+    slot: 9
+    material: POTATO
+    price: 96
+    currency: MONEY
+    values: [1, 10, 64]
+
+  sweet_berry:
+    slot: 10
+    material: SWEET_BERRIES
+    price: 50
+    currency: MONEY
+    values: [1, 10, 64]
+      
+  melon_slice:
+    slot: 11
+    material: MELON_SLICE
+    price: 36
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  carrot:
+    slot: 12
+    material: CARROT
+    price: 96
+    currency: MONEY
+    values: [1, 10, 64]
+    
+  apple:
+    slot: 13
+    material: APPLE
+    price: 25
+    currency: MONEY
+    values: [1, 10, 64]
+
+  cooked_chicken:
+    slot: 14
+    material: COOKED_CHICKEN
+    price: 48
+    currency: MONEY
+    values: [1, 10, 64]
+  
+  cooked_beef:
+    slot: 15
+    material: COOKED_BEEF
+    price: 35
+    currency: MONEY
+    values: [1, 10, 64]
+
+  golden_carrot:
+    slot: 16
+    material: GOLDEN_CARROT
+    price: 120
+    currency: MONEY
+    values: [1, 10, 64]
+
+  golden_apple:
+    slot: 17
+    material: GOLDEN_APPLE
+    price: 250
+    currency: MONEY
+    values: [1, 10, 64]

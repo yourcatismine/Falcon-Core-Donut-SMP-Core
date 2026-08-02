@@ -1,0 +1,59 @@
+INTERVAL: 60
+SCOREBOARD:
+  ENABLED: true
+  SHARD-BOOSTER: " &5⚡ &fBooster &5%falconcore_shard_booster%"
+  VIP: "&fꜰᴀʟᴄᴏɴ+"
+  SWITCHER:
+    [
+      " &#F97603☠ &fDeaths &#F97603%falconcore_deaths%",
+      " &FC0000🗡 &fKills &#FC0000%falconcore_kills%",
+    ]
+  TEAMS: " &d🪓 &fTeam %team_name%"
+  TITLE:
+    - "&b&lFalconSMP"
+  LINES:
+    - ""
+    - " &7{gamertag}"
+    - " &a&l$ &fMoney &a%falconcore_balance%"
+    - " &5⭐ &fShards &5%falconcore_shards%"
+    - " {switcher}"
+    - " &b☄ &fKeyall &b%falconcore_keyall%"
+    - " &e⌚ &fPlaytime &e%falconcore_playtime%"
+    - ""
+    - " &7Asia (&b{region_ping}ms&7)"
+
+CHAT-FORMAT:
+  ENABLED: true
+  CHAT: "&f%prefix%%player%&7: &f%message%"
+  HOVER-LORE:
+    - "%prefix%%player%"
+    - "&7&m----------"
+    - "&a$ &fMoney &a%falconcore_balance%"
+    - "&c⚔ &fKills &c%falconcore_kills%"
+    - "&e⌚ &fPlaytime &e%falconcore_playtime%"
+    - "&5☠ &fDeaths &5%falconcore_deaths%"
+    - "&5⭐ &fShards &5%falconcore_shards%"
+    - "&7&m----------"
+    - "&7ᴄʟɪᴄᴋ ᴛᴏ ᴠɪᴇᴡ ѕᴛᴀᴛѕ"
+
+NICKNAME-FORMAT:
+  ENABLED: true
+  FORMAT:
+    - "{prefix}&7{gamertag}"
+
+TAB:
+  ENABLED: true
+  MAX_COLUMNS: 4
+  MAX_ROWS: 20
+  GROUP_SORTING:
+    ENABLED: true
+    RANKINGS:
+      default: 1
+  TITLE:
+    header:
+      - "&b&lFalconSMP"
+      - "&f%online% players"
+      - ""
+    footer:
+      - ""
+      - "&7Tps:&b {tps}&7&l |&r&7 Mspt:&b {mspt}&7&l |&r&7 Ping:&b {ping}ms"

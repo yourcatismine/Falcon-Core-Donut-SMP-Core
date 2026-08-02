@@ -1,0 +1,19 @@
+worlds:
+  overworld:
+    world: "world"
+    min: 100
+    max: 15000
+    center_x: 0
+    center_z: 0
+  nether:
+    world: "world_nether"
+    min: 100
+    max: 10000
+    center_x: 0
+    center_z: 0
+  end:
+    world: "world_the_end"
+    min: 100
+    max: 10000
+    center_x: 0
+    center_z: 0

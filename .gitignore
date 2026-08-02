@@ -1,0 +1,8 @@
+/.idea
+/.vscode
+/build_scripts
+/mappings
+/target
+# Skidfuscator
+skidfuscator.log
+skidfuscator-error-*.txt

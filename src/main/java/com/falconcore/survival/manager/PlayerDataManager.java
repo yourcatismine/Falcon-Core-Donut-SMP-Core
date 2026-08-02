@@ -230,7 +230,26 @@ public class PlayerDataManager {
             }
         }
 
-        if (plugin.getFalconSell().getDatabaseManager().isConnected()) {
+        if (plugin.getFalconSell().getDatabaseManager().isFlatfileMode()) {
+            File statsFile = new File(plugin.getDataFolder(), "data/economy/money/players/" + uuid.toString() + ".yml");
+            if (statsFile.exists()) {
+                FileConfiguration statsCfg = YamlConfiguration.loadConfiguration(statsFile);
+                data.setTeamId(statsCfg.getString("team"));
+                data.setNameHidden(statsCfg.getBoolean("name_hidden", false));
+                data.setDisguised(statsCfg.getBoolean("disguised", false));
+                data.setDisguiseName(statsCfg.getString("disguise_name"));
+                data.setDisguiseSkinTexture(statsCfg.getString("disguise_skin_texture"));
+                data.setDisguiseSkinSignature(statsCfg.getString("disguise_skin_signature"));
+            }
+            
+            if (data.getTeamId() != null) {
+                File teamMembersFile = new File(plugin.getDataFolder(), "data/server/teams/members.yml");
+                if (teamMembersFile.exists()) {
+                    FileConfiguration tmCfg = YamlConfiguration.loadConfiguration(teamMembersFile);
+                    data.setTeamRole(tmCfg.getString(data.getTeamId() + "." + uuid.toString() + ".role", "MEMBER"));
+                }
+            }
+        } else if (plugin.getFalconSell().getDatabaseManager().isConnected()) {
             try (Connection conn = plugin.getFalconSell().getDatabaseManager().getConnection()) {
                 if (conn != null && !conn.isClosed()) {
                     try (PreparedStatement stmt = conn.prepareStatement(

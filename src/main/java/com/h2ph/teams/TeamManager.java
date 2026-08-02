@@ -360,6 +360,30 @@ public class TeamManager {
 
     public List<TeamMemberData> getMemberDataList(String teamId) {
         List<TeamMemberData> list = new ArrayList<>();
+        if (isFlatfileMode()) {
+            List<Object[]> flatData = getYamlStorage().getTeamMemberDataList(teamId);
+            for (Object[] row : flatData) {
+                UUID uuid = (UUID) row[0];
+                long joinedAt = (long) row[1];
+                
+                String name = plugin.getGamertagManager().getGamertag(uuid);
+                if (name == null)
+                    name = Bukkit.getOfflinePlayer(uuid).getName();
+                if (name == null)
+                    name = "Unknown";
+
+                double money = 0;
+                com.falconcore.survival.manager.PlayerData pData = plugin.getPlayerDataManager()
+                        .get(uuid);
+                if (pData != null) {
+                    money = pData.getMoney();
+                }
+                boolean online = Bukkit.getPlayer(uuid) != null;
+
+                list.add(new TeamMemberData(uuid, name, joinedAt, money, online));
+            }
+            return list;
+        }
         try (Connection conn = dbManager.getConnection()) {
             if (conn != null && !conn.isClosed()) {
                 try (PreparedStatement stmt = conn
@@ -399,6 +423,15 @@ public class TeamManager {
 
     public java.util.Set<String> getTeamMembers(String teamId) {
         java.util.Set<String> memberNames = new java.util.HashSet<>();
+        if (isFlatfileMode()) {
+            for (UUID uuid : getTeamMemberUuids(teamId)) {
+                String name = plugin.getGamertagManager().getGamertag(uuid);
+                if (name != null) {
+                    memberNames.add(name);
+                }
+            }
+            return memberNames;
+        }
         try (Connection conn = dbManager.getConnection()) {
             if (conn != null && !conn.isClosed()) {
                 try (PreparedStatement stmt = conn

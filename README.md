@@ -6,7 +6,7 @@ It targets modern Paper/Folia-compatible servers and bundles gameplay, economy, 
 ## Plugin metadata
 
 - **Name:** Falcon
-- **Version:** 6.0
+- **Version:** 7.0
 - **Main class:** `com.h2ph.Falcon`
 - **API version:** 1.26
 - **Folia supported:** yes

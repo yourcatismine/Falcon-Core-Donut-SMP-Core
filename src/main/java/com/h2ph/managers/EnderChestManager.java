@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class EnderChestManager {
+    private final Map<UUID, Inventory> activeInventories = new HashMap<>();
+    
     public EnderChestManager(Falcon plugin) {}
     
     public ItemStack[] loadEnderChest(UUID uuid) {
@@ -26,7 +28,8 @@ public class EnderChestManager {
     }
     
     public Inventory getOrCreateInventory(UUID uuid, String name, Object extra, ItemStack[] contents) {
-        Inventory inv = Bukkit.createInventory(null, 54, name != null ? name : "EnderChest");
+        com.h2ph.gui.EnderChestGUI.EnderChestHolder holder = new com.h2ph.gui.EnderChestGUI.EnderChestHolder(uuid, name, extra instanceof Block ? (Block) extra : null);
+        Inventory inv = Bukkit.createInventory(holder, 54, "Ender Chest");
         if (contents != null && contents.length <= 54) {
             inv.setContents(contents);
         } else if (contents != null && contents.length > 54) {
@@ -34,11 +37,12 @@ public class EnderChestManager {
             System.arraycopy(contents, 0, resized, 0, 54);
             inv.setContents(resized);
         }
+        activeInventories.put(uuid, inv);
         return inv;
     }
     
     public Map<UUID, Inventory> getActiveInventories() {
-        return new HashMap<>();
+        return activeInventories;
     }
     
     public void saveEnderChest(UUID uuid, ItemStack[] contents) {
@@ -52,11 +56,23 @@ public class EnderChestManager {
     
     public void wipeEnderChest(UUID uuid) {}
     
-    public void registerViewer(Block block, Player player) {}
+    public void registerViewer(Block block, Player player) {
+        if (block != null && block.getState() instanceof org.bukkit.block.EnderChest) {
+            org.bukkit.block.EnderChest ec = (org.bukkit.block.EnderChest) block.getState();
+            ec.open();
+        }
+    }
     
-    public void unregisterViewer(Block block, Player player) {}
+    public void unregisterViewer(Block block, Player player) {
+        if (block != null && block.getState() instanceof org.bukkit.block.EnderChest) {
+            org.bukkit.block.EnderChest ec = (org.bukkit.block.EnderChest) block.getState();
+            ec.close();
+        }
+    }
     
     public void preload(UUID uuid, String name) {}
     
-    public void unload(UUID uuid) {}
+    public void unload(UUID uuid) {
+        activeInventories.remove(uuid);
+    }
 }

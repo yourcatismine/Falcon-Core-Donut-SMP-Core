@@ -182,4 +182,74 @@ public class InventoryWorthListener implements Listener {
             }, 5L);
         }
     }
+
+    @EventHandler
+    public void onInventoryMoveItem(org.bukkit.event.inventory.InventoryMoveItemEvent event) {
+        ItemStack moving = event.getItem();
+        if (plugin.getInventoryWorthManager().stripFromItem(moving)) {
+            event.setItem(moving);
+        }
+
+        org.bukkit.inventory.Inventory dest = event.getDestination();
+        org.bukkit.inventory.Inventory source = event.getSource();
+
+        boolean destViewed = plugin.getInventoryWorthManager().isStandardContainer(dest) && !dest.getViewers().isEmpty();
+        boolean sourceViewed = plugin.getInventoryWorthManager().isStandardContainer(source) && !source.getViewers().isEmpty();
+
+        if (destViewed) {
+            for (int i = 0; i < dest.getSize(); i++) {
+                ItemStack item = dest.getItem(i);
+                if (item != null && item.getType() != Material.AIR) {
+                    plugin.getInventoryWorthManager().stripFromItem(item);
+                }
+            }
+        }
+
+        if (destViewed || sourceViewed) {
+            java.util.Set<Player> viewersToUpdate = new java.util.HashSet<>();
+            if (destViewed) {
+                for (org.bukkit.entity.HumanEntity e : dest.getViewers()) {
+                    if (e instanceof Player) viewersToUpdate.add((Player) e);
+                }
+            }
+            if (sourceViewed) {
+                for (org.bukkit.entity.HumanEntity e : source.getViewers()) {
+                    if (e instanceof Player) viewersToUpdate.add((Player) e);
+                }
+            }
+
+            for (Player p : viewersToUpdate) {
+                plugin.getSchedulerAdapter().runEntityTaskLater(p, () -> {
+                    if (p.isOnline() && plugin.getInventoryWorthManager().isActive(p)) {
+                        if (plugin.getInventoryWorthManager().applyWorthLore(p)) {
+                            p.updateInventory();
+                        }
+                    }
+                }, 1L);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onHopperPickup(org.bukkit.event.inventory.InventoryPickupItemEvent event) {
+        org.bukkit.inventory.Inventory dest = event.getInventory();
+        if (plugin.getInventoryWorthManager().isStandardContainer(dest) && !dest.getViewers().isEmpty()) {
+            for (int i = 0; i < dest.getSize(); i++) {
+                ItemStack item = dest.getItem(i);
+                if (item != null && item.getType() != Material.AIR) {
+                    plugin.getInventoryWorthManager().stripFromItem(item);
+                }
+            }
+            for (org.bukkit.entity.HumanEntity viewer : dest.getViewers()) {
+                if (viewer instanceof Player) {
+                    Player p = (Player) viewer;
+                    plugin.getSchedulerAdapter().runEntityTaskLater(p, () -> {
+                        if (p.isOnline() && plugin.getInventoryWorthManager().isActive(p)) {
+                            if (plugin.getInventoryWorthManager().applyWorthLore(p)) p.updateInventory();
+                        }
+                    }, 1L);
+                }
+            }
+        }
+    }
 }

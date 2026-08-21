@@ -93,6 +93,7 @@ public class Falcon extends JavaPlugin {
     private com.h2ph.teams.TeamInviteManager teamInviteManager;
     private com.h2ph.managers.GamertagManager gamertagManager;
     private com.h2ph.managers.DamageManager damageManager;
+    private com.h2ph.managers.InventoryWorthManager inventoryWorthManager;
 
     private com.falconcore.survival.limiter.LimiterConfig limiterConfig;
     private com.falconcore.survival.limiter.LimiterManager limiterManager;
@@ -535,6 +536,9 @@ public class Falcon extends JavaPlugin {
         this.falconSell = new com.falconcore.survival.sell.FalconSell(this);
         this.falconSell.onEnable();
 
+        this.inventoryWorthManager = new com.h2ph.managers.InventoryWorthManager(this);
+        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventoryWorthListener(this), this);
+
         this.warpManager = new com.falconcore.survival.manager.WarpManager(this);
 
         this.enderChestManager = new com.h2ph.managers.EnderChestManager(this);
@@ -805,6 +809,10 @@ public class Falcon extends JavaPlugin {
             }
         }
 
+        if (this.inventoryWorthManager != null) {
+            this.inventoryWorthManager.shutdown();
+        }
+
         if (this.falconSell != null) {
             this.falconSell.onDisable();
         }
@@ -902,6 +910,10 @@ public class Falcon extends JavaPlugin {
 
     public com.falconcore.survival.sell.FalconSell getFalconSell() {
         return falconSell;
+    }
+
+    public com.h2ph.managers.InventoryWorthManager getInventoryWorthManager() {
+        return inventoryWorthManager;
     }
 
     public com.h2ph.commands.admin.duels.DuelArenaManager getDuelArenaManager() {

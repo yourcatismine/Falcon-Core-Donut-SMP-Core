@@ -131,13 +131,12 @@ public class InventoryWorthListener implements Listener {
 
         plugin.getInventoryWorthManager().stripFromItem(event.getItemDrop().getItemStack());
         
-        plugin.getInventoryWorthManager().stripWorthLore(player);
-        
+        org.bukkit.Material type = event.getItemDrop().getItemStack().getType();
+        plugin.getInventoryWorthManager().stripWorthLoreByMaterial(player, type);
+
         plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
             if (!player.isOnline()) return;
-            if (plugin.getInventoryWorthManager().applyWorthLore(player)) {
-                player.updateInventory();
-            }
+            plugin.getInventoryWorthManager().applyWorthLore(player);
         }, 1L);
     }
 
@@ -157,13 +156,12 @@ public class InventoryWorthListener implements Listener {
         Player player = (Player) event.getEntity();
         if (!plugin.getInventoryWorthManager().isActive(player)) return;
         
-        plugin.getInventoryWorthManager().stripWorthLore(player);
+        org.bukkit.Material type = event.getItem().getItemStack().getType();
+        plugin.getInventoryWorthManager().stripWorthLoreByMaterial(player, type);
 
         plugin.getSchedulerAdapter().runEntityTaskLater(player, () -> {
             if (!player.isOnline()) return;
-            if (plugin.getInventoryWorthManager().applyWorthLore(player)) {
-                player.updateInventory();
-            }
+            plugin.getInventoryWorthManager().applyWorthLore(player);
         }, 1L);
     }
 

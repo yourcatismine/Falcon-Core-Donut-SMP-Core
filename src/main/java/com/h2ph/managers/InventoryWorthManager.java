@@ -189,6 +189,20 @@ public class InventoryWorthManager {
         return changed;
     }
 
+    public boolean stripWorthLoreByMaterial(Player player, Material material) {
+        boolean changed = false;
+        PlayerInventory inv = player.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack item = inv.getItem(i);
+            if (item != null && item.getType() == material) {
+                if (stripFromItem(item)) {
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
     public boolean applyToItem(ItemStack item) {
         if (item == null || item.getType() == Material.AIR) return false;
         if (plugin.getFalconSell() == null || plugin.getFalconSell().getPricesManager() == null) return false;

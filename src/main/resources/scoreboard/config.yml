@@ -36,10 +36,16 @@ CHAT-FORMAT:
     - "&7&m----------"
     - "&7ᴄʟɪᴄᴋ ᴛᴏ ᴠɪᴇᴡ ѕᴛᴀᴛѕ"
 
+# Available Custom Placeholders (works for target player being looked at):
+# {ping}, {health}, {money}, {shards}, {playtime}, {kills}, {death}, {team}
 NICKNAME-FORMAT:
   ENABLED: true
   FORMAT:
     - "{prefix}&7{gamertag}"
+  # Note: BELOW-NAME requires exactly one numeric placeholder from the list above.
+  BELOW-NAME:
+    ENABLED: true
+    TEXT: "&b{ping}ms &r| &a{money} $ &r| &5{shards} ⭐ &r| &d{team} 🪓"
 
 TAB:
   ENABLED: true

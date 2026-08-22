@@ -27,6 +27,8 @@ import java.util.UUID;
 public class NametagManager implements Listener {
     private final Falcon plugin;
     private boolean enabled;
+    private boolean belowNameEnabled;
+    private String belowNameFormat;
     private String format;
     private io.papermc.paper.threadedregions.scheduler.ScheduledTask task;
 
@@ -41,10 +43,39 @@ public class NametagManager implements Listener {
         File configFile = new File(plugin.getDataFolder(), "scoreboard/config.yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
         enabled = config.getBoolean("NICKNAME-FORMAT.ENABLED", false);
+        belowNameEnabled = config.getBoolean("NICKNAME-FORMAT.BELOW-NAME.ENABLED", false);
+        belowNameFormat = config.getString("NICKNAME-FORMAT.BELOW-NAME.TEXT", "&c{ping} ms");
         if (config.isList("NICKNAME-FORMAT.FORMAT")) {
             format = String.join("", config.getStringList("NICKNAME-FORMAT.FORMAT"));
         } else {
             format = config.getString("NICKNAME-FORMAT.FORMAT", "{prefix} {gamertag}");
+        }
+
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            if (belowNameEnabled) {
+                removeBelowNameFor(viewer);
+                setupBelowNameFor(viewer);
+            } else {
+                removeBelowNameFor(viewer);
+            }
+            if (enabled) {
+                updateNametagsFor(viewer);
+            }
+        }
+    }
+
+    private void removeBelowNameFor(Player viewer) {
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+        if (user != null) {
+            com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective objPacket = 
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective(
+                    "FalconBN",
+                    com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective.ObjectiveMode.REMOVE,
+                    net.kyori.adventure.text.Component.empty(),
+                    com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                    null
+                );
+            user.sendPacket(objPacket);
         }
     }
 
@@ -53,6 +84,9 @@ public class NametagManager implements Listener {
             if (!enabled) return;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 updateNametagsFor(player);
+                if (belowNameEnabled) {
+                    updateBelowNameFor(player);
+                }
             }
         }, 20L, 20L);
     }
@@ -65,13 +99,17 @@ public class NametagManager implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        if (enabled) updateNametagsFor(event.getPlayer());
+        if (enabled) {
+            updateNametagsFor(event.getPlayer());
+        }
+        if (belowNameEnabled) {
+            setupBelowNameFor(event.getPlayer());
+        }
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         if (enabled) {
-            // Player quit, let's remove their team for everyone
             String teamName = "nt_" + event.getPlayer().getName();
             if (teamName.length() > 16) teamName = teamName.substring(0, 16);
             WrapperPlayServerTeams removeTeamPacket = new WrapperPlayServerTeams(
@@ -140,18 +178,186 @@ public class NametagManager implements Listener {
                 WrapperPlayServerTeams createPacket = (showDisguise && disguiseTeamPacketCreate != null) ? disguiseTeamPacketCreate : realTeamPacketCreate;
                 WrapperPlayServerTeams updatePacket = (showDisguise && disguiseTeamPacketUpdate != null) ? disguiseTeamPacketUpdate : realTeamPacketUpdate;
                 
-                // Only send create if we haven't sent it yet, but for simplicity, we can send CREATE on join, and UPDATE every tick.
-                // However, without tracking, sending CREATE repeatedly throws errors internally in the client.
-                // Best approach for fake teams: use Scoreboard API, or send remove then create if they changed state.
-                // Since this runs every 20 ticks, we just send UPDATE. 
-                // We send CREATE on join. But what if they change disguise?
-                // For safety and to guarantee no flickering, we just send UPDATE.
-                // To ensure it exists, we send CREATE once if not tracked, but we can't track easily per-viewer here.
-                // Let's send CREATE + UPDATE but with CollisionRule pushed to UPDATE. Wait, the client ignores duplicate CREATEs.
-                // Actually, let's just send CREATE and let the client ignore duplicates, but we only send it if it's their first tick.
                 user.sendPacket(createPacket);
                 user.sendPacket(updatePacket);
             }
+        }
+    }
+
+    private void setupBelowNameFor(Player viewer) {
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+        if (user != null) {
+            String scoreType = extractScoreType(belowNameFormat);
+            String suffix = belowNameFormat;
+            if (scoreType != null) {
+                suffix = suffix.replace("{" + scoreType + "}", "");
+            }
+            suffix = ChatColor.translateAlternateColorCodes('&', suffix);
+            
+            Component objDisplayName;
+            if (supportsModernScoreFormatting()) {
+                objDisplayName = Component.empty();
+            } else {
+                objDisplayName = LegacyComponentSerializer.legacySection().deserialize(suffix);
+            }
+            
+            com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective objPacket = 
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective(
+                    "FalconBN",
+                    com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective.ObjectiveMode.CREATE,
+                    objDisplayName,
+                    com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerScoreboardObjective.RenderType.INTEGER,
+                    null
+                );
+            user.sendPacket(objPacket);
+            
+            com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisplayScoreboard displayPacket = 
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisplayScoreboard(
+                    2, // BELOW_NAME
+                    "FalconBN"
+                );
+            user.sendPacket(displayPacket);
+        }
+    }
+
+    private String extractScoreType(String format) {
+        if (format.contains("{ping}")) return "ping";
+        if (format.contains("{health}")) return "health";
+        if (format.contains("{money}")) return "money";
+        if (format.contains("{shards}")) return "shards";
+        if (format.contains("{kills}")) return "kills";
+        if (format.contains("{death}")) return "death";
+        if (format.contains("{playtime}")) return "playtime";
+        return null;
+    }
+
+    private void updateBelowNameFor(Player target) {
+        String scoreType = extractScoreType(belowNameFormat);
+        int score = 0;
+        if (scoreType != null) {
+            switch (scoreType) {
+                case "ping": score = target.getPing(); break;
+                case "health": score = (int) target.getHealth(); break;
+                case "money": 
+                    com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
+                    score = pd != null ? (int) pd.getMoney() : 0;
+                    break;
+                case "shards": 
+                    com.falconcore.survival.manager.PlayerData pd2 = plugin.getPlayerDataManager().get(target.getUniqueId());
+                    score = pd2 != null ? (int) pd2.getShards() : 0;
+                    break;
+                case "kills": score = target.getStatistic(org.bukkit.Statistic.PLAYER_KILLS); break;
+                case "death": score = target.getStatistic(org.bukkit.Statistic.DEATHS); break;
+                case "playtime": score = target.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / 72000; break;
+            }
+        }
+        
+        String fullString = belowNameFormat;
+        com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
+        
+        fullString = fullString.replace("{ping}", String.valueOf(target.getPing()));
+        fullString = fullString.replace("{health}", String.valueOf((int) target.getHealth()));
+        fullString = fullString.replace("{money}", pd != null ? com.falconcore.survival.utils.NumberUtils.format(pd.getMoney()) : "0");
+        fullString = fullString.replace("{shards}", pd != null ? com.falconcore.survival.utils.NumberUtils.format(pd.getShards()) : "0");
+        fullString = fullString.replace("{playtime}", formatPlaytime(target.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / 20L));
+        fullString = fullString.replace("{kills}", com.falconcore.survival.utils.NumberUtils.format(target.getStatistic(org.bukkit.Statistic.PLAYER_KILLS)));
+        fullString = fullString.replace("{death}", com.falconcore.survival.utils.NumberUtils.format(target.getStatistic(org.bukkit.Statistic.DEATHS)));
+        if (pd != null && pd.getTeamId() != null) {
+            com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(pd.getTeamId());
+            fullString = fullString.replace("{team}", team != null ? team.getName() : "None");
+        } else {
+            fullString = fullString.replace("{team}", "None");
+        }
+        
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            fullString = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(target, fullString);
+        }
+        fullString = ChatColor.translateAlternateColorCodes('&', fullString);
+        Component customComponent = LegacyComponentSerializer.legacySection().deserialize(fullString);
+        
+        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore updatePacket = 
+            new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore(
+                target.getName(),
+                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore.Action.CREATE_OR_UPDATE_ITEM,
+                "FalconBN",
+                Optional.of(score)
+            );
+            
+        apply1_20_3Formatting(updatePacket, customComponent);
+            
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer);
+            if (user != null) {
+                user.sendPacket(updatePacket);
+            }
+        }
+    }
+
+    private boolean supportsModernScoreFormatting() {
+        try {
+            Class<?> scorePacketClass = com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore.class;
+            for (java.lang.reflect.Method m : scorePacketClass.getMethods()) {
+                if (m.getName().equals("setFormat") || m.getName().equals("setNumberFormat") || m.getName().equals("setScoreFormat")) {
+                    return true;
+                }
+                if (m.getName().equals("setDisplayName") || m.getName().equals("setDisplay")) {
+                    return true;
+                }
+            }
+        } catch (Throwable t) {}
+        return false;
+    }
+
+    private void apply1_20_3Formatting(com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateScore packet, Component customComponent) {
+        try {
+            boolean applied = false;
+            for (java.lang.reflect.Method m : packet.getClass().getMethods()) {
+                if (m.getName().equals("setFormat") || m.getName().equals("setNumberFormat") || m.getName().equals("setScoreFormat")) {
+                    if (m.getParameterCount() == 1) {
+                        Class<?> paramType = m.getParameterTypes()[0];
+                        Class<?> scoreFormatClass = null;
+                        try {
+                            scoreFormatClass = Class.forName("com.github.retrooper.packetevents.protocol.score.ScoreFormat");
+                        } catch (Exception e) {}
+                        
+                        if (scoreFormatClass != null) {
+                            Object formatObj = null;
+                            for (java.lang.reflect.Method sm : scoreFormatClass.getMethods()) {
+                                if (java.lang.reflect.Modifier.isStatic(sm.getModifiers()) && sm.getParameterCount() == 1 && sm.getParameterTypes()[0].equals(Component.class)) {
+                                    if (sm.getName().toLowerCase().contains("fixed") || sm.getName().toLowerCase().contains("component")) {
+                                        formatObj = sm.invoke(null, customComponent);
+                                        break;
+                                    }
+                                }
+                            }
+                            if (formatObj != null) {
+                                if (paramType.equals(Optional.class)) {
+                                    m.invoke(packet, Optional.of(formatObj));
+                                    applied = true;
+                                } else if (paramType.isAssignableFrom(scoreFormatClass)) {
+                                    m.invoke(packet, formatObj);
+                                    applied = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!applied) {
+                for (java.lang.reflect.Method m : packet.getClass().getMethods()) {
+                    if (m.getName().equals("setDisplayName") || m.getName().equals("setDisplay")) {
+                        if (m.getParameterCount() == 1) {
+                            Class<?> paramType = m.getParameterTypes()[0];
+                            if (paramType.equals(Optional.class)) {
+                                m.invoke(packet, Optional.of(customComponent));
+                            } else if (paramType.equals(Component.class)) {
+                                m.invoke(packet, customComponent);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
         }
     }
 
@@ -191,6 +397,47 @@ public class NametagManager implements Listener {
         String suffixPart = "";
 
         String rawFormat = format;
+
+        com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
+        if (rawFormat.contains("{ping}")) {
+            rawFormat = rawFormat.replace("{ping}", String.valueOf(target.getPing()));
+        }
+        if (rawFormat.contains("{health}")) {
+            rawFormat = rawFormat.replace("{health}", String.valueOf((int) target.getHealth()));
+        }
+        if (rawFormat.contains("{money}")) {
+            rawFormat = rawFormat.replace("{money}", pd != null ? com.falconcore.survival.utils.NumberUtils.format(pd.getMoney()) : "0");
+        }
+        if (rawFormat.contains("{shards}")) {
+            rawFormat = rawFormat.replace("{shards}", pd != null ? com.falconcore.survival.utils.NumberUtils.format(pd.getShards()) : "0");
+        }
+        if (rawFormat.contains("{playtime}")) {
+            int ticks = target.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE);
+            rawFormat = rawFormat.replace("{playtime}", formatPlaytime(ticks / 20L));
+        }
+        if (rawFormat.contains("{kills}")) {
+            rawFormat = rawFormat.replace("{kills}", com.falconcore.survival.utils.NumberUtils.format(target.getStatistic(org.bukkit.Statistic.PLAYER_KILLS)));
+        }
+        if (rawFormat.contains("{death}")) {
+            rawFormat = rawFormat.replace("{death}", com.falconcore.survival.utils.NumberUtils.format(target.getStatistic(org.bukkit.Statistic.DEATHS)));
+        }
+        if (rawFormat.contains("{team}")) {
+            if (pd != null && pd.getTeamId() != null) {
+                com.h2ph.teams.Team team = plugin.getTeamManager().getTeam(pd.getTeamId());
+                if (team != null) {
+                    String teamName = team.getName();
+                    if (!teamName.contains("&") && !teamName.contains("§") && !teamName.contains("#")) {
+                        teamName = "&6" + teamName;
+                    }
+                    rawFormat = rawFormat.replace("{team}", teamName);
+                } else {
+                    rawFormat = rawFormat.replace("{team}", "&6None");
+                }
+            } else {
+                rawFormat = rawFormat.replace("{team}", "&6None");
+            }
+        }
+
         if (rawFormat.contains("{gamertag}")) {
             String[] split = rawFormat.split("\\{gamertag\\}");
             prefixPart = split.length > 0 ? split[0] : "";
@@ -207,7 +454,7 @@ public class NametagManager implements Listener {
             prefixPart = ChatColor.translateAlternateColorCodes('&', prefixPart);
             suffixPart = ChatColor.translateAlternateColorCodes('&', suffixPart);
         } else {
-            prefixPart = ChatColor.translateAlternateColorCodes('&', format.replace("{prefix}", prefix));
+            prefixPart = ChatColor.translateAlternateColorCodes('&', rawFormat.replace("{prefix}", prefix));
             if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
                 prefixPart = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(target, prefixPart);
             }
@@ -237,5 +484,25 @@ public class NametagManager implements Listener {
                 Optional.of(teamInfo),
                 mode == WrapperPlayServerTeams.TeamMode.CREATE ? Arrays.asList(gamertag) : Collections.emptyList()
         );
+    }
+
+    private String formatPlaytime(long totalSeconds) {
+        long days = totalSeconds / 86400;
+        long rem = totalSeconds % 86400;
+        long hours = rem / 3600;
+        rem = rem % 3600;
+        long minutes = rem / 60;
+        long seconds = rem % 60;
+
+        if (days > 0) {
+            return days + "d " + hours + "h";
+        }
+        if (hours > 0) {
+            return hours + "h " + minutes + "m";
+        }
+        if (minutes > 0) {
+            return minutes + "m " + seconds + "s";
+        }
+        return seconds + "s";
     }
 }

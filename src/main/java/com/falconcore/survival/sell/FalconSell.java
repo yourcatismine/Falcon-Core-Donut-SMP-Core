@@ -66,6 +66,9 @@ public class FalconSell {
         if (this.guiManager != null) {
             this.guiManager.reload();
         }
+        if (plugin.getInventoryWorthManager() != null) {
+            plugin.getInventoryWorthManager().reloadConfig();
+        }
     }
 
     public FileConfiguration getConfig() {

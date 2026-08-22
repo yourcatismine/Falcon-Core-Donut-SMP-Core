@@ -21,12 +21,35 @@ public class InventoryWorthManager {
     private final Set<UUID> activePlayers = ConcurrentHashMap.newKeySet();
     private final Set<UUID> pendingJoinPlayers = ConcurrentHashMap.newKeySet();
     private BukkitTask sweepTask;
+    private boolean enabled = true;
 
     private static final String WORTH_LORE_PREFIX = ChatColor.GRAY + "Worth:" + ChatColor.GREEN + " ";
     private static final DecimalFormat DF = new DecimalFormat("#.##");
 
     public InventoryWorthManager(Falcon plugin) {
         this.plugin = plugin;
+    }
+
+    public void reloadConfig() {
+        if (plugin.getFalconSell() != null) {
+            boolean wasEnabled = this.enabled;
+            this.enabled = plugin.getFalconSell().getConfig().getBoolean("settings.worth-lore-enabled", true);
+            
+            if (wasEnabled && !this.enabled) {
+                for (UUID uuid : activePlayers) {
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player != null && player.isOnline()) {
+                        stripWorthLore(player);
+                    }
+                }
+                activePlayers.clear();
+                pendingJoinPlayers.clear();
+            } else if (!wasEnabled && this.enabled) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    scheduleActivation(p);
+                }
+            }
+        }
     }
 
     public void scheduleActivation(Player player) {
@@ -87,6 +110,7 @@ public class InventoryWorthManager {
     }
 
     public boolean isActive(Player player) {
+        if (!enabled) return false;
         if (player.getGameMode() == org.bukkit.GameMode.CREATIVE) return false;
         return activePlayers.contains(player.getUniqueId());
     }

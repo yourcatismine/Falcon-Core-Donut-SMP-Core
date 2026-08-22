@@ -21,6 +21,8 @@ level-prices:
 - 640000000000
 
 settings:
+  worth-lore-enabled: true
+  
   base-multiplier: 1.0
   
   multiplier-increment: 0.1

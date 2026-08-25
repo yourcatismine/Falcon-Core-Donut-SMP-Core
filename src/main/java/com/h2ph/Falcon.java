@@ -32,6 +32,7 @@ public class Falcon extends JavaPlugin {
     private String motd;
     private boolean motdEnabled;
     private org.bukkit.scheduler.BukkitTask discordStatusTask = null;
+    private org.bukkit.scheduler.BukkitTask discordTopicTask = null;
     private static Falcon instance;
 
     public static Falcon getInstance() {
@@ -196,15 +197,9 @@ public class Falcon extends JavaPlugin {
 
         this.deathMessageManager = new com.h2ph.managers.DeathMessageManager(this);
 
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveSignListener(this), this);
-
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CrateListener(this), this);
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.DeathMessageListener(this), this);
-
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.PlayerConnectionListener(this), this);
-
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventorySyncListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.FalconBundleDupeFix(), this);
 
         getSchedulerAdapter().runTaskTimer(() -> {
@@ -537,6 +532,7 @@ public class Falcon extends JavaPlugin {
         this.falconSell.onEnable();
 
         this.inventoryWorthManager = new com.h2ph.managers.InventoryWorthManager(this);
+        this.inventoryWorthManager.reloadConfig();
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.InventoryWorthListener(this), this);
 
         this.warpManager = new com.falconcore.survival.manager.WarpManager(this);
@@ -722,6 +718,7 @@ public class Falcon extends JavaPlugin {
             jda.addEventListener(discordManager);
             
             startDiscordStatusTask();
+            startDiscordTopicTask(targetChannelId);
             getLogger().info("Discord integration has been started successfully!");
         } catch (IllegalArgumentException e) {
             getLogger().severe("Failed to start Discord: Invalid token provided. Check your config.yml.");
@@ -748,6 +745,42 @@ public class Falcon extends JavaPlugin {
                 getLogger().warning("Failed to update discord status: " + e.getMessage());
             }
         }, 0L, ticks);
+    }
+
+    private void startDiscordTopicTask(String targetChannelId) {
+        if (jda == null || targetChannelId == null || targetChannelId.isEmpty() || targetChannelId.equalsIgnoreCase("ChannelID")) return;
+        
+        long ticks = 20L * 60 * 3;
+        discordTopicTask = getSchedulerAdapter().runTaskTimerAsync(() -> {
+            try {
+                net.dv8tion.jda.api.entities.channel.concrete.TextChannel channel = jda.getTextChannelById(targetChannelId);
+                if (channel != null) {
+                    int online = Bukkit.getOnlinePlayers().size();
+                    int max = Bukkit.getMaxPlayers();
+                    int unique = Bukkit.getOfflinePlayers().length;
+                    long uptimeMinutes = java.lang.management.ManagementFactory.getRuntimeMXBean().getUptime() / 60000L;
+                    
+                    String date = java.time.ZonedDateTime.now(java.time.ZoneId.of("UTC"))
+                            .format(java.time.format.DateTimeFormatter.ofPattern("EEE, dd. MMM yyyy HH:mm:ss 'UTC'", java.util.Locale.ENGLISH));
+                    
+                    String topic = online + "/" + max + " players online | " + unique + " unique players ever joined | Server online for " + uptimeMinutes + " minutes | Last update: " + date;
+                    
+                    channel.getManager().setTopic(topic).queue(
+                            null, 
+                            err -> getLogger().warning("Failed to update discord channel topic: " + err.getMessage())
+                    );
+                }
+            } catch (Exception e) {
+                getLogger().warning("Failed to update discord channel topic: " + e.getMessage());
+            }
+        }, 0L, ticks);
+    }
+
+    private void stopDiscordTopicTask() {
+        if (discordTopicTask != null) {
+            discordTopicTask.cancel();
+            discordTopicTask = null;
+        }
     }
 
     private String replaceDiscordPlaceholders(String template) {
@@ -787,6 +820,7 @@ public class Falcon extends JavaPlugin {
 
                 jda = null; discordManager = null;
                 stopDiscordStatusTask();
+                stopDiscordTopicTask();
             }
         }
 
@@ -1319,19 +1353,16 @@ public class Falcon extends JavaPlugin {
         }
         rtpGlobalConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
 
-        // Auto-create the region folder and config based on the region name
         String regionName = rtpGlobalConfig.getString("region", "asia").toLowerCase();
         java.io.File regionFolder = new java.io.File(getDataFolder(), "rtp/" + regionName);
         java.io.File regionConfigFile = new java.io.File(regionFolder, "config.yml");
         if (!regionConfigFile.exists()) {
-            // Try to extract from bundled resources first
             String resourcePath = "rtp/" + regionName + "/config.yml";
             try {
                 if (getResource(resourcePath) != null) {
                     saveResource(resourcePath, false);
                     getLogger().info("[RTP] Created region config from template: " + resourcePath);
                 } else {
-                    // Generate a default region config if no bundled resource exists
                     regionFolder.mkdirs();
                     org.bukkit.configuration.file.YamlConfiguration defaultCfg = new org.bukkit.configuration.file.YamlConfiguration();
                     defaultCfg.set("worlds.overworld.world", "world");

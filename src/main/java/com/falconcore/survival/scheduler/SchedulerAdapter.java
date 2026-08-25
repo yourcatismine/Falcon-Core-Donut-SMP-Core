@@ -40,9 +40,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a task on the main thread (global region for Folia)
-     */
     public void runTask(Runnable task) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
             if (task != null) {
@@ -57,9 +54,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a task async using bounded thread pool
-     */
     public void runTaskAsync(Runnable task) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
             if (task != null && plugin != null) {
@@ -93,9 +87,6 @@ public class SchedulerAdapter {
         runTaskAsync(task);
     }
 
-    /**
-     * Run a task later on the main thread
-     */
     public BukkitTask runTaskLater(Runnable task, long delayTicks) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
             return null;
@@ -109,9 +100,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a task later async
-     */
     public void runTaskLaterAsync(Runnable task, long delayTicks) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
             return;
@@ -124,12 +112,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a repeating task
-     */
-    /**
-     * Run a repeating task on the main thread
-     */
     public BukkitTask runTaskTimer(Runnable task, long delayTicks, long periodTicks) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
             return null;
@@ -144,9 +126,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a repeating task async
-     */
     public BukkitTask runTaskTimerAsync(Runnable task, long delayTicks, long periodTicks) {
         if (plugin == null || !plugin.isEnabled() || task == null) {
             return null;
@@ -161,9 +140,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a task immediately on the entity's thread (Entity Scheduler for Folia)
-     */
     public void runEntityTask(org.bukkit.entity.Entity entity, Runnable task) {
         try {
             entity.getScheduler().run(plugin, st -> task.run(), null);
@@ -172,9 +148,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a task later on the entity's thread (Entity Scheduler for Folia)
-     */
     public void runEntityTaskLater(org.bukkit.entity.Entity entity, Runnable task, long delayTicks) {
         try {
             entity.getScheduler().runDelayed(plugin, st -> task.run(), null, delayTicks);
@@ -183,9 +156,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a repeating task on the entity's thread (Entity Scheduler for Folia)
-     */
     public BukkitTask runEntityTaskTimer(org.bukkit.entity.Entity entity, Runnable task, long delayTicks,
             long periodTicks) {
         try {
@@ -198,9 +168,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Run a task at a specific location (Region Scheduler for Folia)
-     */
     public void runAtLocation(org.bukkit.Location location, Runnable task) {
         try {
             Bukkit.getRegionScheduler().execute(plugin, location, task);
@@ -209,10 +176,6 @@ public class SchedulerAdapter {
         }
     }
 
-    /**
-     * Wrapper for Folia tasks to implement BukkitTask interface
-     * This allows us to return a BukkitTask even when using Folia schedulers
-     */
     private static class FoliaBukkitTaskWrapper implements BukkitTask {
         private final Object foliaTask;
 

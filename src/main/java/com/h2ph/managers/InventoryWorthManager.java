@@ -126,6 +126,7 @@ public class InventoryWorthManager {
     }
 
     public boolean applyWorthLore(Player player) {
+        if (!enabled) return false;
         if (plugin.getFalconSell() == null || plugin.getFalconSell().getPricesManager() == null) return false;
 
         boolean changed = false;
@@ -204,6 +205,7 @@ public class InventoryWorthManager {
     }
 
     public boolean applyToItem(ItemStack item) {
+        if (!enabled) return false;
         if (item == null || item.getType() == Material.AIR) return false;
         if (plugin.getFalconSell() == null || plugin.getFalconSell().getPricesManager() == null) return false;
 

@@ -207,14 +207,14 @@ public class DiscordWebhookManager {
 
     private void sendEmbedWithFields(String webhookUrl, String playerName, String uuid,
                                      String description, int color, String title, String fieldsJson) {
-        String skinUrl = String.format(SKIN_URL, uuid);
+        String skinUrl = String.format(SKIN_URL, playerName);
         String json = buildEmbedJsonWithFields(playerName, skinUrl, description, color, title, fieldsJson);
         executeWebhook(webhookUrl, playerName, json);
     }
 
     private void sendEmbed(String webhookUrl, String playerName, String uuid,
                            String description, int color, String title) {
-        String skinUrl = String.format(SKIN_URL, uuid);
+        String skinUrl = String.format(SKIN_URL, playerName);
         String json = buildEmbedJson(playerName, skinUrl, description, color, title);
         executeWebhook(webhookUrl, playerName, json);
     }

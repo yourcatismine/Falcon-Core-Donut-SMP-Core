@@ -113,7 +113,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-           // player.sendMessage(ChatColor.RED + "Usage: /team create <name>");
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
@@ -124,7 +123,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (name.length() < 3 || name.length() > 32) {
-           // player.sendMessage(ChatColor.RED + "Team name must be between 3 and 16 characters (ignoring colors).");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
@@ -157,7 +155,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-          //  player.sendMessage(ChatColor.RED + "Usage: /team invite <player>");
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
@@ -254,8 +251,13 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         Team team = teamManager.getTeam(data.getTeamId());
-        if (team == null)
+        if (team == null) {
+            data.setTeamId(null);
+            data.setTeamRole(null);
+            plugin.getScoreboardManager().reloadScoreboard(player);
+            sendAlert(player, "&7You left a deleted team.", null);
             return;
+        }
 
         if ("OWNER".equals(data.getTeamRole())) {
             new com.h2ph.gui.TeamDisbandMenu(plugin, player, team).open();
@@ -293,13 +295,11 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
     private void handleKick(Player player, PlayerData data, String[] args) {
         if (data.getTeamId() == null || !"OWNER".equals(data.getTeamRole())) {
-          //  player.sendMessage(ChatColor.RED + "Only the owner can kick members!");
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
         if (args.length < 2) {
-          //  player.sendMessage(ChatColor.RED + "Usage: /team kick <player>");
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }

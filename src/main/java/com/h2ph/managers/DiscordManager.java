@@ -21,7 +21,14 @@ public class DiscordManager extends ListenerAdapter {
     public void onMessageReceived(MessageReceivedEvent event) {
         if(event.getAuthor().isBot() || event.isWebhookMessage()) return;
         if(!event.getChannel().getId().equals(targetChannelId)) return;
-        String discordName = event.getAuthor().getName();
+        String discordName;
+        if (event.getMember() != null) {
+            discordName = event.getMember().getEffectiveName();
+        } else if (event.getAuthor().getGlobalName() != null) {
+            discordName = event.getAuthor().getGlobalName();
+        } else {
+            discordName = event.getAuthor().getName();
+        }
         String messageContent = event.getMessage().getContentDisplay();
 
         Component minecraftmessage = Component.text("[Discord] ", NamedTextColor.BLUE).append(Component.text(discordName, NamedTextColor.AQUA))

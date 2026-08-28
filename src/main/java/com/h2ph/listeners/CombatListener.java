@@ -2,6 +2,7 @@ package com.h2ph.listeners;
 
 import com.h2ph.Falcon;
 import com.falconcore.survival.manager.PlayerData;
+import com.falconcore.survival.utils.ItemSerializationManager;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -9,7 +10,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.Block;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
@@ -27,13 +33,14 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.projectiles.ProjectileSource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class CombatListener implements Listener {
+public class CombatListener implements Listener, CommandExecutor, TabCompleter {
 
     private static CombatListener instance;
     private final Falcon plugin;
@@ -238,7 +245,7 @@ public class CombatListener implements Listener {
         return true;
     }
 
-    private void startCombatFor(Player p, int seconds) {
+    public void startCombatFor(Player p, int seconds) {
         UUID uuid = p.getUniqueId();
         remaining.put(uuid, seconds);
 
@@ -330,7 +337,7 @@ public class CombatListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
@@ -341,19 +348,31 @@ public class CombatListener implements Listener {
             PlayerData data = plugin.getPlayerDataManager().get(uuid);
             if (data != null) {
                 data.setCombatLogged(true);
-                plugin.getPlayerDataManager().savePlayerAsync(uuid);
             }
         } catch (Throwable ignored) {
         }
 
         try {
-            p.sendTitle(ChatColor.translateAlternateColorCodes('&', "&cYou Died"),
-                    ChatColor.translateAlternateColorCodes('&', "&7You were died from combat logging"), 10, 70, 20);
+            p.setHealth(0.0);
         } catch (Throwable ignored) {
         }
 
         try {
-            p.setHealth(0.0);
+            p.getInventory().clear();
+            p.getInventory().setArmorContents(new ItemStack[4]);
+            p.getInventory().setItemInOffHand(null);
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            String emptyInv = ItemSerializationManager.itemStackArrayToBase64(new ItemStack[0]);
+            String emptyArmor = ItemSerializationManager.itemStackArrayToBase64(new ItemStack[0]);
+            plugin.getDatabaseManager().saveInventory(uuid, emptyInv, emptyArmor);
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            plugin.getPlayerDataManager().savePlayerAsync(uuid);
         } catch (Throwable ignored) {
         }
 
@@ -368,5 +387,98 @@ public class CombatListener implements Listener {
         if (remaining.containsKey(uuid)) {
             cancelTask(uuid);
         }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!label.equalsIgnoreCase("testcombat")) {
+            return false;
+        }
+
+        if (!sender.hasPermission("falcon.testcombat") && !sender.isOp()) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
+        }
+
+        Player target;
+        int seconds = DEFAULT_COMBAT_SECONDS;
+
+        if (args.length == 0) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(ChatColor.RED + "Usage: /testcombat [seconds] or /testcombat <player> [seconds]");
+                return true;
+            }
+            target = (Player) sender;
+        } else if (args.length == 1) {
+            try {
+                seconds = Integer.parseInt(args[0]);
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /testcombat <player> [seconds]");
+                    return true;
+                }
+                target = (Player) sender;
+            } catch (NumberFormatException e) {
+                target = Bukkit.getPlayer(args[0]);
+                if (target == null) {
+                    sender.sendMessage(ChatColor.RED + "Player not found: " + args[0]);
+                    return true;
+                }
+            }
+        } else {
+            target = Bukkit.getPlayer(args[0]);
+            if (target == null) {
+                sender.sendMessage(ChatColor.RED + "Player not found: " + args[0]);
+                return true;
+            }
+            try {
+                seconds = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(ChatColor.RED + "Invalid seconds: " + args[1]);
+                return true;
+            }
+        }
+
+        if (seconds <= 0) {
+            sender.sendMessage(ChatColor.RED + "Seconds must be greater than 0.");
+            return true;
+        }
+
+        startCombatFor(target, seconds);
+        sender.sendMessage(ChatColor.GREEN + "Triggered combat countdown (" + seconds + "s) for " + target.getName() + ".");
+        if (target.getGameMode() == GameMode.CREATIVE) {
+            sender.sendMessage(ChatColor.YELLOW + "Warning: " + target.getName() + " is in Creative mode (combat countdown ends immediately in Creative).");
+        }
+        return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        List<String> completions = new ArrayList<>();
+        if (!sender.hasPermission("falcon.testcombat") && !sender.isOp()) {
+            return completions;
+        }
+
+        if (args.length == 1) {
+            String input = args[0].toLowerCase();
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.getName().toLowerCase().startsWith(input)) {
+                    completions.add(p.getName());
+                }
+            }
+            for (String sec : List.of("5", "10", "15", "20", "30", "60")) {
+                if (sec.startsWith(input)) {
+                    completions.add(sec);
+                }
+            }
+        } else if (args.length == 2) {
+            String input = args[1].toLowerCase();
+            for (String sec : List.of("5", "10", "15", "20", "30", "60")) {
+                if (sec.startsWith(input)) {
+                    completions.add(sec);
+                }
+            }
+        }
+
+        return completions;
     }
 }

@@ -177,7 +177,12 @@ public class Falcon extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.LiveCommandListener(this), this);
 
-        getServer().getPluginManager().registerEvents(new com.h2ph.listeners.CombatListener(this), this);
+        com.h2ph.listeners.CombatListener combatListener = new com.h2ph.listeners.CombatListener(this);
+        getServer().getPluginManager().registerEvents(combatListener, this);
+        if (getCommand("testcombat") != null) {
+            getCommand("testcombat").setExecutor(combatListener);
+            getCommand("testcombat").setTabCompleter(combatListener);
+        }
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.SpawnListener(this), this);
         getServer().getPluginManager().registerEvents(new com.h2ph.listeners.AutoRTPListener(this), this);
 
@@ -204,6 +209,9 @@ public class Falcon extends JavaPlugin {
 
         getSchedulerAdapter().runTaskTimer(() -> {
             for (org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                if (player.isDead()) {
+                    continue;
+                }
                 final org.bukkit.inventory.ItemStack[] contents = player.getInventory().getContents().clone();
                 final org.bukkit.inventory.ItemStack[] armor = player.getInventory().getArmorContents().clone();
                 final java.util.UUID uuid = player.getUniqueId();

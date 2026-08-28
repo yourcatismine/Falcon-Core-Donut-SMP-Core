@@ -423,8 +423,7 @@ public class PlayerDataManager {
         }
 
         Player player = Bukkit.getPlayer(uuid);
-        if (player != null && player.isOnline()) {
-            try {
+        if (player != null && player.isOnline() && !player.isDead() && !data.isCombatLogged()) {
                 ItemStack[] contents = player.getInventory().getContents();
                 ItemStack[] armor = player.getInventory().getArmorContents();
                 String invBase64 = ItemSerializationManager.itemStackArrayToBase64(contents);

@@ -1,11 +1,14 @@
 package com.h2ph.listeners;
 
 import com.h2ph.Falcon;
+import com.falconcore.survival.manager.PlayerData;
 import com.falconcore.survival.utils.ItemSerializationManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -21,17 +24,26 @@ public class InventorySyncListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
+        if (player.isDead()) {
+            return;
+        }
+
+        PlayerData data = plugin.getPlayerDataManager().get(uuid);
+        if (data != null && data.isCombatLogged()) {
+            return;
+        }
+
         plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
             try {
-                String[] data = plugin.getDatabaseManager().loadInventory(uuid);
-                if (data != null && data.length == 2) {
-                    String invBase64 = data[0];
-                    String armorBase64 = data[1];
+                String[] savedData = plugin.getDatabaseManager().loadInventory(uuid);
+                if (savedData != null && savedData.length == 2) {
+                    String invBase64 = savedData[0];
+                    String armorBase64 = savedData[1];
 
                     if (invBase64 != null && armorBase64 != null) {
                         try {
@@ -39,7 +51,7 @@ public class InventorySyncListener implements Listener {
                             ItemStack[] armor = ItemSerializationManager.itemStackArrayFromBase64(armorBase64);
 
                             plugin.getSchedulerAdapter().runEntityTask(player, () -> {
-                                if (player.isOnline()) {
+                                if (player.isOnline() && !player.isDead()) {
                                     player.getInventory().setContents(inventory);
                                     player.getInventory().setArmorContents(armor);
                                 }
@@ -56,10 +68,39 @@ public class InventorySyncListener implements Listener {
         });
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (event.getKeepInventory()) {
+            return;
+        }
+        Player player = event.getEntity();
+        UUID uuid = player.getUniqueId();
+        try {
+            String emptyInv = ItemSerializationManager.itemStackArrayToBase64(new ItemStack[0]);
+            String emptyArmor = ItemSerializationManager.itemStackArrayToBase64(new ItemStack[0]);
+            plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
+                plugin.getDatabaseManager().saveInventory(uuid, emptyInv, emptyArmor);
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
+
+        if (player.isDead()) {
+            try {
+                String emptyInv = ItemSerializationManager.itemStackArrayToBase64(new ItemStack[0]);
+                String emptyArmor = ItemSerializationManager.itemStackArrayToBase64(new ItemStack[0]);
+                plugin.getSchedulerAdapter().runTaskAsynchronously(() -> {
+                    plugin.getDatabaseManager().saveInventory(uuid, emptyInv, emptyArmor);
+                });
+            } catch (Exception ignored) {
+            }
+            return;
+        }
 
         try {
             String invBase64 = ItemSerializationManager.itemStackArrayToBase64(player.getInventory().getContents());
@@ -74,3 +115,4 @@ public class InventorySyncListener implements Listener {
         }
     }
 }
+

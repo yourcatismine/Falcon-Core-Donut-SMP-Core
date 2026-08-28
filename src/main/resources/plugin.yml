@@ -415,7 +415,16 @@ commands:
     usage: /unignore <player>
     default: true
 
+  testcombat:
+    description: Trigger a combat tag countdown for testing
+    usage: /testcombat [seconds] or /testcombat <player> [seconds]
+    permission: falcon.testcombat
+    default: op
+
 permissions:
+  falcon.testcombat:
+    description: Allows testing combat countdown via /testcombat
+    default: op
   falcon.redstone:
     description: Permission to use /redstone admin commands
     default: false

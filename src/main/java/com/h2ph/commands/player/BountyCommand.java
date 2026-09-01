@@ -73,23 +73,15 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            net.milkbowl.vault.economy.Economy econ = plugin.getEconomy();
-            if (econ != null) {
-                if (!econ.has(player, amount)) {
-                    player.sendMessage(ChatColor.RED + "You do not have enough money.");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return true;
-                }
-            } else {
-                PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
-                if (data == null)
-                    data = plugin.getPlayerDataManager().loadPlayer(player.getUniqueId());
+            PlayerData data = plugin.getPlayerDataManager().get(player.getUniqueId());
+            if (data == null) {
+                data = plugin.getPlayerDataManager().loadPlayer(player.getUniqueId());
+            }
 
-                if (data.getMoney() < amount) {
-                    player.sendMessage(ChatColor.RED + "You do not have enough money.");
-                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                    return true;
-                }
+            if (data == null || data.getMoney() < amount) {
+                player.sendMessage(ChatColor.RED + "You do not have enough money.");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return true;
             }
 
             Player target = Bukkit.getPlayer(targetName);

@@ -1,6 +1,7 @@
 package com.falconcore.survival.manager;
 
 import com.h2ph.Falcon;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 
@@ -208,14 +209,14 @@ public class DiscordWebhookManager {
     private void sendEmbedWithFields(String webhookUrl, String playerName, String uuid,
                                      String description, int color, String title, String fieldsJson) {
         String skinUrl = String.format(SKIN_URL, playerName);
-        String json = buildEmbedJsonWithFields(playerName, skinUrl, description, color, title, fieldsJson);
+        String json = buildEmbedJsonWithFields(playerName, uuid, skinUrl, description, color, title, fieldsJson);
         executeWebhook(webhookUrl, playerName, json);
     }
 
     private void sendEmbed(String webhookUrl, String playerName, String uuid,
                            String description, int color, String title) {
         String skinUrl = String.format(SKIN_URL, playerName);
-        String json = buildEmbedJson(playerName, skinUrl, description, color, title);
+        String json = buildEmbedJson(playerName, uuid, skinUrl, description, color, title);
         executeWebhook(webhookUrl, playerName, json);
     }
 
@@ -255,15 +256,44 @@ public class DiscordWebhookManager {
         });
     }
 
-    private String buildEmbedJson(String playerName, String skinUrl,
-                                  String description, int color, String title) {
-        return buildEmbedJsonWithFields(playerName, skinUrl, description, color, title, null);
+    private String formatDisplayName(String playerName, String uuidStr) {
+        if (playerName == null || playerName.isEmpty()) return "";
+        try {
+            org.bukkit.OfflinePlayer player = null;
+            if (uuidStr != null && !uuidStr.isEmpty()) {
+                try {
+                    player = org.bukkit.Bukkit.getOfflinePlayer(java.util.UUID.fromString(uuidStr));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+            if (player == null) {
+                player = org.bukkit.Bukkit.getPlayerExact(playerName);
+            }
+            if (player != null) {
+                String rawPrefix = com.h2ph.utils.LuckPermsUtils.getPrefix(player);
+                String prefix = stripColor(rawPrefix != null ? rawPrefix : "").trim();
+                if (prefix.startsWith("[") && prefix.endsWith("]")) {
+                    prefix = prefix.substring(1, prefix.length() - 1).trim();
+                }
+                if (!prefix.isEmpty()) {
+                    return prefix + " " + playerName;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return playerName;
     }
 
-    private String buildEmbedJsonWithFields(String playerName, String skinUrl,
+    private String buildEmbedJson(String playerName, String uuid, String skinUrl,
+                                  String description, int color, String title) {
+        return buildEmbedJsonWithFields(playerName, uuid, skinUrl, description, color, title, null);
+    }
+
+    private String buildEmbedJsonWithFields(String playerName, String uuid, String skinUrl,
                                             String description, int color, String title, String fieldsJson) {
         String safeDesc = escapeJson(description);
-        String safeName = escapeJson(playerName);
+        String displayName = formatDisplayName(playerName, uuid);
+        String safeDisplayName = escapeJson(displayName);
         String safeSkin = escapeJson(skinUrl);
         String thumb = (serverIconUrl != null && !serverIconUrl.isEmpty()) ? escapeJson(serverIconUrl) : safeSkin;
 
@@ -276,11 +306,11 @@ public class DiscordWebhookManager {
                 : "";
 
         return "{"
-             + "\"username\":\"" + safeName + "\","
+             + "\"username\":\"" + safeDisplayName + "\","
              + "\"avatar_url\":\"" + safeSkin + "\","
              + "\"embeds\":[{"
              +   "\"author\":{"
-             +     "\"name\":\"" + safeName + "\","
+             +     "\"name\":\"" + safeDisplayName + "\","
              +     "\"icon_url\":\"" + safeSkin + "\""
              +   "},"
              +   titlePart
@@ -307,6 +337,12 @@ public class DiscordWebhookManager {
 
     private static String stripColor(String s) {
         if (s == null) return "";
-        return s.replaceAll("§[0-9a-fk-orA-FK-OR]", "");
+        String stripped = ChatColor.stripColor(s);
+        if (stripped == null) return "";
+        stripped = stripped.replaceAll("(?i)&x(&[0-9a-fA-F]){6}", "");
+        stripped = stripped.replaceAll("(?i)§x(§[0-9a-fA-F]){6}", "");
+        stripped = stripped.replaceAll("(?i)[§&][0-9a-fk-orxX]", "");
+        stripped = stripped.replaceAll("(?i)(?:&|)?#([A-Fa-f0-9]{6})|(?:<|\\{)#([A-Fa-f0-9]{6})(?:>|\\})", "");
+        return stripped;
     }
 }

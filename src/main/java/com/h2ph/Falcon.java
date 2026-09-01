@@ -673,7 +673,7 @@ public class Falcon extends JavaPlugin {
             }, 40);
         }
 
-        printStartupBanner(vaultEnabled);
+        printStartupBanner();
 
         this.playerNameCache.initialize();
 
@@ -758,7 +758,8 @@ public class Falcon extends JavaPlugin {
     private void startDiscordTopicTask(String targetChannelId) {
         if (jda == null || targetChannelId == null || targetChannelId.isEmpty() || targetChannelId.equalsIgnoreCase("ChannelID")) return;
         
-        long ticks = 20L * 60 * 3;
+        long intervalMinutes = getSurvivalConfig().getLong("discord-topic.interval-minutes", 10L);
+        long ticks = 20L * 60 * Math.max(10L, intervalMinutes);
         discordTopicTask = getSchedulerAdapter().runTaskTimerAsync(() -> {
             try {
                 net.dv8tion.jda.api.entities.channel.concrete.TextChannel channel = jda.getTextChannelById(targetChannelId);
@@ -768,20 +769,26 @@ public class Falcon extends JavaPlugin {
                     int unique = Bukkit.getOfflinePlayers().length;
                     long uptimeMinutes = java.lang.management.ManagementFactory.getRuntimeMXBean().getUptime() / 60000L;
                     
-                    String date = java.time.ZonedDateTime.now(java.time.ZoneId.of("UTC"))
-                            .format(java.time.format.DateTimeFormatter.ofPattern("EEE, dd. MMM yyyy HH:mm:ss 'UTC'", java.util.Locale.ENGLISH));
+                    String topic = online + "/" + max + " players online | " + unique + " unique players ever joined | Server uptime: " + uptimeMinutes + "m";
                     
-                    String topic = online + "/" + max + " players online | " + unique + " unique players ever joined | Server online for " + uptimeMinutes + " minutes | Last update: " + date;
-                    
+                    String currentTopic = channel.getTopic();
+                    if (currentTopic != null && currentTopic.equals(topic)) {
+                        return;
+                    }
+
                     channel.getManager().setTopic(topic).queue(
                             null, 
-                            err -> getLogger().warning("Failed to update discord channel topic: " + err.getMessage())
+                            err -> {
+                                if (err != null && !err.getMessage().contains("429")) {
+                                    getLogger().warning("Failed to update discord channel topic: " + err.getMessage());
+                                }
+                            }
                     );
                 }
             } catch (Exception e) {
                 getLogger().warning("Failed to update discord channel topic: " + e.getMessage());
             }
-        }, 0L, ticks);
+        }, 20L * 30, ticks);
     }
 
     private void stopDiscordTopicTask() {
@@ -1408,7 +1415,7 @@ public class Falcon extends JavaPlugin {
         return damageManager;
     }
 
-    private void printStartupBanner(boolean vaultEnabled) {
+    private void printStartupBanner() {
         org.bukkit.command.ConsoleCommandSender console = getServer().getConsoleSender();
         String version = getDescription().getVersion();
         String author = getDescription().getAuthors().isEmpty() ? "h2ph" : String.join(", ", getDescription().getAuthors());
@@ -1435,12 +1442,12 @@ public class Falcon extends JavaPlugin {
                             + ")"));
         }
 
-        if (vaultEnabled && getServer().getPluginManager().getPlugin("Vault") != null) {
+        if (playerDataManager != null) {
             console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&b  [+] &fEconomy System: &a&lONLINE &7(Vault Hooked)"));
+                    "&b  [+] &fEconomy System: &a&lONLINE &7(Falcon Direct)"));
         } else {
             console.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                    "&b  [-] &fEconomy System: &c&lOFFLINE &7(Vault Missing/Disabled)"));
+                    "&b  [-] &fEconomy System: &c&lOFFLINE"));
         }
 
         if (apiServer != null) {

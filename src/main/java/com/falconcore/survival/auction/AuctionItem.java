@@ -1,7 +1,11 @@
 package com.falconcore.survival.auction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class AuctionItem {
     private final UUID id;
@@ -17,7 +21,16 @@ public class AuctionItem {
     public AuctionItem(UUID id, String seller, ItemStack itemStack, double price, long listedAt, int duration) {
         this.id = id;
         this.seller = seller;
-        this.itemStack = itemStack.clone();
+        ItemStack clean = itemStack.clone();
+        if (clean.getItemMeta() != null && clean.getItemMeta().hasLore()) {
+            ItemMeta meta = clean.getItemMeta();
+            List<String> lore = new ArrayList<>(meta.getLore());
+            if (lore.removeIf(line -> line != null && ChatColor.stripColor(line).toLowerCase().contains("worth:"))) {
+                meta.setLore(lore.isEmpty() ? null : lore);
+                clean.setItemMeta(meta);
+            }
+        }
+        this.itemStack = clean;
         this.price = price;
         this.listedAt = listedAt;
         this.duration = duration;

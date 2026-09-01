@@ -1,9 +1,4 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.plugin.Plugin
- */
+
 package com.falconcore.survival.sell.data;
 
 import com.falconcore.survival.sell.FalconSell;
@@ -34,12 +29,40 @@ public class PlayerDataManagerDB {
         return data;
     }
 
-    /*
-     * Enabled force condition propagation
-     * Lifted jumps to return sites
-     */
+   
     private PlayerData loadPlayerData(UUID uuid) {
         PlayerData data = new PlayerData(uuid);
+
+        if (this.plugin.getDatabaseManager().isFlatfileMode()) {
+            com.falconcore.survival.manager.DatabaseManager.LoadResult<com.falconcore.survival.manager.DatabaseManager.PlayerDataStats> result =
+                    this.plugin.getPlugin().getDatabaseManager().loadPlayerStats(uuid);
+            if (result != null && result.getData() != null) {
+                com.falconcore.survival.manager.DatabaseManager.PlayerDataStats stats = result.getData();
+                data.setBreakBlocks(stats.breakBlocks);
+                data.setPlacedBlocks(stats.placedBlocks);
+                data.setMobKills(stats.mobKills);
+                data.setSellMade(stats.sellMade);
+                data.setPlaytime(stats.playtime);
+                data.setDeaths(stats.deaths);
+                data.setKills(stats.kills);
+                data.setToolExpiry(stats.toolExpiry);
+            }
+
+            Map<String, double[]> catData = this.plugin.getPlugin().getDatabaseManager().getYamlStorage().loadCategoryData(uuid);
+            if (catData != null) {
+                for (Category category : Category.values()) {
+                    if (catData.containsKey(category.name())) {
+                        double[] vals = catData.get(category.name());
+                        data.setMultiplier(category, vals[0]);
+                        data.setProgress(category, vals[1]);
+                    }
+                }
+            }
+
+            data.resetDirty();
+            return data;
+        }
+
         String queryData = "SELECT * FROM player_stats WHERE uuid = ?";
         String queryCategoryData = "SELECT * FROM player_category_data WHERE uuid = ?";
 
@@ -115,7 +138,29 @@ public class PlayerDataManagerDB {
     }
 
     private void savePlayerDataSync(UUID uuid, PlayerData data) {
-        if (this.plugin.getDatabaseManager().isFlatfileMode() || !this.plugin.getDatabaseManager().isConnected()) {
+        if (this.plugin.getDatabaseManager().isFlatfileMode()) {
+            com.falconcore.survival.storage.YamlFlatfileStorage yaml = this.plugin.getPlugin().getDatabaseManager().getYamlStorage();
+            if (yaml != null) {
+                yaml.updatePlayerStatsField(uuid, "break_blocks", data.getBreakBlocks());
+                yaml.updatePlayerStatsField(uuid, "placed_blocks", data.getPlacedBlocks());
+                yaml.updatePlayerStatsField(uuid, "mob_kills", data.getMobKills());
+                yaml.updatePlayerStatsField(uuid, "sell_made", data.getSellMade());
+                yaml.updatePlayerStatsField(uuid, "playtime", data.getPlaytime());
+                yaml.updatePlayerStatsField(uuid, "deaths", data.getDeaths());
+                yaml.updatePlayerStatsField(uuid, "kills", data.getKills());
+                yaml.updatePlayerStatsField(uuid, "tool_expiry", data.getToolExpiry());
+
+                Map<String, double[]> catMap = new java.util.HashMap<>();
+                for (Category cat : Category.values()) {
+                    catMap.put(cat.name(), new double[]{data.getMultiplier(cat), data.getProgress(cat)});
+                }
+                yaml.saveCategoryData(uuid, catMap);
+            }
+            data.resetDirty();
+            return;
+        }
+
+        if (!this.plugin.getDatabaseManager().isConnected()) {
             data.resetDirty();
             return;
         }

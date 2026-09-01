@@ -31,26 +31,20 @@ public class EconomyMonitor {
     private void updateOnlineTotalMoney() {
         double onlineTotal = 0.0;
         try {
-            if (plugin != null && plugin.isEnabled() && plugin.getServer() != null && 
-                plugin.getServer().getPluginManager() != null && 
-                plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
-                
-                org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin
-                        .getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-                if (rsp != null) {
-                    net.milkbowl.vault.economy.Economy eco = rsp.getProvider();
-                    if (eco != null) {
-                        for (org.bukkit.entity.Player p : plugin.getServer().getOnlinePlayers()) {
-                            if (p != null && eco.hasAccount(p)) {
-                                onlineTotal += eco.getBalance(p);
-                            }
+            if (plugin != null && plugin.isEnabled() && plugin.getServer() != null) {
+                for (org.bukkit.entity.Player p : plugin.getServer().getOnlinePlayers()) {
+                    if (p != null) {
+                        com.falconcore.survival.manager.PlayerData data = plugin.getPlayerDataManager().get(p.getUniqueId());
+                        if (data != null) {
+                            onlineTotal += data.getMoney();
                         }
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
 
+        totalMoney.set(onlineTotal);
         initialized = true;
     }
 

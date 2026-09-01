@@ -85,6 +85,7 @@ public class GUIHandler {
             ItemMeta meta = item.getItemMeta();
             List<String> baseLore = meta != null && meta.hasLore() ? new ArrayList<>(meta.getLore())
                     : new ArrayList<>();
+            baseLore.removeIf(line -> line != null && org.bukkit.ChatColor.stripColor(line).toLowerCase().contains("worth:"));
             List<String> auctionLore = new ArrayList<>();
             long elapsed = (System.currentTimeMillis() - ai.getListedAt()) / 1000L;
             long remain = (long) ai.getDuration() - elapsed;
@@ -247,7 +248,8 @@ public class GUIHandler {
         Inventory inv = Bukkit.createInventory((InventoryHolder) new BuyConfirmHolder(), (int) size, (String) title);
         ItemStack preview = ai.getItemStack().clone();
         ItemMeta pm = preview.getItemMeta();
-        ArrayList baseLore = pm != null && pm.hasLore() ? new ArrayList(pm.getLore()) : new ArrayList();
+        ArrayList<String> baseLore = pm != null && pm.hasLore() ? new ArrayList<>(pm.getLore()) : new ArrayList<>();
+        baseLore.removeIf(line -> line != null && org.bukkit.ChatColor.stripColor(line).toLowerCase().contains("worth:"));
         List loreTpl = cfg.getStringList("main-gui.lore-item");
         ArrayList<String> auctionLore = new ArrayList<String>();
         long elapsed = (System.currentTimeMillis() - ai.getListedAt()) / 1000L;
@@ -350,7 +352,8 @@ public class GUIHandler {
                 ItemMeta mm = copy.getItemMeta();
                 if (mm == null)
                     continue;
-                ArrayList baseLore = mm != null && mm.hasLore() ? new ArrayList(mm.getLore()) : new ArrayList();
+                ArrayList<String> baseLore = mm != null && mm.hasLore() ? new ArrayList<>(mm.getLore()) : new ArrayList<>();
+                baseLore.removeIf(line -> line != null && org.bukkit.ChatColor.stripColor(line).toLowerCase().contains("worth:"));
                 List loreTpl = cfg.getStringList("main-gui.lore-item");
                 ArrayList<String> auctionLore = new ArrayList<String>();
                 long elapsed = (System.currentTimeMillis() - ai.getListedAt()) / 1000L;
@@ -617,7 +620,8 @@ public class GUIHandler {
             AuctionItem ai = items.get(i);
             ItemStack item = ai.getItemStack().clone();
             ItemMeta meta = item.getItemMeta();
-            List<String> lore = (meta != null && meta.hasLore()) ? meta.getLore() : new ArrayList<>();
+            List<String> lore = (meta != null && meta.hasLore()) ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+            lore.removeIf(line -> line != null && org.bukkit.ChatColor.stripColor(line).toLowerCase().contains("worth:"));
 
             long elapsed = (System.currentTimeMillis() - ai.getListedAt()) / 1000L;
             long remain = (long) ai.getDuration() - elapsed;
@@ -1141,7 +1145,8 @@ public class GUIHandler {
         ItemStack item = tx.getItem().clone();
         ItemMeta im = item.getItemMeta();
         if (im != null) {
-            List<String> lore = im.hasLore() ? im.getLore() : new ArrayList<>();
+            List<String> lore = im.hasLore() ? new ArrayList<>(im.getLore()) : new ArrayList<>();
+            lore.removeIf(line -> line != null && org.bukkit.ChatColor.stripColor(line).toLowerCase().contains("worth:"));
             lore.add("");
             lore.add(Utils.formatColors("&fPrice: &a$" + Utils.formatNumber(tx.getPrice())));
             lore.add(Utils.formatColors("&fSeller: &a" + tx.getSeller()));

@@ -166,6 +166,7 @@ public class BaltopCommand implements CommandExecutor, Listener {
                         } else {
                             balance = plugin.getPlayerDataManager().get(player.getUniqueId()).getMoney();
                         }
+                        balance = plugin.getPlayerDataManager().get(player.getUniqueId()).getMoney();
                         rankDisplay = "&7 (Not in top " + allEntries.size() + ")";
                     }
 

@@ -33,7 +33,7 @@ public class YamlFlatfileStorage {
     private final Falcon plugin;
     private final File dataFolder;
 
-    // Sub-folders
+    
     private final File playerStatsFolder;
     private final File playerNamesFolder;
     private final File inventoriesFolder;
@@ -46,7 +46,7 @@ public class YamlFlatfileStorage {
     private final File sellHistoryFolder;
     private final File categoryDataFolder;
 
-    // Single-file data
+    
     private final File bansFile;
     private final File mutesFile;
     private final File voiceMutesFile;
@@ -63,14 +63,14 @@ public class YamlFlatfileStorage {
     private final File teamsDataFile;
     private final File teamMembersFile;
 
-    // Per-file locks for thread safety
+    
     private final ConcurrentHashMap<String, ReentrantReadWriteLock> fileLocks = new ConcurrentHashMap<>();
 
     public YamlFlatfileStorage(Falcon plugin) {
         this.plugin = plugin;
         this.dataFolder = new File(plugin.getDataFolder(), "data");
 
-        // Create folder structure
+        
         this.playerStatsFolder = mkdirs("economy/money/players");
         this.playerNamesFolder = mkdirs("economy/stats/players");
         this.inventoriesFolder = mkdirs("server/inventories");
@@ -83,7 +83,7 @@ public class YamlFlatfileStorage {
         this.sellHistoryFolder = mkdirs("server/sell_history");
         this.categoryDataFolder = mkdirs("server/category_data");
 
-        // Single files
+        
         this.bansFile = new File(dataFolder, "server/bans.yml");
         this.mutesFile = new File(dataFolder, "server/mutes.yml");
         this.voiceMutesFile = new File(dataFolder, "server/voice_mutes.yml");
@@ -143,7 +143,7 @@ public class YamlFlatfileStorage {
         plugin.getSchedulerAdapter().runTaskAsync(() -> saveYaml(config, file));
     }
 
-    // ======================= AFK REGIONS =======================
+    
 
     public void upsertAfkRegion(String name, String world, double minX, double minY, double minZ,
                                 double maxX, double maxY, double maxZ) {
@@ -188,7 +188,7 @@ public class YamlFlatfileStorage {
         return list;
     }
 
-    // ======================= BANS =======================
+    
 
     public List<String> getBannedPlayerNames() {
         List<String> names = new ArrayList<>();
@@ -339,7 +339,7 @@ public class YamlFlatfileStorage {
         return info;
     }
 
-    // ======================= OFFENSES =======================
+    
 
     public int getOffenseCount(UUID uuid, String reasonKey) {
         FileConfiguration cfg = loadYaml(offensesFile);
@@ -354,7 +354,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= IP LOGS =======================
+    
 
     public void logIP(UUID uuid, String ip) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -398,7 +398,7 @@ public class YamlFlatfileStorage {
         return alts;
     }
 
-    // ======================= MUTES =======================
+    
 
     public void addMute(UUID uuid, String playerName, String muteId, String reason, long date, long expiry, String mutedBy) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -522,7 +522,7 @@ public class YamlFlatfileStorage {
         return null;
     }
 
-    // ======================= AUCTION PENDING PAYMENTS =======================
+    
 
     public void addAuctionPendingPayment(UUID uuid, double amount, String buyerName, String itemName) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -550,7 +550,7 @@ public class YamlFlatfileStorage {
             sales.add(new com.falconcore.survival.auction.AuctionManager.OfflineSale(buyer, item, amount));
         }
         if (!sales.isEmpty()) {
-            // Clear the file
+            
             plugin.getSchedulerAdapter().runTaskAsync(() -> {
                 try { if (file.exists()) file.delete(); } catch (Exception ignored) {}
             });
@@ -563,7 +563,7 @@ public class YamlFlatfileStorage {
         return sales.stream().mapToDouble(s -> s.price).sum();
     }
 
-    // ======================= INVENTORY =======================
+    
 
     public void saveInventory(UUID uuid, String inventoryBase64, String armorBase64) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -584,7 +584,7 @@ public class YamlFlatfileStorage {
         return new String[]{cfg.getString("inventory_data"), cfg.getString("armor_data")};
     }
 
-    // ======================= AUCTION TRANSACTIONS =======================
+    
 
     public void addAuctionTransaction(UUID playerUuid, com.falconcore.survival.auction.Transaction tx) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -653,39 +653,48 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= PLAYER STATS =======================
+    
 
     public void savePlayerStats(UUID uuid, PlayerData data) {
-        plugin.getSchedulerAdapter().runTaskAsync(() -> {
-            File file = new File(playerStatsFolder, uuid.toString() + ".yml");
-            FileConfiguration cfg = loadYaml(file);
-            cfg.set("money", data.getMoney());
-            cfg.set("shards", data.getShards());
-            cfg.set("shop_spent", data.getShopSpent());
-            cfg.set("ip", data.getIp());
-            cfg.set("history", data.getHistory());
-            cfg.set("last_updated", System.currentTimeMillis());
-            saveYaml(cfg, file);
-        });
+        plugin.getSchedulerAdapter().runTaskAsync(() -> savePlayerStatsSync(uuid, data));
     }
 
     public void savePlayerStatsSync(UUID uuid, PlayerData data) {
         File file = new File(playerStatsFolder, uuid.toString() + ".yml");
         FileConfiguration cfg = loadYaml(file);
+        if (data.getName() != null && !data.getName().isEmpty()) {
+            cfg.set("name", data.getName());
+            cfg.set("cached_name", data.getName());
+        }
         cfg.set("money", data.getMoney());
         cfg.set("shards", data.getShards());
         cfg.set("shop_spent", data.getShopSpent());
         cfg.set("ip", data.getIp());
         cfg.set("history", data.getHistory());
+        cfg.set("break_blocks", data.getBreakBlocks());
+        cfg.set("placed_blocks", data.getPlacedBlocks());
+        cfg.set("mob_kills", data.getMobKills());
+        cfg.set("sell_made", data.getSellMade());
+        cfg.set("playtime", data.getPlaytime());
+        cfg.set("deaths", data.getDeaths());
+        cfg.set("kills", data.getKills());
+        cfg.set("tool_expiry", data.getToolExpiry());
         cfg.set("last_updated", System.currentTimeMillis());
         saveYaml(cfg, file);
+
+        if (data.getName() != null && !data.getName().isEmpty()) {
+            File nameFile = new File(playerNamesFolder, uuid.toString() + ".yml");
+            FileConfiguration nameCfg = new YamlConfiguration();
+            nameCfg.set("cached_name", data.getName());
+            saveYaml(nameCfg, nameFile);
+        }
     }
 
     public DatabaseManager.LoadResult<DatabaseManager.PlayerDataStats> loadPlayerStats(UUID uuid) {
         File file = new File(playerStatsFolder, uuid.toString() + ".yml");
         if (!file.exists()) return new DatabaseManager.LoadResult<>(null, false, null);
         FileConfiguration cfg = loadYaml(file);
-        if (!cfg.contains("money")) return new DatabaseManager.LoadResult<>(null, false, null);
+        if (cfg.getKeys(false).isEmpty()) return new DatabaseManager.LoadResult<>(null, false, null);
         DatabaseManager.PlayerDataStats stats = new DatabaseManager.PlayerDataStats(
                 cfg.getDouble("money", 0),
                 cfg.getDouble("shards", 0),
@@ -704,7 +713,7 @@ public class YamlFlatfileStorage {
         return new DatabaseManager.LoadResult<>(stats, false, null);
     }
 
-    // ======================= PLAYER NAMES =======================
+    
 
     public void savePlayerName(UUID uuid, String name) {
         if (name == null) return;
@@ -723,30 +732,90 @@ public class YamlFlatfileStorage {
         return cfg.getString("cached_name");
     }
 
-    // ======================= LEADERBOARDS =======================
+    
 
     public List<PlayerDataManager.LeaderboardEntry> getTopByField(String field, int limit) {
-        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>();
+        Map<UUID, PlayerDataManager.LeaderboardEntry> entryMap = new HashMap<>();
         File[] files = playerStatsFolder.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (files == null) return entries;
-        for (File file : files) {
-            try {
-                String uuidStr = file.getName().replace(".yml", "");
-                UUID uuid = UUID.fromString(uuidStr);
-                FileConfiguration cfg = loadYaml(file);
-                double value = cfg.getDouble(field, 0);
-                if (value > 0) {
-                    String name = getPlayerName(uuid);
-                    if (name == null) {
-                        org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
-                        name = op.getName();
+        if (files != null) {
+            for (File file : files) {
+                try {
+                    String uuidStr = file.getName().replace(".yml", "");
+                    UUID uuid = UUID.fromString(uuidStr);
+                    FileConfiguration cfg = loadYaml(file);
+                    double value = cfg.getDouble(field, 0.0);
+                    if (value > 0) {
+                        String name = cfg.getString("name");
+                        if (name == null || name.isEmpty()) {
+                            name = cfg.getString("cached_name");
+                        }
+                        if (name == null || name.isEmpty()) {
+                            name = getPlayerName(uuid);
+                        }
+                        if (name == null || name.isEmpty()) {
+                            org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+                            if (op != null && op.getName() != null) {
+                                name = op.getName();
+                            }
+                        }
+                        if (name == null || name.isEmpty()) {
+                            name = uuidStr.length() > 8 ? uuidStr.substring(0, 8) : uuidStr;
+                        }
+                        entryMap.put(uuid, new PlayerDataManager.LeaderboardEntry(name, uuid, value));
                     }
-                    entries.add(new PlayerDataManager.LeaderboardEntry(name, uuid, value));
+                } catch (Exception ignored) {}
+            }
+        }
+
+        
+        for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) {
+            try {
+                UUID uuid = p.getUniqueId();
+                PlayerData pd = plugin.getPlayerDataManager().get(uuid);
+                if (pd != null) {
+                    double val = 0.0;
+                    switch (field.toLowerCase()) {
+                        case "money":
+                            val = pd.getMoney();
+                            break;
+                        case "shards":
+                            val = pd.getShards();
+                            break;
+                        case "kills":
+                            val = p.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
+                            break;
+                        case "deaths":
+                            val = p.getStatistic(org.bukkit.Statistic.DEATHS);
+                            break;
+                        case "playtime":
+                            val = p.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / 20L;
+                            break;
+                        case "mob_kills":
+                            val = p.getStatistic(org.bukkit.Statistic.MOB_KILLS);
+                            break;
+                        case "break_blocks":
+                            val = com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksBroken(p);
+                            break;
+                        case "placed_blocks":
+                            val = com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksPlaced(p);
+                            break;
+                        case "sell_made":
+                            if (plugin.getFalconSell() != null && plugin.getFalconSell().getPlayerDataManager() != null) {
+                                com.falconcore.survival.sell.data.PlayerData sellPd = plugin.getFalconSell().getPlayerDataManager().getPlayerData(uuid);
+                                if (sellPd != null) val = sellPd.getSellMade();
+                            }
+                            break;
+                    }
+                    if (val > 0) {
+                        entryMap.put(uuid, new PlayerDataManager.LeaderboardEntry(p.getName(), uuid, val));
+                    }
                 }
             } catch (Exception ignored) {}
         }
+
+        List<PlayerDataManager.LeaderboardEntry> entries = new ArrayList<>(entryMap.values());
         entries.sort((a, b) -> Double.compare(b.value, a.value));
-        return entries.size() > limit ? entries.subList(0, limit) : entries;
+        return entries.size() > limit ? new ArrayList<>(entries.subList(0, limit)) : entries;
     }
 
     public List<PlayerDataManager.LeaderboardEntry> getTopShards(int limit) { return getTopByField("shards", limit); }
@@ -758,7 +827,7 @@ public class YamlFlatfileStorage {
     public List<PlayerDataManager.LeaderboardEntry> getTopBlocksBroken(int limit) { return getTopByField("break_blocks", limit); }
     public List<PlayerDataManager.LeaderboardEntry> getTopBlocksPlaced(int limit) { return getTopByField("placed_blocks", limit); }
 
-    // ======================= OFFLINE BALANCE =======================
+    
 
     public void updateOfflineBalance(UUID uuid, double balance, boolean isShards) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -770,7 +839,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= BOUNTIES =======================
+    
 
     public Map<UUID, Double> loadAllBounties() {
         Map<UUID, Double> bounties = new HashMap<>();
@@ -800,7 +869,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= ORDERS =======================
+    
 
     public List<com.falconcore.survival.orders.data.Order> loadAllOrders() {
         List<com.falconcore.survival.orders.data.Order> orders = new ArrayList<>();
@@ -886,7 +955,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= AUCTION LISTINGS =======================
+    
 
     public List<com.falconcore.survival.auction.AuctionItem> loadAllAuctionItems() {
         List<com.falconcore.survival.auction.AuctionItem> items = new ArrayList<>();
@@ -938,7 +1007,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= STATUS / LOCATION =======================
+    
 
     public void updateStatus(UUID uuid, String status) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -989,7 +1058,7 @@ public class YamlFlatfileStorage {
             FileConfiguration cfg = loadYaml(file);
             String worldName = cfg.getString("last_world");
             if (worldName == null) { callback.accept(null); return; }
-            // Must get world on main thread, but the world lookup is quick
+            
             plugin.getSchedulerAdapter().runTask(() -> {
                 World world = Bukkit.getWorld(worldName);
                 if (world == null) { callback.accept(null); return; }
@@ -1022,7 +1091,7 @@ public class YamlFlatfileStorage {
         }).thenAccept(callback);
     }
 
-    // ======================= WIPE OPERATIONS =======================
+    
 
     public void wipeAuctionTransactions(UUID playerUuid) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -1065,7 +1134,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= SERVER CONFIG =======================
+    
 
     public void setServerConfig(String key, String value) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -1091,7 +1160,7 @@ public class YamlFlatfileStorage {
         setServerConfig(key, String.valueOf(value));
     }
 
-    // ======================= SPAWNERS =======================
+    
 
     public Map<Location, SpawnerData> loadAllSpawnersSync() {
         Map<Location, SpawnerData> result = new HashMap<>();
@@ -1133,7 +1202,7 @@ public class YamlFlatfileStorage {
         cfg.set(key + ".drops", serializeDrops(data.getAccumulatedDrops()));
         cfg.set(key + ".blacklist", serializeBlacklist(data.getBlacklistedLoot()));
         cfg.set(key + ".created_at", System.currentTimeMillis());
-        // Remove lost markers
+        
         cfg.set(key + ".lost_at", null);
         cfg.set(key + ".lost_reason", null);
         cfg.set(key + ".lost_by_uuid", null);
@@ -1184,7 +1253,7 @@ public class YamlFlatfileStorage {
         return set;
     }
 
-    // ======================= HOMES (FalconSell) =======================
+    
 
     public Map<Integer, Object[]> loadHomes(UUID uuid) {
         Map<Integer, Object[]> homes = new HashMap<>();
@@ -1246,7 +1315,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= TEAMS (FalconSell) =======================
+    
 
     public void saveTeam(String id, String name, UUID ownerUuid, long createdAt, boolean pvpEnabled) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -1386,7 +1455,7 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= ENDERCHEST (FalconSell) =======================
+    
 
     public void saveEnderChest(UUID uuid, String contentsBase64) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -1403,7 +1472,7 @@ public class YamlFlatfileStorage {
         return loadYaml(file).getString("contents");
     }
 
-    // ======================= SELL HISTORY (FalconSell) =======================
+    
 
     public void saveSellHistory(UUID uuid, Map<String, double[]> history) {
         if (history == null || history.isEmpty()) return;
@@ -1434,7 +1503,7 @@ public class YamlFlatfileStorage {
         return history;
     }
 
-    // ======================= CATEGORY DATA (FalconSell) =======================
+    
 
     public void saveCategoryData(UUID uuid, Map<String, double[]> categoryData) {
         if (categoryData == null || categoryData.isEmpty()) return;
@@ -1449,7 +1518,20 @@ public class YamlFlatfileStorage {
         });
     }
 
-    // ======================= DISGUISE / NAME HIDDEN (FalconSell) =======================
+    public Map<String, double[]> loadCategoryData(UUID uuid) {
+        Map<String, double[]> result = new HashMap<>();
+        File file = new File(categoryDataFolder, uuid.toString() + ".yml");
+        if (!file.exists()) return result;
+        FileConfiguration cfg = loadYaml(file);
+        for (String key : cfg.getKeys(false)) {
+            double mult = cfg.getDouble(key + ".multiplier", 1.0);
+            double prog = cfg.getDouble(key + ".progress", 0.0);
+            result.put(key, new double[]{mult, prog});
+        }
+        return result;
+    }
+
+    
 
     public void updateNameHidden(UUID uuid, boolean hidden) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -1503,7 +1585,7 @@ public class YamlFlatfileStorage {
         };
     }
 
-    // ======================= PLAYER STATS EXTRA FIELDS =======================
+    
 
     public void updatePlayerStatsField(UUID uuid, String field, Object value) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
@@ -1518,29 +1600,29 @@ public class YamlFlatfileStorage {
         updatePlayerStatsField(uuid, "team", teamId);
     }
 
-    // ======================= DEEP WIPE (FalconSell) =======================
+    
 
     public void wipeAllPlayerData(UUID uuid) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
-            // Stats
+            
             File file = new File(playerStatsFolder, uuid.toString() + ".yml");
             if (file.exists()) file.delete();
-            // Sell history
+            
             file = new File(sellHistoryFolder, uuid.toString() + ".yml");
             if (file.exists()) file.delete();
-            // Homes
+            
             file = new File(homesFolder, uuid.toString() + ".yml");
             if (file.exists()) file.delete();
-            // Category data
+            
             file = new File(categoryDataFolder, uuid.toString() + ".yml");
             if (file.exists()) file.delete();
-            // Enderchest
+            
             file = new File(enderchestFolder, uuid.toString() + ".yml");
             if (file.exists()) file.delete();
         });
     }
 
-    // ======================= PVP SAFE ZONES =======================
+    
 
     public List<com.falconcore.survival.manager.PvPSafeZoneManager.PvPSafeZone> loadAllPvpSafeZones() {
         List<com.falconcore.survival.manager.PvPSafeZoneManager.PvPSafeZone> zones = new ArrayList<>();
@@ -1586,15 +1668,15 @@ public class YamlFlatfileStorage {
         return false;
     }
 
-    // ======================= TEMPORARY BLOCKS =======================
+    
 
     public void trackTemporaryBlock(String worldName, int x, int y, int z, String originalMaterial,
                                      String originalData, long placedTime) {
         plugin.getSchedulerAdapter().runTaskAsync(() -> {
             FileConfiguration cfg = loadYaml(temporaryBlocksFile);
-            // Check if already tracked
+            
             String locKey = worldName + "_" + x + "_" + y + "_" + z;
-            if (cfg.contains(locKey)) return; // Already tracked, keep original
+            if (cfg.contains(locKey)) return; 
             cfg.set(locKey + ".world", worldName);
             cfg.set(locKey + ".x", x);
             cfg.set(locKey + ".y", y);

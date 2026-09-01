@@ -103,3 +103,5 @@ command-whitelist:
     - "nightvision"
     - "store"
     - "bounty"
+    - "stats"
+    - 'team'

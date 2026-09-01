@@ -6,8 +6,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import net.milkbowl.vault.economy.Economy;
-import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -173,19 +171,10 @@ public class PlayerListHandler implements HttpHandler {
 
     private double getBalance(OfflinePlayer p) {
         try {
-            if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
-                RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager()
-                        .getRegistration(Economy.class);
-                if (rsp != null) {
-                    Economy eco = rsp.getProvider();
-                    if (eco != null) {
-                        return eco.getBalance(p);
-                    }
-                }
-            }
-            return plugin.getPlayerDataManager().get(p.getUniqueId()).getMoney();
+            com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(p.getUniqueId());
+            return pd != null ? pd.getMoney() : 0.0;
         } catch (Exception e) {
-            return 0;
+            return 0.0;
         }
     }
 

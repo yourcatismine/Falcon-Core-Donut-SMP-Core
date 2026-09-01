@@ -1,7 +1,6 @@
 package com.h2ph.commands.player;
 
 import com.h2ph.Falcon;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -74,20 +73,11 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
                     double bal = 0, spent = 0, made = 0;
                     long shards = 0, kills = 0, deaths = 0, ticks = 0, placed = 0, broken = 0, mobs = 0;
 
-                    RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager()
-                            .getRegistration(Economy.class);
-                    if (rsp != null) {
-                        Economy econ = rsp.getProvider();
-                        try {
-                            bal = econ.getBalance(check);
-                        } catch (Throwable ignored) {
-                        }
-                    }
-
                     try {
                         com.falconcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager()
                                 .get(check.getUniqueId());
                         if (corePd != null) {
+                            bal = corePd.getMoney();
                             shards = (long) corePd.getShards();
                             spent = corePd.getShopSpent();
                         }
@@ -135,18 +125,10 @@ public class StatsCommand implements CommandExecutor, Listener, TabCompleter {
         double bal = 0, spent = 0, made = 0;
         long shards = 0, kills = 0, deaths = 0, ticks = 0, placed = 0, broken = 0, mobs = 0;
 
-        RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp != null) {
-            Economy econ = rsp.getProvider();
-            try {
-                bal = econ.getBalance(target);
-            } catch (Throwable ignored) {
-            }
-        }
-
         try {
             com.falconcore.survival.manager.PlayerData corePd = plugin.getPlayerDataManager().get(target.getUniqueId());
             if (corePd != null) {
+                bal = corePd.getMoney();
                 shards = (long) corePd.getShards();
                 spent = corePd.getShopSpent();
             }

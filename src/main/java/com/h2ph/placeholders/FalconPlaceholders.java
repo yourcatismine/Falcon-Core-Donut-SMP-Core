@@ -357,13 +357,30 @@ public class FalconPlaceholders extends PlaceholderExpansion {
     
     private String resolveEntryName(com.falconcore.survival.manager.PlayerDataManager.LeaderboardEntry entry) {
         if (entry == null) return "None";
-        if (entry.name != null && !entry.name.matches("^[0-9a-fA-F\\-]{36}$")) return entry.name;
-        try {
-            org.bukkit.OfflinePlayer op = org.bukkit.Bukkit.getOfflinePlayer(entry.uuid);
-            if (op != null && op.getName() != null) return op.getName();
-        } catch (Exception ignored) {
+        if (entry.name != null && !entry.name.isEmpty() && !entry.name.matches("^[0-9a-fA-F\\-]{36}$")) {
+            return entry.name;
         }
         if (entry.uuid != null) {
+            org.bukkit.entity.Player online = org.bukkit.Bukkit.getPlayer(entry.uuid);
+            if (online != null && online.getName() != null) {
+                return online.getName();
+            }
+            try {
+                org.bukkit.OfflinePlayer op = org.bukkit.Bukkit.getOfflinePlayer(entry.uuid);
+                if (op != null && op.getName() != null) {
+                    return op.getName();
+                }
+            } catch (Exception ignored) {
+            }
+            try {
+                if (plugin.getDatabaseManager() != null && plugin.getDatabaseManager().getYamlStorage() != null) {
+                    String cached = plugin.getDatabaseManager().getYamlStorage().getPlayerName(entry.uuid);
+                    if (cached != null && !cached.isEmpty()) {
+                        return cached;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
             String u = entry.uuid.toString();
             return u.length() > 8 ? u.substring(0, 8) : u;
         }

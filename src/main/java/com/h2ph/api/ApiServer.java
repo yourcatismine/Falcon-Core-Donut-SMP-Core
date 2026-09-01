@@ -673,10 +673,9 @@ public class ApiServer {
 
             if (path.endsWith("/onlineplayers")) {
                 List<String> jsonList = new ArrayList<>();
-                net.milkbowl.vault.economy.Economy eco = getEconomy();
 
                 for (Player p : plugin.getServer().getOnlinePlayers()) {
-                    double balance = (eco != null) ? eco.getBalance(p) : 0.0;
+                    double balance = plugin.getPlayerDataManager().get(p.getUniqueId()).getMoney();
                     double shards = plugin.getPlayerDataManager().get(p.getUniqueId()).getShards();
 
                     int kills = p.getStatistic(org.bukkit.Statistic.PLAYER_KILLS);
@@ -728,11 +727,14 @@ public class ApiServer {
                 }
 
                 if (target != null && (target.hasPlayedBefore() || target.isOnline())) {
-                    net.milkbowl.vault.economy.Economy eco = getEconomy();
-                    double balance = (eco != null) ? eco.getBalance(target) : 0.0;
+                    double balance = 0.0;
                     double shards = 0.0;
                     try {
-                        shards = plugin.getPlayerDataManager().get(target.getUniqueId()).getShards();
+                        com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(target.getUniqueId());
+                        if (pd != null) {
+                            balance = pd.getMoney();
+                            shards = pd.getShards();
+                        }
                     } catch (Exception ignored) {
                     }
 
@@ -808,13 +810,17 @@ public class ApiServer {
                 return;
             }
 
-            net.milkbowl.vault.economy.Economy eco = getEconomy();
-            if (eco == null) {
-                sendResponse(t, 500, "{\"error\": \"Economy plugin not found\"}");
+            org.bukkit.OfflinePlayer p = plugin.getServer().getPlayer(playerName);
+            if (p == null) {
+                p = plugin.getServer().getOfflinePlayer(playerName);
+            }
+            if (p == null || (!p.hasPlayedBefore() && !p.isOnline())) {
+                sendResponse(t, 404, "{\"error\": \"Player not found\"}");
                 return;
             }
 
-            double balance = eco.getBalance(playerName);
+            com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(p.getUniqueId());
+            double balance = (pd != null) ? pd.getMoney() : 0.0;
 
             String response = String.format("{\"player\": \"%s\", \"balance\": %.2f}", escape(playerName), balance);
             sendResponse(t, 200, response);
@@ -868,44 +874,49 @@ public class ApiServer {
                 return;
             }
 
-            net.milkbowl.vault.economy.Economy eco = getEconomy();
-            if (eco == null) {
-                sendResponse(t, 500, "{\"error\": \"Economy plugin not found\"}");
+            org.bukkit.OfflinePlayer p = plugin.getServer().getPlayer(playerName);
+            if (p == null) {
+                p = plugin.getServer().getOfflinePlayer(playerName);
+            }
+            if (p == null || (!p.hasPlayedBefore() && !p.isOnline())) {
+                sendResponse(t, 404, "{\"error\": \"Player not found\"}");
                 return;
             }
 
-            double oldBalance = eco.getBalance(playerName);
-            net.milkbowl.vault.economy.EconomyResponse res = null;
+            com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(p.getUniqueId());
+            if (pd == null) {
+                sendResponse(t, 500, "{\"error\": \"Failed to load player data\"}");
+                return;
+            }
+
+            double oldBalance = pd.getMoney();
+            double newBalance = oldBalance;
 
             switch (actionType) {
                 case "ADD":
-                    res = eco.depositPlayer(playerName, amount);
+                    pd.addMoney(amount, "API");
+                    newBalance = pd.getMoney();
                     break;
                 case "REMOVE":
-                    res = eco.withdrawPlayer(playerName, amount);
+                    if (oldBalance < amount) {
+                        sendResponse(t, 400, "{\"error\": \"Insufficient funds\"}");
+                        return;
+                    }
+                    pd.removeMoney(amount, "API");
+                    newBalance = pd.getMoney();
                     break;
                 case "SET":
-                    double delta = amount - oldBalance;
-                    if (delta > 0) {
-                        res = eco.depositPlayer(playerName, delta);
-                    } else if (delta < 0) {
-                        res = eco.withdrawPlayer(playerName, Math.abs(delta));
-                    } else {
-                        res = new net.milkbowl.vault.economy.EconomyResponse(0, oldBalance,
-                                net.milkbowl.vault.economy.EconomyResponse.ResponseType.SUCCESS, null);
-                    }
+                    pd.setMoney(amount, "API");
+                    newBalance = pd.getMoney();
                     break;
             }
 
-            if (res != null && res.transactionSuccess()) {
-                String response = String.format(
-                        "{\"status\": \"success\", \"player\": \"%s\", \"action\": \"%s\", \"amount\": %.2f, \"old_balance\": %.2f, \"new_balance\": %.2f}",
-                        escape(playerName), actionType, amount, oldBalance, res.balance);
-                sendResponse(t, 200, response);
-            } else {
-                String error = (res != null) ? res.errorMessage : "Transaction failed";
-                sendResponse(t, 400, String.format("{\"error\": \"%s\"}", escape(error)));
-            }
+            plugin.getPlayerDataManager().saveMoneyAsync(p.getUniqueId(), pd);
+
+            String response = String.format(
+                    "{\"status\": \"success\", \"player\": \"%s\", \"action\": \"%s\", \"amount\": %.2f, \"old_balance\": %.2f, \"new_balance\": %.2f}",
+                    escape(playerName), actionType, amount, oldBalance, newBalance);
+            sendResponse(t, 200, response);
         }
     }
 

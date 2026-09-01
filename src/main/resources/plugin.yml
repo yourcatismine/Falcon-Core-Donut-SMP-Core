@@ -1,12 +1,12 @@
 name: Falcon
-version: "7.1"
+version: "7.2"
 main: com.h2ph.Falcon
 api-version: "1.13"
 author: Kiarerss
 folia-supported: true
 description: Falcon was tamed by h2ph
-depend: [Vault, packetevents]
-softdepend: [PlaceholderAPI, WorldEdit, FastAsyncWorldEdit, LuckPerms, voicechat]
+depend: [packetevents, PlaceholderAPI]
+softdepend: [Vault, WorldEdit, FastAsyncWorldEdit, LuckPerms, voicechat]
 
 commands:
   shop:

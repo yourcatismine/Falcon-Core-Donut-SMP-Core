@@ -580,10 +580,10 @@ public class OffendPlugin implements CommandExecutor, TabCompleter {
                 }
 
                 try {
-                    net.milkbowl.vault.economy.Economy econ = plugin.getServer().getServicesManager()
-                            .getRegistration(net.milkbowl.vault.economy.Economy.class).getProvider();
-                    if (econ != null && econ.hasAccount(target)) {
-                        econ.withdrawPlayer(target, econ.getBalance(target));
+                    com.falconcore.survival.manager.PlayerData targetPd = plugin.getPlayerDataManager().get(uuid);
+                    if (targetPd != null) {
+                        targetPd.setMoney(0, "Wiped by Offend");
+                        plugin.getPlayerDataManager().saveMoneyAsync(uuid, targetPd);
                     }
                 } catch (Throwable ignored) {
                 }

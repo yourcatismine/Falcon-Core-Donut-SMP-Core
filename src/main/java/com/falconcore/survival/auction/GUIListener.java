@@ -235,6 +235,9 @@ public class GUIListener
                     return;
                 }
                 ItemStack toSell = held.clone();
+                if (((com.h2ph.Falcon) this.controller.getPlugin()).getInventoryWorthManager() != null) {
+                    ((com.h2ph.Falcon) this.controller.getPlugin()).getInventoryWorthManager().stripFromItem(toSell);
+                }
                 p.getInventory().setItemInMainHand(null);
 
                 AuctionItem auctionItem = new AuctionItem(

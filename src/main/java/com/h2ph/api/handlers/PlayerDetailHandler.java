@@ -9,8 +9,6 @@ import com.sun.net.httpserver.HttpHandler;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
-import net.milkbowl.vault.economy.Economy;
-import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -111,23 +109,13 @@ public class PlayerDetailHandler implements HttpHandler {
         economy.put("shards", pd.getShards());
 
         List<Map<String, Object>> vaults = new ArrayList<>();
-
-        Collection<RegisteredServiceProvider<Economy>> rsps = plugin.getServer().getServicesManager()
-                .getRegistrations(Economy.class);
-        for (RegisteredServiceProvider<Economy> rsp : rsps) {
-            Economy eco = rsp.getProvider();
-            if (eco == null)
-                continue;
-
-            Map<String, Object> vaultMap = new LinkedHashMap<>();
-            String ecoName = eco.getName();
-            vaultMap.put("id", "vault_" + ecoName.toLowerCase().replace(" ", "_"));
-            vaultMap.put("name", ecoName);
-            vaultMap.put("icon", "Coins");
-            vaultMap.put("type", "MONEY");
-            vaultMap.put("balance", eco.getBalance(op));
-            vaults.add(vaultMap);
-        }
+        Map<String, Object> vaultMap = new LinkedHashMap<>();
+        vaultMap.put("id", "vault_falcon");
+        vaultMap.put("name", "FalconEconomy");
+        vaultMap.put("icon", "Coins");
+        vaultMap.put("type", "MONEY");
+        vaultMap.put("balance", pd.getMoney());
+        vaults.add(vaultMap);
 
         economy.put("vaults", vaults);
         data.put("economy", economy);

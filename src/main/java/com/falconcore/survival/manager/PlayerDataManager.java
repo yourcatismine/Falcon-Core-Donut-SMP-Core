@@ -43,6 +43,8 @@ public class PlayerDataManager {
                 plugin.getLogger().severe("FAILED to create crates data directory: " + dataFolderCrates.getPath() + ". Crates data saving WILL FAIL.");
             }
         }
+
+        warmupLeaderboards();
     }
 
     public PlayerData get(UUID uuid) {
@@ -331,7 +333,7 @@ public class PlayerDataManager {
             long last = lastAsyncSaveTime.getOrDefault(uuid, 0L);
             
             if (now - last < SAVE_DEBOUNCE_MILLIS) {
-                return; // Debounce
+                return; 
             }
             
             lastAsyncSaveTime.put(uuid, now);
@@ -346,6 +348,25 @@ public class PlayerDataManager {
             return;
         }
 
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null && player.isOnline()) {
+            if (data.getName() == null || !data.getName().equals(player.getName())) {
+                data.setName(player.getName());
+            }
+            data.setKills(player.getStatistic(org.bukkit.Statistic.PLAYER_KILLS));
+            data.setDeaths(player.getStatistic(org.bukkit.Statistic.DEATHS));
+            data.setMobKills(player.getStatistic(org.bukkit.Statistic.MOB_KILLS));
+            data.setPlaytime(player.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / 20L);
+            data.setBreakBlocks(com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksBroken(player));
+            data.setPlacedBlocks(com.falconcore.survival.utils.BlockStatsUtils.getTotalBlocksPlaced(player));
+            if (plugin.getFalconSell() != null && plugin.getFalconSell().getPlayerDataManager() != null) {
+                com.falconcore.survival.sell.data.PlayerData sellPd = plugin.getFalconSell().getPlayerDataManager().getPlayerData(uuid);
+                if (sellPd != null) {
+                    data.setSellMade(sellPd.getSellMade());
+                }
+            }
+        }
+
         plugin.getDatabaseManager().savePlayerStats(uuid, data);
 
         File cratesFile = new File(dataFolderCrates, uuid.toString() + ".db");
@@ -356,7 +377,6 @@ public class PlayerDataManager {
             cratesConfig.set("keys." + entry.getKey(), entry.getValue());
         }
 
-        cratesConfig.set("last_seen_update", data.getLastSeenUpdate());
         cratesConfig.set("last_seen_update", data.getLastSeenUpdate());
         cratesConfig.set("shard_booster_expiry", data.getShardBoosterExpiry());
 
@@ -422,8 +442,8 @@ public class PlayerDataManager {
             }
         }
 
-        Player player = Bukkit.getPlayer(uuid);
         if (player != null && player.isOnline() && !player.isDead() && !data.isCombatLogged()) {
+            try {
                 ItemStack[] contents = player.getInventory().getContents();
                 ItemStack[] armor = player.getInventory().getArmorContents();
                 String invBase64 = ItemSerializationManager.itemStackArrayToBase64(contents);
@@ -517,40 +537,36 @@ public class PlayerDataManager {
             triggerShardsUpdateAsync();
         }
 
-        // Return old cache even if it's dirty, instead of empty list
+        
         return (cachedShardsTop != null)
                 ? (cachedShardsTop.size() > limit ? cachedShardsTop.subList(0, limit) : cachedShardsTop)
                 : new ArrayList<>();
     }
 
     private void fetchVaultTopMoney() {
-        if (!plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+        if (!plugin.getServer().getPluginManager().isPluginEnabled("Vault") || plugin.getDatabaseManager().isFlatfileMode()) {
+            cachedMoneyTop = plugin.getDatabaseManager().getTopMoney(1000);
+            lastMoneyUpdate = System.currentTimeMillis();
             return;
         }
 
         org.bukkit.plugin.RegisteredServiceProvider<net.milkbowl.vault.economy.Economy> rsp = plugin.getServer()
                 .getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
         if (rsp == null) {
+            cachedMoneyTop = plugin.getDatabaseManager().getTopMoney(1000);
+            lastMoneyUpdate = System.currentTimeMillis();
             return;
         }
 
         net.milkbowl.vault.economy.Economy eco = rsp.getProvider();
-        if (eco == null) {
-            return;
-        }
-
-        // OPTIMIZATION: If using FalconEconomy, use direct DB query
-        if (eco.getName().equalsIgnoreCase("FalconEconomy")) {
+        if (eco == null || eco.getName().equalsIgnoreCase("FalconEconomy")) {
             cachedMoneyTop = plugin.getDatabaseManager().getTopMoney(1000);
             lastMoneyUpdate = System.currentTimeMillis();
             return;
         }
 
         List<LeaderboardEntry> entries = new ArrayList<>();
-        // Fallback for other economy plugins (still limit it to some reasonable number if possible)
-        // Note: getOfflinePlayers() is still slow, but we only do it if not using FalconEconomy
         org.bukkit.OfflinePlayer[] offlinePlayers = plugin.getServer().getOfflinePlayers();
-        int count = 0;
         for (org.bukkit.OfflinePlayer p : offlinePlayers) {
             if (p.getName() == null)
                 continue;
@@ -563,8 +579,6 @@ public class PlayerDataManager {
                 }
             } catch (Exception ignored) {
             }
-            // If it's too much, maybe stop? But Vault doesn't provide a way to get top.
-            // Let's at least process it.
         }
 
         entries.sort((a, b) -> Double.compare(b.value, a.value));
@@ -580,18 +594,26 @@ public class PlayerDataManager {
     private boolean isUpdatingSell = false;
 
     public List<LeaderboardEntry> getTopMoney(int limit) {
-        if (cachedMoneyTop == null || cachedMoneyTop.isEmpty()) {
-            if (!isUpdatingMoney) {
-                triggerVaultUpdateAsync();
-            }
-            return new ArrayList<>();
+        if (cachedMoneyTop != null && (System.currentTimeMillis() - lastMoneyUpdate < CACHE_DURATION)) {
+            return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
         }
 
-        if (System.currentTimeMillis() - lastMoneyUpdate > CACHE_DURATION) {
+        if (!isUpdatingMoney) {
             triggerVaultUpdateAsync();
         }
 
-        return cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop;
+        return (cachedMoneyTop != null)
+                ? (cachedMoneyTop.size() > limit ? cachedMoneyTop.subList(0, limit) : cachedMoneyTop)
+                : new ArrayList<>();
+    }
+
+    public void warmupLeaderboards() {
+        triggerVaultUpdateAsync();
+        triggerShardsUpdateAsync();
+        triggerKillsUpdateAsync();
+        triggerDeathsUpdateAsync();
+        triggerPlaytimeUpdateAsync();
+        triggerSellUpdateAsync();
     }
 
     private void triggerVaultUpdateAsync() {
@@ -762,7 +784,7 @@ public class PlayerDataManager {
     }
 
     public void initializeLeaderboards() {
-        //plugin.getLogger().info("Initializing leaderboard caches...");
+        
         triggerVaultUpdateAsync();
         triggerShardsUpdateAsync();
         triggerKillsUpdateAsync();

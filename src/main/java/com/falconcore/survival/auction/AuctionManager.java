@@ -26,6 +26,9 @@ public class AuctionManager {
     }
 
     public void addItem(AuctionItem item) {
+        if (Falcon.getInstance().getInventoryWorthManager() != null) {
+            Falcon.getInstance().getInventoryWorthManager().stripFromItem(item.getItemStack());
+        }
         pauseAmethystTimer(item.getItemStack());
         this.items.add(item);
         Falcon.getInstance().getDatabaseManager().saveAuctionItemAsync(item);
@@ -92,6 +95,9 @@ public class AuctionManager {
 
         List<AuctionItem> dbItems = Falcon.getInstance().getDatabaseManager().loadAllAuctionItems();
         for (AuctionItem ai : dbItems) {
+            if (Falcon.getInstance().getInventoryWorthManager() != null) {
+                Falcon.getInstance().getInventoryWorthManager().stripFromItem(ai.getItemStack());
+            }
             pauseAmethystTimer(ai.getItemStack());
             this.items.add(ai);
         }

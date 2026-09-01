@@ -3,7 +3,6 @@ package com.h2ph.commands.economy;
 import com.h2ph.Falcon;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -560,14 +559,6 @@ public class ShopCommand implements CommandExecutor, Listener {
         }
 
         int buyAmount = Math.min(session.quantity, spaceAvailable);
-
-        if (plugin.getServer().getServicesManager().getRegistration(Economy.class) == null) {
-            player.sendMessage(
-                    ChatColor.RED + "Shop is currently unavailable (Economy plugin missing). Please contact an admin.");
-            plugin.getLogger()
-                    .warning("Vault Economy provider not found! Please install an economy plugin (Essentials, etc).");
-            return;
-        }
 
         com.falconcore.survival.manager.PlayerData pd = plugin.getPlayerDataManager().get(player.getUniqueId());
         if (pd == null) {

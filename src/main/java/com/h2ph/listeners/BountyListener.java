@@ -45,16 +45,13 @@ public class BountyListener implements Listener {
             double amount = plugin.getBountyManager().getBounty(victimId);
             plugin.getBountyManager().removeBounty(victimId);
 
-            net.milkbowl.vault.economy.Economy econ = plugin.getEconomy();
-            if (econ != null) {
-                econ.depositPlayer(killer, amount);
-            } else {
-                PlayerData killerData = plugin.getPlayerDataManager().get(killer.getUniqueId());
-                if (killerData == null)
-                    killerData = plugin.getPlayerDataManager().loadPlayer(killer.getUniqueId());
-
+            PlayerData killerData = plugin.getPlayerDataManager().get(killer.getUniqueId());
+            if (killerData == null) {
+                killerData = plugin.getPlayerDataManager().loadPlayer(killer.getUniqueId());
+            }
+            if (killerData != null) {
                 killerData.addMoney(amount, "Bounty claim on " + victim.getName());
-                plugin.getPlayerDataManager().savePlayerAsync(killer.getUniqueId());
+                plugin.getPlayerDataManager().saveMoneyAsync(killer.getUniqueId(), killerData);
             }
 
             String amountFormatted = formatNumber(amount);

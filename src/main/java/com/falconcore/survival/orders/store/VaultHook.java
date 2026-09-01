@@ -1,11 +1,4 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.milkbowl.vault.economy.Economy
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.plugin.RegisteredServiceProvider
- */
+
 package com.falconcore.survival.orders.store;
 
 import com.falconcore.survival.orders.OrdersModule;
@@ -22,32 +15,33 @@ public class VaultHook {
         if (module.getPlugin().getServer().getPluginManager().getPlugin("Vault") == null) {
             return;
         }
-        RegisteredServiceProvider rsp = module.getPlugin().getServer().getServicesManager()
+        RegisteredServiceProvider<Economy> rsp = module.getPlugin().getServer().getServicesManager()
                 .getRegistration(Economy.class);
         if (rsp != null) {
-            this.econ = (Economy) rsp.getProvider();
+            this.econ = rsp.getProvider();
         }
     }
 
     public boolean hooked() {
-        return this.econ != null;
+        return true;
     }
 
     public boolean canAfford(OfflinePlayer p, double amount) {
-        if (this.econ == null) {
-            return false;
-        }
         if (!Double.isFinite(amount)) {
             return false;
         }
         if (amount <= 0.0) {
             return true;
         }
-        try {
-            return this.econ.has(p, amount);
-        } catch (Throwable ignored) {
-            return this.bal(p) + 1.0E-9 >= amount;
+        if (this.econ != null) {
+            try {
+                return this.econ.has(p, amount);
+            } catch (Throwable ignored) {
+                return this.bal(p) + 1.0E-9 >= amount;
+            }
         }
+        com.falconcore.survival.manager.PlayerData pd = module.getPlugin().getPlayerDataManager().get(p.getUniqueId());
+        return pd != null && pd.getMoney() >= amount;
     }
 
     public boolean take(OfflinePlayer p, double amount) {
@@ -55,9 +49,6 @@ public class VaultHook {
     }
 
     public boolean take(OfflinePlayer p, double amount, String source) {
-        if (this.econ == null) {
-            return false;
-        }
         if (!Double.isFinite(amount)) {
             return false;
         }
@@ -67,17 +58,26 @@ public class VaultHook {
         if (!this.canAfford(p, amount)) {
             return false;
         }
-        try {
-            com.falconcore.survival.auction.EconomyHandler.setSourceContext(source);
+        if (this.econ != null) {
             try {
-                return this.econ.withdrawPlayer(p, amount).transactionSuccess();
-            } finally {
-                com.falconcore.survival.auction.EconomyHandler.clearSourceContext();
+                com.falconcore.survival.auction.EconomyHandler.setSourceContext(source);
+                try {
+                    return this.econ.withdrawPlayer(p, amount).transactionSuccess();
+                } finally {
+                    com.falconcore.survival.auction.EconomyHandler.clearSourceContext();
+                }
+            } catch (Throwable t) {
+                this.module.getPlugin().getLogger().warning("Vault withdraw failed: " + t.getMessage());
+                return false;
             }
-        } catch (Throwable t) {
-            this.module.getPlugin().getLogger().warning("Vault withdraw failed: " + t.getMessage());
+        }
+        com.falconcore.survival.manager.PlayerData pd = module.getPlugin().getPlayerDataManager().get(p.getUniqueId());
+        if (pd == null || pd.getMoney() < amount) {
             return false;
         }
+        pd.removeMoney(amount, source);
+        module.getPlugin().getPlayerDataManager().saveMoneyAsync(p.getUniqueId(), pd);
+        return true;
     }
 
     public boolean give(OfflinePlayer p, double amount) {
@@ -85,37 +85,43 @@ public class VaultHook {
     }
 
     public boolean give(OfflinePlayer p, double amount, String source) {
-        if (this.econ == null) {
-            return false;
-        }
         if (!Double.isFinite(amount)) {
             return false;
         }
         if (amount <= 0.0) {
             return true;
         }
-        try {
-            com.falconcore.survival.auction.EconomyHandler.setSourceContext(source);
+        if (this.econ != null) {
             try {
-                return this.econ.depositPlayer(p, amount).transactionSuccess();
-            } finally {
-                com.falconcore.survival.auction.EconomyHandler.clearSourceContext();
+                com.falconcore.survival.auction.EconomyHandler.setSourceContext(source);
+                try {
+                    return this.econ.depositPlayer(p, amount).transactionSuccess();
+                } finally {
+                    com.falconcore.survival.auction.EconomyHandler.clearSourceContext();
+                }
+            } catch (Throwable t) {
+                this.module.getPlugin().getLogger().warning("Vault deposit failed: " + t.getMessage());
+                return false;
             }
-        } catch (Throwable t) {
-            this.module.getPlugin().getLogger().warning("Vault deposit failed: " + t.getMessage());
-            return false;
         }
+        com.falconcore.survival.manager.PlayerData pd = module.getPlugin().getPlayerDataManager().get(p.getUniqueId());
+        if (pd != null) {
+            pd.addMoney(amount, source);
+            module.getPlugin().getPlayerDataManager().saveMoneyAsync(p.getUniqueId(), pd);
+            return true;
+        }
+        return false;
     }
 
     public double bal(OfflinePlayer p) {
-        if (this.econ == null) {
-            return 0.0;
+        if (this.econ != null) {
+            try {
+                return this.econ.getBalance(p);
+            } catch (Throwable t) {
+                this.module.getPlugin().getLogger().warning("Vault getBalance failed: " + t.getMessage());
+            }
         }
-        try {
-            return this.econ.getBalance(p);
-        } catch (Throwable t) {
-            this.module.getPlugin().getLogger().warning("Vault getBalance failed: " + t.getMessage());
-            return 0.0;
-        }
+        com.falconcore.survival.manager.PlayerData pd = module.getPlugin().getPlayerDataManager().get(p.getUniqueId());
+        return pd != null ? pd.getMoney() : 0.0;
     }
 }
